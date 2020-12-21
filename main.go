@@ -105,6 +105,8 @@ func main() {
 				continue
 			}
 
+			irc.ExecuteJoins(config.Channels)
+
 			log.Info("Config file reloaded")
 
 		}

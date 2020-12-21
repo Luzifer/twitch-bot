@@ -59,6 +59,12 @@ func newIRCHandler() (*ircHandler, error) {
 
 func (i ircHandler) Close() error { return i.conn.Close() }
 
+func (i ircHandler) ExecuteJoins(channels []string) {
+	for _, ch := range channels {
+		i.c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
+	}
+}
+
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 	switch m.Command {
 	case "001":
@@ -74,9 +80,7 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 				}, " "),
 			},
 		})
-		for _, ch := range config.Channels {
-			c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
-		}
+		i.ExecuteJoins(config.Channels)
 
 	case "NOTICE":
 		// NOTICE (Twitch Commands)
