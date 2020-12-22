@@ -35,11 +35,14 @@ type rule struct {
 	MatchEvent   *string `yaml:"match_event"`
 	MatchMessage *string `yaml:"match_message"`
 
+	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
+
 	DisableOnPermit bool     `yaml:"disable_on_permit"`
 	DisableOn       []string `yaml:"disable_on"`
 	EnableOn        []string `yaml:"enable_on"`
 
-	matchMessage *regexp.Regexp
+	matchMessage           *regexp.Regexp
+	disableOnMatchMessages []*regexp.Regexp
 }
 
 func (r rule) MatcherID() string {
@@ -99,6 +102,28 @@ func (r rule) Matches(m *irc.Message, event *string) bool {
 		if !r.matchMessage.MatchString(m.Trailing()) {
 			logger.Trace("Non-Match: Message")
 			return false
+		}
+	}
+
+	if len(r.DisableOnMatchMessages) > 0 {
+		// If the regexps were not pre-compiled, do it now
+		if len(r.disableOnMatchMessages) != len(r.DisableOnMatchMessages) {
+			r.disableOnMatchMessages = nil
+			for _, dm := range r.DisableOnMatchMessages {
+				dmr, err := regexp.Compile(dm)
+				if err != nil {
+					logger.WithError(err).Error("Unable to compile expression")
+					return false
+				}
+				r.disableOnMatchMessages = append(r.disableOnMatchMessages, dmr)
+			}
+		}
+
+		for _, rex := range r.disableOnMatchMessages {
+			if rex.MatchString(m.Trailing()) {
+				logger.Trace("Non-Match: Disable-On-Message")
+				return false
+			}
 		}
 	}
 
