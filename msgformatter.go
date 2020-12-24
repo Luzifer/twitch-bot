@@ -38,6 +38,8 @@ func formatMessage(tplString string, m *irc.Message, fields map[string]interface
 }
 
 func init() {
+	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
+
 	messageFunctions["getArg"] = func(m *irc.Message, params ...int) (string, error) {
 		msgParts := strings.Split(m.Trailing(), " ")
 		if len(msgParts) < params[0]+1 {
@@ -64,6 +66,4 @@ func init() {
 
 		return game, err
 	}
-
-	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
 }
