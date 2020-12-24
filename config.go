@@ -153,7 +153,7 @@ func (r rule) Matches(m *irc.Message, event *string) bool {
 	}
 
 	// Check on permit
-	if r.DisableOnPermit && timerStore.HasPermit(m.User) {
+	if r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User) {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
