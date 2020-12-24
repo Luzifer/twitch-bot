@@ -12,15 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func formatMessage(tplString string, m *irc.Message, fields map[string]interface{}) (string, error) {
-	fm := korvike.GetFunctionMap()
-	fm["getArg"] = tplGetMessageArg
-	fm["getCounterValue"] = tplGetCounterValue
-	fm["getTag"] = tplGetTagFromMessage
+var messageFunctions = korvike.GetFunctionMap()
 
+func formatMessage(tplString string, m *irc.Message, fields map[string]interface{}) (string, error) {
 	tpl, err := template.
 		New(tplString).
-		Funcs(fm).
+		Funcs(messageFunctions).
 		Parse(tplString)
 	if err != nil {
 		return "", errors.Wrap(err, "parse template")
@@ -40,20 +37,27 @@ func formatMessage(tplString string, m *irc.Message, fields map[string]interface
 	return buf.String(), errors.Wrap(err, "execute template")
 }
 
-func tplGetCounterValue(name string, _ ...string) int64 {
-	return store.GetCounterValue(name)
-}
+func init() {
+	messageFunctions["getArg"] = func(m *irc.Message, params ...int) (string, error) {
+		msgParts := strings.Split(m.Trailing(), " ")
+		if len(msgParts) < params[0]+1 {
+			return "", errors.New("argument not found")
+		}
 
-func tplGetMessageArg(m *irc.Message, params ...int) (string, error) {
-	msgParts := strings.Split(m.Trailing(), " ")
-	if len(msgParts) < params[0]+1 {
-		return "", errors.New("argument not found")
+		return msgParts[params[0]], nil
 	}
 
-	return msgParts[params[0]], nil
-}
+	messageFunctions["getCounterValue"] = func(name string, _ ...string) int64 {
+		return store.GetCounterValue(name)
+	}
 
-func tplGetTagFromMessage(m *irc.Message, params ...string) string {
-	s, _ := m.GetTag(params[0])
-	return s
+	messageFunctions["getTag"] = func(m *irc.Message, params ...string) string {
+		s, _ := m.GetTag(params[0])
+		return s
+	}
+
+	messageFunctions["recentGame"] = func(username string, _ ...string) (string, error) {
+		game, _, err := twitch.getRecentStreamInfo(username)
+		return game, err
+	}
 }
