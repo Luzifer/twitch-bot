@@ -56,8 +56,12 @@ func init() {
 		return s
 	}
 
-	messageFunctions["recentGame"] = func(username string, _ ...string) (string, error) {
+	messageFunctions["recentGame"] = func(username string, v ...string) (string, error) {
 		game, _, err := twitch.getRecentStreamInfo(username)
+		if err != nil && len(v) > 0 {
+			return v[0], nil
+		}
+
 		return game, err
 	}
 }
