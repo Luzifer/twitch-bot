@@ -1,5 +1,8 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/Luzifer/go_helpers v1.4.0 h1:Pmm058SbYewfnpP1CHda/zERoAqYoZFiBHF4l8k03Ko=
+github.com/Luzifer/go_helpers/v2 v2.11.0 h1:IEVuDEAq2st1sjQNaaTX8TxZ2LsXP0qGeqb2uzYZCIo=
+github.com/Luzifer/go_helpers/v2 v2.11.0/go.mod h1:ZnWxPjyCdQ4rZP3kNiMSUW/7FigU1X9Rz8XopdJ5ZCU=
 github.com/Luzifer/korvike v0.8.1 h1:JlQarp8DAkS9VZzpONfvM0W1/H9A3YWF7Hx5Cn5gTcM=
 github.com/Luzifer/korvike/functions v0.6.1 h1:OGDaEciVzQh0NUMUxcEK1/vmHLIn4lmneoU/iuKc8YI=
 github.com/Luzifer/korvike/functions v0.6.1/go.mod h1:D7C4XN3++eXL3MH87sRPBDEDgL9ylYdEav3Wdp3HCfU=
@@ -58,6 +61,8 @@ github.com/hashicorp/vault/sdk v0.1.13 h1:mOEPeOhT7jl0J4AMl1E705+BcmeRs1VmKNb9F0
 github.com/hashicorp/vault/sdk v0.1.13/go.mod h1:B+hVj7TpuQY1Y/GPbCpffmgd+tSEwvhkWnjtSYCaS2M=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
+github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf/go.mod h1:hyb9oH7vZsitZCiBt0ZvifOrB+qc8PS5IiilCIb87rg=
+github.com/leekchan/gtf v0.0.0-20190214083521-5fba33c5b00b/go.mod h1:thNruaSwydMhkQ8dXzapABF9Sc1Tz08ZBcDdgott9RA=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=

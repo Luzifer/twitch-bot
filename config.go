@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+
+	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 type configFile struct {
@@ -31,9 +34,9 @@ type rule struct {
 
 	Cooldown *time.Duration `yaml:"cooldown"`
 
-	MatchChannel *string `yaml:"match_channel"`
-	MatchEvent   *string `yaml:"match_event"`
-	MatchMessage *string `yaml:"match_message"`
+	MatchChannels []string `yaml:"match_channels"`
+	MatchEvent    *string  `yaml:"match_event"`
+	MatchMessage  *string  `yaml:"match_message"`
 
 	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
 
@@ -49,7 +52,7 @@ func (r rule) MatcherID() string {
 	out := sha256.New()
 
 	for _, e := range []*string{
-		r.MatchChannel,
+		ptrStr(strings.Join(r.MatchChannels, "|")),
 		r.MatchEvent,
 		r.MatchMessage,
 	} {
@@ -73,8 +76,8 @@ func (r rule) Matches(m *irc.Message, event *string) bool {
 	)
 
 	// Check Channel match
-	if r.MatchChannel != nil {
-		if len(m.Params) == 0 || (m.Params[0] != *r.MatchChannel) {
+	if len(r.MatchChannels) > 0 {
+		if len(m.Params) == 0 || !str.StringInSlice(m.Params[0], r.MatchChannels) {
 			logger.Trace("Non-Match: Channel")
 			return false
 		}

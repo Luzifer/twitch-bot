@@ -3,6 +3,7 @@ module github.com/Luzifer/twitch-bot
 go 1.15
 
 require (
+	github.com/Luzifer/go_helpers/v2 v2.11.0
 	github.com/Luzifer/korvike/functions v0.6.1
 	github.com/Luzifer/rconfig/v2 v2.2.1
 	github.com/go-irc/irc v2.1.0+incompatible
