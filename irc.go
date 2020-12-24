@@ -1,11 +1,8 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +31,7 @@ type ircHandler struct {
 func newIRCHandler() (*ircHandler, error) {
 	h := new(ircHandler)
 
-	username, err := h.fetchTwitchUsername()
+	username, err := twitch.getAuthorizedUsername()
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching username")
 	}
@@ -112,42 +109,6 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 }
 
 func (i ircHandler) Run() error { return errors.Wrap(i.c.Run(), "running IRC client") }
-
-func (ircHandler) fetchTwitchUsername() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.twitch.tv/helix/users", nil)
-	if err != nil {
-		return "", errors.Wrap(err, "assemble user request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Client-Id", cfg.TwitchClient)
-	req.Header.Set("Authorization", "Bearer "+cfg.TwitchToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", errors.Wrap(err, "requesting user info")
-	}
-	defer resp.Body.Close()
-
-	var payload struct {
-		Data []struct {
-			ID    string `json:"id"`
-			Login string `json:"login"`
-		} `json:"data"`
-	}
-
-	if err = json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return "", errors.Wrap(err, "parse user info")
-	}
-
-	if l := len(payload.Data); l != 1 {
-		return "", errors.Errorf("unexpected number of users returned: %d", l)
-	}
-
-	return payload.Data[0].Login, nil
-}
 
 func (i ircHandler) handlePermit(m *irc.Message) {
 	badges := i.ParseBadgeLevels(m)
