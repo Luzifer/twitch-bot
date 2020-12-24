@@ -64,4 +64,6 @@ func init() {
 
 		return game, err
 	}
+
+	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
 }
