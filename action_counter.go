@@ -11,13 +11,18 @@ func init() {
 			return nil
 		}
 
+		counterName, err := formatMessage(*r.Counter, m, ruleDef, nil)
+		if err != nil {
+			return errors.Wrap(err, "preparing response")
+		}
+
 		var counterStep int64 = 1
 		if r.CounterStep != nil {
 			counterStep = *r.CounterStep
 		}
 
 		return errors.Wrap(
-			store.UpdateCounter(*r.Counter, counterStep, false),
+			store.UpdateCounter(counterName, counterStep, false),
 			"update counter",
 		)
 	})
