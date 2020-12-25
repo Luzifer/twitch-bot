@@ -64,7 +64,7 @@ func (r rule) MatcherID() string {
 	return fmt.Sprintf("sha256:%x", out.Sum(nil))
 }
 
-func (r rule) Matches(m *irc.Message, event *string) bool {
+func (r *rule) Matches(m *irc.Message, event *string) bool {
 	var err error
 
 	var (
