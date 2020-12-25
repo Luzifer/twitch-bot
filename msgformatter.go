@@ -12,9 +12,48 @@ import (
 	"github.com/pkg/errors"
 )
 
-var messageFunctions = korvike.GetFunctionMap()
+func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]interface{}) (string, error) {
+	// Create anonymous functions in current context in order to access function variables
+	messageFunctions := korvike.GetFunctionMap()
+	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
 
-func formatMessage(tplString string, m *irc.Message, fields map[string]interface{}) (string, error) {
+	messageFunctions["getArg"] = func(arg int) (string, error) {
+		msgParts := strings.Split(m.Trailing(), " ")
+		if len(msgParts) <= arg {
+			return "", errors.New("argument not found")
+		}
+
+		return msgParts[arg], nil
+	}
+
+	messageFunctions["getCounterValue"] = func(name string, _ ...string) int64 {
+		return store.GetCounterValue(name)
+	}
+
+	messageFunctions["getTag"] = func(tag string) string {
+		s, _ := m.GetTag(tag)
+		return s
+	}
+
+	messageFunctions["group"] = func(idx int) (string, error) {
+		fields := r.matchMessage.FindStringSubmatch(m.Trailing())
+		if len(fields) <= idx {
+			return "", errors.New("group not found")
+		}
+
+		return fields[idx], nil
+	}
+
+	messageFunctions["recentGame"] = func(username string, v ...string) (string, error) {
+		game, _, err := twitch.getRecentStreamInfo(username)
+		if err != nil && len(v) > 0 {
+			return v[0], nil
+		}
+
+		return game, err
+	}
+
+	// Parse and execute template
 	tpl, err := template.
 		New(tplString).
 		Funcs(messageFunctions).
@@ -35,35 +74,4 @@ func formatMessage(tplString string, m *irc.Message, fields map[string]interface
 	err = tpl.Execute(buf, fields)
 
 	return buf.String(), errors.Wrap(err, "execute template")
-}
-
-func init() {
-	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
-
-	messageFunctions["getArg"] = func(m *irc.Message, params ...int) (string, error) {
-		msgParts := strings.Split(m.Trailing(), " ")
-		if len(msgParts) < params[0]+1 {
-			return "", errors.New("argument not found")
-		}
-
-		return msgParts[params[0]], nil
-	}
-
-	messageFunctions["getCounterValue"] = func(name string, _ ...string) int64 {
-		return store.GetCounterValue(name)
-	}
-
-	messageFunctions["getTag"] = func(m *irc.Message, params ...string) string {
-		s, _ := m.GetTag(params[0])
-		return s
-	}
-
-	messageFunctions["recentGame"] = func(username string, v ...string) (string, error) {
-		game, _, err := twitch.getRecentStreamInfo(username)
-		if err != nil && len(v) > 0 {
-			return v[0], nil
-		}
-
-		return game, err
-	}
 }

@@ -6,12 +6,12 @@ import (
 )
 
 func init() {
-	registerAction(func(c *irc.Client, m *irc.Message, r *ruleAction) error {
+	registerAction(func(c *irc.Client, m *irc.Message, ruleDef *rule, r *ruleAction) error {
 		if r.Respond == nil {
 			return nil
 		}
 
-		msg, err := formatMessage(*r.Respond, m, nil)
+		msg, err := formatMessage(*r.Respond, m, ruleDef, nil)
 		if err != nil {
 			return errors.Wrap(err, "preparing response")
 		}
