@@ -15,9 +15,8 @@ import (
 func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]interface{}) (string, error) {
 	// Create anonymous functions in current context in order to access function variables
 	messageFunctions := korvike.GetFunctionMap()
-	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
 
-	messageFunctions["getArg"] = func(arg int) (string, error) {
+	messageFunctions["arg"] = func(arg int) (string, error) {
 		msgParts := strings.Split(m.Trailing(), " ")
 		if len(msgParts) <= arg {
 			return "", errors.New("argument not found")
@@ -26,14 +25,11 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 		return msgParts[arg], nil
 	}
 
-	messageFunctions["getCounterValue"] = func(name string, _ ...string) int64 {
+	messageFunctions["counterValue"] = func(name string, _ ...string) int64 {
 		return store.GetCounterValue(name)
 	}
 
-	messageFunctions["getTag"] = func(tag string) string {
-		s, _ := m.GetTag(tag)
-		return s
-	}
+	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
 
 	messageFunctions["group"] = func(idx int) (string, error) {
 		fields := r.matchMessage.FindStringSubmatch(m.Trailing())
@@ -51,6 +47,11 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 		}
 
 		return game, err
+	}
+
+	messageFunctions["tag"] = func(tag string) string {
+		s, _ := m.GetTag(tag)
+		return s
 	}
 
 	// Parse and execute template
