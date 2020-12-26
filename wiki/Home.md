@@ -68,6 +68,7 @@ There are certain variables available in the strings with templating enabled:
 Additionally there are some functions available in the templates:
 
 - `arg <idx>` - Takes the message sent to the channel, splits by space and returns the Nth element
+- `channelCounter <counter name>` - Wraps the counter name into a channel specific counter name including the channel name
 - `counterValue <counter name>` - Returns the current value of the counter which identifier was supplied
 - `fixUsername <username>` - Ensures the username no longer contains the `@` prefix
 - `group <idx>` - Gets matching group specified by index from `match_message` regular expression
@@ -80,8 +81,8 @@ Additionally there are some functions available in the templates:
 
 ```yaml
   - actions:
-    - counter: '{{ recentGame "mychannel" }}'
-    - respond: 'I already died {{ counterValue (recentGame "mychannel") }} times in {{ recentGame "mychannel" }}'
+    - counter: '{{ channelCounter (recentGame .channel) }}'
+    - respond: 'I already died {{ counterValue (channelCounter (recentGame .channel)) }} times in {{ recentGame .channel }}'
     cooldown: 60s
     enable_on: [broadcaster, moderator]
     match_channels: ['#mychannel']

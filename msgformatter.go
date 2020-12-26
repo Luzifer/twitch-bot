@@ -25,6 +25,15 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 		return msgParts[arg], nil
 	}
 
+	messageFunctions["channelCounter"] = func(name string) (string, error) {
+		channel, ok := fields["channel"].(string)
+		if !ok {
+			return "", errors.New("channel not available")
+		}
+
+		return strings.Join([]string{channel, name}, ":"), nil
+	}
+
 	messageFunctions["counterValue"] = func(name string, _ ...string) int64 {
 		return store.GetCounterValue(name)
 	}
@@ -41,7 +50,7 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 	}
 
 	messageFunctions["recentGame"] = func(username string, v ...string) (string, error) {
-		game, _, err := twitch.getRecentStreamInfo(username)
+		game, _, err := twitch.getRecentStreamInfo(strings.TrimLeft(username, "#"))
 		if err != nil && len(v) > 0 {
 			return v[0], nil
 		}
