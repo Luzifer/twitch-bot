@@ -71,6 +71,10 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 	fields["permitTimeout"] = int64(*&config.PermitTimeout / time.Second)
 	fields["username"] = m.User
 
+	if m.Command == "PRIVMSG" && len(m.Params) > 0 {
+		fields["channel"] = m.Params[0]
+	}
+
 	buf := new(bytes.Buffer)
 	err = tpl.Execute(buf, fields)
 

@@ -60,6 +60,7 @@ rules: # See below for examples
 
 There are certain variables available in the strings with templating enabled:
 
+- `channel` - Channel the message was sent to, only available for regular messages not events
 - `msg` - The message object, used in functions, should not be sent to chat
 - `permitTimeout` - Value of `permit_timeout` in seconds
 - `username` - The username of the message author
