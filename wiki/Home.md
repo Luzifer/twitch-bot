@@ -82,7 +82,9 @@ Additionally there are some functions available in the templates:
 ```yaml
   - actions:
     - counter: '{{ channelCounter (recentGame .channel) }}'
-    - respond: 'I already died {{ counterValue (channelCounter (recentGame .channel)) }} times in {{ recentGame .channel }}'
+    - respond: >-
+        I already died {{ counterValue (channelCounter (recentGame .channel)) }}
+        times in {{ recentGame .channel }}'
     cooldown: 60s
     enable_on: [broadcaster, moderator]
     match_channels: ['#mychannel']
