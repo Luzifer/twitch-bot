@@ -169,11 +169,12 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 }
 
 type ruleAction struct {
-	Ban         *string        `yaml:"ban"`
-	CounterStep *int64         `yaml:"counter_step"`
-	Counter     *string        `yaml:"counter"`
-	Respond     *string        `yaml:"respond"`
-	Timeout     *time.Duration `yaml:"timeout"`
+	Ban           *string        `yaml:"ban"`
+	CounterStep   *int64         `yaml:"counter_step"`
+	Counter       *string        `yaml:"counter"`
+	DeleteMessage *bool          `yaml:"delete_message"`
+	Respond       *string        `yaml:"respond"`
+	Timeout       *time.Duration `yaml:"timeout"`
 }
 
 func loadConfig(filename string) error {

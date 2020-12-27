@@ -23,6 +23,9 @@ rules: # See below for examples
     - counter: "counterid" # String to identify the counter, applies templating
       counter_step: 1      # Integer, can be negative or positive, default: +1
 
+    # Issue a delete on the message caught
+    - delete_message: true # Bool, set to true to delete
+
     # Send responding message to the channel the original message was received in
     - respond: 'Hello chatter' # String, applies templating
 
