@@ -194,7 +194,7 @@ func (ircHandler) ParseBadgeLevels(m *irc.Message) badgeCollection {
 	out := badgeCollection{}
 
 	badgeString, ok := m.GetTag("badges")
-	if !ok {
+	if !ok || len(badgeString) == 0 {
 		return out
 	}
 
