@@ -47,6 +47,9 @@ rules: # See below for examples
     # Require the chat message to be sent in this channel
     match_channels: ['#mychannel']
 
+    # Require the chat message to be sent by one of these users
+    match_users: ['mychannel'] # List of users, all names MUST be all lower-case
+
     # Execute actions when this event occurs
     match_event: 'permit'
 

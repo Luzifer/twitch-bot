@@ -37,6 +37,7 @@ type rule struct {
 	MatchChannels []string `yaml:"match_channels"`
 	MatchEvent    *string  `yaml:"match_event"`
 	MatchMessage  *string  `yaml:"match_message"`
+	MatchUsers    []string `yaml:"match_users"`
 
 	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
 
@@ -79,6 +80,13 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	if len(r.MatchChannels) > 0 {
 		if len(m.Params) == 0 || !str.StringInSlice(m.Params[0], r.MatchChannels) {
 			logger.Trace("Non-Match: Channel")
+			return false
+		}
+	}
+
+	if len(r.MatchUsers) > 0 {
+		if !str.StringInSlice(strings.ToLower(m.User), r.MatchUsers) {
+			logger.Trace("Non-Match: Users")
 			return false
 		}
 	}
