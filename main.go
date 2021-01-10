@@ -14,12 +14,13 @@ import (
 
 var (
 	cfg = struct {
-		Config         string `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
-		LogLevel       string `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		StorageFile    string `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient   string `flag:"twitch-client" default:"" description:"Client ID to act as" validate:"nonzero"`
-		TwitchToken    string `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
-		VersionAndExit bool   `flag:"version" default:"false" description:"Prints current version and exits"`
+		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
+		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as" validate:"nonzero"`
+		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
+		VersionAndExit bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
 	config     *configFile
