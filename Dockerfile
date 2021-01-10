@@ -18,6 +18,7 @@ ENV CONFIG=/data/config.yaml \
 
 RUN set -ex \
  && apk --no-cache add \
+      bash \
       ca-certificates \
       curl \
       jq
