@@ -79,7 +79,8 @@ Additionally there are some functions available in the templates:
 - `arg <idx>` - Takes the message sent to the channel, splits by space and returns the Nth element
 - `channelCounter <counter name>` - Wraps the counter name into a channel specific counter name including the channel name
 - `counterValue <counter name>` - Returns the current value of the counter which identifier was supplied
-- `fixUsername <username>` - Ensures the username no longer contains the `@` prefix
+- `fixUsername <username>` - Ensures the username no longer contains the `@` or `#` prefix
+- `followDate <from> <to>` - Looks up when `from` followed `to`
 - `group <idx>` - Gets matching group specified by index from `match_message` regular expression
 - `recentGame <username> [fallback]` - Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
 - `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified
@@ -158,6 +159,15 @@ The example was dumped using this action:
     disable_on_permit: true
     match_channels: ['#mychannel']
     match_message: '(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]'
+```
+
+### Post follow date for an user
+
+```
+  - actions:
+    - respond: 'You followed on {{ ( followDate .username ( fixUsername .channel ) ).Format "2006-01-02" }}'
+    match_channels: ['#mychannel']
+    match_message: '^!followage'
 ```
 
 ### Send a notification on successful permit

@@ -19,6 +19,7 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 	// Generic functions
 	messageFunctions["toLower"] = strings.ToLower
 	messageFunctions["toUpper"] = strings.ToUpper
+	messageFunctions["followDate"] = twitch.GetFollowDate
 
 	// Message specific functions
 	messageFunctions["arg"] = func(arg int) (string, error) {
@@ -43,7 +44,7 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 		return store.GetCounterValue(name)
 	}
 
-	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@") }
+	messageFunctions["fixUsername"] = func(username string) string { return strings.TrimLeft(username, "@#") }
 
 	messageFunctions["group"] = func(idx int) (string, error) {
 		fields := r.matchMessage.FindStringSubmatch(m.Trailing())
