@@ -163,7 +163,7 @@ The example was dumped using this action:
 
 ### Post follow date for an user
 
-```
+```yaml
   - actions:
     - respond: 'You followed on {{ ( followDate .username ( fixUsername .channel ) ).Format "2006-01-02" }}'
     match_channels: ['#mychannel']
