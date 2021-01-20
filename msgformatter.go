@@ -16,6 +16,11 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 	// Create anonymous functions in current context in order to access function variables
 	messageFunctions := korvike.GetFunctionMap()
 
+	// Generic functions
+	messageFunctions["toLower"] = strings.ToLower
+	messageFunctions["toUpper"] = strings.ToUpper
+
+	// Message specific functions
 	messageFunctions["arg"] = func(arg int) (string, error) {
 		msgParts := strings.Split(m.Trailing(), " ")
 		if len(msgParts) <= arg {
