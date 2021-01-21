@@ -13,7 +13,10 @@ func init() {
 
 		msg, err := formatMessage(*r.Respond, m, ruleDef, nil)
 		if err != nil {
-			return errors.Wrap(err, "preparing response")
+			if r.RespondFallback == nil {
+				return errors.Wrap(err, "preparing response")
+			}
+			msg = *r.RespondFallback
 		}
 
 		return errors.Wrap(

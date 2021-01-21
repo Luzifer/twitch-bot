@@ -177,13 +177,14 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 }
 
 type ruleAction struct {
-	Ban           *string        `json:"ban" yaml:"ban"`
-	Command       []string       `json:"command" yaml:"command"`
-	CounterStep   *int64         `json:"counter_step" yaml:"counter_step"`
-	Counter       *string        `json:"counter" yaml:"counter"`
-	DeleteMessage *bool          `json:"delete_message" yaml:"delete_message"`
-	Respond       *string        `json:"respond" yaml:"respond"`
-	Timeout       *time.Duration `json:"timeout" yaml:"timeout"`
+	Ban             *string        `json:"ban" yaml:"ban"`
+	Command         []string       `json:"command" yaml:"command"`
+	CounterStep     *int64         `json:"counter_step" yaml:"counter_step"`
+	Counter         *string        `json:"counter" yaml:"counter"`
+	DeleteMessage   *bool          `json:"delete_message" yaml:"delete_message"`
+	Respond         *string        `json:"respond" yaml:"respond"`
+	RespondFallback *string        `json:"respond_fallback" yaml:"respond_fallback"`
+	Timeout         *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
 func loadConfig(filename string) error {
