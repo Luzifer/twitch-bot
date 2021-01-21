@@ -32,7 +32,7 @@ rules: # See below for examples
     # Send responding message to the channel the original message was received in
     - respond: 'Hello chatter'    # String, applies templating
       respond_fallback: 'Oh noes' # String, text to send if the template function causes
-                                  # an error, does NOT support templating (default: unset)
+                                  # an error, applies templating (default: unset)
 
     # Issue a timeout on the user who wrote the chat-line
     - timeout: 1s # Duration value: 1s / 1m / 1h

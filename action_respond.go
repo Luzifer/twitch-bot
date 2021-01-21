@@ -16,7 +16,9 @@ func init() {
 			if r.RespondFallback == nil {
 				return errors.Wrap(err, "preparing response")
 			}
-			msg = *r.RespondFallback
+			if msg, err = formatMessage(*r.RespondFallback, m, ruleDef, nil); err != nil {
+				return errors.Wrap(err, "preparing response fallback")
+			}
 		}
 
 		return errors.Wrap(
