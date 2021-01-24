@@ -44,6 +44,6 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string) {
 		}
 
 		// Lock command
-		timerStore.Add(r.MatcherID())
+		timerStore.AddCooldown(r.MatcherID())
 	}
 }

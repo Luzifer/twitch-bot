@@ -167,7 +167,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	}
 
 	// Check whether rule is in cooldown
-	if r.Cooldown != nil && timerStore.Has(r.MatcherID(), *r.Cooldown) {
+	if r.Cooldown != nil && timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
 		logger.Trace("Non-Match: On cooldown")
 		return false
 	}
