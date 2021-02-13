@@ -79,6 +79,12 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		})
 		i.ExecuteJoins(config.Channels)
 
+	case "JOIN":
+		// JOIN (Default IRC Command)
+		// User enters the channel, might be triggered multiple times
+		// should not be used to greet users
+		i.handleJoin(m)
+
 	case "NOTICE":
 		// NOTICE (Twitch Commands)
 		// General notices from the server.
@@ -109,6 +115,10 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 }
 
 func (i ircHandler) Run() error { return errors.Wrap(i.c.Run(), "running IRC client") }
+
+func (i ircHandler) handleJoin(m *irc.Message) {
+	go handleMessage(i.c, m, eventTypeJoin)
+}
 
 func (i ircHandler) handlePermit(m *irc.Message) {
 	badges := i.ParseBadgeLevels(m)
