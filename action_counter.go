@@ -16,6 +16,13 @@ func init() {
 			return errors.Wrap(err, "preparing response")
 		}
 
+		if r.CounterSet != nil {
+			return errors.Wrap(
+				store.UpdateCounter(counterName, *r.CounterSet, true),
+				"set counter",
+			)
+		}
+
 		var counterStep int64 = 1
 		if r.CounterStep != nil {
 			counterStep = *r.CounterStep

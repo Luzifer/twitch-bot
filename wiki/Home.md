@@ -24,6 +24,7 @@ rules: # See below for examples
 
     # Modify an internal counter value (does NOT send a chat line)
     - counter: "counterid" # String to identify the counter, applies templating
+      counter_set: 25      # Integer, set counter to value (counter_step is ignored if set)
       counter_step: 1      # Integer, can be negative or positive, default: +1
 
     # Issue a delete on the message caught
