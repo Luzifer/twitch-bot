@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -17,8 +19,18 @@ func init() {
 		}
 
 		if r.CounterSet != nil {
+			parseValue, err := formatMessage(*r.CounterSet, m, ruleDef, nil)
+			if err != nil {
+				return errors.Wrap(err, "execute counter value template")
+			}
+
+			counterValue, err := strconv.ParseInt(parseValue, 10, 64)
+			if err != nil {
+				return errors.Wrap(err, "parse counter value")
+			}
+
 			return errors.Wrap(
-				store.UpdateCounter(counterName, *r.CounterSet, true),
+				store.UpdateCounter(counterName, counterValue, true),
 				"set counter",
 			)
 		}

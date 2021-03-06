@@ -179,7 +179,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 type ruleAction struct {
 	Ban             *string        `json:"ban" yaml:"ban"`
 	Command         []string       `json:"command" yaml:"command"`
-	CounterSet      *int64         `json:"counter_set" yaml:"counter_set"`
+	CounterSet      *string        `json:"counter_set" yaml:"counter_set"`
 	CounterStep     *int64         `json:"counter_step" yaml:"counter_step"`
 	Counter         *string        `json:"counter" yaml:"counter"`
 	DeleteMessage   *bool          `json:"delete_message" yaml:"delete_message"`
