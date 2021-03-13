@@ -17,6 +17,16 @@ func init() {
 			return nil
 		}
 
+		var command []string
+		for _, arg := range r.Command {
+			tmp, err := formatMessage(arg, m, ruleDef, nil)
+			if err != nil {
+				return errors.Wrap(err, "execute command argument template")
+			}
+
+			command = append(command, tmp)
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.CommandTimeout)
 		defer cancel()
 
@@ -35,7 +45,7 @@ func init() {
 			return errors.Wrap(err, "encoding script input")
 		}
 
-		cmd := exec.CommandContext(ctx, r.Command[0], r.Command[1:]...)
+		cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 		cmd.Env = os.Environ()
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = stdin
