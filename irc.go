@@ -225,5 +225,13 @@ func (ircHandler) ParseBadgeLevels(m *irc.Message) badgeCollection {
 		out.Add(badgeParts[0], level)
 	}
 
+	// If there is a founders badge but no subscribers badge
+	// add a level-0 subscribers badge to prevent the bot to
+	// cause trouble on founders when subscribers are allowed
+	// to do something
+	if out.Has(badgeFounder) && !out.Has(badgeSubscriber) {
+		out.Add(badgeSubscriber, out.Get(badgeFounder))
+	}
+
 	return out
 }
