@@ -42,6 +42,9 @@ rules: # See below for examples
     # Add a cooldown to the command (not to trigger counters twice, ...)
     cooldown: 1s # Duration value: 1s / 1m / 1h
 
+    # Disable actions when the matched channel has no active stream
+    disable_on_offline: false
+
     # Disable actions on this rule if the user has an active permit
     disable_on_permit: false
 

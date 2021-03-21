@@ -73,6 +73,31 @@ func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
+func (t twitchClient) HasLiveStream(username string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
+	defer cancel()
+
+	var payload struct {
+		Data []struct {
+			ID        string `json:"id"`
+			UserLogin string `json:"user_login"`
+			Type      string `json:"type"`
+		} `json:"data"`
+	}
+
+	if err := t.request(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", username),
+		nil,
+		&payload,
+	); err != nil {
+		return false, errors.Wrap(err, "request stream info")
+	}
+
+	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
+}
+
 func (t twitchClient) getIDForUsername(username string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()

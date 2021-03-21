@@ -41,9 +41,10 @@ type rule struct {
 
 	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
 
-	DisableOnPermit bool     `yaml:"disable_on_permit"`
-	DisableOn       []string `yaml:"disable_on"`
-	EnableOn        []string `yaml:"enable_on"`
+	DisableOnOffline bool     `yaml:"disable_on_offline"`
+	DisableOnPermit  bool     `yaml:"disable_on_permit"`
+	DisableOn        []string `yaml:"disable_on"`
+	EnableOn         []string `yaml:"enable_on"`
 
 	matchMessage           *regexp.Regexp
 	disableOnMatchMessages []*regexp.Regexp
@@ -170,6 +171,17 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	if r.Cooldown != nil && timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
 		logger.Trace("Non-Match: On cooldown")
 		return false
+	}
+
+	if r.DisableOnOffline {
+		streamLive, err := twitch.HasLiveStream(m.Params[0])
+		if err != nil {
+			logger.WithError(err).Error("Unable to determine live status")
+			return false
+		}
+		if !streamLive {
+			return false
+		}
 	}
 
 	// Nothing objected: Matches!
