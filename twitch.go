@@ -101,7 +101,7 @@ func (t twitchClient) getIDForUsername(username string) (string, error) {
 	return payload.Data[0].ID, nil
 }
 
-func (t twitchClient) getRecentStreamInfo(username string) (string, string, error) {
+func (t twitchClient) GetRecentStreamInfo(username string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 

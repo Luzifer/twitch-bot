@@ -56,7 +56,7 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 	}
 
 	messageFunctions["recentGame"] = func(username string, v ...string) (string, error) {
-		game, _, err := twitch.getRecentStreamInfo(strings.TrimLeft(username, "#"))
+		game, _, err := twitch.GetRecentStreamInfo(strings.TrimLeft(username, "#"))
 		if err != nil && len(v) > 0 {
 			return v[0], nil
 		}
