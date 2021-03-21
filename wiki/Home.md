@@ -42,6 +42,9 @@ rules: # See below for examples
     # Add a cooldown to the command (not to trigger counters twice, ...)
     cooldown: 1s # Duration value: 1s / 1m / 1h
 
+    # Do not apply cooldown for these badges
+    skip_cooldown_for: [broadcaster, moderator]
+
     # Disable actions when the matched channel has no active stream
     disable_on_offline: false
 

@@ -32,7 +32,8 @@ func newConfigFile() configFile {
 type rule struct {
 	Actions []*ruleAction `yaml:"actions"`
 
-	Cooldown *time.Duration `yaml:"cooldown"`
+	Cooldown        *time.Duration `yaml:"cooldown"`
+	SkipCooldownFor []string       `yaml:"skip_cooldown_for"`
 
 	MatchChannels []string `yaml:"match_channels"`
 	MatchEvent    *string  `yaml:"match_event"`
@@ -169,8 +170,16 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 
 	// Check whether rule is in cooldown
 	if r.Cooldown != nil && timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
-		logger.Trace("Non-Match: On cooldown")
-		return false
+		var userHasSkipBadge bool
+		for _, b := range r.SkipCooldownFor {
+			if badges.Has(b) {
+				userHasSkipBadge = true
+			}
+		}
+		if !userHasSkipBadge {
+			logger.Trace("Non-Match: On cooldown")
+			return false
+		}
 	}
 
 	if r.DisableOnOffline {
@@ -180,6 +189,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 			return false
 		}
 		if !streamLive {
+			logger.Trace("Non-Match: Stream offline")
 			return false
 		}
 	}
