@@ -14,7 +14,10 @@ import (
 
 func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]interface{}) (string, error) {
 	// Create anonymous functions in current context in order to access function variables
-	messageFunctions := korvike.GetFunctionMap()
+	messageFunctions := make(template.FuncMap)
+	for n, f := range korvike.GetFunctionMap() {
+		messageFunctions[n] = f
+	}
 
 	// Generic functions
 	messageFunctions["toLower"] = strings.ToLower
