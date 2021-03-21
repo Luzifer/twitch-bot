@@ -183,7 +183,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	}
 
 	if r.DisableOnOffline {
-		streamLive, err := twitch.HasLiveStream(m.Params[0])
+		streamLive, err := twitch.HasLiveStream(strings.TrimLeft(m.Params[0], "#"))
 		if err != nil {
 			logger.WithError(err).Error("Unable to determine live status")
 			return false
