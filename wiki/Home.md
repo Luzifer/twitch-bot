@@ -12,6 +12,18 @@ permit_allow_moderator: true
 # How long to permit on !permit command
 permit_timeout: 60s
 
+auto_messages:
+  - channel: 'mychannel'          # String, channel to send message to
+    message: 'Automated message'  # String, message to send
+    use_action: true              # Bool, optional, send message as action (`/me <message>`)
+
+    # Even though all of these are optional, at least one MUST be specified for the entry to be valid
+    cron: '*/10 * * * *'  # String, optional, cron syntax when to send the message
+    message_interval: 3   # Integer, optional, how many non-bot-messages must be sent in between
+    time_interval: 900s   # Duration, optional, how long to wait before repeating the message
+
+    only_on_live: true    # Boolean, optional, only send the message when channel is live
+
 rules: # See below for examples
 
   - actions: # Array of actions to take when this rule matches
