@@ -167,6 +167,15 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		"trailing": m.Trailing(),
 	}).Trace("Received privmsg")
 
+	if m.User != i.user {
+		// Count messages from other users than self
+		configLock.RLock()
+		for _, am := range config.AutoMessages {
+			am.CountMessage(m.Params[0])
+		}
+		configLock.RUnlock()
+	}
+
 	if strings.HasPrefix(m.Trailing(), "!permit") {
 		i.handlePermit(m)
 		return

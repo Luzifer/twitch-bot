@@ -17,10 +17,11 @@ import (
 )
 
 type configFile struct {
-	Channels             []string      `yaml:"channels"`
-	PermitAllowModerator bool          `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration `yaml:"permit_timeout"`
-	Rules                []*rule       `yaml:"rules"`
+	AutoMessages         []*autoMessage `yaml:"auto_messages"`
+	Channels             []string       `yaml:"channels"`
+	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
+	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
+	Rules                []*rule        `yaml:"rules"`
 }
 
 func newConfigFile() configFile {
@@ -234,6 +235,35 @@ func loadConfig(filename string) error {
 
 	if len(tmpConfig.Rules) == 0 {
 		log.Warn("Loaded config with empty ruleset")
+	}
+
+	for idx, nam := range tmpConfig.AutoMessages {
+		// By default assume last message to be sent now
+		// in order not to spam messages at startup
+		nam.lastMessageSent = time.Now()
+
+		if !nam.IsValid() {
+			log.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
+		}
+
+		if config == nil {
+			// Initial config load, do not update timers
+			continue
+		}
+
+		for _, oam := range config.AutoMessages {
+			if nam.ID() != oam.ID() {
+				continue
+			}
+
+			// We disable the old message as executing it would
+			// mess up the constraints of the new message
+			oam.lock.Lock()
+			oam.disabled = true
+
+			nam.lastMessageSent = oam.lastMessageSent
+			nam.linesSinceLastMessage = oam.linesSinceLastMessage
+		}
 	}
 
 	configLock.Lock()
