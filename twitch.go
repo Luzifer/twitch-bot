@@ -9,11 +9,20 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
-var twitch = twitchClient{}
+var twitch = newTwitchClient()
 
-type twitchClient struct{}
+type twitchClient struct {
+	apiCache twitchAPICache
+}
+
+func newTwitchClient() *twitchClient {
+	return &twitchClient{
+		apiCache: make(twitchAPICache),
+	}
+}
 
 func (t twitchClient) getAuthorizedUsername() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
@@ -38,6 +47,11 @@ func (t twitchClient) getAuthorizedUsername() (string, error) {
 }
 
 func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
+	cacheKey := []string{"followDate", from, to}
+	if d := t.apiCache.Get(cacheKey); d != nil {
+		return d.(time.Time), nil
+	}
+
 	fromID, err := t.getIDForUsername(from)
 	if err != nil {
 		return time.Time{}, errors.Wrap(err, "getting id for 'from' user")
@@ -70,10 +84,18 @@ func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 		return time.Time{}, errors.Errorf("unexpected number of records returned: %d", l)
 	}
 
+	// Follow date will not change that often, cache for a long time
+	t.apiCache.Set(cacheKey, 24*time.Hour, payload.Data[0].FollowedAt)
+
 	return payload.Data[0].FollowedAt, nil
 }
 
 func (t twitchClient) HasLiveStream(username string) (bool, error) {
+	cacheKey := []string{"hasLiveStream", username}
+	if d := t.apiCache.Get(cacheKey); d != nil {
+		return d.(bool), nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
@@ -95,10 +117,18 @@ func (t twitchClient) HasLiveStream(username string) (bool, error) {
 		return false, errors.Wrap(err, "request stream info")
 	}
 
+	// Live status might change recently, cache for one minute
+	t.apiCache.Set(cacheKey, time.Minute, len(payload.Data) == 1 && payload.Data[0].Type == "live")
+
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
 }
 
 func (t twitchClient) getIDForUsername(username string) (string, error) {
+	cacheKey := []string{"idForUsername", username}
+	if d := t.apiCache.Get(cacheKey); d != nil {
+		return d.(string), nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
@@ -123,10 +153,18 @@ func (t twitchClient) getIDForUsername(username string) (string, error) {
 		return "", errors.Errorf("unexpected number of users returned: %d", l)
 	}
 
+	// The ID for an username will not change (often), cache for a long time
+	t.apiCache.Set(cacheKey, 24*time.Hour, payload.Data[0].ID)
+
 	return payload.Data[0].ID, nil
 }
 
 func (t twitchClient) GetRecentStreamInfo(username string) (string, string, error) {
+	cacheKey := []string{"recentStreamInfo", username}
+	if d := t.apiCache.Get(cacheKey); d != nil {
+		return d.([2]string)[0], d.([2]string)[1], nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
@@ -158,10 +196,18 @@ func (t twitchClient) GetRecentStreamInfo(username string) (string, string, erro
 		return "", "", errors.Errorf("unexpected number of users returned: %d", l)
 	}
 
+	// Stream-info can be changed at any moment, cache for a short period of time
+	t.apiCache.Set(cacheKey, time.Minute, [2]string{payload.Data[0].GameName, payload.Data[0].Title})
+
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
 func (twitchClient) request(ctx context.Context, method, url string, body io.Reader, out interface{}) error {
+	log.WithFields(log.Fields{
+		"method": method,
+		"url":    url,
+	}).Trace("Execute Twitch API request")
+
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return errors.Wrap(err, "assemble request")
