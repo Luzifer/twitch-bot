@@ -33,12 +33,12 @@ func newConfigFile() configFile {
 }
 
 type autoMessage struct {
-	Channel   string
-	Message   string
-	UseAction bool
+	Channel   string `yaml:"channel"`
+	Message   string `yaml:"message"`
+	UseAction bool   `yaml:"use_action"`
 
-	MessageInterval int64
-	TimeInterval    time.Duration
+	MessageInterval int64         `yaml:"message_interval"`
+	TimeInterval    time.Duration `yaml:"time_interval"`
 
 	disabled              bool
 	lastMessageSent       time.Time
