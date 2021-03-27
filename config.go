@@ -44,7 +44,7 @@ type autoMessage struct {
 	lastMessageSent       time.Time
 	linesSinceLastMessage int64
 
-	lock *sync.RWMutex
+	lock sync.RWMutex
 }
 
 func (a *autoMessage) CanSend() bool {
@@ -75,7 +75,7 @@ func (a *autoMessage) CountMessage(channel string) {
 	a.linesSinceLastMessage++
 }
 
-func (a autoMessage) ID() string {
+func (a *autoMessage) ID() string {
 	sum := sha1.New()
 
 	fmt.Fprintf(sum, "channel:%q", a.Channel)
@@ -321,6 +321,11 @@ func loadConfig(filename string) error {
 		// By default assume last message to be sent now
 		// in order not to spam messages at startup
 		nam.lastMessageSent = time.Now()
+
+		if config == nil {
+			// Initial config load, do not update timers
+			continue
+		}
 
 		for _, oam := range config.AutoMessages {
 			if nam.ID() != oam.ID() {
