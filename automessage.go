@@ -64,6 +64,9 @@ func (a *autoMessage) CanSend() bool {
 			return false
 		}
 		if !streamLive {
+			// Timer is only to be triggered during stream being live,
+			// reset the timer in order not to spam all messages on stream-start
+			a.lastMessageSent = time.Now()
 			return false
 		}
 	}
