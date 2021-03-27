@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/sha1"
 	"crypto/sha256"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-irc/irc"
@@ -17,16 +19,95 @@ import (
 )
 
 type configFile struct {
-	Channels             []string      `yaml:"channels"`
-	PermitAllowModerator bool          `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration `yaml:"permit_timeout"`
-	Rules                []*rule       `yaml:"rules"`
+	AutoMessages         []*autoMessage `yaml:"auto_messages"`
+	Channels             []string       `yaml:"channels"`
+	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
+	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
+	Rules                []*rule        `yaml:"rules"`
 }
 
 func newConfigFile() configFile {
 	return configFile{
 		PermitTimeout: time.Minute,
 	}
+}
+
+type autoMessage struct {
+	Channel   string
+	Message   string
+	UseAction bool
+
+	MessageInterval int64
+	TimeInterval    time.Duration
+
+	disabled              bool
+	lastMessageSent       time.Time
+	linesSinceLastMessage int64
+
+	lock *sync.RWMutex
+}
+
+func (a *autoMessage) CanSend() bool {
+	if a.disabled {
+		return false
+	}
+
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+
+	if a.MessageInterval == 0 && a.TimeInterval == 0 {
+		return false
+	}
+
+	return 1 == 1 &&
+		a.linesSinceLastMessage >= a.MessageInterval &&
+		a.lastMessageSent.Add(a.TimeInterval).Before(time.Now())
+}
+
+func (a *autoMessage) CountMessage(channel string) {
+	if strings.TrimLeft(channel, "#") != strings.TrimLeft(a.Channel, "#") {
+		return
+	}
+
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	a.linesSinceLastMessage++
+}
+
+func (a autoMessage) ID() string {
+	sum := sha1.New()
+
+	fmt.Fprintf(sum, "channel:%q", a.Channel)
+	fmt.Fprintf(sum, "message:%q", a.Message)
+	fmt.Fprintf(sum, "action:%v", a.UseAction)
+
+	return fmt.Sprintf("sha1:%x", sum.Sum(nil))
+}
+
+func (a *autoMessage) Send(c *irc.Client) error {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	msg := a.Message
+	if a.UseAction {
+		msg = fmt.Sprintf("\001ACTION %s\001", msg)
+	}
+
+	if err := c.WriteMessage(&irc.Message{
+		Command: "PRIVMSG",
+		Params: []string{
+			fmt.Sprintf("#%s", strings.TrimLeft(a.Channel, "#")),
+			msg,
+		},
+	}); err != nil {
+		return errors.Wrap(err, "sending auto-message")
+	}
+
+	a.lastMessageSent = time.Now()
+	a.linesSinceLastMessage = 0
+
+	return nil
 }
 
 type rule struct {
@@ -234,6 +315,26 @@ func loadConfig(filename string) error {
 
 	if len(tmpConfig.Rules) == 0 {
 		log.Warn("Loaded config with empty ruleset")
+	}
+
+	for _, nam := range tmpConfig.AutoMessages {
+		// By default assume last message to be sent now
+		// in order not to spam messages at startup
+		nam.lastMessageSent = time.Now()
+
+		for _, oam := range config.AutoMessages {
+			if nam.ID() != oam.ID() {
+				continue
+			}
+
+			// We disable the old message as executing it would
+			// mess up the constraints of the new message
+			oam.lock.Lock()
+			oam.disabled = true
+
+			nam.lastMessageSent = oam.lastMessageSent
+			nam.linesSinceLastMessage = oam.linesSinceLastMessage
+		}
 	}
 
 	configLock.Lock()
