@@ -42,6 +42,7 @@ type autoMessage struct {
 
 	Cron            string        `yaml:"cron"`
 	MessageInterval int64         `yaml:"message_interval"`
+	OnlyOnLive      bool          `yaml:"only_on_live"`
 	TimeInterval    time.Duration `yaml:"time_interval"`
 
 	disabled              bool
@@ -72,6 +73,17 @@ func (a *autoMessage) CanSend() bool {
 		sched, _ := cronParser.Parse(a.Cron)
 		if sched.Next(a.lastMessageSent).After(time.Now()) {
 			// Cron timer is not yet expired
+			return false
+		}
+	}
+
+	if a.OnlyOnLive {
+		streamLive, err := twitch.HasLiveStream(strings.TrimLeft(a.Channel, "#"))
+		if err != nil {
+			log.WithError(err).Error("Unable to determine channel live status")
+			return false
+		}
+		if !streamLive {
 			return false
 		}
 	}
