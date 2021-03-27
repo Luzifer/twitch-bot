@@ -12,11 +12,14 @@ import (
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 )
+
+var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
 type configFile struct {
 	AutoMessages         []*autoMessage `yaml:"auto_messages"`
@@ -37,6 +40,7 @@ type autoMessage struct {
 	Message   string `yaml:"message"`
 	UseAction bool   `yaml:"use_action"`
 
+	Cron            string        `yaml:"cron"`
 	MessageInterval int64         `yaml:"message_interval"`
 	TimeInterval    time.Duration `yaml:"time_interval"`
 
@@ -48,20 +52,31 @@ type autoMessage struct {
 }
 
 func (a *autoMessage) CanSend() bool {
-	if a.disabled {
+	if a.disabled || !a.IsValid() {
 		return false
 	}
 
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
-	if a.MessageInterval == 0 && a.TimeInterval == 0 {
+	switch {
+	case a.MessageInterval > a.linesSinceLastMessage:
+		// Not enough chatted lines
 		return false
+
+	case a.TimeInterval > 0 && a.lastMessageSent.Add(a.TimeInterval).After(time.Now()):
+		// Simple timer is not yet expired
+		return false
+
+	case a.Cron != "":
+		sched, _ := cronParser.Parse(a.Cron)
+		if sched.Next(a.lastMessageSent).After(time.Now()) {
+			// Cron timer is not yet expired
+			return false
+		}
 	}
 
-	return 1 == 1 &&
-		a.linesSinceLastMessage >= a.MessageInterval &&
-		a.lastMessageSent.Add(a.TimeInterval).Before(time.Now())
+	return true
 }
 
 func (a *autoMessage) CountMessage(channel string) {
@@ -83,6 +98,20 @@ func (a *autoMessage) ID() string {
 	fmt.Fprintf(sum, "action:%v", a.UseAction)
 
 	return fmt.Sprintf("sha1:%x", sum.Sum(nil))
+}
+
+func (a *autoMessage) IsValid() bool {
+	if a.Cron != "" {
+		if _, err := cronParser.Parse(a.Cron); err != nil {
+			return false
+		}
+	}
+
+	if a.MessageInterval == 0 && a.TimeInterval == 0 && a.Cron == "" {
+		return false
+	}
+
+	return true
 }
 
 func (a *autoMessage) Send(c *irc.Client) error {
@@ -317,10 +346,14 @@ func loadConfig(filename string) error {
 		log.Warn("Loaded config with empty ruleset")
 	}
 
-	for _, nam := range tmpConfig.AutoMessages {
+	for idx, nam := range tmpConfig.AutoMessages {
 		// By default assume last message to be sent now
 		// in order not to spam messages at startup
 		nam.lastMessageSent = time.Now()
+
+		if !nam.IsValid() {
+			log.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
+		}
 
 		if config == nil {
 			// Initial config load, do not update timers
