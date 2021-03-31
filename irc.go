@@ -116,6 +116,13 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 
 func (i ircHandler) Run() error { return errors.Wrap(i.c.Run(), "running IRC client") }
 
+func (ircHandler) getChannel(m *irc.Message) string {
+	if len(m.Params) > 0 {
+		return m.Params[0]
+	}
+	return ""
+}
+
 func (i ircHandler) handleJoin(m *irc.Message) {
 	go handleMessage(i.c, m, eventTypeJoin)
 }
@@ -142,6 +149,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 	log.WithFields(log.Fields{
+		"channel":  i.getChannel(m),
 		"tags":     m.Tags,
 		"trailing": m.Trailing,
 	}).Debug("IRC NOTICE event")
@@ -161,6 +169,7 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 
 func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	log.WithFields(log.Fields{
+		"channel":  i.getChannel(m),
 		"name":     m.Name,
 		"user":     m.User,
 		"tags":     m.Tags,
@@ -186,6 +195,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 
 func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	log.WithFields(log.Fields{
+		"channel":  i.getChannel(m),
 		"tags":     m.Tags,
 		"trailing": m.Trailing,
 	}).Debug("IRC USERNOTICE event")
