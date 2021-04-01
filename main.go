@@ -51,6 +51,7 @@ func init() {
 	}
 }
 
+//nolint: gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
 
