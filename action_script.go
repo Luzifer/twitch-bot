@@ -45,7 +45,7 @@ func init() {
 			return errors.Wrap(err, "encoding script input")
 		}
 
-		cmd := exec.CommandContext(ctx, command[0], command[1:]...)
+		cmd := exec.CommandContext(ctx, command[0], command[1:]...) // #nosec G204 // This is expected to call a command with parameters
 		cmd.Env = os.Environ()
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = stdin
