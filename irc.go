@@ -19,7 +19,6 @@ const (
 	badgeFounder     = "founder"
 	badgeModerator   = "moderator"
 	badgeSubscriber  = "subscriber"
-	badgeVIP         = "vip"
 )
 
 type ircHandler struct {
