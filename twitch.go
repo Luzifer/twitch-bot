@@ -15,12 +15,12 @@ import (
 var twitch = newTwitchClient()
 
 type twitchClient struct {
-	apiCache twitchAPICache
+	apiCache *twitchAPICache
 }
 
 func newTwitchClient() *twitchClient {
 	return &twitchClient{
-		apiCache: make(twitchAPICache),
+		apiCache: newTwitchAPICache(),
 	}
 }
 
