@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,6 +35,13 @@ var (
 )
 
 func init() {
+	for _, a := range os.Args {
+		if strings.HasPrefix(a, "-test.") {
+			// Skip initialize for test run
+			return
+		}
+	}
+
 	rconfig.AutoEnv(true)
 	if err := rconfig.ParseAndValidate(&cfg); err != nil {
 		log.Fatalf("Unable to parse commandline options: %s", err)

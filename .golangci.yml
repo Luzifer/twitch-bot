@@ -3,6 +3,8 @@
 ---
 
 run:
+  skip-dirs:
+    - config
   skip-files:
     - assets.go
     - bindata.go
