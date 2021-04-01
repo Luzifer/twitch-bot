@@ -1,0 +1,12 @@
+---
+
+image: "reporunner/golang-alpine"
+checkout_dir: /go/src/github.com/Luzifer/twitch-bot
+
+commands:
+  - make lint publish
+
+environment:
+  CGO_ENABLED: 0
+  GO111MODULE: on
+  MOD_MODE: readonly
