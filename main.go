@@ -12,6 +12,8 @@ import (
 	"github.com/Luzifer/rconfig/v2"
 )
 
+const ircReconnectDelay = 100 * time.Millisecond
+
 var (
 	cfg = struct {
 		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
@@ -93,7 +95,7 @@ func main() {
 				if err := irc.Run(); err != nil {
 					log.WithError(err).Error("IRC run exited unexpectedly")
 				}
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}
 			}()
 

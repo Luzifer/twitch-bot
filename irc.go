@@ -134,7 +134,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	}
 
 	msgParts := strings.Split(m.Trailing(), " ")
-	if len(msgParts) != 2 {
+	if len(msgParts) != 2 { //nolint:gomnd // This is not a magic number but just an expected count
 		return
 	}
 
@@ -229,7 +229,7 @@ func (ircHandler) ParseBadgeLevels(m *irc.Message) badgeCollection {
 	badges := strings.Split(badgeString, ",")
 	for _, b := range badges {
 		badgeParts := strings.Split(b, "/")
-		if len(badgeParts) != 2 {
+		if len(badgeParts) != 2 { //nolint:gomnd // This is not a magic number but just an expected count
 			log.WithField("badge", b).Warn("Malformed badge found")
 			continue
 		}

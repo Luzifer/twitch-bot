@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const timeDay = 24 * time.Hour
+
 var twitch = newTwitchClient()
 
 type twitchClient struct {
@@ -85,7 +87,7 @@ func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 	}
 
 	// Follow date will not change that often, cache for a long time
-	t.apiCache.Set(cacheKey, 24*time.Hour, payload.Data[0].FollowedAt)
+	t.apiCache.Set(cacheKey, timeDay, payload.Data[0].FollowedAt)
 
 	return payload.Data[0].FollowedAt, nil
 }
@@ -154,7 +156,7 @@ func (t twitchClient) getIDForUsername(username string) (string, error) {
 	}
 
 	// The ID for an username will not change (often), cache for a long time
-	t.apiCache.Set(cacheKey, 24*time.Hour, payload.Data[0].ID)
+	t.apiCache.Set(cacheKey, timeDay, payload.Data[0].ID)
 
 	return payload.Data[0].ID, nil
 }
