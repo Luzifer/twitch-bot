@@ -112,7 +112,7 @@ func (r *rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, e
 		return true
 	}
 
-	if len(m.Params) == 0 || !str.StringInSlice(m.Params[0], r.MatchChannels) {
+	if len(m.Params) == 0 || (!str.StringInSlice(m.Params[0], r.MatchChannels) && !str.StringInSlice(strings.TrimPrefix(m.Params[0], "#"), r.MatchChannels)) {
 		logger.Trace("Non-Match: Channel")
 		return false
 	}
