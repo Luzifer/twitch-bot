@@ -8,7 +8,7 @@ publish:
 	bash golang.sh
 
 test:
-	go test -cover -race -v .
+	go test -cover -v .
 
 # --- Wiki Updates
 
