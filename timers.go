@@ -12,7 +12,6 @@ type timerType uint8
 
 const (
 	timerTypePermit timerType = iota
-	timerTypeChatMessage
 	timerTypeCooldown
 )
 
@@ -26,7 +25,6 @@ type timerEntry struct {
 type timer struct {
 	timers map[string]timerEntry
 	lock   *sync.RWMutex
-	kind   timerType
 }
 
 func newTimer() *timer {

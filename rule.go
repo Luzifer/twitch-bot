@@ -51,8 +51,6 @@ func (r rule) MatcherID() string {
 }
 
 func (r *rule) Matches(m *irc.Message, event *string) bool {
-	var err error
-
 	var (
 		badges = ircHandler{}.ParseBadgeLevels(m)
 		logger = log.WithFields(log.Fields{
@@ -61,69 +59,28 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 		})
 	)
 
-	// Check Channel match
-	if len(r.MatchChannels) > 0 {
-		if len(m.Params) == 0 || !str.StringInSlice(m.Params[0], r.MatchChannels) {
-			logger.Trace("Non-Match: Channel")
+	for _, matcher := range []func(*log.Entry, *irc.Message, *string, badgeCollection) bool{
+		r.allowExecuteChannelWhitelist,
+		r.allowExecuteUserWhitelist,
+		r.allowExecuteEventWhitelist,
+		r.allowExecuteMessageMatcherWhitelist,
+		r.allowExecuteMessageMatcherBlacklist,
+		r.allowExecuteBadgeBlacklist,
+		r.allowExecuteBadgeWhitelist,
+		r.allowExecuteDisableOnPermit,
+		r.allowExecuteCooldown,
+		r.allowExecuteDisableOnOffline,
+	} {
+		if !matcher(logger, m, event, badges) {
 			return false
 		}
 	}
 
-	if len(r.MatchUsers) > 0 {
-		if !str.StringInSlice(strings.ToLower(m.User), r.MatchUsers) {
-			logger.Trace("Non-Match: Users")
-			return false
-		}
-	}
+	// Nothing objected: Matches!
+	return true
+}
 
-	// Check Event match
-	if r.MatchEvent != nil {
-		if event == nil || *r.MatchEvent != *event {
-			logger.Trace("Non-Match: Event")
-			return false
-		}
-	}
-
-	// Check Message match
-	if r.MatchMessage != nil {
-		// If the regexp was not yet compiled, cache it
-		if r.matchMessage == nil {
-			if r.matchMessage, err = regexp.Compile(*r.MatchMessage); err != nil {
-				logger.WithError(err).Error("Unable to compile expression")
-				return false
-			}
-		}
-
-		// Check whether the message matches
-		if !r.matchMessage.MatchString(m.Trailing()) {
-			logger.Trace("Non-Match: Message")
-			return false
-		}
-	}
-
-	if len(r.DisableOnMatchMessages) > 0 {
-		// If the regexps were not pre-compiled, do it now
-		if len(r.disableOnMatchMessages) != len(r.DisableOnMatchMessages) {
-			r.disableOnMatchMessages = nil
-			for _, dm := range r.DisableOnMatchMessages {
-				dmr, err := regexp.Compile(dm)
-				if err != nil {
-					logger.WithError(err).Error("Unable to compile expression")
-					return false
-				}
-				r.disableOnMatchMessages = append(r.disableOnMatchMessages, dmr)
-			}
-		}
-
-		for _, rex := range r.disableOnMatchMessages {
-			if rex.MatchString(m.Trailing()) {
-				logger.Trace("Non-Match: Disable-On-Message")
-				return false
-			}
-		}
-	}
-
-	// Check whether user has one of the disable rules
+func (r *rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
 	for _, b := range r.DisableOn {
 		if badges.Has(b) {
 			logger.Tracef("Non-Match: Disable-Badge %s", b)
@@ -131,53 +88,164 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 		}
 	}
 
-	// Check whether user has at least one of the enable rules
-	if len(r.EnableOn) > 0 {
-		var userHasEnableBadge bool
-		for _, b := range r.EnableOn {
-			if badges.Has(b) {
-				userHasEnableBadge = true
-			}
-		}
-		if !userHasEnableBadge {
-			logger.Trace("Non-Match: No enable-badges")
-			return false
+	return true
+}
+
+func (r *rule) allowExecuteBadgeWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if len(r.EnableOn) == 0 {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	for _, b := range r.EnableOn {
+		if badges.Has(b) {
+			return true
 		}
 	}
 
-	// Check on permit
+	return false
+}
+
+func (r *rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if len(r.MatchChannels) == 0 {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if len(m.Params) == 0 || (!str.StringInSlice(m.Params[0], r.MatchChannels) && !str.StringInSlice(strings.TrimPrefix(m.Params[0], "#"), r.MatchChannels)) {
+		logger.Trace("Non-Match: Channel")
+		return false
+	}
+
+	return true
+}
+
+func (r *rule) allowExecuteCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.Cooldown == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if !timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
+		return true
+	}
+
+	for _, b := range r.SkipCooldownFor {
+		if badges.Has(b) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if !r.DisableOnOffline {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	streamLive, err := twitch.HasLiveStream(strings.TrimLeft(m.Params[0], "#"))
+	if err != nil {
+		logger.WithError(err).Error("Unable to determine live status")
+		return false
+	}
+	if !streamLive {
+		logger.Trace("Non-Match: Stream offline")
+		return false
+	}
+
+	return true
+}
+
+func (r *rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
 	if r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User) {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
 
-	// Check whether rule is in cooldown
-	if r.Cooldown != nil && timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
-		var userHasSkipBadge bool
-		for _, b := range r.SkipCooldownFor {
-			if badges.Has(b) {
-				userHasSkipBadge = true
+	return true
+}
+
+func (r *rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.MatchEvent == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if event == nil || *r.MatchEvent != *event {
+		logger.Trace("Non-Match: Event")
+		return false
+	}
+
+	return true
+}
+
+func (r *rule) allowExecuteMessageMatcherBlacklist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if len(r.DisableOnMatchMessages) == 0 {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	// If the regexps were not pre-compiled, do it now
+	if len(r.disableOnMatchMessages) != len(r.DisableOnMatchMessages) {
+		r.disableOnMatchMessages = nil
+		for _, dm := range r.DisableOnMatchMessages {
+			dmr, err := regexp.Compile(dm)
+			if err != nil {
+				logger.WithError(err).Error("Unable to compile expression")
+				return false
 			}
+			r.disableOnMatchMessages = append(r.disableOnMatchMessages, dmr)
 		}
-		if !userHasSkipBadge {
-			logger.Trace("Non-Match: On cooldown")
+	}
+
+	for _, rex := range r.disableOnMatchMessages {
+		if rex.MatchString(m.Trailing()) {
+			logger.Trace("Non-Match: Disable-On-Message")
 			return false
 		}
 	}
 
-	if r.DisableOnOffline {
-		streamLive, err := twitch.HasLiveStream(strings.TrimLeft(m.Params[0], "#"))
-		if err != nil {
-			logger.WithError(err).Error("Unable to determine live status")
-			return false
-		}
-		if !streamLive {
-			logger.Trace("Non-Match: Stream offline")
+	return true
+}
+
+func (r *rule) allowExecuteMessageMatcherWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.MatchMessage == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	var err error
+
+	// If the regexp was not yet compiled, cache it
+	if r.matchMessage == nil {
+		if r.matchMessage, err = regexp.Compile(*r.MatchMessage); err != nil {
+			logger.WithError(err).Error("Unable to compile expression")
 			return false
 		}
 	}
 
-	// Nothing objected: Matches!
+	// Check whether the message matches
+	if !r.matchMessage.MatchString(m.Trailing()) {
+		logger.Trace("Non-Match: Message")
+		return false
+	}
+
+	return true
+}
+
+func (r *rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if len(r.MatchUsers) == 0 {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if !str.StringInSlice(strings.ToLower(m.User), r.MatchUsers) {
+		logger.Trace("Non-Match: Users")
+		return false
+	}
+
 	return true
 }
 
