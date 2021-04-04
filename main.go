@@ -166,8 +166,7 @@ following website:
          https://luzifer.github.io/twitch-bot/
 
 You will be guided through the token generation and can afterwards
-provide the required configuration parameters.
-`)
+provide the required configuration parameters.`)
 		return errors.New(strings.Join(errs, ", "))
 	}
 
