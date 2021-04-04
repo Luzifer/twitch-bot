@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"
 
@@ -21,7 +22,7 @@ var (
 		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
 		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as" validate:"nonzero"`
+		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
 		VersionAndExit bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
@@ -62,6 +63,10 @@ func init() {
 //nolint: gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
+
+	if err = startCheck(); err != nil {
+		log.WithError(err).Fatal("Missing required parameters")
+	}
 
 	if err = store.Load(); err != nil {
 		log.WithError(err).Fatal("Unable to load storage file")
@@ -137,4 +142,34 @@ func main() {
 
 		}
 	}
+}
+
+func startCheck() error {
+	var errs []string
+
+	if cfg.TwitchClient == "" {
+		errs = append(errs, "No Twitch-ClientId given")
+	}
+
+	if cfg.TwitchToken == "" {
+		errs = append(errs, "Twitch-Token is unset")
+	}
+
+	if len(errs) > 0 {
+		fmt.Println(`
+You've not provided a Twitch-ClientId and/or a Twitch-Token.
+
+These parameters are required and you need to provide them. In case
+you need help with obtaining those credentials please visit the
+following website:
+
+         https://luzifer.github.io/twitch-bot/
+
+You will be guided through the token generation and can afterwards
+provide the required configuration parameters.
+`)
+		return errors.New(strings.Join(errs, ", "))
+	}
+
+	return nil
 }
