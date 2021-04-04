@@ -2,6 +2,7 @@
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Twitch-Bot Authorization</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/combine/npm/bootstrap@4/dist/css/bootstrap.min.css,npm/bootstrap-vue@2/dist/bootstrap-vue.min.css,npm/bootswatch@4/dist/darkly/bootstrap.min.css">
 
   <div id="app">
@@ -40,6 +41,36 @@
                   <b-button :href="authURL" :disabled="!authURL" variant="success">Get OAuth Token now!</b-button>
                 </b-input-group-append>
               </b-input-group>
+
+              <div class="accordion" role="tablist">
+                <b-card no-body class="mb-1">
+                  <b-card-header header-tag="header" class="p-1" role="tab">
+                    <b-button block v-b-toggle.detailconfig variant="secondary">
+                      Let me customize the scopes!
+                    </b-button>
+                    <b-collapse id="detailconfig" accordion="detailconfig" role="tabpanel">
+                      <b-card-body>
+
+                        <p>I want my bot to be able to&hellip;</p>
+
+                        <b-form-checkbox
+                          :disabled="scope.required"
+                          :key="scope.scope"
+                          v-for="scope in scopeList"
+                          v-model="scope.enabled"
+                        >
+                          <span
+                            :title="scope.scope"
+                            v-html="`&hellip;${scope.description}`"
+                          ></span>
+                        </b-form-checkbox>
+
+                      </b-card-body>
+                    </b-collapse>
+                  </b-card-header>
+                </b-card>
+              </div>
+
               <hr>
               <p><strong>Security Hint:</strong> This website has no code to send your Client-ID or Access-Token to any place other than Twitch. Even though you should ensure you trust it before using as Twitch will send an AccessToken with following scopes here:</p>
               <p><code>{{ scopes }}</code></p>
@@ -74,17 +105,12 @@
         },
 
         scopes() {
-          return [
-            // API Scopes
-            'channel:edit:commercial', // Run commercials on a channel.
-            'channel:manage:broadcast', // Manage a channel’s broadcast configuration, including updating channel configuration and managing stream markers and stream tags.
-            'channel:manage:redemptions', // Manage Channel Points custom rewards and their redemptions on a channel.
-
-            // IRC Scopes
-            'channel_editor', // host, marker, raid, unhost, unraid
-            'chat:edit', // color, disconnect, help, me, mods, vips
-            'channel:moderate', // ban, clear, delete, emoteonly, emoteonlyoff, followers, followersoff, mod, slow, slowoff, timeout, unban, unmod, untimeout, unvip, vip
-          ].join(' ')
+          return this.scopeList
+            .filter(scope => scope.enabled)
+            .map(scope => scope.scope.split(' ')) // Split is required, some entries have multiple scopes
+            .flat()
+            .sort((i, j) => i.localeCompare(j))
+            .join(' ')
         },
 
         redirURL() {
@@ -94,6 +120,60 @@
 
       data: {
         clientId: null,
+        scopeList: [
+          {
+            description: 'read chat messages',
+            enabled: true,
+            required: true,
+            scope: 'chat:read',
+          },
+          {
+            description: 'send messages to the chat',
+            enabled: true,
+            required: true,
+            scope: 'chat:edit',
+          },
+          {
+            description: 'read messages sent as whispers',
+            enabled: true,
+            scope: 'whispers:read',
+          },
+          {
+            description: 'send whispers',
+            enabled: true,
+            scope: 'whispers:edit',
+          },
+          {
+            description: 'use moderation chat-commands like <code>/ban, /clear, /delete, /timeout</code>',
+            enabled: true,
+            scope: 'channel:moderate',
+          },
+          {
+            description: 'use channel editor chat-commands like <code>/host, /marker, /raid</code>',
+            enabled: true,
+            scope: 'channel_editor',
+          },
+          {
+            description: 'manage my channel’s broadcast configuration (title, game, &hellip;), stream markers and stream tags',
+            enabled: true,
+            scope: 'channel:manage:broadcast',
+          },
+          {
+            description: 'run commercials on my channel',
+            enabled: false,
+            scope: 'channel:edit:commercial channel_commercial',
+          },
+          {
+            description: 'manage Channel Points custom rewards and their redemptions on my channel',
+            enabled: false,
+            scope: 'channel:manage:redemptions channel:read:redemptions',
+          },
+          {
+            description: 'create Clips on my channel',
+            enabled: false,
+            scope: 'clips:edit',
+          },
+        ],
         token: null,
       },
 
