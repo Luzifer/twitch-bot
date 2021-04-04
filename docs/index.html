@@ -1,0 +1,111 @@
+<html>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/combine/npm/bootstrap@4/dist/css/bootstrap.min.css,npm/bootstrap-vue@2/dist/bootstrap-vue.min.css,npm/bootswatch@4/dist/darkly/bootstrap.min.css">
+
+  <div id="app">
+    <b-container>
+      <b-row>
+        <b-col>
+
+          <b-jumbotron
+            class="mt-4"
+            header="Twitch-Bot Authorization"
+            lead="Get a Twitch Auth-Token for your bot easily"
+          >
+
+            <template v-if="token">
+              <label for="token">Your <code>--twitch-token</code>:</label>
+              <b-form-input id="token" v-model="token" type="text" readonly />
+            </template>
+
+            <template v-else>
+              <p>In case you haven't done this yet you need to create an Application for your bot:</p>
+              <ol class="mb-3">
+                <li>Go to <a href="https://dev.twitch.tv/console/apps">https://dev.twitch.tv/console/apps</a></li>
+                <li>
+                  Register a new Application with these properties:
+                  <ul>
+                    <li><strong>Name:</strong> Choose any you like</li>
+                    <li><strong>OAuth Redirect URLs:</strong> <code>{{ redirURL }}</code></li>
+                    <li><strong>Category:</strong> Chat Bot</li>
+                  </ul>
+                </li>
+              </ol>
+              <p>After you've completed the steps above, copy your <strong>Client ID</strong> (do <strong>NOT</strong> copy your Client Secret) below and click the button:</p>
+              <b-input-group class="mb-3">
+                <b-form-input v-model="clientId" placeholder="Application Client Id"></b-form-input>
+                <b-input-group-append>
+                  <b-button :href="authURL" :disabled="!authURL" variant="success">Get OAuth Token now!</b-button>
+                </b-input-group-append>
+              </b-input-group>
+              <hr>
+              <p><strong>Security Hint:</strong> This website has no code to send your Client-ID or Access-Token to any place other than Twitch. Even though you should ensure you trust it before using as Twitch will send an AccessToken with following scopes here:</p>
+              <p><code>{{ scopes }}</code></p>
+              <p>For more information about the scopes see these two pages: <a href="https://dev.twitch.tv/docs/irc/guide">IRC Guide</a> and <a href="https://dev.twitch.tv/docs/authentication#scopes">API Scopes</a>
+            </template>
+
+          </b-jumbotron>
+
+        </b-col>
+      </b-row>
+    </b-container>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/combine/npm/vue@2,npm/bootstrap-vue@2/dist/bootstrap-vue.min.js"></script>
+  <script>
+    new Vue({
+      computed: {
+        authURL() {
+          if (!this.clientId) {
+            return null
+          }
+
+          const params = {
+            client_id: this.clientId,
+            redirect_uri: this.redirURL,
+            response_type: 'token',
+            scope: this.scopes,
+          }
+
+          const paramString = Object.keys(params).map(k => [k, params[k]].join('=')).join('&')
+          return `https://id.twitch.tv/oauth2/authorize?${paramString}`
+        },
+
+        scopes() {
+          return [
+            // API Scopes
+            'channel:edit:commercial', // Run commercials on a channel.
+            'channel:manage:broadcast', // Manage a channel’s broadcast configuration, including updating channel configuration and managing stream markers and stream tags.
+            'channel:manage:redemptions', // Manage Channel Points custom rewards and their redemptions on a channel.
+
+            // IRC Scopes
+            'channel_editor', // host, marker, raid, unhost, unraid
+            'chat:edit', // color, disconnect, help, me, mods, vips
+            'channel:moderate', // ban, clear, delete, emoteonly, emoteonlyoff, followers, followersoff, mod, slow, slowoff, timeout, unban, unmod, untimeout, unvip, vip
+          ].join(' ')
+        },
+
+        redirURL() {
+          return window.location.href
+        }
+      },
+
+      data: {
+        clientId: null,
+        token: null,
+      },
+
+      el: '#app',
+
+      mounted() {
+        const hashParams = new URLSearchParams(window.location.hash.substr(1))
+        if (hashParams.has('access_token')) {
+          this.token = hashParams.get('access_token')
+        }
+      },
+    })
+  </script>
+
+</html>
