@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"os"
+	"path"
 	"time"
 
 	"github.com/go-irc/irc"
@@ -15,7 +18,10 @@ type configFile struct {
 	Channels             []string       `yaml:"channels"`
 	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
 	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
+	RawLog               string         `yaml:"raw_log"`
 	Rules                []*rule        `yaml:"rules"`
+
+	rawLogWriter io.WriteCloser
 }
 
 func newConfigFile() configFile {
@@ -82,8 +88,38 @@ func loadConfig(filename string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
+	switch {
+	case config != nil && config.RawLog == tmpConfig.RawLog:
+		tmpConfig.rawLogWriter = config.rawLogWriter
+
+	case tmpConfig.RawLog == "":
+		if err = config.CloseRawMessageWriter(); err != nil {
+			return errors.Wrap(err, "closing old raw log writer")
+		}
+
+		tmpConfig.rawLogWriter = writeNoOpCloser{io.Discard}
+
+	default:
+		if err = config.CloseRawMessageWriter(); err != nil {
+			return errors.Wrap(err, "closing old raw log writer")
+		}
+		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), 0o755); err != nil {
+			return errors.Wrap(err, "creating directories for raw log")
+		}
+		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err != nil {
+			return errors.Wrap(err, "opening raw log for appending")
+		}
+	}
+
 	config = &tmpConfig
 	return nil
+}
+
+func (c *configFile) CloseRawMessageWriter() error {
+	if c == nil || c.rawLogWriter == nil {
+		return nil
+	}
+	return c.rawLogWriter.Close()
 }
 
 func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*rule {
@@ -99,4 +135,9 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*rule {
 	}
 
 	return out
+}
+
+func (c configFile) LogRawMessage(m *irc.Message) error {
+	_, err := fmt.Fprintln(c.rawLogWriter, m.String())
+	return errors.Wrap(err, "writing raw log message")
 }

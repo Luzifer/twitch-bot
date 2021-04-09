@@ -75,6 +75,7 @@ func main() {
 	if err = loadConfig(cfg.Config); err != nil {
 		log.WithError(err).Fatal("Initial config load failed")
 	}
+	defer func() { config.CloseRawMessageWriter() }()
 
 	fswatch, err := fsnotify.NewWatcher()
 	if err != nil {

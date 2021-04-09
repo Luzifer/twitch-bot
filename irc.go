@@ -70,6 +70,15 @@ func (i ircHandler) ExecuteJoins(channels []string) {
 }
 
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
+	go func(m *irc.Message) {
+		configLock.RLock()
+		defer configLock.RUnlock()
+
+		if err := config.LogRawMessage(m); err != nil {
+			log.WithError(err).Error("Unable to log raw message")
+		}
+	}(m)
+
 	switch m.Command {
 	case "001":
 		// 001 is a welcome event, so we join channels there
