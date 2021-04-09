@@ -12,7 +12,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const twitchRequestTimeout = 2 * time.Second
+const (
+	twitchRequestTimeout = 2 * time.Second
+	// 20 join attempts per 10 seconds per user (2000 for verified bots)
+	// https://dev.twitch.tv/docs/irc/guide
+	twitchChannelJoinDelay = time.Second
+)
 
 const (
 	badgeBroadcaster = "broadcaster"
@@ -58,6 +63,9 @@ func (i ircHandler) Close() error { return i.conn.Close() }
 func (i ircHandler) ExecuteJoins(channels []string) {
 	for _, ch := range channels {
 		i.c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
+
+		// We need to wait a moment between joins not to get kicked
+		time.Sleep(twitchChannelJoinDelay)
 	}
 }
 
@@ -76,7 +84,7 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 				}, " "),
 			},
 		})
-		i.ExecuteJoins(config.Channels)
+		go i.ExecuteJoins(config.Channels)
 
 	case "JOIN":
 		// JOIN (Default IRC Command)
