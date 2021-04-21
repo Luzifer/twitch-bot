@@ -56,37 +56,10 @@ func loadConfig(filename string) error {
 		log.Warn("Loaded config with empty ruleset")
 	}
 
-	for idx, nam := range tmpConfig.AutoMessages {
-		// By default assume last message to be sent now
-		// in order not to spam messages at startup
-		nam.lastMessageSent = time.Now()
-
-		if !nam.IsValid() {
-			log.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
-		}
-
-		if config == nil {
-			// Initial config load, do not update timers
-			continue
-		}
-
-		for _, oam := range config.AutoMessages {
-			if nam.ID() != oam.ID() {
-				continue
-			}
-
-			// We disable the old message as executing it would
-			// mess up the constraints of the new message
-			oam.lock.Lock()
-			oam.disabled = true
-
-			nam.lastMessageSent = oam.lastMessageSent
-			nam.linesSinceLastMessage = oam.linesSinceLastMessage
-		}
-	}
-
 	configLock.Lock()
 	defer configLock.Unlock()
+
+	tmpConfig.updateAutoMessagesFromConfig(config)
 
 	switch {
 	case config != nil && config.RawLog == tmpConfig.RawLog:
@@ -140,4 +113,35 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*rule {
 func (c configFile) LogRawMessage(m *irc.Message) error {
 	_, err := fmt.Fprintln(c.rawLogWriter, m.String())
 	return errors.Wrap(err, "writing raw log message")
+}
+
+func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
+	for idx, nam := range c.AutoMessages {
+		// By default assume last message to be sent now
+		// in order not to spam messages at startup
+		nam.lastMessageSent = time.Now()
+
+		if !nam.IsValid() {
+			log.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
+		}
+
+		if old == nil {
+			// Initial config load, do not update timers
+			continue
+		}
+
+		for _, oam := range old.AutoMessages {
+			if nam.ID() != oam.ID() {
+				continue
+			}
+
+			// We disable the old message as executing it would
+			// mess up the constraints of the new message
+			oam.lock.Lock()
+			oam.disabled = true
+
+			nam.lastMessageSent = oam.lastMessageSent
+			nam.linesSinceLastMessage = oam.linesSinceLastMessage
+		}
+	}
 }
