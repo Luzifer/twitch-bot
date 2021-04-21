@@ -17,10 +17,12 @@ Please see the [Wiki](https://github.com/Luzifer/twitch-bot/wiki) for documentat
 ```console
 # twitch-bot --help
 Usage of twitch-bot:
-  -c, --config string          Location of configuration file (default "./config.yaml")
-      --log-level string       Log level (debug, info, warn, error, fatal) (default "info")
-      --storage-file string    Where to store the data (default "./storage.json.gz")
-      --twitch-client string   Client ID to act as
-      --twitch-token string    OAuth token valid for client
-      --version                Prints current version and exits
+      --command-timeout duration   Timeout for command execution (default 30s)
+  -c, --config string              Location of configuration file (default "./config.yaml")
+      --log-level string           Log level (debug, info, warn, error, fatal) (default "info")
+      --rate-limit duration        How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots) (default 1.5s)
+      --storage-file string        Where to store the data (default "./storage.json.gz")
+      --twitch-client string       Client ID to act as
+      --twitch-token string        OAuth token valid for client
+      --version                    Prints current version and exits
 ```
