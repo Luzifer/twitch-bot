@@ -1,3 +1,7 @@
+# 0.4.0 / 2021-04-22
+
+  * Introduce general send limit to prevent global-timeouts
+
 # 0.3.0 / 2021-04-21
 
   * Extract template functions into registry
