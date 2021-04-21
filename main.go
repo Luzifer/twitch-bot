@@ -20,6 +20,7 @@ var (
 	cfg = struct {
 		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
 		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		IRCRateLimit   time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
 		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
 		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`

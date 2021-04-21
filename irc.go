@@ -14,9 +14,6 @@ import (
 
 const (
 	twitchRequestTimeout = 2 * time.Second
-	// 20 join attempts per 10 seconds per user (2000 for verified bots)
-	// https://dev.twitch.tv/docs/irc/guide
-	twitchChannelJoinDelay = time.Second
 )
 
 const (
@@ -51,6 +48,9 @@ func newIRCHandler() (*ircHandler, error) {
 		User:    username,
 		Name:    username,
 		Handler: h,
+
+		SendLimit: cfg.IRCRateLimit,
+		SendBurst: 0, // Twitch uses a bucket system, we don't have anything to replicate that in this IRC client
 	})
 	h.conn = conn
 	h.user = username
@@ -63,9 +63,6 @@ func (i ircHandler) Close() error { return i.conn.Close() }
 func (i ircHandler) ExecuteJoins(channels []string) {
 	for _, ch := range channels {
 		i.c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
-
-		// We need to wait a moment between joins not to get kicked
-		time.Sleep(twitchChannelJoinDelay)
 	}
 }
 
