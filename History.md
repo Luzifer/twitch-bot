@@ -1,3 +1,8 @@
+# 0.4.1 / 2021-05-06
+
+  * Include tzdata into Docker image to allow TZ env setting
+  * Update README for new flags
+
 # 0.4.0 / 2021-04-22
 
   * Introduce general send limit to prevent global-timeouts
