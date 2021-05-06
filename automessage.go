@@ -113,7 +113,11 @@ func (a *autoMessage) Send(c *irc.Client) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
-	msg := a.Message
+	msg, err := formatMessage(a.Message, nil, nil, nil)
+	if err != nil {
+		return errors.Wrap(err, "preparing message")
+	}
+
 	if a.UseAction {
 		msg = fmt.Sprintf("\001ACTION %s\001", msg)
 	}
