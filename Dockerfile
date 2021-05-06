@@ -21,7 +21,8 @@ RUN set -ex \
       bash \
       ca-certificates \
       curl \
-      jq
+      jq \
+      tzdata
 
 COPY --from=builder /go/bin/twitch-bot /usr/local/bin/twitch-bot
 
