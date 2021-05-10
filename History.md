@@ -1,3 +1,9 @@
+# 0.5.0 / 2021-05-11
+
+  * Fix: Unlock auto-messages to prevent dead-locks
+  * Log amount of loaded rules on (re)load
+  * Support templating in automessages
+
 # 0.4.1 / 2021-05-06
 
   * Include tzdata into Docker image to allow TZ env setting
