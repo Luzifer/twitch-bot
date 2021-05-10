@@ -127,12 +127,6 @@ func main() {
 
 			irc.ExecuteJoins(config.Channels)
 
-			log.WithFields(log.Fields{
-				"auto_messages": len(config.AutoMessages),
-				"rules":         len(config.Rules),
-				"channels":      len(config.Channels),
-			}).Info("Config file reloaded")
-
 		case <-autoMessageTicker.C:
 			configLock.RLock()
 			for _, am := range config.AutoMessages {

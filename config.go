@@ -85,6 +85,13 @@ func loadConfig(filename string) error {
 	}
 
 	config = tmpConfig
+
+	log.WithFields(log.Fields{
+		"auto_messages": len(config.AutoMessages),
+		"rules":         len(config.Rules),
+		"channels":      len(config.Channels),
+	}).Info("Config file (re)loaded")
+
 	return nil
 }
 
