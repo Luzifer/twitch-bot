@@ -149,6 +149,7 @@ func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
 
 			nam.lastMessageSent = oam.lastMessageSent
 			nam.linesSinceLastMessage = oam.linesSinceLastMessage
+			oam.lock.Unlock()
 		}
 	}
 }
