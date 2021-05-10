@@ -24,8 +24,8 @@ type configFile struct {
 	rawLogWriter io.WriteCloser
 }
 
-func newConfigFile() configFile {
-	return configFile{
+func newConfigFile() *configFile {
+	return &configFile{
 		PermitTimeout: time.Minute,
 	}
 }
@@ -84,7 +84,7 @@ func loadConfig(filename string) error {
 		}
 	}
 
-	config = &tmpConfig
+	config = tmpConfig
 	return nil
 }
 
