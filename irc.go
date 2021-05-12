@@ -229,6 +229,12 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	case "resub":
 		go handleMessage(i.c, m, eventTypeResub)
 
+	case "sub":
+		go handleMessage(i.c, m, eventTypeSub)
+
+	case "subgift", "anonsubgift":
+		go handleMessage(i.c, m, eventTypeSubgift)
+
 	}
 }
 
