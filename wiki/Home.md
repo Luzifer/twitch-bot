@@ -40,6 +40,10 @@ rules: # See below for examples
                            # applies templating but MUST result in a parseable integer
       counter_step: 1      # Integer, can be negative or positive, default: +1
 
+    # Introduce a delay between two actions
+    - delay: 1m         # Duration, how long to wait (fixed)
+      delay_jitter: 1m  # Duration, add random delay to fixed delay between 0 and this value
+
     # Issue a delete on the message caught
     - delete_message: true # Bool, set to true to delete
 
@@ -191,6 +195,18 @@ The example was dumped using this action:
     - respond: 'You followed on {{ ( followDate .username ( fixUsername .channel ) ).Format "2006-01-02" }}'
     match_channels: ['#mychannel']
     match_message: '^!followage'
+```
+
+### Respond to a message after random delay
+
+```yaml
+  - actions:
+    # Respond after 30-40s
+    - delay: 30s
+      delay_jitter: 10s
+    - respond: 'Hey {{ .username }}'
+    match_channels: ['#mychannel']
+    match_message: '^Hi'
 ```
 
 ### Send a notification on successful permit

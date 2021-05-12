@@ -250,13 +250,21 @@ func (r *rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 }
 
 type ruleAction struct {
-	Ban             *string        `json:"ban" yaml:"ban"`
-	Command         []string       `json:"command" yaml:"command"`
-	CounterSet      *string        `json:"counter_set" yaml:"counter_set"`
-	CounterStep     *int64         `json:"counter_step" yaml:"counter_step"`
-	Counter         *string        `json:"counter" yaml:"counter"`
-	DeleteMessage   *bool          `json:"delete_message" yaml:"delete_message"`
-	Respond         *string        `json:"respond" yaml:"respond"`
-	RespondFallback *string        `json:"respond_fallback" yaml:"respond_fallback"`
-	Timeout         *time.Duration `json:"timeout" yaml:"timeout"`
+	Ban *string `json:"ban" yaml:"ban"`
+
+	Command []string `json:"command" yaml:"command"`
+
+	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
+	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
+	Counter     *string `json:"counter" yaml:"counter"`
+
+	Delay       time.Duration `json:"delay" yaml:"delay"`
+	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
+
+	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
+
+	Respond         *string `json:"respond" yaml:"respond"`
+	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
+
+	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
