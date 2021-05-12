@@ -1,3 +1,8 @@
+# 0.7.0 / 2021-05-13
+
+  * Lint: Disable requirement for crypto/rand for time randomizer
+  * Add delay-action
+
 # 0.6.0 / 2021-05-12
 
   * Add sub events, document available event types
