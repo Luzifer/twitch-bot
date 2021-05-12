@@ -15,7 +15,7 @@ func init() {
 
 		totalDelay := r.Delay
 		if r.DelayJitter > 0 {
-			totalDelay += time.Duration(rand.Int63n(int64(r.DelayJitter)))
+			totalDelay += time.Duration(rand.Int63n(int64(r.DelayJitter))) // #nosec: G404 // It's just time, no need for crypto/rand
 		}
 
 		time.Sleep(totalDelay)
