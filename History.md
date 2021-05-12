@@ -1,3 +1,7 @@
+# 0.6.0 / 2021-05-12
+
+  * Add sub events, document available event types
+
 # 0.5.0 / 2021-05-11
 
   * Fix: Unlock auto-messages to prevent dead-locks
