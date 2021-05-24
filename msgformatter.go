@@ -16,12 +16,15 @@ func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]
 
 	if m != nil {
 		fields["msg"] = m
-		fields["permitTimeout"] = int64(config.PermitTimeout / time.Second)
 		fields["username"] = m.User
 
 		if m.Command == "PRIVMSG" && len(m.Params) > 0 {
 			fields["channel"] = m.Params[0]
 		}
+	}
+
+	if config != nil {
+		fields["permitTimeout"] = int64(config.PermitTimeout / time.Second)
 	}
 
 	// Parse and execute template
