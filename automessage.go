@@ -16,14 +16,14 @@ import (
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
 type autoMessage struct {
-	Channel   string `yaml:"channel" hcl:"channel"`
-	Message   string `yaml:"message" hcl:"message"`
-	UseAction bool   `yaml:"use_action" hcl:"use_action,optional"`
+	Channel   string `yaml:"channel"`
+	Message   string `yaml:"message"`
+	UseAction bool   `yaml:"use_action"`
 
-	Cron            string        `yaml:"cron" hcl:"cron,optional"`
-	MessageInterval int64         `yaml:"message_interval" hcl:"message_interval,optional"`
-	OnlyOnLive      bool          `yaml:"only_on_live" hcl:"only_on_live,optional"`
-	TimeInterval    time.Duration `yaml:"time_interval" hcl:"time_interval,optional"`
+	Cron            string        `yaml:"cron"`
+	MessageInterval int64         `yaml:"message_interval"`
+	OnlyOnLive      bool          `yaml:"only_on_live"`
+	TimeInterval    time.Duration `yaml:"time_interval"`
 
 	disabled              bool
 	lastMessageSent       time.Time

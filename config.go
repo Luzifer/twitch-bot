@@ -3,25 +3,23 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
 	"github.com/go-irc/irc"
-	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 type configFile struct {
-	AutoMessages         []*autoMessage `yaml:"auto_messages" hcl:"auto_message,block"`
-	Channels             []string       `yaml:"channels" hcl:"channels"`
-	PermitAllowModerator bool           `yaml:"permit_allow_moderator" hcl:"permit_allow_moderator,optional"`
-	PermitTimeout        time.Duration  `yaml:"permit_timeout" hcl:"permit_timeout,optional"`
-	RawLog               string         `yaml:"raw_log" hcl:"raw_log,optional"`
-	Rules                []*rule        `yaml:"rules" hcl:"rule,block"`
+	AutoMessages         []*autoMessage `yaml:"auto_messages"`
+	Channels             []string       `yaml:"channels"`
+	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
+	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
+	RawLog               string         `yaml:"raw_log"`
+	Rules                []*rule        `yaml:"rules"`
 
 	rawLogWriter io.WriteCloser
 }
@@ -39,9 +37,6 @@ func loadConfig(filename string) error {
 	)
 
 	switch path.Ext(filename) {
-	case ".hcl":
-		tmpConfig, err = parseConfigFromHCL(filename)
-
 	case ".yaml", ".yml":
 		tmpConfig, err = parseConfigFromYAML(filename)
 
@@ -99,18 +94,6 @@ func loadConfig(filename string) error {
 	}).Info("Config file (re)loaded")
 
 	return nil
-}
-
-func parseConfigFromHCL(filename string) (*configFile, error) {
-	rawHCL, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "reading file content")
-	}
-
-	tmpConfig := newConfigFile()
-	err = hclsimple.Decode(path.Base(filename), rawHCL, nil, tmpConfig)
-
-	return tmpConfig, errors.Wrap(err, "decode config file")
 }
 
 func parseConfigFromYAML(filename string) (*configFile, error) {
