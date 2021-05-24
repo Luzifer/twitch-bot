@@ -19,6 +19,7 @@ const (
 
 func watchConfigChanges(filename string, evt chan configChangeEvent) {
 	var (
+		available   bool
 		initialized bool
 		size        int64
 		modTime     time.Time
@@ -31,7 +32,10 @@ func watchConfigChanges(filename string, evt chan configChangeEvent) {
 			// Fine
 
 		case os.IsNotExist(err):
-			evt <- configChangeEventNotExist
+			if available {
+				evt <- configChangeEventNotExist
+			}
+			available = false
 			continue
 
 		default:
@@ -43,6 +47,7 @@ func watchConfigChanges(filename string, evt chan configChangeEvent) {
 			evt <- configChangeEventModified
 		}
 
+		available = true
 		initialized = true
 		size = info.Size()
 		modTime = info.ModTime()
