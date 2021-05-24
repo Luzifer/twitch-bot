@@ -16,7 +16,7 @@ func init() {
 
 	tplFuncs.Register("recentGame", genericTemplateFunctionGetter(func(username string, v ...string) (string, error) {
 		game, _, err := twitch.GetRecentStreamInfo(strings.TrimLeft(username, "#"))
-		if err != nil && len(v) > 0 {
+		if len(v) > 0 && (err != nil || game == "") {
 			return v[0], nil
 		}
 
