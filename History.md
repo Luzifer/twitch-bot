@@ -1,3 +1,10 @@
+# 0.8.0 / 2021-05-24
+
+  * Fix: Display fallback when no category is set in `recentGame`
+  * Add displayName template function
+  * Replace non-reliable fsevents library with simple check
+  * Add HCL config format support
+
 # 0.7.0 / 2021-05-13
 
   * Lint: Disable requirement for crypto/rand for time randomizer
