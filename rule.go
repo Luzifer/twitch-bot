@@ -25,10 +25,12 @@ type rule struct {
 
 	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
 
-	DisableOnOffline bool     `yaml:"disable_on_offline"`
-	DisableOnPermit  bool     `yaml:"disable_on_permit"`
-	DisableOn        []string `yaml:"disable_on"`
-	EnableOn         []string `yaml:"enable_on"`
+	Disable           *bool    `yaml:"disable"`
+	DisableOnOffline  *bool    `yaml:"disable_on_offline"`
+	DisableOnPermit   *bool    `yaml:"disable_on_permit"`
+	DisableOnTemplate *string  `yaml:"disable_on_template"`
+	DisableOn         []string `yaml:"disable_on"`
+	EnableOn          []string `yaml:"enable_on"`
 
 	matchMessage           *regexp.Regexp
 	disableOnMatchMessages []*regexp.Regexp
@@ -60,6 +62,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	)
 
 	for _, matcher := range []func(*log.Entry, *irc.Message, *string, badgeCollection) bool{
+		r.allowExecuteDisable,
 		r.allowExecuteChannelWhitelist,
 		r.allowExecuteUserWhitelist,
 		r.allowExecuteEventWhitelist,
@@ -69,6 +72,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 		r.allowExecuteBadgeWhitelist,
 		r.allowExecuteDisableOnPermit,
 		r.allowExecuteCooldown,
+		r.allowExecuteDisableOnTemplate,
 		r.allowExecuteDisableOnOffline,
 	} {
 		if !matcher(logger, m, event, badges) {
@@ -139,8 +143,12 @@ func (r *rule) allowExecuteCooldown(logger *log.Entry, m *irc.Message, event *st
 	return false
 }
 
+func (r *rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	return r.Disable == nil || !*r.Disable
+}
+
 func (r *rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	if !r.DisableOnOffline {
+	if r.DisableOnOffline == nil || !*r.DisableOnOffline {
 		// No match criteria set, does not speak against matching
 		return true
 	}
@@ -159,12 +167,28 @@ func (r *rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, e
 }
 
 func (r *rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	if r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User) {
+	if r.DisableOnPermit == nil || (*r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User)) {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
 
 	return true
+}
+
+func (r *rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.DisableOnTemplate == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	res, err := formatMessage(*r.DisableOnTemplate, m, r, nil)
+	if err != nil {
+		logger.WithError(err).Error("Unable to check DisableOnTemplate field")
+		// Caused an error, forbid execution
+		return false
+	}
+
+	return res != "true"
 }
 
 func (r *rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {

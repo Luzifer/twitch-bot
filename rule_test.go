@@ -12,6 +12,7 @@ import (
 var (
 	testLogger      = logrus.NewEntry(logrus.StandardLogger())
 	testBadgeLevel0 = func(i int) *int { return &i }(0)
+	testPtrBool     = func(b bool) *bool { return &b }
 )
 
 func TestAllowExecuteBadgeBlacklist(t *testing.T) {
@@ -76,8 +77,19 @@ func TestAllowExecuteCooldown(t *testing.T) {
 	}
 }
 
+func TestAllowExecuteDisable(t *testing.T) {
+	for exp, r := range map[bool]*rule{
+		true:  {Disable: testPtrBool(false)},
+		false: {Disable: testPtrBool(true)},
+	} {
+		if res := r.allowExecuteDisable(testLogger, nil, nil, badgeCollection{}); res != exp {
+			t.Errorf("Disable status %v yield unexpected result: exp=%v res=%v", *r.Disable, exp, res)
+		}
+	}
+}
+
 func TestAllowExecuteDisableOnOffline(t *testing.T) {
-	r := &rule{DisableOnOffline: true}
+	r := &rule{DisableOnOffline: testPtrBool(true)}
 
 	// Fake cache entries to prevent calling the real Twitch API
 	twitch.apiCache.Set([]string{"hasLiveStream", "channel1"}, time.Minute, true)
@@ -94,7 +106,7 @@ func TestAllowExecuteDisableOnOffline(t *testing.T) {
 }
 
 func TestAllowExecuteDisableOnPermit(t *testing.T) {
-	r := &rule{DisableOnPermit: true}
+	r := &rule{DisableOnPermit: testPtrBool(true)}
 
 	// Permit is using global configuration, so we must fake that one
 	config = &configFile{PermitTimeout: time.Minute}
@@ -108,6 +120,19 @@ func TestAllowExecuteDisableOnPermit(t *testing.T) {
 	timerStore.AddPermit(m.Params[0], m.User)
 	if r.allowExecuteDisableOnPermit(testLogger, m, nil, badgeCollection{}) {
 		t.Error("Execution was allowed with permit")
+	}
+}
+
+func TestAllowExecuteDisableOnTemplate(t *testing.T) {
+	r := &rule{DisableOnTemplate: func(s string) *string { return &s }(`{{ ne .username "amy" }}`)}
+
+	for msg, exp := range map[string]bool{
+		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing": true,
+		":bob!bob@foo.example.com PRIVMSG #mychannel :Testing": false,
+	} {
+		if res := r.allowExecuteDisableOnTemplate(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
+			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
+		}
 	}
 }
 
