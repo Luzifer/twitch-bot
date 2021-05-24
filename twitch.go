@@ -48,6 +48,43 @@ func (t twitchClient) getAuthorizedUsername() (string, error) {
 	return payload.Data[0].Login, nil
 }
 
+func (t twitchClient) GetDisplayNameForUser(username string) (string, error) {
+	cacheKey := []string{"displayNameForUsername", username}
+	if d := t.apiCache.Get(cacheKey); d != nil {
+		return d.(string), nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
+	defer cancel()
+
+	var payload struct {
+		Data []struct {
+			ID          string `json:"id"`
+			DisplayName string `json:"display_name"`
+			Login       string `json:"login"`
+		} `json:"data"`
+	}
+
+	if err := t.request(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
+		nil,
+		&payload,
+	); err != nil {
+		return "", errors.Wrap(err, "request channel info")
+	}
+
+	if l := len(payload.Data); l != 1 {
+		return "", errors.Errorf("unexpected number of users returned: %d", l)
+	}
+
+	// The DisplayName for an username will not change (often), cache for a decent time
+	t.apiCache.Set(cacheKey, time.Hour, payload.Data[0].DisplayName)
+
+	return payload.Data[0].DisplayName, nil
+}
+
 func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 	cacheKey := []string{"followDate", from, to}
 	if d := t.apiCache.Get(cacheKey); d != nil {
