@@ -13,22 +13,22 @@ import (
 )
 
 type rule struct {
-	Actions []*ruleAction `yaml:"actions"`
+	Actions []*ruleAction `yaml:"actions" hcl:"action,block"`
 
-	Cooldown        *time.Duration `yaml:"cooldown"`
-	SkipCooldownFor []string       `yaml:"skip_cooldown_for"`
+	Cooldown        *time.Duration `yaml:"cooldown" hcl:"cooldown,optional"`
+	SkipCooldownFor []string       `yaml:"skip_cooldown_for" hcl:"skip_cooldown_for,optional"`
 
-	MatchChannels []string `yaml:"match_channels"`
-	MatchEvent    *string  `yaml:"match_event"`
-	MatchMessage  *string  `yaml:"match_message"`
-	MatchUsers    []string `yaml:"match_users"`
+	MatchChannels []string `yaml:"match_channels" hcl:"match_channels,optional"`
+	MatchEvent    *string  `yaml:"match_event" hcl:"match_event,optional"`
+	MatchMessage  *string  `yaml:"match_message" hcl:"match_message,optional"`
+	MatchUsers    []string `yaml:"match_users"  hcl:"match_users,optional"`
 
-	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
+	DisableOnMatchMessages []string `yaml:"disable_on_match_messages" hcl:"disable_on_match_messages,optional"`
 
-	DisableOnOffline bool     `yaml:"disable_on_offline"`
-	DisableOnPermit  bool     `yaml:"disable_on_permit"`
-	DisableOn        []string `yaml:"disable_on"`
-	EnableOn         []string `yaml:"enable_on"`
+	DisableOnOffline bool     `yaml:"disable_on_offline" hcl:"disable_on_offline,optional"`
+	DisableOnPermit  bool     `yaml:"disable_on_permit" hcl:"disable_on_permit,optional"`
+	DisableOn        []string `yaml:"disable_on" hcl:"disable_on,optional"`
+	EnableOn         []string `yaml:"enable_on" hcl:"enable_on,optional"`
 
 	matchMessage           *regexp.Regexp
 	disableOnMatchMessages []*regexp.Regexp
@@ -250,21 +250,21 @@ func (r *rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 }
 
 type ruleAction struct {
-	Ban *string `json:"ban" yaml:"ban"`
+	Ban *string `json:"ban" yaml:"ban" hcl:"ban,optional"`
 
-	Command []string `json:"command" yaml:"command"`
+	Command []string `json:"command" yaml:"command" hcl:"command,optional"`
 
-	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
-	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
-	Counter     *string `json:"counter" yaml:"counter"`
+	CounterSet  *string `json:"counter_set" yaml:"counter_set" hcl:"counter_set,optional"`
+	CounterStep *int64  `json:"counter_step" yaml:"counter_step" hcl:"counter_step,optional"`
+	Counter     *string `json:"counter" yaml:"counter" hcl:"counter,optional"`
 
-	Delay       time.Duration `json:"delay" yaml:"delay"`
-	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
+	Delay       time.Duration `json:"delay" yaml:"delay" hcl:"delay,optional"`
+	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter" hcl:"delay_jitter,optional"`
 
-	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
+	DeleteMessage *bool `json:"delete_message" yaml:"delete_message" hcl:"delete_message,optional"`
 
-	Respond         *string `json:"respond" yaml:"respond"`
-	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
+	Respond         *string `json:"respond" yaml:"respond" hcl:"respond,optional"`
+	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback" hcl:"respond_fallback,optional"`
 
-	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
+	Timeout *time.Duration `json:"timeout" yaml:"timeout" hcl:"timeout,optional"`
 }

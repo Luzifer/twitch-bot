@@ -3,23 +3,25 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
 	"github.com/go-irc/irc"
+	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
 type configFile struct {
-	AutoMessages         []*autoMessage `yaml:"auto_messages"`
-	Channels             []string       `yaml:"channels"`
-	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
-	RawLog               string         `yaml:"raw_log"`
-	Rules                []*rule        `yaml:"rules"`
+	AutoMessages         []*autoMessage `yaml:"auto_messages" hcl:"auto_message,block"`
+	Channels             []string       `yaml:"channels" hcl:"channels"`
+	PermitAllowModerator bool           `yaml:"permit_allow_moderator" hcl:"permit_allow_moderator,optional"`
+	PermitTimeout        time.Duration  `yaml:"permit_timeout" hcl:"permit_timeout,optional"`
+	RawLog               string         `yaml:"raw_log" hcl:"raw_log,optional"`
+	Rules                []*rule        `yaml:"rules" hcl:"rule,block"`
 
 	rawLogWriter io.WriteCloser
 }
@@ -31,21 +33,24 @@ func newConfigFile() *configFile {
 }
 
 func loadConfig(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return errors.Wrap(err, "open config file")
-	}
-	defer f.Close()
-
 	var (
-		decoder   = yaml.NewDecoder(f)
-		tmpConfig = newConfigFile()
+		err       error
+		tmpConfig *configFile
 	)
 
-	decoder.SetStrict(true)
+	switch path.Ext(filename) {
+	case ".hcl":
+		tmpConfig, err = parseConfigFromHCL(filename)
 
-	if err = decoder.Decode(&tmpConfig); err != nil {
-		return errors.Wrap(err, "decode config file")
+	case ".yaml", ".yml":
+		tmpConfig, err = parseConfigFromYAML(filename)
+
+	default:
+		return errors.Errorf("Unknown config format %q", path.Ext(filename))
+	}
+
+	if err != nil {
+		return errors.Wrap(err, "parsing config")
 	}
 
 	if len(tmpConfig.Channels) == 0 {
@@ -60,6 +65,7 @@ func loadConfig(filename string) error {
 	defer configLock.Unlock()
 
 	tmpConfig.updateAutoMessagesFromConfig(config)
+	tmpConfig.fixDurations()
 
 	switch {
 	case config != nil && config.RawLog == tmpConfig.RawLog:
@@ -95,6 +101,39 @@ func loadConfig(filename string) error {
 	return nil
 }
 
+func parseConfigFromHCL(filename string) (*configFile, error) {
+	rawHCL, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "reading file content")
+	}
+
+	tmpConfig := newConfigFile()
+	err = hclsimple.Decode(path.Base(filename), rawHCL, nil, tmpConfig)
+
+	return tmpConfig, errors.Wrap(err, "decode config file")
+}
+
+func parseConfigFromYAML(filename string) (*configFile, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "open config file")
+	}
+	defer f.Close()
+
+	var (
+		decoder   = yaml.NewDecoder(f)
+		tmpConfig = newConfigFile()
+	)
+
+	decoder.SetStrict(true)
+
+	if err = decoder.Decode(&tmpConfig); err != nil {
+		return nil, errors.Wrap(err, "decode config file")
+	}
+
+	return tmpConfig, nil
+}
+
 func (c *configFile) CloseRawMessageWriter() error {
 	if c == nil || c.rawLogWriter == nil {
 		return nil
@@ -120,6 +159,36 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*rule {
 func (c configFile) LogRawMessage(m *irc.Message) error {
 	_, err := fmt.Fprintln(c.rawLogWriter, m.String())
 	return errors.Wrap(err, "writing raw log message")
+}
+
+func (c *configFile) fixDurations() {
+	// General fields
+	c.PermitTimeout = c.fixedDuration(c.PermitTimeout)
+
+	// Fix rules
+	for _, r := range c.Rules {
+		r.Cooldown = c.fixedDurationPtr(r.Cooldown)
+	}
+
+	// Fix auto-messages
+	for _, a := range c.AutoMessages {
+		a.TimeInterval = c.fixedDuration(a.TimeInterval)
+	}
+}
+
+func (configFile) fixedDuration(d time.Duration) time.Duration {
+	if d > time.Second {
+		return d
+	}
+	return d * time.Second
+}
+
+func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
+	if d == nil || *d > time.Second {
+		return d
+	}
+	fd := *d * time.Second
+	return &fd
 }
 
 func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {

@@ -1,4 +1,5 @@
 config
+config.hcl
 config.yaml
 .env
 storage.json.gz
