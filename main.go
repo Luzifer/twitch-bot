@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
 
 	"github.com/Luzifer/rconfig/v2"
 )
@@ -78,14 +77,8 @@ func main() {
 	}
 	defer func() { config.CloseRawMessageWriter() }()
 
-	fswatch, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.WithError(err).Fatal("Unable to create file watcher")
-	}
-
-	if err = fswatch.Add(cfg.Config); err != nil {
-		log.WithError(err).Error("Unable to watch config, auto-reload will not work")
-	}
+	fsEvents := make(chan configChangeEvent, 1)
+	go watchConfigChanges(cfg.Config, fsEvents)
 
 	var (
 		irc               *ircHandler
@@ -115,9 +108,17 @@ func main() {
 				ircDisconnected <- struct{}{}
 			}()
 
-		case evt := <-fswatch.Events:
-			if evt.Op&fsnotify.Write != fsnotify.Write {
+		case evt := <-fsEvents:
+			switch evt {
+			case configChangeEventUnkown:
 				continue
+
+			case configChangeEventNotExist:
+				log.Error("Config file is not available, not reloading config")
+				continue
+
+			case configChangeEventModified:
+				// Fine, reload
 			}
 
 			if err := loadConfig(cfg.Config); err != nil {
