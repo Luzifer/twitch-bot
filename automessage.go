@@ -20,6 +20,8 @@ type autoMessage struct {
 	Message   string `yaml:"message"`
 	UseAction bool   `yaml:"use_action"`
 
+	DisableOnTemplate *string `yaml:"disable_on_template"`
+
 	Cron            string        `yaml:"cron"`
 	MessageInterval int64         `yaml:"message_interval"`
 	OnlyOnLive      bool          `yaml:"only_on_live"`
@@ -69,6 +71,10 @@ func (a *autoMessage) CanSend() bool {
 			a.lastMessageSent = time.Now()
 			return false
 		}
+	}
+
+	if !a.allowExecuteDisableOnTemplate() {
+		return false
 	}
 
 	return true
@@ -136,4 +142,21 @@ func (a *autoMessage) Send(c *irc.Client) error {
 	a.linesSinceLastMessage = 0
 
 	return nil
+}
+
+func (a *autoMessage) allowExecuteDisableOnTemplate() bool {
+	if a.DisableOnTemplate == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	res, err := formatMessage(*a.DisableOnTemplate, nil, nil, map[string]interface{}{
+		"channel": a.Channel,
+	})
+	if err != nil {
+		// Caused an error, forbid execution
+		return false
+	}
+
+	return res != "true"
 }
