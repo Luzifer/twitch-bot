@@ -144,7 +144,17 @@ func (r *rule) allowExecuteCooldown(logger *log.Entry, m *irc.Message, event *st
 }
 
 func (r *rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	return r.Disable == nil || !*r.Disable
+	if r.Disable == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if *r.Disable {
+		logger.Trace("Non-Match: Disable")
+		return false
+	}
+
+	return true
 }
 
 func (r *rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
@@ -167,7 +177,7 @@ func (r *rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, e
 }
 
 func (r *rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	if r.DisableOnPermit == nil || (*r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User)) {
+	if r.DisableOnPermit != nil && *r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User) {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
@@ -188,7 +198,12 @@ func (r *rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 		return false
 	}
 
-	return res != "true"
+	if res == "true" {
+		logger.Trace("Non-Match: Template")
+		return false
+	}
+
+	return true
 }
 
 func (r *rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
