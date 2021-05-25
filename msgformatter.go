@@ -10,34 +10,41 @@ import (
 )
 
 func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]interface{}) (string, error) {
-	if fields == nil {
-		fields = map[string]interface{}{}
+	compiledFields := map[string]interface{}{}
+
+	if config != nil {
+		configLock.RLock()
+		for k, v := range config.Variables {
+			compiledFields[k] = v
+		}
+		compiledFields["permitTimeout"] = int64(config.PermitTimeout / time.Second)
+		configLock.RUnlock()
+	}
+
+	for k, v := range fields {
+		compiledFields[k] = v
 	}
 
 	if m != nil {
-		fields["msg"] = m
-		fields["username"] = m.User
+		compiledFields["msg"] = m
+		compiledFields["username"] = m.User
 
 		if m.Command == "PRIVMSG" && len(m.Params) > 0 {
-			fields["channel"] = m.Params[0]
+			compiledFields["channel"] = m.Params[0]
 		}
-	}
-
-	if config != nil {
-		fields["permitTimeout"] = int64(config.PermitTimeout / time.Second)
 	}
 
 	// Parse and execute template
 	tpl, err := template.
 		New(tplString).
-		Funcs(tplFuncs.GetFuncMap(m, r, fields)).
+		Funcs(tplFuncs.GetFuncMap(m, r, compiledFields)).
 		Parse(tplString)
 	if err != nil {
 		return "", errors.Wrap(err, "parse template")
 	}
 
 	buf := new(bytes.Buffer)
-	err = tpl.Execute(buf, fields)
+	err = tpl.Execute(buf, compiledFields)
 
 	return buf.String(), errors.Wrap(err, "execute template")
 }

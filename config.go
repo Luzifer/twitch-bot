@@ -14,12 +14,13 @@ import (
 )
 
 type configFile struct {
-	AutoMessages         []*autoMessage `yaml:"auto_messages"`
-	Channels             []string       `yaml:"channels"`
-	PermitAllowModerator bool           `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration  `yaml:"permit_timeout"`
-	RawLog               string         `yaml:"raw_log"`
-	Rules                []*rule        `yaml:"rules"`
+	AutoMessages         []*autoMessage         `yaml:"auto_messages"`
+	Channels             []string               `yaml:"channels"`
+	PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
+	PermitTimeout        time.Duration          `yaml:"permit_timeout"`
+	RawLog               string                 `yaml:"raw_log"`
+	Rules                []*rule                `yaml:"rules"`
+	Variables            map[string]interface{} `yaml:"variables"`
 
 	rawLogWriter io.WriteCloser
 }
