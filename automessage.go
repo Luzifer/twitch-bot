@@ -74,6 +74,9 @@ func (a *autoMessage) CanSend() bool {
 	}
 
 	if !a.allowExecuteDisableOnTemplate() {
+		log.Trace("Auto-Message disabled by template")
+		// Reset the timer for this execution not to spam every second
+		a.lastMessageSent = time.Now()
 		return false
 	}
 
@@ -154,6 +157,7 @@ func (a *autoMessage) allowExecuteDisableOnTemplate() bool {
 		"channel": a.Channel,
 	})
 	if err != nil {
+		log.WithError(err).Error("Error in auto-message disable template")
 		// Caused an error, forbid execution
 		return false
 	}
