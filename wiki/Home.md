@@ -12,6 +12,13 @@ permit_allow_moderator: true
 # How long to permit on !permit command
 permit_timeout: 60s
 
+# Variables are made available in templating (for example useful to disable several
+# rules at once using the `disable_on_template` directive)
+# Supported data types: Boolean, Float, Integer, String
+variables:
+  myvariable: true
+  anothervariable: "string"
+
 auto_messages:
   - channel: 'mychannel'          # String, channel to send message to
     message: 'Automated message'  # String, message to send
@@ -23,6 +30,9 @@ auto_messages:
     time_interval: 900s   # Duration, optional, how long to wait before repeating the message
 
     only_on_live: true    # Boolean, optional, only send the message when channel is live
+
+    # Disable message using templating, must yield string `true` to disable the automated message
+    disable_on_template: '{{ ne .myvariable true }}'
 
 rules: # See below for examples
 
@@ -61,11 +71,17 @@ rules: # See below for examples
     # Do not apply cooldown for these badges
     skip_cooldown_for: [broadcaster, moderator]
 
+    # Disable the rule by setting to true
+    disable: false
+
     # Disable actions when the matched channel has no active stream
     disable_on_offline: false
 
     # Disable actions on this rule if the user has an active permit
     disable_on_permit: false
+
+    # Disable actions using templating, must yield string `true` to disable the rule
+    disable_on_template: '{{ ne .myvariable true }}'
 
     # Disable actions on this rule if the user has one of these badges
     disable_on: [broadcaster, moderator]
