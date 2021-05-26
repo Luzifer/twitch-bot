@@ -11,4 +11,5 @@ var (
 	eventTypeResub   = ptrStr("resub")
 	eventTypeSub     = ptrStr("sub")
 	eventTypeSubgift = ptrStr("subgift")
+	eventTypeWhisper = ptrStr("whisper")
 )

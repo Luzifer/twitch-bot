@@ -122,6 +122,11 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		// Announces Twitch-specific events to the channel (for example, a user’s subscription notification).
 		i.handleTwitchUsernotice(m)
 
+	case "WHISPER":
+		// WHISPER (Twitch Commands)
+		// Delivers whisper-messages received
+		i.handleTwitchWhisper(m)
+
 	default:
 		log.WithFields(log.Fields{
 			"command":  m.Command,
@@ -245,6 +250,10 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeSubgift)
 
 	}
+}
+
+func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
+	go handleMessage(i.c, m, eventTypeWhisper)
 }
 
 func (ircHandler) ParseBadgeLevels(m *irc.Message) badgeCollection {
