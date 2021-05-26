@@ -1,3 +1,11 @@
+# 0.9.0 / 2021-05-26
+
+  * Add `part` event
+  * Allow to disable automessages with templates
+  * Add global variables to be used in templates
+  * Add Disable and DisableOnTemplate attributes for rules
+  * Drop HCL support (causes too much effort for too little benefit)
+
 # 0.8.0 / 2021-05-24
 
   * Fix: Display fallback when no category is set in `recentGame`
