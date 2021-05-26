@@ -302,8 +302,13 @@ type ruleAction struct {
 
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 
+	RawMessage *string `json:"raw_message" yaml:"raw_message"`
+
 	Respond         *string `json:"respond" yaml:"respond"`
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
+
+	WhisperMessage *string `json:"whisper_message" yaml:"whisper_message"`
+	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }

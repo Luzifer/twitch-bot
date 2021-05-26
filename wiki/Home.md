@@ -57,6 +57,9 @@ rules: # See below for examples
     # Issue a delete on the message caught
     - delete_message: true # Bool, set to true to delete
 
+    # Send raw IRC message to Twitch servers
+    - raw_message: 'PRIVMSG #{{ .channel }} :Test' # String, applies templating
+
     # Send responding message to the channel the original message was received in
     - respond: 'Hello chatter'    # String, applies templating
       respond_fallback: 'Oh noes' # String, text to send if the template function causes
@@ -64,6 +67,11 @@ rules: # See below for examples
 
     # Issue a timeout on the user who wrote the chat-line
     - timeout: 1s # Duration value: 1s / 1m / 1h
+
+    # Send a whisper (ATTENTION: You need to have a known / verified bot for this!)
+    # Without being known / verified your whisper will just silently get dropped by Twitch
+    - whisper_to: '{{ .username }}' # String, username to send to, applies templating
+      whisper_message: 'Ohai!'      # String, message to send, applies templating
 
     # Add a cooldown to the command (not to trigger counters twice, ...)
     cooldown: 1s # Duration value: 1s / 1m / 1h
