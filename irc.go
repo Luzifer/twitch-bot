@@ -103,6 +103,11 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		// General notices from the server.
 		i.handleTwitchNotice(m)
 
+	case "PART":
+		// PART (Default IRC Command)
+		// User leaves the channel, might be triggered multiple times
+		i.handlePart(m)
+
 	case "PRIVMSG":
 		i.handleTwitchPrivmsg(m)
 
@@ -138,6 +143,10 @@ func (ircHandler) getChannel(m *irc.Message) string {
 
 func (i ircHandler) handleJoin(m *irc.Message) {
 	go handleMessage(i.c, m, eventTypeJoin)
+}
+
+func (i ircHandler) handlePart(m *irc.Message) {
+	go handleMessage(i.c, m, eventTypePart)
 }
 
 func (i ircHandler) handlePermit(m *irc.Message) {
