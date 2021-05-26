@@ -70,6 +70,7 @@ rules: # See below for examples
 
     # Send a whisper (ATTENTION: You need to have a known / verified bot for this!)
     # Without being known / verified your whisper will just silently get dropped by Twitch
+    # Go here to get that verification: https://dev.twitch.tv/limit-increase
     - whisper_to: '{{ .username }}' # String, username to send to, applies templating
       whisper_message: 'Ohai!'      # String, message to send, applies templating
 
