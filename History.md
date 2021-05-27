@@ -1,3 +1,8 @@
+# 0.10.0 / 2021-05-27
+
+  * Add Whisper / RawMessage actions
+  * Add `whisper` event
+
 # 0.9.0 / 2021-05-26
 
   * Add `part` event
