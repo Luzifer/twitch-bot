@@ -62,6 +62,7 @@ rules: # See below for examples
 
     # Send responding message to the channel the original message was received in
     - respond: 'Hello chatter'    # String, applies templating
+      respond_as_reply: true      # Boolean, optional, use Twitch-Reply feature in respond
       respond_fallback: 'Oh noes' # String, text to send if the template function causes
                                   # an error, applies templating (default: unset)
 

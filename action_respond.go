@@ -21,14 +21,26 @@ func init() {
 			}
 		}
 
+		ircMessage := &irc.Message{
+			Command: "PRIVMSG",
+			Params: []string{
+				m.Params[0],
+				msg,
+			},
+		}
+
+		if r.RespondAsReply != nil && *r.RespondAsReply {
+			id, ok := m.GetTag("id")
+			if ok {
+				if ircMessage.Tags == nil {
+					ircMessage.Tags = make(irc.Tags)
+				}
+				ircMessage.Tags["reply-parent-msg-id"] = irc.TagValue(id)
+			}
+		}
+
 		return errors.Wrap(
-			c.WriteMessage(&irc.Message{
-				Command: "PRIVMSG",
-				Params: []string{
-					m.Params[0],
-					msg,
-				},
-			}),
+			c.WriteMessage(ircMessage),
 			"sending response",
 		)
 	})

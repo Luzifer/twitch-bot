@@ -305,6 +305,7 @@ type ruleAction struct {
 	RawMessage *string `json:"raw_message" yaml:"raw_message"`
 
 	Respond         *string `json:"respond" yaml:"respond"`
+	RespondAsReply  *bool   `json:"respond_as_reply" yaml:"respond_as_reply"`
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
