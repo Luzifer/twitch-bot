@@ -1,3 +1,7 @@
+# 0.11.0 / 2021-06-02
+
+  * Add retries to Twitch API calls
+
 # 0.10.0 / 2021-05-27
 
   * Add Whisper / RawMessage actions
