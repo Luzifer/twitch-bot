@@ -5,15 +5,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	twitchRequestTimeout = 2 * time.Second
 )
 
 const (

@@ -8,11 +8,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-const timeDay = 24 * time.Hour
+const (
+	timeDay = 24 * time.Hour
+
+	twitchRequestRetries = 5
+	twitchRequestTimeout = 2 * time.Second
+)
 
 var twitch = newTwitchClient()
 
@@ -27,9 +33,6 @@ func newTwitchClient() *twitchClient {
 }
 
 func (t twitchClient) getAuthorizedUsername() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	var payload struct {
 		Data []struct {
 			ID    string `json:"id"`
@@ -37,7 +40,13 @@ func (t twitchClient) getAuthorizedUsername() (string, error) {
 		} `json:"data"`
 	}
 
-	if err := t.request(ctx, http.MethodGet, "https://api.twitch.tv/helix/users", nil, &payload); err != nil {
+	if err := t.request(
+		context.Background(),
+		http.MethodGet,
+		"https://api.twitch.tv/helix/users",
+		nil,
+		&payload,
+	); err != nil {
 		return "", errors.Wrap(err, "request channel info")
 	}
 
@@ -54,9 +63,6 @@ func (t twitchClient) GetDisplayNameForUser(username string) (string, error) {
 		return d.(string), nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	var payload struct {
 		Data []struct {
 			ID          string `json:"id"`
@@ -66,7 +72,7 @@ func (t twitchClient) GetDisplayNameForUser(username string) (string, error) {
 	}
 
 	if err := t.request(
-		ctx,
+		context.Background(),
 		http.MethodGet,
 		fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
 		nil,
@@ -100,9 +106,6 @@ func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 		return time.Time{}, errors.Wrap(err, "getting id for 'to' user")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	var payload struct {
 		Data []struct {
 			FollowedAt time.Time `json:"followed_at"`
@@ -110,7 +113,7 @@ func (t twitchClient) GetFollowDate(from, to string) (time.Time, error) {
 	}
 
 	if err := t.request(
-		ctx,
+		context.Background(),
 		http.MethodGet,
 		fmt.Sprintf("https://api.twitch.tv/helix/users/follows?to_id=%s&from_id=%s", toID, fromID),
 		nil,
@@ -135,9 +138,6 @@ func (t twitchClient) HasLiveStream(username string) (bool, error) {
 		return d.(bool), nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	var payload struct {
 		Data []struct {
 			ID        string `json:"id"`
@@ -147,7 +147,7 @@ func (t twitchClient) HasLiveStream(username string) (bool, error) {
 	}
 
 	if err := t.request(
-		ctx,
+		context.Background(),
 		http.MethodGet,
 		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", username),
 		nil,
@@ -168,9 +168,6 @@ func (t twitchClient) getIDForUsername(username string) (string, error) {
 		return d.(string), nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	var payload struct {
 		Data []struct {
 			ID    string `json:"id"`
@@ -179,7 +176,7 @@ func (t twitchClient) getIDForUsername(username string) (string, error) {
 	}
 
 	if err := t.request(
-		ctx,
+		context.Background(),
 		http.MethodGet,
 		fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
 		nil,
@@ -204,9 +201,6 @@ func (t twitchClient) GetRecentStreamInfo(username string) (string, string, erro
 		return d.([2]string)[0], d.([2]string)[1], nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
 	id, err := t.getIDForUsername(username)
 	if err != nil {
 		return "", "", errors.Wrap(err, "getting ID for username")
@@ -222,7 +216,7 @@ func (t twitchClient) GetRecentStreamInfo(username string) (string, string, erro
 	}
 
 	if err := t.request(
-		ctx,
+		context.Background(),
 		http.MethodGet,
 		fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", id),
 		nil,
@@ -247,22 +241,27 @@ func (twitchClient) request(ctx context.Context, method, url string, body io.Rea
 		"url":    url,
 	}).Trace("Execute Twitch API request")
 
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
-	if err != nil {
-		return errors.Wrap(err, "assemble request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Client-Id", cfg.TwitchClient)
-	req.Header.Set("Authorization", "Bearer "+cfg.TwitchToken)
+	return backoff.NewBackoff().WithMaxIterations(twitchRequestRetries).Retry(func() error {
+		reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
+		defer cancel()
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "execute request")
-	}
-	defer resp.Body.Close()
+		req, err := http.NewRequestWithContext(reqCtx, method, url, body)
+		if err != nil {
+			return errors.Wrap(err, "assemble request")
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Client-Id", cfg.TwitchClient)
+		req.Header.Set("Authorization", "Bearer "+cfg.TwitchToken)
 
-	return errors.Wrap(
-		json.NewDecoder(resp.Body).Decode(out),
-		"parse user info",
-	)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return errors.Wrap(err, "execute request")
+		}
+		defer resp.Body.Close()
+
+		return errors.Wrap(
+			json.NewDecoder(resp.Body).Decode(out),
+			"parse user info",
+		)
+	})
 }
