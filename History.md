@@ -1,3 +1,7 @@
+# 0.12.0 / 2021-06-05
+
+  * Add "respond as reply" functionality
+
 # 0.11.0 / 2021-06-02
 
   * Add retries to Twitch API calls
