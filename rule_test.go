@@ -58,25 +58,6 @@ func TestAllowExecuteChannelWhitelist(t *testing.T) {
 	}
 }
 
-func TestAllowExecuteCooldown(t *testing.T) {
-	r := &rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
-
-	if !r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{}) {
-		t.Error("Initial call was not allowed")
-	}
-
-	// Add cooldown
-	timerStore.AddCooldown(r.MatcherID())
-
-	if r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{}) {
-		t.Error("Call after cooldown added was allowed")
-	}
-
-	if !r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
-		t.Error("Call in cooldown with skip badge was not allowed")
-	}
-}
-
 func TestAllowExecuteDisable(t *testing.T) {
 	for exp, r := range map[bool]*rule{
 		true:  {Disable: testPtrBool(false)},
@@ -102,6 +83,31 @@ func TestAllowExecuteDisableOnOffline(t *testing.T) {
 		if res := r.allowExecuteDisableOnOffline(testLogger, irc.MustParseMessage(fmt.Sprintf("PRIVMSG #%s :test", ch)), nil, badgeCollection{}); res != exp {
 			t.Errorf("Channel %q yield an unexpected result: exp=%v res=%v", ch, exp, res)
 		}
+	}
+}
+
+func TestAllowExecuteChannelCooldown(t *testing.T) {
+	r := &rule{ChannelCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	c1 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
+	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #otherchannel :Testing")
+
+	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{}) {
+		t.Error("Initial call was not allowed")
+	}
+
+	// Add cooldown
+	timerStore.AddCooldown(timerTypeCooldown, c1.Params[0], r.MatcherID())
+
+	if r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{}) {
+		t.Error("Call after cooldown added was allowed")
+	}
+
+	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+		t.Error("Call in cooldown with skip badge was not allowed")
+	}
+
+	if !r.allowExecuteChannelCooldown(testLogger, c2, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+		t.Error("Call in cooldown with different channel was not allowed")
 	}
 }
 
@@ -172,6 +178,50 @@ func TestAllowExecuteMessageMatcherWhitelist(t *testing.T) {
 		if res := r.allowExecuteMessageMatcherWhitelist(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
 			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
 		}
+	}
+}
+
+func TestAllowExecuteRuleCooldown(t *testing.T) {
+	r := &rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
+		t.Error("Initial call was not allowed")
+	}
+
+	// Add cooldown
+	timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
+
+	if r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
+		t.Error("Call after cooldown added was allowed")
+	}
+
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+		t.Error("Call in cooldown with skip badge was not allowed")
+	}
+}
+
+func TestAllowExecuteUserCooldown(t *testing.T) {
+	r := &rule{UserCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	c1 := irc.MustParseMessage(":ben!ben@foo.example.com PRIVMSG #mychannel :Testing")
+	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
+
+	if !r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{}) {
+		t.Error("Initial call was not allowed")
+	}
+
+	// Add cooldown
+	timerStore.AddCooldown(timerTypeCooldown, c1.User, r.MatcherID())
+
+	if r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{}) {
+		t.Error("Call after cooldown added was allowed")
+	}
+
+	if !r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+		t.Error("Call in cooldown with skip badge was not allowed")
+	}
+
+	if !r.allowExecuteUserCooldown(testLogger, c2, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+		t.Error("Call in cooldown with different user was not allowed")
 	}
 }
 

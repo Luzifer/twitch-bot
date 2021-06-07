@@ -75,8 +75,21 @@ rules: # See below for examples
     - whisper_to: '{{ .username }}' # String, username to send to, applies templating
       whisper_message: 'Ohai!'      # String, message to send, applies templating
 
-    # Add a cooldown to the command (not to trigger counters twice, ...)
+    # Add a cooldown to the rule in general (not to trigger counters twice, ...)
+    # Using this will prevent the rule to be executed in all matching channels
+    # as long as the cooldown is active.
     cooldown: 1s # Duration value: 1s / 1m / 1h
+
+    # Add a cooldown to the rule per channel (not to trigger counters twice, ...)
+    # Using this will prevent the rule to be executed in the channel it was triggered
+    # which means other channels are not affected.
+    channel_cooldown: 1s # Duration value: 1s / 1m / 1h
+
+    # Add a cooldown to the rule per user (not to trigger counters twice, ...)
+    # Using this will prevent the rule to be executed for the user which triggered it
+    # in any of the matching channels, which means other users can trigger the command
+    # while that particular user cannot
+    user_cooldown: 1s # Duration value: 1s / 1m / 1h
 
     # Do not apply cooldown for these badges
     skip_cooldown_for: [broadcaster, moderator]
