@@ -74,6 +74,8 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 		r.allowExecuteBadgeWhitelist,
 		r.allowExecuteDisableOnPermit,
 		r.allowExecuteRuleCooldown,
+		r.allowExecuteChannelCooldown,
+		r.allowExecuteUserCooldown,
 		r.allowExecuteDisableOnTemplate,
 		r.allowExecuteDisableOnOffline,
 	} {
@@ -86,9 +88,17 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 	return true
 }
 
-func (r *rule) SetCooldown() {
+func (r *rule) SetCooldown(m *irc.Message) {
 	if r.Cooldown != nil {
 		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
+	}
+
+	if r.ChannelCooldown != nil && len(m.Params) > 0 {
+		timerStore.AddCooldown(timerTypeCooldown, m.Params[0], r.MatcherID())
+	}
+
+	if r.UserCooldown != nil {
+		timerStore.AddCooldown(timerTypeCooldown, m.User, r.MatcherID())
 	}
 }
 
@@ -110,6 +120,25 @@ func (r *rule) allowExecuteBadgeWhitelist(logger *log.Entry, m *irc.Message, eve
 	}
 
 	for _, b := range r.EnableOn {
+		if badges.Has(b) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.ChannelCooldown == nil || len(m.Params) < 1 {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if !timerStore.InCooldown(timerTypeCooldown, m.Params[0], r.MatcherID(), *r.ChannelCooldown) {
+		return true
+	}
+
+	for _, b := range r.SkipCooldownFor {
 		if badges.Has(b) {
 			return true
 		}
@@ -270,6 +299,25 @@ func (r *rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event
 	}
 
 	if !timerStore.InCooldown(timerTypeCooldown, "", r.MatcherID(), *r.Cooldown) {
+		return true
+	}
+
+	for _, b := range r.SkipCooldownFor {
+		if badges.Has(b) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.UserCooldown == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if !timerStore.InCooldown(timerTypeCooldown, m.User, r.MatcherID(), *r.UserCooldown) {
 		return true
 	}
 
