@@ -58,21 +58,21 @@ func TestAllowExecuteChannelWhitelist(t *testing.T) {
 	}
 }
 
-func TestAllowExecuteCooldown(t *testing.T) {
+func TestAllowExecuteRuleCooldown(t *testing.T) {
 	r := &rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
 
-	if !r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{}) {
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
 		t.Error("Initial call was not allowed")
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(r.MatcherID())
+	timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
 
-	if r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{}) {
+	if r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
 	}
 
-	if !r.allowExecuteCooldown(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with skip badge was not allowed")
 	}
 }

@@ -36,17 +36,17 @@ func newTimer() *timer {
 
 // Cooldown timer
 
-func (t *timer) AddCooldown(ruleID string) {
-	t.add(timerTypeCooldown, t.getCooldownTimerKey(ruleID))
+func (t *timer) AddCooldown(tt timerType, limiter, ruleID string) {
+	t.add(timerTypeCooldown, t.getCooldownTimerKey(tt, limiter, ruleID))
 }
 
-func (t *timer) InCooldown(ruleID string, cooldown time.Duration) bool {
-	return t.has(t.getCooldownTimerKey(ruleID), cooldown)
+func (t *timer) InCooldown(tt timerType, limiter, ruleID string, cooldown time.Duration) bool {
+	return t.has(t.getCooldownTimerKey(tt, limiter, ruleID), cooldown)
 }
 
-func (t timer) getCooldownTimerKey(ruleID string) string {
+func (t timer) getCooldownTimerKey(tt timerType, limiter, ruleID string) string {
 	h := sha256.New()
-	fmt.Fprintf(h, "%d:%s", timerTypeCooldown, ruleID)
+	fmt.Fprintf(h, "%d:%s:%s", tt, limiter, ruleID)
 	return fmt.Sprintf("sha256:%x", h.Sum(nil))
 }
 

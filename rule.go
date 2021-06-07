@@ -16,6 +16,8 @@ type rule struct {
 	Actions []*ruleAction `yaml:"actions"`
 
 	Cooldown        *time.Duration `yaml:"cooldown"`
+	ChannelCooldown *time.Duration `yaml:"channel_cooldown"`
+	UserCooldown    *time.Duration `yaml:"user_cooldown"`
 	SkipCooldownFor []string       `yaml:"skip_cooldown_for"`
 
 	MatchChannels []string `yaml:"match_channels"`
@@ -71,7 +73,7 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 		r.allowExecuteBadgeBlacklist,
 		r.allowExecuteBadgeWhitelist,
 		r.allowExecuteDisableOnPermit,
-		r.allowExecuteCooldown,
+		r.allowExecuteRuleCooldown,
 		r.allowExecuteDisableOnTemplate,
 		r.allowExecuteDisableOnOffline,
 	} {
@@ -82,6 +84,12 @@ func (r *rule) Matches(m *irc.Message, event *string) bool {
 
 	// Nothing objected: Matches!
 	return true
+}
+
+func (r *rule) SetCooldown() {
+	if r.Cooldown != nil {
+		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
+	}
 }
 
 func (r *rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
@@ -122,25 +130,6 @@ func (r *rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, e
 	}
 
 	return true
-}
-
-func (r *rule) allowExecuteCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	if r.Cooldown == nil {
-		// No match criteria set, does not speak against matching
-		return true
-	}
-
-	if !timerStore.InCooldown(r.MatcherID(), *r.Cooldown) {
-		return true
-	}
-
-	for _, b := range r.SkipCooldownFor {
-		if badges.Has(b) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (r *rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
@@ -272,6 +261,25 @@ func (r *rule) allowExecuteMessageMatcherWhitelist(logger *log.Entry, m *irc.Mes
 	}
 
 	return true
+}
+
+func (r *rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+	if r.Cooldown == nil {
+		// No match criteria set, does not speak against matching
+		return true
+	}
+
+	if !timerStore.InCooldown(timerTypeCooldown, "", r.MatcherID(), *r.Cooldown) {
+		return true
+	}
+
+	for _, b := range r.SkipCooldownFor {
+		if badges.Has(b) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
