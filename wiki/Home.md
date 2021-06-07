@@ -87,8 +87,8 @@ rules: # See below for examples
 
     # Add a cooldown to the rule per user (not to trigger counters twice, ...)
     # Using this will prevent the rule to be executed for the user which triggered it
-    # which means other users in the same channel can trigger the command while that
-    # particular user cannot
+    # in any of the matching channels, which means other users can trigger the command
+    # while that particular user cannot
     user_cooldown: 1s # Duration value: 1s / 1m / 1h
 
     # Do not apply cooldown for these badges
