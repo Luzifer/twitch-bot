@@ -354,30 +354,3 @@ func (r *RuleAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (r *RuleAction) Unmarshal(v interface{}) error {
 	return r.unmarshal(v)
 }
-
-// FIXME: Remove
-type oldRuleAction struct {
-	Ban *string `json:"ban" yaml:"ban"`
-
-	Command []string `json:"command" yaml:"command"`
-
-	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
-	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
-	Counter     *string `json:"counter" yaml:"counter"`
-
-	Delay       time.Duration `json:"delay" yaml:"delay"`
-	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
-
-	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
-
-	RawMessage *string `json:"raw_message" yaml:"raw_message"`
-
-	Respond         *string `json:"respond" yaml:"respond"`
-	RespondAsReply  *bool   `json:"respond_as_reply" yaml:"respond_as_reply"`
-	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
-
-	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
-
-	WhisperMessage *string `json:"whisper_message" yaml:"whisper_message"`
-	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
-}

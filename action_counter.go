@@ -8,41 +8,52 @@ import (
 )
 
 func init() {
-	registerAction(func(c *irc.Client, m *irc.Message, ruleDef *Rule, r *RuleAction) error {
-		if r.Counter == nil {
-			return nil
-		}
+	registerAction(func() Actor { return &ActorCounter{} })
+}
 
-		counterName, err := formatMessage(*r.Counter, m, ruleDef, nil)
+type ActorCounter struct {
+	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
+	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
+	Counter     *string `json:"counter" yaml:"counter"`
+}
+
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+	if a.Counter == nil {
+		return nil
+	}
+
+	counterName, err := formatMessage(*a.Counter, m, r, nil)
+	if err != nil {
+		return errors.Wrap(err, "preparing response")
+	}
+
+	if a.CounterSet != nil {
+		parseValue, err := formatMessage(*a.CounterSet, m, r, nil)
 		if err != nil {
-			return errors.Wrap(err, "preparing response")
+			return errors.Wrap(err, "execute counter value template")
 		}
 
-		if r.CounterSet != nil {
-			parseValue, err := formatMessage(*r.CounterSet, m, ruleDef, nil)
-			if err != nil {
-				return errors.Wrap(err, "execute counter value template")
-			}
-
-			counterValue, err := strconv.ParseInt(parseValue, 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "parse counter value")
-			}
-
-			return errors.Wrap(
-				store.UpdateCounter(counterName, counterValue, true),
-				"set counter",
-			)
-		}
-
-		var counterStep int64 = 1
-		if r.CounterStep != nil {
-			counterStep = *r.CounterStep
+		counterValue, err := strconv.ParseInt(parseValue, 10, 64)
+		if err != nil {
+			return errors.Wrap(err, "parse counter value")
 		}
 
 		return errors.Wrap(
-			store.UpdateCounter(counterName, counterStep, false),
-			"update counter",
+			store.UpdateCounter(counterName, counterValue, true),
+			"set counter",
 		)
-	})
+	}
+
+	var counterStep int64 = 1
+	if a.CounterStep != nil {
+		counterStep = *a.CounterStep
+	}
+
+	return errors.Wrap(
+		store.UpdateCounter(counterName, counterStep, false),
+		"update counter",
+	)
 }
+
+func (a ActorCounter) IsAsync() bool { return false }
+func (a ActorCounter) Name() string  { return "counter" }
