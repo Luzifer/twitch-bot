@@ -54,7 +54,7 @@ func (r Rule) MatcherID() string {
 	return fmt.Sprintf("sha256:%x", out.Sum(nil))
 }
 
-func (r *Rule) Matches(m *irc.Message, event *string) bool {
+func (r *Rule) matches(m *irc.Message, event *string) bool {
 	var (
 		badges = ircHandler{}.ParseBadgeLevels(m)
 		logger = log.WithFields(log.Fields{

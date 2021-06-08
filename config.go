@@ -132,7 +132,7 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*Rule {
 	var out []*Rule
 
 	for _, r := range c.Rules {
-		if r.Matches(m, event) {
+		if r.matches(m, event) {
 			out = append(out, r)
 		}
 	}
