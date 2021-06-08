@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	registerAction(func(c *irc.Client, m *irc.Message, ruleDef *rule, r *ruleAction) error {
+	registerAction(func(c *irc.Client, m *irc.Message, ruleDef *Rule, r *RuleAction) error {
 		if r.Timeout == nil {
 			return nil
 		}

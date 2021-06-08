@@ -19,7 +19,7 @@ type configFile struct {
 	PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
 	PermitTimeout        time.Duration          `yaml:"permit_timeout"`
 	RawLog               string                 `yaml:"raw_log"`
-	Rules                []*rule                `yaml:"rules"`
+	Rules                []*Rule                `yaml:"rules"`
 	Variables            map[string]interface{} `yaml:"variables"`
 
 	rawLogWriter io.WriteCloser
@@ -125,11 +125,11 @@ func (c *configFile) CloseRawMessageWriter() error {
 	return c.rawLogWriter.Close()
 }
 
-func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*rule {
+func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*Rule {
 	configLock.RLock()
 	defer configLock.RUnlock()
 
-	var out []*rule
+	var out []*Rule
 
 	for _, r := range c.Rules {
 		if r.Matches(m, event) {

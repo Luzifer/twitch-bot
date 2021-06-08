@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func formatMessage(tplString string, m *irc.Message, r *rule, fields map[string]interface{}) (string, error) {
+func formatMessage(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error) {
 	compiledFields := map[string]interface{}{}
 
 	if config != nil {

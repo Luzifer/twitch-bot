@@ -16,7 +16,7 @@ var (
 )
 
 func TestAllowExecuteBadgeBlacklist(t *testing.T) {
-	r := &rule{DisableOn: []string{badgeBroadcaster}}
+	r := &Rule{DisableOn: []string{badgeBroadcaster}}
 
 	if r.allowExecuteBadgeBlacklist(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Execution allowed on blacklisted badge")
@@ -28,7 +28,7 @@ func TestAllowExecuteBadgeBlacklist(t *testing.T) {
 }
 
 func TestAllowExecuteBadgeWhitelist(t *testing.T) {
-	r := &rule{EnableOn: []string{badgeBroadcaster}}
+	r := &Rule{EnableOn: []string{badgeBroadcaster}}
 
 	if r.allowExecuteBadgeWhitelist(testLogger, nil, nil, badgeCollection{badgeModerator: testBadgeLevel0}) {
 		t.Error("Execution allowed without whitelisted badge")
@@ -40,7 +40,7 @@ func TestAllowExecuteBadgeWhitelist(t *testing.T) {
 }
 
 func TestAllowExecuteChannelWhitelist(t *testing.T) {
-	r := &rule{MatchChannels: []string{"#mychannel", "otherchannel"}}
+	r := &Rule{MatchChannels: []string{"#mychannel", "otherchannel"}}
 
 	for m, exp := range map[string]bool{
 		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing":                                    true,
@@ -59,7 +59,7 @@ func TestAllowExecuteChannelWhitelist(t *testing.T) {
 }
 
 func TestAllowExecuteDisable(t *testing.T) {
-	for exp, r := range map[bool]*rule{
+	for exp, r := range map[bool]*Rule{
 		true:  {Disable: testPtrBool(false)},
 		false: {Disable: testPtrBool(true)},
 	} {
@@ -70,7 +70,7 @@ func TestAllowExecuteDisable(t *testing.T) {
 }
 
 func TestAllowExecuteDisableOnOffline(t *testing.T) {
-	r := &rule{DisableOnOffline: testPtrBool(true)}
+	r := &Rule{DisableOnOffline: testPtrBool(true)}
 
 	// Fake cache entries to prevent calling the real Twitch API
 	twitch.apiCache.Set([]string{"hasLiveStream", "channel1"}, time.Minute, true)
@@ -87,7 +87,7 @@ func TestAllowExecuteDisableOnOffline(t *testing.T) {
 }
 
 func TestAllowExecuteChannelCooldown(t *testing.T) {
-	r := &rule{ChannelCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{ChannelCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
 	c1 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
 	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #otherchannel :Testing")
 
@@ -112,7 +112,7 @@ func TestAllowExecuteChannelCooldown(t *testing.T) {
 }
 
 func TestAllowExecuteDisableOnPermit(t *testing.T) {
-	r := &rule{DisableOnPermit: testPtrBool(true)}
+	r := &Rule{DisableOnPermit: testPtrBool(true)}
 
 	// Permit is using global configuration, so we must fake that one
 	config = &configFile{PermitTimeout: time.Minute}
@@ -130,7 +130,7 @@ func TestAllowExecuteDisableOnPermit(t *testing.T) {
 }
 
 func TestAllowExecuteDisableOnTemplate(t *testing.T) {
-	r := &rule{DisableOnTemplate: func(s string) *string { return &s }(`{{ ne .username "amy" }}`)}
+	r := &Rule{DisableOnTemplate: func(s string) *string { return &s }(`{{ ne .username "amy" }}`)}
 
 	for msg, exp := range map[string]bool{
 		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing": true,
@@ -143,7 +143,7 @@ func TestAllowExecuteDisableOnTemplate(t *testing.T) {
 }
 
 func TestAllowExecuteEventWhitelist(t *testing.T) {
-	r := &rule{MatchEvent: func(s string) *string { return &s }("test")}
+	r := &Rule{MatchEvent: func(s string) *string { return &s }("test")}
 
 	for evt, exp := range map[string]bool{
 		"foobar": false,
@@ -156,7 +156,7 @@ func TestAllowExecuteEventWhitelist(t *testing.T) {
 }
 
 func TestAllowExecuteMessageMatcherBlacklist(t *testing.T) {
-	r := &rule{DisableOnMatchMessages: []string{`^!disable`}}
+	r := &Rule{DisableOnMatchMessages: []string{`^!disable`}}
 
 	for msg, exp := range map[string]bool{
 		"PRIVMSG #test :Random message":    true,
@@ -169,7 +169,7 @@ func TestAllowExecuteMessageMatcherBlacklist(t *testing.T) {
 }
 
 func TestAllowExecuteMessageMatcherWhitelist(t *testing.T) {
-	r := &rule{MatchMessage: func(s string) *string { return &s }(`^!test`)}
+	r := &Rule{MatchMessage: func(s string) *string { return &s }(`^!test`)}
 
 	for msg, exp := range map[string]bool{
 		"PRIVMSG #test :Random message": false,
@@ -182,7 +182,7 @@ func TestAllowExecuteMessageMatcherWhitelist(t *testing.T) {
 }
 
 func TestAllowExecuteRuleCooldown(t *testing.T) {
-	r := &rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
 
 	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
 		t.Error("Initial call was not allowed")
@@ -201,7 +201,7 @@ func TestAllowExecuteRuleCooldown(t *testing.T) {
 }
 
 func TestAllowExecuteUserCooldown(t *testing.T) {
-	r := &rule{UserCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{UserCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
 	c1 := irc.MustParseMessage(":ben!ben@foo.example.com PRIVMSG #mychannel :Testing")
 	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
 
@@ -226,7 +226,7 @@ func TestAllowExecuteUserCooldown(t *testing.T) {
 }
 
 func TestAllowExecuteUserWhitelist(t *testing.T) {
-	r := &rule{MatchUsers: []string{"amy"}}
+	r := &Rule{MatchUsers: []string{"amy"}}
 
 	for msg, exp := range map[string]bool{
 		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing": true,

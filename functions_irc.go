@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	tplFuncs.Register("arg", func(m *irc.Message, r *rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("arg", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
 		return func(arg int) (string, error) {
 			msgParts := strings.Split(m.Trailing(), " ")
 			if len(msgParts) <= arg {
@@ -21,7 +21,7 @@ func init() {
 
 	tplFuncs.Register("fixUsername", genericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
-	tplFuncs.Register("group", func(m *irc.Message, r *rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("group", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
 		return func(idx int) (string, error) {
 			fields := r.matchMessage.FindStringSubmatch(m.Trailing())
 			if len(fields) <= idx {
@@ -32,7 +32,7 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("tag", func(m *irc.Message, r *rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("tag", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
 		return func(tag string) string {
 			s, _ := m.GetTag(tag)
 			return s
