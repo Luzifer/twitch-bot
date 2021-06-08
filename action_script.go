@@ -87,4 +87,4 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 }
 
 func (a ActorScript) IsAsync() bool { return false }
-func (a ActorScript) Name() string  { return "ban" }
+func (a ActorScript) Name() string  { return "script" }

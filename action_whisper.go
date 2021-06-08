@@ -49,4 +49,4 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 }
 
 func (a ActorWhisper) IsAsync() bool { return false }
-func (a ActorWhisper) Name() string  { return "ban" }
+func (a ActorWhisper) Name() string  { return "whisper" }

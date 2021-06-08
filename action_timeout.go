@@ -34,4 +34,4 @@ func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 }
 
 func (a ActorTimeout) IsAsync() bool { return false }
-func (a ActorTimeout) Name() string  { return "ban" }
+func (a ActorTimeout) Name() string  { return "timeout" }
