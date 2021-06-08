@@ -76,6 +76,6 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string) {
 		}
 
 		// Lock command
-		r.SetCooldown(m)
+		r.setCooldown(m)
 	}
 }

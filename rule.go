@@ -88,7 +88,7 @@ func (r *Rule) Matches(m *irc.Message, event *string) bool {
 	return true
 }
 
-func (r *Rule) SetCooldown(m *irc.Message) {
+func (r *Rule) setCooldown(m *irc.Message) {
 	if r.Cooldown != nil {
 		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
 	}
