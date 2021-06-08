@@ -40,10 +40,22 @@ func triggerActions(c *irc.Client, m *irc.Message, rule *Rule, ra *RuleAction) e
 	defer availableActionsLock.RUnlock()
 
 	for _, acf := range availableActions {
-		a := acf()
+		var (
+			a      = acf()
+			logger = log.WithField("actor", a.Name())
+		)
 
 		if err := ra.Unmarshal(a); err != nil {
-			log.WithError(err).WithField("actor", a.Name()).Trace("Unable to unmarshal config")
+			logger.WithError(err).Trace("Unable to unmarshal config")
+			continue
+		}
+
+		if a.IsAsync() {
+			go func() {
+				if err := a.Execute(c, m, rule); err != nil {
+					logger.WithError(err).Error("Error in async actor")
+				}
+			}()
 			continue
 		}
 
