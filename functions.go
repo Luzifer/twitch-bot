@@ -12,7 +12,7 @@ import (
 var tplFuncs = newTemplateFuncProvider()
 
 type (
-	templateFuncGetter   func(*irc.Message, *rule, map[string]interface{}) interface{}
+	templateFuncGetter   func(*irc.Message, *Rule, map[string]interface{}) interface{}
 	templateFuncProvider struct {
 		funcs map[string]templateFuncGetter
 		lock  *sync.RWMutex
@@ -28,7 +28,7 @@ func newTemplateFuncProvider() *templateFuncProvider {
 	return out
 }
 
-func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *rule, fields map[string]interface{}) template.FuncMap {
+func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *Rule, fields map[string]interface{}) template.FuncMap {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
@@ -49,7 +49,7 @@ func (t *templateFuncProvider) Register(name string, fg templateFuncGetter) {
 }
 
 func genericTemplateFunctionGetter(f interface{}) templateFuncGetter {
-	return func(*irc.Message, *rule, map[string]interface{}) interface{} { return f }
+	return func(*irc.Message, *Rule, map[string]interface{}) interface{} { return f }
 }
 
 func init() {
