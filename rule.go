@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/go-irc/irc"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -344,13 +346,30 @@ func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 	return true
 }
 
-type RuleAction struct{ unmarshal func(interface{}) error }
+type RuleAction struct {
+	yamlUnmarshal func(interface{}) error
+	jsonValue     []byte
+}
+
+func (r *RuleAction) UnmarshalJSON(d []byte) error {
+	r.jsonValue = d
+	return nil
+}
 
 func (r *RuleAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	r.unmarshal = unmarshal
+	r.yamlUnmarshal = unmarshal
 	return nil
 }
 
 func (r *RuleAction) Unmarshal(v interface{}) error {
-	return r.unmarshal(v)
+	switch {
+	case r.yamlUnmarshal != nil:
+		return r.yamlUnmarshal(v)
+
+	case r.jsonValue != nil:
+		return json.Unmarshal(r.jsonValue, v)
+
+	default:
+		return errors.New("unmarshal on unprimed object")
+	}
 }
