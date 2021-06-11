@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -367,7 +368,9 @@ func (r *RuleAction) Unmarshal(v interface{}) error {
 		return r.yamlUnmarshal(v)
 
 	case r.jsonValue != nil:
-		return json.Unmarshal(r.jsonValue, v)
+		jd := json.NewDecoder(bytes.NewReader(r.jsonValue))
+		jd.DisallowUnknownFields()
+		return jd.Decode(v)
 
 	default:
 		return errors.New("unmarshal on unprimed object")
