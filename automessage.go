@@ -35,12 +35,12 @@ type autoMessage struct {
 }
 
 func (a *autoMessage) CanSend() bool {
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+
 	if a.disabled || !a.IsValid() {
 		return false
 	}
-
-	a.lock.RLock()
-	defer a.lock.RUnlock()
 
 	switch {
 	case a.MessageInterval > a.linesSinceLastMessage:
