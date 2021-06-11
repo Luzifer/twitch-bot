@@ -53,10 +53,16 @@ func (a *autoMessage) CanSend() bool {
 
 	case a.Cron != "":
 		sched, _ := cronParser.Parse(a.Cron)
-		if sched.Next(a.lastMessageSent).After(time.Now()) {
+		nextExecute := sched.Next(a.lastMessageSent)
+		if nextExecute.After(time.Now()) {
 			// Cron timer is not yet expired
 			return false
 		}
+		log.WithFields(log.Fields{
+			"lastMessage":   a.lastMessageSent,
+			"nextExecution": nextExecute,
+			"now":           time.Now(),
+		}).Debug("Auto-Message was allowed through cron")
 	}
 
 	if a.OnlyOnLive {
