@@ -219,7 +219,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	log.WithFields(log.Fields{
 		"channel":  i.getChannel(m),
 		"tags":     m.Tags,
-		"trailing": m.Trailing,
+		"trailing": m.Trailing(),
 	}).Debug("IRC USERNOTICE event")
 
 	switch m.Tags["msg-id"] {
