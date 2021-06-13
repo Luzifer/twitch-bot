@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -11,11 +10,14 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/go-irc/irc"
+	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 type Rule struct {
+	UUID string `hash:"-" yaml:"uuid"`
+
 	Actions []*RuleAction `yaml:"actions"`
 
 	Cooldown        *time.Duration `yaml:"cooldown"`
@@ -42,19 +44,15 @@ type Rule struct {
 }
 
 func (r Rule) MatcherID() string {
-	out := sha256.New()
-
-	for _, e := range []*string{
-		ptrStr(strings.Join(r.MatchChannels, "|")),
-		r.MatchEvent,
-		r.MatchMessage,
-	} {
-		if e != nil {
-			fmt.Fprintf(out, *e)
-		}
+	if r.UUID != "" {
+		return r.UUID
 	}
 
-	return fmt.Sprintf("sha256:%x", out.Sum(nil))
+	h, err := hashstructure.Hash(r, hashstructure.FormatV2, nil)
+	if err != nil {
+		panic(errors.Wrap(err, "hashing automessage"))
+	}
+	return fmt.Sprintf("hashstructure:%x", h)
 }
 
 func (r *Rule) matches(m *irc.Message, event *string) bool {

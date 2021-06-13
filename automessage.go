@@ -1,13 +1,13 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-irc/irc"
+	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -16,6 +16,8 @@ import (
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
 type autoMessage struct {
+	UUID string `hash:"-" yaml:"uuid"`
+
 	Channel   string `yaml:"channel"`
 	Message   string `yaml:"message"`
 	UseAction bool   `yaml:"use_action"`
@@ -101,13 +103,15 @@ func (a *autoMessage) CountMessage(channel string) {
 }
 
 func (a *autoMessage) ID() string {
-	sum := sha256.New()
+	if a.UUID != "" {
+		return a.UUID
+	}
 
-	fmt.Fprintf(sum, "channel:%q", a.Channel)
-	fmt.Fprintf(sum, "message:%q", a.Message)
-	fmt.Fprintf(sum, "action:%v", a.UseAction)
-
-	return fmt.Sprintf("sha256:%x", sum.Sum(nil))
+	h, err := hashstructure.Hash(a, hashstructure.FormatV2, nil)
+	if err != nil {
+		panic(errors.Wrap(err, "hashing automessage"))
+	}
+	return fmt.Sprintf("hashstructure:%x", h)
 }
 
 func (a *autoMessage) IsValid() bool {
