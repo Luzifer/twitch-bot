@@ -1,3 +1,11 @@
+# 0.13.0 / 2021-06-13
+
+  * Use more flexible Actor format to allow addition of new actors (#5)
+  * Add user- and channel-based cooldowns (#4)
+  * Fix: ID generation handling different automessages as same
+  * Fix: Do not try to log functions
+  * Fix: Do not access automessage attributes without lock
+
 # 0.12.0 / 2021-06-05
 
   * Add "respond as reply" functionality
