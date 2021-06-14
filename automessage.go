@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
@@ -115,6 +116,11 @@ func (a *autoMessage) ID() string {
 }
 
 func (a *autoMessage) IsValid() bool {
+	if !str.StringInSlice(a.Channel, config.Channels) {
+		// Not an observed channel, auto-message is not valid
+		return false
+	}
+
 	if a.Cron != "" {
 		if _, err := cronParser.Parse(a.Cron); err != nil {
 			return false
