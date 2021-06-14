@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
 )
 
@@ -121,12 +122,21 @@ func main() {
 				// Fine, reload
 			}
 
+			previousChannels := append([]string{}, config.Channels...)
+
 			if err := loadConfig(cfg.Config); err != nil {
 				log.WithError(err).Error("Unable to reload config")
 				continue
 			}
 
 			irc.ExecuteJoins(config.Channels)
+
+			for _, c := range previousChannels {
+				if !str.StringInSlice(c, config.Channels) {
+					log.WithField("channel", c).Info("Leaving removed channel...")
+					irc.ExecutePart(c)
+				}
+			}
 
 		case <-autoMessageTicker.C:
 			configLock.RLock()

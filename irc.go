@@ -61,6 +61,10 @@ func (i ircHandler) ExecuteJoins(channels []string) {
 	}
 }
 
+func (i ircHandler) ExecutePart(channel string) {
+	i.c.Write(fmt.Sprintf("PART #%s", strings.TrimLeft(channel, "#")))
+}
+
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 	go func(m *irc.Message) {
 		configLock.RLock()
