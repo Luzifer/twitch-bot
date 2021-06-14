@@ -46,6 +46,10 @@ func (a *autoMessage) CanSend() bool {
 	}
 
 	switch {
+	case !str.StringInSlice(a.Channel, config.Channels):
+		// Not an observed channel, auto-message is not valid
+		return false
+
 	case a.MessageInterval > a.linesSinceLastMessage:
 		// Not enough chatted lines
 		return false
@@ -116,11 +120,6 @@ func (a *autoMessage) ID() string {
 }
 
 func (a *autoMessage) IsValid() bool {
-	if !str.StringInSlice(a.Channel, config.Channels) {
-		// Not an observed channel, auto-message is not valid
-		return false
-	}
-
 	if a.Cron != "" {
 		if _, err := cronParser.Parse(a.Cron); err != nil {
 			return false
