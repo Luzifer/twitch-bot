@@ -1,3 +1,10 @@
+# 0.14.0 / 2021-06-17
+
+  * Fix: JSON is not able to decode `2s` but `2` which is ns instead of s
+  * Add concat template function
+  * Disable auto-messages in non-observed channels
+  * Automatically leave channel when removed from config
+
 # 0.13.0 / 2021-06-13
 
   * Use more flexible Actor format to allow addition of new actors (#5)
