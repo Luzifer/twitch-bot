@@ -26,7 +26,7 @@ func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 			Command: "PRIVMSG",
 			Params: []string{
 				m.Params[0],
-				fmt.Sprintf("/timeout %s %d", m.User, *a.Timeout/time.Second),
+				fmt.Sprintf("/timeout %s %d", m.User, fixDurationValue(*a.Timeout)/time.Second),
 			},
 		}),
 		"sending timeout",
