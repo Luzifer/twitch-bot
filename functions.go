@@ -61,4 +61,5 @@ func init() {
 	tplFuncs.Register("toLower", genericTemplateFunctionGetter(strings.ToLower))
 	tplFuncs.Register("toUpper", genericTemplateFunctionGetter(strings.ToUpper))
 	tplFuncs.Register("followDate", genericTemplateFunctionGetter(twitch.GetFollowDate))
+	tplFuncs.Register("concat", genericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
 }
