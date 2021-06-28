@@ -29,7 +29,7 @@ func formatMessage(tplString string, m *irc.Message, r *Rule, fields map[string]
 		compiledFields["msg"] = m
 		compiledFields["username"] = m.User
 
-		if m.Command == "PRIVMSG" && len(m.Params) > 0 {
+		if len(m.Params) > 0 {
 			compiledFields["channel"] = m.Params[0]
 		}
 	}
