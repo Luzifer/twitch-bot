@@ -33,7 +33,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 			return errors.Wrap(err, "execute counter value template")
 		}
 
-		counterValue, err := strconv.ParseInt(parseValue, 10, 64)
+		counterValue, err := strconv.ParseInt(parseValue, 10, 64) //nolint:gomnd // Those numbers are static enough
 		if err != nil {
 			return errors.Wrap(err, "parse counter value")
 		}

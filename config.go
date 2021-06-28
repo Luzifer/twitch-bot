@@ -78,10 +78,10 @@ func loadConfig(filename string) error {
 		if err = config.CloseRawMessageWriter(); err != nil {
 			return errors.Wrap(err, "closing old raw log writer")
 		}
-		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), 0o755); err != nil {
+		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), 0o755); err != nil { //nolint:gomnd // This is a common directory permission
 			return errors.Wrap(err, "creating directories for raw log")
 		}
-		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err != nil {
+		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err != nil { //nolint:gomnd // This is a common file permission
 			return errors.Wrap(err, "opening raw log for appending")
 		}
 	}
