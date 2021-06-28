@@ -96,7 +96,7 @@ func TestAllowExecuteChannelCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, c1.Params[0], r.MatcherID())
+	timerStore.AddCooldown(timerTypeCooldown, c1.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
 
 	if r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
@@ -189,7 +189,7 @@ func TestAllowExecuteRuleCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
+	timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
 
 	if r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
@@ -210,7 +210,7 @@ func TestAllowExecuteUserCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, c1.User, r.MatcherID())
+	timerStore.AddCooldown(timerTypeCooldown, c1.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
 
 	if r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")

@@ -91,15 +91,15 @@ func (r *Rule) matches(m *irc.Message, event *string) bool {
 
 func (r *Rule) setCooldown(m *irc.Message) {
 	if r.Cooldown != nil {
-		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID())
+		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
 	}
 
 	if r.ChannelCooldown != nil && len(m.Params) > 0 {
-		timerStore.AddCooldown(timerTypeCooldown, m.Params[0], r.MatcherID())
+		timerStore.AddCooldown(timerTypeCooldown, m.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
 	}
 
 	if r.UserCooldown != nil {
-		timerStore.AddCooldown(timerTypeCooldown, m.User, r.MatcherID())
+		timerStore.AddCooldown(timerTypeCooldown, m.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
 	}
 }
 
@@ -135,7 +135,7 @@ func (r *Rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, ev
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, m.Params[0], r.MatcherID(), *r.ChannelCooldown) {
+	if !timerStore.InCooldown(timerTypeCooldown, m.Params[0], r.MatcherID()) {
 		return true
 	}
 
@@ -299,7 +299,7 @@ func (r *Rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, "", r.MatcherID(), *r.Cooldown) {
+	if !timerStore.InCooldown(timerTypeCooldown, "", r.MatcherID()) {
 		return true
 	}
 
@@ -318,7 +318,7 @@ func (r *Rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, m.User, r.MatcherID(), *r.UserCooldown) {
+	if !timerStore.InCooldown(timerTypeCooldown, m.User, r.MatcherID()) {
 		return true
 	}
 

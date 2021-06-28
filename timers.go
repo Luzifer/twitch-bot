@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -18,33 +17,27 @@ const (
 var timerStore = newTimer()
 
 type timerEntry struct {
-	kind timerType
-	time time.Time
+	Kind timerType `json:"kind"`
+	Time time.Time `json:"time"`
 }
 
-type timer struct {
-	timers map[string]timerEntry
-	lock   *sync.RWMutex
-}
+type timer struct{}
 
 func newTimer() *timer {
-	return &timer{
-		timers: map[string]timerEntry{},
-		lock:   new(sync.RWMutex),
-	}
+	return &timer{}
 }
 
 // Cooldown timer
 
-func (t *timer) AddCooldown(tt timerType, limiter, ruleID string) {
-	t.add(timerTypeCooldown, t.getCooldownTimerKey(tt, limiter, ruleID))
+func (t *timer) AddCooldown(tt timerType, limiter, ruleID string, expiry time.Time) {
+	store.SetTimer(timerTypeCooldown, t.getCooldownTimerKey(tt, limiter, ruleID), expiry)
 }
 
-func (t *timer) InCooldown(tt timerType, limiter, ruleID string, cooldown time.Duration) bool {
-	return t.has(t.getCooldownTimerKey(tt, limiter, ruleID), cooldown)
+func (t *timer) InCooldown(tt timerType, limiter, ruleID string) bool {
+	return store.HasTimer(t.getCooldownTimerKey(tt, limiter, ruleID))
 }
 
-func (t timer) getCooldownTimerKey(tt timerType, limiter, ruleID string) string {
+func (timer) getCooldownTimerKey(tt timerType, limiter, ruleID string) string {
 	h := sha256.New()
 	fmt.Fprintf(h, "%d:%s:%s", tt, limiter, ruleID)
 	return fmt.Sprintf("sha256:%x", h.Sum(nil))
@@ -53,31 +46,15 @@ func (t timer) getCooldownTimerKey(tt timerType, limiter, ruleID string) string 
 // Permit timer
 
 func (t *timer) AddPermit(channel, username string) {
-	t.add(timerTypePermit, t.getPermitTimerKey(channel, username))
+	store.SetTimer(timerTypePermit, t.getPermitTimerKey(channel, username), time.Now().Add(config.PermitTimeout))
 }
 
 func (t *timer) HasPermit(channel, username string) bool {
-	return t.has(t.getPermitTimerKey(channel, username), config.PermitTimeout)
+	return store.HasTimer(t.getPermitTimerKey(channel, username))
 }
 
-func (t timer) getPermitTimerKey(channel, username string) string {
+func (timer) getPermitTimerKey(channel, username string) string {
 	h := sha256.New()
 	fmt.Fprintf(h, "%d:%s:%s", timerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@")))
 	return fmt.Sprintf("sha256:%x", h.Sum(nil))
-}
-
-// Generic
-
-func (t *timer) add(kind timerType, id string) {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-
-	t.timers[id] = timerEntry{kind: kind, time: time.Now()}
-}
-
-func (t *timer) has(id string, validity time.Duration) bool {
-	t.lock.RLock()
-	defer t.lock.RUnlock()
-
-	return time.Since(t.timers[id].time) < validity
 }

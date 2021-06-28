@@ -31,7 +31,7 @@ var (
 	config     *configFile
 	configLock = new(sync.RWMutex)
 
-	store = newStorageFile()
+	store = newStorageFile(false)
 
 	version = "dev"
 )
@@ -40,6 +40,7 @@ func init() {
 	for _, a := range os.Args {
 		if strings.HasPrefix(a, "-test.") {
 			// Skip initialize for test run
+			store = newStorageFile(true) // Use in-mem-store for tests
 			return
 		}
 	}
