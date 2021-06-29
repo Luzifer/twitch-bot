@@ -11,8 +11,9 @@ import (
 )
 
 type storageFile struct {
-	Counters map[string]int64      `json:"counters"`
-	Timers   map[string]timerEntry `json:"timers"`
+	Counters  map[string]int64      `json:"counters"`
+	Timers    map[string]timerEntry `json:"timers"`
+	Variables map[string]string     `json:"variables"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -20,8 +21,9 @@ type storageFile struct {
 
 func newStorageFile(inMemStore bool) *storageFile {
 	return &storageFile{
-		Counters: map[string]int64{},
-		Timers:   map[string]timerEntry{},
+		Counters:  map[string]int64{},
+		Timers:    map[string]timerEntry{},
+		Variables: map[string]string{},
 
 		inMem: inMemStore,
 		lock:  new(sync.RWMutex),
@@ -33,6 +35,13 @@ func (s *storageFile) GetCounterValue(counter string) int64 {
 	defer s.lock.RUnlock()
 
 	return s.Counters[counter]
+}
+
+func (s *storageFile) GetVariable(key string) string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.Variables[key]
 }
 
 func (s *storageFile) HasTimer(id string) bool {
@@ -117,6 +126,24 @@ func (s *storageFile) SetTimer(kind timerType, id string, expiry time.Time) erro
 	defer s.lock.Unlock()
 
 	s.Timers[id] = timerEntry{Kind: kind, Time: expiry}
+
+	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) SetVariable(key, value string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.Variables[key] = value
+
+	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) RemoveVariable(key string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	delete(s.Variables, key)
 
 	return errors.Wrap(s.Save(), "saving store")
 }

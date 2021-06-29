@@ -69,6 +69,11 @@ rules: # See below for examples
     # Issue a timeout on the user who wrote the chat-line
     - timeout: 1s # Duration value: 1s / 1m / 1h
 
+    # Set a variable to value defined for later usage
+    - variable: myvar       # String, name of the variable to set (applies templating)
+      clear: false          # Boolean, clear the variable
+      set: '{{ .channel }}' # String, value to set the variable to (applies templating)
+
     # Send a whisper (ATTENTION: You need to have a known / verified bot for this!)
     # Without being known / verified your whisper will just silently get dropped by Twitch
     # Go here to get that verification: https://dev.twitch.tv/limit-increase
@@ -154,6 +159,7 @@ Additionally there are some functions available in the templates:
 - `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified
 - `toLower <string>` - Converts the given string to lower-case
 - `toUpper <string>` - Converts the given string to upper-case
+- `variable <name> [default]` - Returns the variable value or default in case it is empty
 
 ## Command executions
 
