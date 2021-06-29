@@ -207,6 +207,35 @@ The example was dumped using this action:
 
 ## Rule examples
 
+### Chat-addable generic text-respond-commands
+
+```yaml
+  # Respond with variable content if set
+  - actions:
+    - respond: '{{ variable (concat ":" "genericcmd" .channel (group 1)) }}'
+    disable_on_template: '{{ eq (variable (concat ":" "genericcmd" .channel (group 1))) "" }}'
+    match_channels: ['#mychannel']
+    match_message: '^!([^\s]+)(?: |$)'
+
+  # Set variable content to content of chat command
+  - actions:
+    - variable: '{{ concat ":" "genericcmd" .channel (group 1) }}'
+      set: '{{ group 2 }}'
+    - respond: '[Admin] Set command !{{ group 1 }} to "{{ group 2 }}"'
+    enable_on: [broadcaster, moderator]
+    match_channels: ['#mychannel']
+    match_message: '^!setcmd ([^\s]+) (.*)'
+
+  # Remove variable and therefore delete command
+  - actions:
+    - variable: '{{ concat ":" "genericcmd" .channel (group 1) }}'
+      clear: true
+    - respond: '[Admin] Deleted command !{{ group 1 }}'
+    enable_on: [broadcaster, moderator]
+    match_channels: ['#mychannel']
+    match_message: '^!clearcmd ([^\s]+)'
+```
+
 ### Game death counter with dynamic name
 
 ```yaml
