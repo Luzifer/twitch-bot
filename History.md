@@ -1,3 +1,11 @@
+# 0.15.0 / 2021-06-30
+
+  * Wiki: Add example for generic chat-addable commands
+  * Add support for dynamic variables
+  * Lint: Update linter list, disable gomnd for some lines
+  * Move timers to storage to persist them
+  * Fix: Set channel for more events
+
 # 0.14.0 / 2021-06-17
 
   * Fix: JSON is not able to decode `2s` but `2` which is ns instead of s
