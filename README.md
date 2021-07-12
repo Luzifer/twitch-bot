@@ -24,5 +24,6 @@ Usage of twitch-bot:
       --storage-file string        Where to store the data (default "./storage.json.gz")
       --twitch-client string       Client ID to act as
       --twitch-token string        OAuth token valid for client
+  -v, --validate-config            Loads the config, logs any errors and quits with status 0 on success
       --version                    Prints current version and exits
 ```

@@ -25,6 +25,7 @@ var (
 		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
 		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
+		ValidateConfig bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
 		VersionAndExit bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
@@ -66,6 +67,17 @@ func init() {
 func main() {
 	var err error
 
+	if err = loadConfig(cfg.Config); err != nil {
+		log.WithError(err).Fatal("Initial config load failed")
+	}
+	defer func() { config.CloseRawMessageWriter() }()
+
+	if cfg.ValidateConfig {
+		// We were asked to only validate the config, this was successful
+		log.Info("Config validated successfully")
+		return
+	}
+
 	if err = startCheck(); err != nil {
 		log.WithError(err).Fatal("Missing required parameters")
 	}
@@ -73,11 +85,6 @@ func main() {
 	if err = store.Load(); err != nil {
 		log.WithError(err).Fatal("Unable to load storage file")
 	}
-
-	if err = loadConfig(cfg.Config); err != nil {
-		log.WithError(err).Fatal("Initial config load failed")
-	}
-	defer func() { config.CloseRawMessageWriter() }()
 
 	fsEvents := make(chan configChangeEvent, 1)
 	go watchConfigChanges(cfg.Config, fsEvents)
