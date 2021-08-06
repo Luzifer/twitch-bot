@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -31,6 +32,8 @@ var (
 
 	config     *configFile
 	configLock = new(sync.RWMutex)
+
+	sendMessage func(m *irc.Message) error
 
 	store = newStorageFile(false)
 
@@ -102,6 +105,7 @@ func main() {
 
 		case <-ircDisconnected:
 			if irc != nil {
+				sendMessage = nil
 				irc.Close()
 			}
 
@@ -110,9 +114,11 @@ func main() {
 			}
 
 			go func() {
+				sendMessage = irc.SendMessage
 				if err := irc.Run(); err != nil {
 					log.WithError(err).Error("IRC run exited unexpectedly")
 				}
+				sendMessage = nil
 				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}
 			}()

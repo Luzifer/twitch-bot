@@ -138,6 +138,8 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 
 func (i ircHandler) Run() error { return errors.Wrap(i.c.Run(), "running IRC client") }
 
+func (i ircHandler) SendMessage(m *irc.Message) error { return i.c.WriteMessage(m) }
+
 func (ircHandler) getChannel(m *irc.Message) string {
 	if len(m.Params) > 0 {
 		return m.Params[0]
