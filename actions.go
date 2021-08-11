@@ -60,10 +60,10 @@ func triggerActions(c *irc.Client, m *irc.Message, rule *Rule, ra *RuleAction) (
 		}
 
 		apc, err := a.Execute(c, m, rule)
+		preventCooldown = preventCooldown || apc
 		if err != nil {
 			return preventCooldown, errors.Wrap(err, "execute action")
 		}
-		preventCooldown = preventCooldown || apc
 	}
 
 	return preventCooldown, nil
