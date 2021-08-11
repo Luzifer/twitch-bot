@@ -16,19 +16,19 @@ type ActorWhisper struct {
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
-		return nil
+		return false, nil
 	}
 
 	to, err := formatMessage(*a.WhisperTo, m, r, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing whisper receiver")
+		return false, errors.Wrap(err, "preparing whisper receiver")
 	}
 
 	msg, err := formatMessage(*a.WhisperMessage, m, r, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing whisper message")
+		return false, errors.Wrap(err, "preparing whisper message")
 	}
 
 	channel := "#tmijs" // As a fallback, copied from tmi.js
@@ -36,7 +36,7 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 		channel = fmt.Sprintf("#%s", config.Channels[0])
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{

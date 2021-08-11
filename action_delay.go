@@ -16,9 +16,9 @@ type ActorDelay struct {
 	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
 }
 
-func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Delay == 0 && a.DelayJitter == 0 {
-		return nil
+		return false, nil
 	}
 
 	totalDelay := a.Delay
@@ -27,7 +27,7 @@ func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 	}
 
 	time.Sleep(totalDelay)
-	return nil
+	return false, nil
 }
 
 func (a ActorDelay) IsAsync() bool { return false }

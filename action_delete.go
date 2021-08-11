@@ -15,17 +15,17 @@ type ActorDelete struct {
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 }
 
-func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.DeleteMessage == nil || !*a.DeleteMessage {
-		return nil
+		return false, nil
 	}
 
 	msgID, ok := m.Tags.GetTag("id")
 	if !ok || msgID == "" {
-		return nil
+		return false, nil
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{

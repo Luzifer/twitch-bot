@@ -16,12 +16,12 @@ type ActorTimeout struct {
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
-func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Timeout == nil {
-		return nil
+		return false, nil
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{

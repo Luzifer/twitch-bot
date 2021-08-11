@@ -19,16 +19,16 @@ type ActorScript struct {
 	Command []string `json:"command" yaml:"command"`
 }
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if len(a.Command) == 0 {
-		return nil
+		return false, nil
 	}
 
 	var command []string
 	for _, arg := range a.Command {
 		tmp, err := formatMessage(arg, m, r, nil)
 		if err != nil {
-			return errors.Wrap(err, "execute command argument template")
+			return false, errors.Wrap(err, "execute command argument template")
 		}
 
 		command = append(command, tmp)
@@ -49,7 +49,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 		"tags":     m.Tags,
 		"username": m.User,
 	}); err != nil {
-		return errors.Wrap(err, "encoding script input")
+		return false, errors.Wrap(err, "encoding script input")
 	}
 
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...) // #nosec G204 // This is expected to call a command with parameters
@@ -59,12 +59,12 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "running command")
+		return false, errors.Wrap(err, "running command")
 	}
 
 	if stdout.Len() == 0 {
 		// Script was successful but did not yield actions
-		return nil
+		return false, nil
 	}
 
 	var (
@@ -74,16 +74,18 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&actions); err != nil {
-		return errors.Wrap(err, "decoding actions output")
+		return false, errors.Wrap(err, "decoding actions output")
 	}
 
 	for _, action := range actions {
-		if err := triggerActions(c, m, r, action); err != nil {
-			return errors.Wrap(err, "execute returned action")
+		apc, err := triggerActions(c, m, r, action)
+		if err != nil {
+			return preventCooldown, errors.Wrap(err, "execute returned action")
 		}
+		preventCooldown = preventCooldown || apc
 	}
 
-	return nil
+	return preventCooldown, nil
 }
 
 func (a ActorScript) IsAsync() bool { return false }

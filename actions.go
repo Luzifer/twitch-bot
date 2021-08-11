@@ -11,7 +11,7 @@ import (
 type (
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
-		Execute(*irc.Client, *irc.Message, *Rule) error
+		Execute(*irc.Client, *irc.Message, *Rule) (preventCooldown bool, err error)
 		// IsAsync may return true if the Execute function is to be executed
 		// in a Go routine as of long runtime. Normally it should return false
 		// except in very specific cases
@@ -35,7 +35,7 @@ func registerAction(af ActorCreationFunc) {
 	availableActions = append(availableActions, af)
 }
 
-func triggerActions(c *irc.Client, m *irc.Message, rule *Rule, ra *RuleAction) error {
+func triggerActions(c *irc.Client, m *irc.Message, rule *Rule, ra *RuleAction) (preventCooldown bool, err error) {
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
@@ -52,30 +52,38 @@ func triggerActions(c *irc.Client, m *irc.Message, rule *Rule, ra *RuleAction) e
 
 		if a.IsAsync() {
 			go func() {
-				if err := a.Execute(c, m, rule); err != nil {
+				if _, err := a.Execute(c, m, rule); err != nil {
 					logger.WithError(err).Error("Error in async actor")
 				}
 			}()
 			continue
 		}
 
-		if err := a.Execute(c, m, rule); err != nil {
-			return errors.Wrap(err, "execute action")
+		apc, err := a.Execute(c, m, rule)
+		if err != nil {
+			return preventCooldown, errors.Wrap(err, "execute action")
 		}
+		preventCooldown = preventCooldown || apc
 	}
 
-	return nil
+	return preventCooldown, nil
 }
 
 func handleMessage(c *irc.Client, m *irc.Message, event *string) {
 	for _, r := range config.GetMatchingRules(m, event) {
+		var preventCooldown bool
+
 		for _, a := range r.Actions {
-			if err := triggerActions(c, m, r, a); err != nil {
+			apc, err := triggerActions(c, m, r, a)
+			if err != nil {
 				log.WithError(err).Error("Unable to trigger action")
 			}
+			preventCooldown = preventCooldown || apc
 		}
 
 		// Lock command
-		r.setCooldown(m)
+		if !preventCooldown {
+			r.setCooldown(m)
+		}
 	}
 }

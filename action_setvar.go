@@ -15,18 +15,18 @@ type ActorSetVariable struct {
 	Set      string `json:"set" yaml:"set"`
 }
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Variable == "" {
-		return nil
+		return false, nil
 	}
 
 	varName, err := formatMessage(a.Variable, m, r, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing variable name")
+		return false, errors.Wrap(err, "preparing variable name")
 	}
 
 	if a.Clear {
-		return errors.Wrap(
+		return false, errors.Wrap(
 			store.RemoveVariable(varName),
 			"removing variable",
 		)
@@ -34,10 +34,10 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *Rule) error 
 
 	value, err := formatMessage(a.Set, m, r, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing value")
+		return false, errors.Wrap(err, "preparing value")
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		store.SetVariable(varName, value),
 		"setting variable",
 	)

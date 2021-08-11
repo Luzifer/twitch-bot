@@ -17,28 +17,28 @@ type ActorCounter struct {
 	Counter     *string `json:"counter" yaml:"counter"`
 }
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Counter == nil {
-		return nil
+		return false, nil
 	}
 
 	counterName, err := formatMessage(*a.Counter, m, r, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing response")
+		return false, errors.Wrap(err, "preparing response")
 	}
 
 	if a.CounterSet != nil {
 		parseValue, err := formatMessage(*a.CounterSet, m, r, nil)
 		if err != nil {
-			return errors.Wrap(err, "execute counter value template")
+			return false, errors.Wrap(err, "execute counter value template")
 		}
 
 		counterValue, err := strconv.ParseInt(parseValue, 10, 64) //nolint:gomnd // Those numbers are static enough
 		if err != nil {
-			return errors.Wrap(err, "parse counter value")
+			return false, errors.Wrap(err, "parse counter value")
 		}
 
-		return errors.Wrap(
+		return false, errors.Wrap(
 			store.UpdateCounter(counterName, counterValue, true),
 			"set counter",
 		)
@@ -49,7 +49,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 		counterStep = *a.CounterStep
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		store.UpdateCounter(counterName, counterStep, false),
 		"update counter",
 	)

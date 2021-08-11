@@ -15,12 +15,12 @@ type ActorBan struct {
 	Ban *string `json:"ban" yaml:"ban"`
 }
 
-func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Ban == nil {
-		return nil
+		return false, nil
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{

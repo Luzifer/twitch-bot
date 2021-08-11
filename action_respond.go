@@ -15,18 +15,18 @@ type ActorRespond struct {
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 }
 
-func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
+func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
 	if a.Respond == nil {
-		return nil
+		return false, nil
 	}
 
 	msg, err := formatMessage(*a.Respond, m, r, nil)
 	if err != nil {
 		if a.RespondFallback == nil {
-			return errors.Wrap(err, "preparing response")
+			return false, errors.Wrap(err, "preparing response")
 		}
 		if msg, err = formatMessage(*a.RespondFallback, m, r, nil); err != nil {
-			return errors.Wrap(err, "preparing response fallback")
+			return false, errors.Wrap(err, "preparing response fallback")
 		}
 	}
 
@@ -48,7 +48,7 @@ func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) error {
 		}
 	}
 
-	return errors.Wrap(
+	return false, errors.Wrap(
 		c.WriteMessage(ircMessage),
 		"sending response",
 	)
