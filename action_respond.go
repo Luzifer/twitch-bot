@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -15,7 +16,7 @@ type ActorRespond struct {
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 }
 
-func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Respond == nil {
 		return false, nil
 	}

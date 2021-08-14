@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 )
 
@@ -16,7 +17,7 @@ type ActorDelay struct {
 	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
 }
 
-func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Delay == 0 && a.DelayJitter == 0 {
 		return false, nil
 	}

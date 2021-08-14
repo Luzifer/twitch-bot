@@ -13,6 +13,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 const ircReconnectDelay = 100 * time.Millisecond
@@ -35,7 +36,8 @@ var (
 
 	sendMessage func(m *irc.Message) error
 
-	store = newStorageFile(false)
+	store        = newStorageFile(false)
+	twitchClient *twitch.Client
 
 	version = "dev"
 )
@@ -69,6 +71,8 @@ func init() {
 //nolint: gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
+
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
 	if err = loadConfig(cfg.Config); err != nil {
 		log.WithError(err).Fatal("Initial config load failed")

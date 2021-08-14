@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -17,7 +18,7 @@ type ActorCounter struct {
 	Counter     *string `json:"counter" yaml:"counter"`
 }
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Counter == nil {
 		return false, nil
 	}

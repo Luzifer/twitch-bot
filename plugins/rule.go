@@ -1,14 +1,13 @@
-package main
+package plugins
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
@@ -41,6 +40,10 @@ type Rule struct {
 
 	matchMessage           *regexp.Regexp
 	disableOnMatchMessages []*regexp.Regexp
+
+	msgFormatter MsgFormatter
+	timerStore   TimerStore
+	twitchClient *twitch.Client
 }
 
 func (r Rule) MatcherID() string {
@@ -55,16 +58,20 @@ func (r Rule) MatcherID() string {
 	return fmt.Sprintf("hashstructure:%x", h)
 }
 
-func (r *Rule) matches(m *irc.Message, event *string) bool {
+func (r *Rule) Matches(m *irc.Message, event *string, timerStore TimerStore, msgFormatter MsgFormatter, twitchClient *twitch.Client) bool {
+	r.msgFormatter = msgFormatter
+	r.timerStore = timerStore
+	r.twitchClient = twitchClient
+
 	var (
-		badges = ircHandler{}.ParseBadgeLevels(m)
+		badges = twitch.ParseBadgeLevels(m)
 		logger = log.WithFields(log.Fields{
 			"msg":  m,
 			"rule": r,
 		})
 	)
 
-	for _, matcher := range []func(*log.Entry, *irc.Message, *string, badgeCollection) bool{
+	for _, matcher := range []func(*log.Entry, *irc.Message, *string, twitch.BadgeCollection) bool{
 		r.allowExecuteDisable,
 		r.allowExecuteChannelWhitelist,
 		r.allowExecuteUserWhitelist,
@@ -89,21 +96,34 @@ func (r *Rule) matches(m *irc.Message, event *string) bool {
 	return true
 }
 
-func (r *Rule) setCooldown(m *irc.Message) {
+func (r *Rule) GetMatchMessage() *regexp.Regexp {
+	var err error
+
+	if r.matchMessage == nil {
+		if r.matchMessage, err = regexp.Compile(*r.MatchMessage); err != nil {
+			log.WithError(err).Error("Unable to compile expression")
+			return nil
+		}
+	}
+
+	return r.matchMessage
+}
+
+func (r *Rule) SetCooldown(timerStore TimerStore, m *irc.Message) {
 	if r.Cooldown != nil {
-		timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
+		timerStore.AddCooldown(TimerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
 	}
 
 	if r.ChannelCooldown != nil && len(m.Params) > 0 {
-		timerStore.AddCooldown(timerTypeCooldown, m.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
+		timerStore.AddCooldown(TimerTypeCooldown, m.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
 	}
 
 	if r.UserCooldown != nil {
-		timerStore.AddCooldown(timerTypeCooldown, m.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
+		timerStore.AddCooldown(TimerTypeCooldown, m.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
 	}
 }
 
-func (r *Rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	for _, b := range r.DisableOn {
 		if badges.Has(b) {
 			logger.Tracef("Non-Match: Disable-Badge %s", b)
@@ -114,7 +134,7 @@ func (r *Rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, eve
 	return true
 }
 
-func (r *Rule) allowExecuteBadgeWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteBadgeWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if len(r.EnableOn) == 0 {
 		// No match criteria set, does not speak against matching
 		return true
@@ -129,13 +149,13 @@ func (r *Rule) allowExecuteBadgeWhitelist(logger *log.Entry, m *irc.Message, eve
 	return false
 }
 
-func (r *Rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.ChannelCooldown == nil || len(m.Params) < 1 {
 		// No match criteria set, does not speak against matching
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, m.Params[0], r.MatcherID()) {
+	if !r.timerStore.InCooldown(TimerTypeCooldown, m.Params[0], r.MatcherID()) {
 		return true
 	}
 
@@ -148,7 +168,7 @@ func (r *Rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, ev
 	return false
 }
 
-func (r *Rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if len(r.MatchChannels) == 0 {
 		// No match criteria set, does not speak against matching
 		return true
@@ -162,7 +182,7 @@ func (r *Rule) allowExecuteChannelWhitelist(logger *log.Entry, m *irc.Message, e
 	return true
 }
 
-func (r *Rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.Disable == nil {
 		// No match criteria set, does not speak against matching
 		return true
@@ -176,13 +196,13 @@ func (r *Rule) allowExecuteDisable(logger *log.Entry, m *irc.Message, event *str
 	return true
 }
 
-func (r *Rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.DisableOnOffline == nil || !*r.DisableOnOffline {
 		// No match criteria set, does not speak against matching
 		return true
 	}
 
-	streamLive, err := twitch.HasLiveStream(strings.TrimLeft(m.Params[0], "#"))
+	streamLive, err := r.twitchClient.HasLiveStream(strings.TrimLeft(m.Params[0], "#"))
 	if err != nil {
 		logger.WithError(err).Error("Unable to determine live status")
 		return false
@@ -195,8 +215,8 @@ func (r *Rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, e
 	return true
 }
 
-func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
-	if r.DisableOnPermit != nil && *r.DisableOnPermit && timerStore.HasPermit(m.Params[0], m.User) {
+func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
+	if r.DisableOnPermit != nil && *r.DisableOnPermit && r.timerStore.HasPermit(m.Params[0], m.User) {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
@@ -204,13 +224,13 @@ func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, ev
 	return true
 }
 
-func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.DisableOnTemplate == nil {
 		// No match criteria set, does not speak against matching
 		return true
 	}
 
-	res, err := formatMessage(*r.DisableOnTemplate, m, r, nil)
+	res, err := r.msgFormatter(*r.DisableOnTemplate, m, r, nil)
 	if err != nil {
 		logger.WithError(err).Error("Unable to check DisableOnTemplate field")
 		// Caused an error, forbid execution
@@ -225,7 +245,7 @@ func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 	return true
 }
 
-func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.MatchEvent == nil {
 		// No match criteria set, does not speak against matching
 		return true
@@ -239,7 +259,7 @@ func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, eve
 	return true
 }
 
-func (r *Rule) allowExecuteMessageMatcherBlacklist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteMessageMatcherBlacklist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if len(r.DisableOnMatchMessages) == 0 {
 		// No match criteria set, does not speak against matching
 		return true
@@ -268,7 +288,7 @@ func (r *Rule) allowExecuteMessageMatcherBlacklist(logger *log.Entry, m *irc.Mes
 	return true
 }
 
-func (r *Rule) allowExecuteMessageMatcherWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteMessageMatcherWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.MatchMessage == nil {
 		// No match criteria set, does not speak against matching
 		return true
@@ -293,13 +313,13 @@ func (r *Rule) allowExecuteMessageMatcherWhitelist(logger *log.Entry, m *irc.Mes
 	return true
 }
 
-func (r *Rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.Cooldown == nil {
 		// No match criteria set, does not speak against matching
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, "", r.MatcherID()) {
+	if !r.timerStore.InCooldown(TimerTypeCooldown, "", r.MatcherID()) {
 		return true
 	}
 
@@ -312,13 +332,13 @@ func (r *Rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event
 	return false
 }
 
-func (r *Rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if r.UserCooldown == nil {
 		// No match criteria set, does not speak against matching
 		return true
 	}
 
-	if !timerStore.InCooldown(timerTypeCooldown, m.User, r.MatcherID()) {
+	if !r.timerStore.InCooldown(TimerTypeCooldown, m.User, r.MatcherID()) {
 		return true
 	}
 
@@ -331,7 +351,7 @@ func (r *Rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event
 	return false
 }
 
-func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, event *string, badges badgeCollection) bool {
+func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection) bool {
 	if len(r.MatchUsers) == 0 {
 		// No match criteria set, does not speak against matching
 		return true
@@ -343,34 +363,4 @@ func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 	}
 
 	return true
-}
-
-type RuleAction struct {
-	yamlUnmarshal func(interface{}) error
-	jsonValue     []byte
-}
-
-func (r *RuleAction) UnmarshalJSON(d []byte) error {
-	r.jsonValue = d
-	return nil
-}
-
-func (r *RuleAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	r.yamlUnmarshal = unmarshal
-	return nil
-}
-
-func (r *RuleAction) Unmarshal(v interface{}) error {
-	switch {
-	case r.yamlUnmarshal != nil:
-		return r.yamlUnmarshal(v)
-
-	case r.jsonValue != nil:
-		jd := json.NewDecoder(bytes.NewReader(r.jsonValue))
-		jd.DisallowUnknownFields()
-		return jd.Decode(v)
-
-	default:
-		return errors.New("unmarshal on unprimed object")
-	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -15,7 +16,7 @@ type ActorBan struct {
 	Ban *string `json:"ban" yaml:"ban"`
 }
 
-func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Ban == nil {
 		return false, nil
 	}

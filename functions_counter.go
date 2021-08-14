@@ -3,12 +3,13 @@ package main
 import (
 	"strings"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
 func init() {
-	tplFuncs.Register("channelCounter", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("channelCounter", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(name string) (string, error) {
 			channel, ok := fields["channel"].(string)
 			if !ok {

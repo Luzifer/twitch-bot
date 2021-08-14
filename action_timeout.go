@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -16,7 +17,7 @@ type ActorTimeout struct {
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
-func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Timeout == nil {
 		return false, nil
 	}

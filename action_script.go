@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -19,7 +21,7 @@ type ActorScript struct {
 	Command []string `json:"command" yaml:"command"`
 }
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if len(a.Command) == 0 {
 		return false, nil
 	}
@@ -43,7 +45,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCoo
 	)
 
 	if err := json.NewEncoder(stdin).Encode(map[string]interface{}{
-		"badges":   ircHandler{}.ParseBadgeLevels(m),
+		"badges":   twitch.ParseBadgeLevels(m),
 		"channel":  m.Params[0],
 		"message":  m.Trailing(),
 		"tags":     m.Tags,
@@ -68,7 +70,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCoo
 	}
 
 	var (
-		actions []*RuleAction
+		actions []*plugins.RuleAction
 		decoder = json.NewDecoder(stdout)
 	)
 

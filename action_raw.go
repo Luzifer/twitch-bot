@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -13,7 +14,7 @@ type ActorRaw struct {
 	RawMessage *string `json:"raw_message" yaml:"raw_message"`
 }
 
-func (a ActorRaw) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorRaw) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.RawMessage == nil {
 		return false, nil
 	}

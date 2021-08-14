@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -15,7 +16,7 @@ type ActorDelete struct {
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 }
 
-func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.DeleteMessage == nil || !*a.DeleteMessage {
 		return false, nil
 	}

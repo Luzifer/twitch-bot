@@ -1,4 +1,4 @@
-package main
+package twitch
 
 import (
 	"crypto/sha256"

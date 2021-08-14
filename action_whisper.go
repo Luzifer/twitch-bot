@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
@@ -16,7 +17,7 @@ type ActorWhisper struct {
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
 		return false, nil
 	}

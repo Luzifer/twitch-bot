@@ -3,19 +3,12 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"strconv"
 	"strings"
 
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	badgeBroadcaster = "broadcaster"
-	badgeFounder     = "founder"
-	badgeModerator   = "moderator"
-	badgeSubscriber  = "subscriber"
 )
 
 type ircHandler struct {
@@ -27,7 +20,7 @@ type ircHandler struct {
 func newIRCHandler() (*ircHandler, error) {
 	h := new(ircHandler)
 
-	username, err := twitch.getAuthorizedUsername()
+	username, err := twitchClient.GetAuthorizedUsername()
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching username")
 	}
@@ -156,8 +149,8 @@ func (i ircHandler) handlePart(m *irc.Message) {
 }
 
 func (i ircHandler) handlePermit(m *irc.Message) {
-	badges := i.ParseBadgeLevels(m)
-	if !badges.Has(badgeBroadcaster) && (!config.PermitAllowModerator || !badges.Has(badgeModerator)) {
+	badges := twitch.ParseBadgeLevels(m)
+	if !badges.Has(twitch.BadgeBroadcaster) && (!config.PermitAllowModerator || !badges.Has(twitch.BadgeModerator)) {
 		// Neither broadcaster nor moderator or moderator not permitted
 		return
 	}
@@ -255,40 +248,4 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
 	go handleMessage(i.c, m, eventTypeWhisper)
-}
-
-func (ircHandler) ParseBadgeLevels(m *irc.Message) badgeCollection {
-	out := badgeCollection{}
-
-	badgeString, ok := m.GetTag("badges")
-	if !ok || len(badgeString) == 0 {
-		return out
-	}
-
-	badges := strings.Split(badgeString, ",")
-	for _, b := range badges {
-		badgeParts := strings.Split(b, "/")
-		if len(badgeParts) != 2 { //nolint:gomnd // This is not a magic number but just an expected count
-			log.WithField("badge", b).Warn("Malformed badge found")
-			continue
-		}
-
-		level, err := strconv.Atoi(badgeParts[1])
-		if err != nil {
-			log.WithField("badge", b).Warn("Unparsable level in badge")
-			continue
-		}
-
-		out.Add(badgeParts[0], level)
-	}
-
-	// If there is a founders badge but no subscribers badge
-	// add a level-0 subscribers badge to prevent the bot to
-	// cause trouble on founders when subscribers are allowed
-	// to do something
-	if out.Has(badgeFounder) && !out.Has(badgeSubscriber) {
-		out.Add(badgeSubscriber, out.Get(badgeFounder))
-	}
-
-	return out
 }

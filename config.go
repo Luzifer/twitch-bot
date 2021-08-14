@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +20,7 @@ type configFile struct {
 	PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
 	PermitTimeout        time.Duration          `yaml:"permit_timeout"`
 	RawLog               string                 `yaml:"raw_log"`
-	Rules                []*Rule                `yaml:"rules"`
+	Rules                []*plugins.Rule        `yaml:"rules"`
 	Variables            map[string]interface{} `yaml:"variables"`
 
 	rawLogWriter io.WriteCloser
@@ -125,14 +126,14 @@ func (c *configFile) CloseRawMessageWriter() error {
 	return c.rawLogWriter.Close()
 }
 
-func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*Rule {
+func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*plugins.Rule {
 	configLock.RLock()
 	defer configLock.RUnlock()
 
-	var out []*Rule
+	var out []*plugins.Rule
 
 	for _, r := range c.Rules {
-		if r.matches(m, event) {
+		if r.Matches(m, event, timerStore, formatMessage, twitchClient) {
 			out = append(out, r)
 		}
 	}

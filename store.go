@@ -7,13 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
 )
 
 type storageFile struct {
-	Counters  map[string]int64      `json:"counters"`
-	Timers    map[string]timerEntry `json:"timers"`
-	Variables map[string]string     `json:"variables"`
+	Counters  map[string]int64              `json:"counters"`
+	Timers    map[string]plugins.TimerEntry `json:"timers"`
+	Variables map[string]string             `json:"variables"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -22,7 +23,7 @@ type storageFile struct {
 func newStorageFile(inMemStore bool) *storageFile {
 	return &storageFile{
 		Counters:  map[string]int64{},
-		Timers:    map[string]timerEntry{},
+		Timers:    map[string]plugins.TimerEntry{},
 		Variables: map[string]string{},
 
 		inMem: inMemStore,
@@ -121,11 +122,11 @@ func (s *storageFile) Save() error {
 	)
 }
 
-func (s *storageFile) SetTimer(kind timerType, id string, expiry time.Time) error {
+func (s *storageFile) SetTimer(kind plugins.TimerType, id string, expiry time.Time) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	s.Timers[id] = timerEntry{Kind: kind, Time: expiry}
+	s.Timers[id] = plugins.TimerEntry{Kind: kind, Time: expiry}
 
 	return errors.Wrap(s.Save(), "saving store")
 }
