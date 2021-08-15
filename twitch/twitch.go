@@ -24,7 +24,7 @@ type Client struct {
 	clientID string
 	token    string
 
-	apiCache *twitchAPICache
+	apiCache *TwitchAPICache
 }
 
 func New(clientID, token string) *Client {
@@ -35,6 +35,8 @@ func New(clientID, token string) *Client {
 		apiCache: newTwitchAPICache(),
 	}
 }
+
+func (c Client) APICache() *TwitchAPICache { return c.apiCache }
 
 func (c Client) GetAuthorizedUsername() (string, error) {
 	var payload struct {
