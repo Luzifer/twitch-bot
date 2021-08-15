@@ -34,7 +34,7 @@ var (
 	config     *configFile
 	configLock = new(sync.RWMutex)
 
-	sendMessage func(m *irc.Message) error
+	sendMessage func(m *irc.Message) error //nolint: unused // Will make sense later in this PR // FIXME: Reenable
 
 	store        = newStorageFile(false)
 	twitchClient *twitch.Client
@@ -68,7 +68,7 @@ func init() {
 	}
 }
 
-//nolint: gocognit,gocyclo // Complexity is a little too high but makes no sense to split
+//nolint: funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
 
