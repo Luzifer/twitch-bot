@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -61,7 +62,7 @@ func init() {
 
 	tplFuncs.Register("toLower", genericTemplateFunctionGetter(strings.ToLower))
 	tplFuncs.Register("toUpper", genericTemplateFunctionGetter(strings.ToUpper))
-	tplFuncs.Register("followDate", genericTemplateFunctionGetter(twitchClient.GetFollowDate))
+	tplFuncs.Register("followDate", genericTemplateFunctionGetter(func(from, to string) (time.Time, error) { return twitchClient.GetFollowDate(from, to) }))
 	tplFuncs.Register("concat", genericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
 	tplFuncs.Register("variable", genericTemplateFunctionGetter(func(name string, defVal ...string) string {
 		value := store.GetVariable(name)
