@@ -1,4 +1,4 @@
-package deleteActor
+package deleteactor
 
 import (
 	"fmt"

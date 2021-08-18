@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
-	deleteActor "github.com/Luzifer/twitch-bot/internal/actors/delete"
+	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
@@ -15,7 +15,7 @@ import (
 var coreActorRegistations = []plugins.RegisterFunc{
 	ban.Register,
 	delay.Register,
-	deleteActor.Register,
+	deleteactor.Register,
 	raw.Register,
 	respond.Register,
 	timeout.Register,
