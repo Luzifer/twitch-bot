@@ -21,9 +21,11 @@ type (
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
 
+	// RegisterFunc is the type of function your plugin must expose with the name Register
 	RegisterFunc func(RegistrationArguments) error
 
 	RegistrationArguments struct {
+		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 	}
 )
