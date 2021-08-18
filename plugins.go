@@ -56,7 +56,7 @@ func loadPlugins(pluginDir string) error {
 			return nil
 		}
 
-		f.(plugins.RegisterFunc)(args)
+		f.(func(plugins.RegistrationArguments) error)(args)
 
 		return nil
 	}), "loading plugins")
