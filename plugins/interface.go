@@ -36,5 +36,9 @@ type (
 		GetLogger LoggerCreationFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
+		// SendMessage can be used to send a message not triggered by an event
+		SendMessage SendMessageFunc
 	}
+
+	SendMessageFunc func(*irc.Message) error
 )

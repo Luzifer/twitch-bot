@@ -35,7 +35,7 @@ var (
 	config     *configFile
 	configLock = new(sync.RWMutex)
 
-	sendMessage func(m *irc.Message) error //nolint: unused // Will make sense later in this PR // FIXME: Reenable
+	sendMessage func(m *irc.Message) error
 
 	store        = newStorageFile(false)
 	twitchClient *twitch.Client
