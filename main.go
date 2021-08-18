@@ -24,6 +24,7 @@ var (
 		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
 		IRCRateLimit   time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
 		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		PluginDir      string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
 		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
 		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
@@ -71,6 +72,10 @@ func init() {
 //nolint: funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
+
+	if err = loadPlugins(cfg.PluginDir); err != nil {
+		log.WithError(err).Fatal("Unable to load plugins")
+	}
 
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
