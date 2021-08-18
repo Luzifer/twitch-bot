@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorCounter{} })
+	registerAction(func() plugins.Actor { return &ActorCounter{} })
 }
 
 type ActorCounter struct {

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorRespond{} })
+	registerAction(func() plugins.Actor { return &ActorRespond{} })
 }
 
 type ActorRespond struct {

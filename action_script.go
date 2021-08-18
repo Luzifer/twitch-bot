@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorScript{} })
+	registerAction(func() plugins.Actor { return &ActorScript{} })
 }
 
 type ActorScript struct {

@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorTimeout{} })
+	registerAction(func() plugins.Actor { return &ActorTimeout{} })
 }
 
 type ActorTimeout struct {

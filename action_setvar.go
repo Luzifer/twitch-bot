@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorSetVariable{} })
+	registerAction(func() plugins.Actor { return &ActorSetVariable{} })
 }
 
 type ActorSetVariable struct {

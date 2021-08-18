@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorDelete{} })
+	registerAction(func() plugins.Actor { return &ActorDelete{} })
 }
 
 type ActorDelete struct {

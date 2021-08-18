@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorDelay{} })
+	registerAction(func() plugins.Actor { return &ActorDelay{} })
 }
 
 type ActorDelay struct {
