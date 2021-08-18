@@ -1,6 +1,9 @@
 package plugins
 
-import "github.com/go-irc/irc"
+import (
+	"github.com/go-irc/irc"
+	log "github.com/sirupsen/logrus"
+)
 
 type (
 	Actor interface {
@@ -19,6 +22,8 @@ type (
 
 	ActorRegistrationFunc func(ActorCreationFunc)
 
+	LoggerCreationFunc func(moduleName string) *log.Entry
+
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
 
 	// RegisterFunc is the type of function your plugin must expose with the name Register
@@ -27,6 +32,8 @@ type (
 	RegistrationArguments struct {
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
+		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
+		GetLogger LoggerCreationFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 	}
