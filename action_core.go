@@ -23,12 +23,17 @@ var coreActorRegistations = []plugins.RegisterFunc{
 }
 
 func init() {
+	args := getRegistrationArguments()
 	for _, rf := range coreActorRegistations {
-		if err := rf(plugins.RegistrationArguments{
-			FormatMessage: formatMessage,
-			RegisterActor: registerAction,
-		}); err != nil {
+		if err := rf(args); err != nil {
 			log.WithError(err).Fatal("Unable to register core actor")
 		}
+	}
+}
+
+func getRegistrationArguments() plugins.RegistrationArguments {
+	return plugins.RegistrationArguments{
+		FormatMessage: formatMessage,
+		RegisterActor: registerAction,
 	}
 }
