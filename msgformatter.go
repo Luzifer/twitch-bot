@@ -10,6 +10,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Compile-time assertion
+var _ plugins.MsgFormatter = formatMessage
+
 func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields map[string]interface{}) (string, error) {
 	compiledFields := map[string]interface{}{}
 

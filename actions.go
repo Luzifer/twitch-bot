@@ -9,27 +9,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type (
-	Actor interface {
-		// Execute will be called after the config was read into the Actor
-		Execute(*irc.Client, *irc.Message, *plugins.Rule) (preventCooldown bool, err error)
-		// IsAsync may return true if the Execute function is to be executed
-		// in a Go routine as of long runtime. Normally it should return false
-		// except in very specific cases
-		IsAsync() bool
-		// Name must return an unique name for the actor in order to identify
-		// it in the logs for debugging purposes
-		Name() string
-	}
-	ActorCreationFunc func() Actor
-)
-
 var (
-	availableActions     []ActorCreationFunc
+	availableActions     []plugins.ActorCreationFunc
 	availableActionsLock = new(sync.RWMutex)
 )
 
-func registerAction(af ActorCreationFunc) {
+// Compile-time assertion
+var _ plugins.ActorRegistrationFunc = registerAction
+
+func registerAction(af plugins.ActorCreationFunc) {
 	availableActionsLock.Lock()
 	defer availableActionsLock.Unlock()
 
