@@ -9,16 +9,16 @@ import (
 )
 
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &ActorDelete{} })
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
 
 	return nil
 }
 
-type ActorDelete struct {
+type actor struct {
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 }
 
-func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.DeleteMessage == nil || !*a.DeleteMessage {
 		return false, nil
 	}
@@ -40,5 +40,5 @@ func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (pr
 	)
 }
 
-func (a ActorDelete) IsAsync() bool { return false }
-func (a ActorDelete) Name() string  { return "delete" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "delete" }

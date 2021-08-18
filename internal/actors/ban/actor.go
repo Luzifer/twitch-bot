@@ -9,16 +9,16 @@ import (
 )
 
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &ActorBan{} })
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
 
 	return nil
 }
 
-type ActorBan struct {
+type actor struct {
 	Ban *string `json:"ban" yaml:"ban"`
 }
 
-func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Ban == nil {
 		return false, nil
 	}
@@ -35,5 +35,5 @@ func (a ActorBan) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preve
 	)
 }
 
-func (a ActorBan) IsAsync() bool { return false }
-func (a ActorBan) Name() string  { return "ban" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "ban" }

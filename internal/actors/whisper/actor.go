@@ -13,17 +13,17 @@ var formatMessage plugins.MsgFormatter
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
-	args.RegisterActor(func() plugins.Actor { return &ActorWhisper{} })
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
 
 	return nil
 }
 
-type ActorWhisper struct {
+type actor struct {
 	WhisperMessage *string `json:"whisper_message" yaml:"whisper_message"`
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
 		return false, nil
 	}
@@ -52,5 +52,5 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (p
 	)
 }
 
-func (a ActorWhisper) IsAsync() bool { return false }
-func (a ActorWhisper) Name() string  { return "whisper" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "whisper" }

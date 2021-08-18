@@ -10,16 +10,16 @@ import (
 )
 
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &ActorTimeout{} })
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
 
 	return nil
 }
 
-type ActorTimeout struct {
+type actor struct {
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
-func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Timeout == nil {
 		return false, nil
 	}
@@ -36,8 +36,8 @@ func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (p
 	)
 }
 
-func (a ActorTimeout) IsAsync() bool { return false }
-func (a ActorTimeout) Name() string  { return "timeout" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "timeout" }
 
 func fixDurationValue(d time.Duration) time.Duration {
 	if d >= time.Second {
