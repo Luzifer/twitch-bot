@@ -1,4 +1,4 @@
-package main
+package deleteActor
 
 import (
 	"fmt"
@@ -8,8 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorDelete{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &ActorDelete{} })
+
+	return nil
 }
 
 type ActorDelete struct {

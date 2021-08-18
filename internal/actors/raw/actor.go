@@ -1,4 +1,4 @@
-package main
+package raw
 
 import (
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -6,8 +6,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorRaw{} })
+var formatMessage plugins.MsgFormatter
+
+func Register(args plugins.RegistrationArguments) error {
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor(func() plugins.Actor { return &ActorRaw{} })
+
+	return nil
 }
 
 type ActorRaw struct {

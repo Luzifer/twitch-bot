@@ -1,4 +1,4 @@
-package main
+package ban
 
 import (
 	"fmt"
@@ -8,8 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorBan{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &ActorBan{} })
+
+	return nil
 }
 
 type ActorBan struct {

@@ -1,4 +1,4 @@
-package main
+package timeout
 
 import (
 	"fmt"
@@ -9,8 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorTimeout{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &ActorTimeout{} })
+
+	return nil
 }
 
 type ActorTimeout struct {
@@ -36,3 +38,11 @@ func (a ActorTimeout) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (p
 
 func (a ActorTimeout) IsAsync() bool { return false }
 func (a ActorTimeout) Name() string  { return "timeout" }
+
+func fixDurationValue(d time.Duration) time.Duration {
+	if d >= time.Second {
+		return d
+	}
+
+	return d * time.Second
+}

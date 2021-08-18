@@ -1,4 +1,4 @@
-package main
+package delay
 
 import (
 	"math/rand"
@@ -8,8 +8,10 @@ import (
 	"github.com/go-irc/irc"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorDelay{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &ActorDelay{} })
+
+	return nil
 }
 
 type ActorDelay struct {

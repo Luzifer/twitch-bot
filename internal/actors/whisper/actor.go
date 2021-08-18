@@ -1,4 +1,4 @@
-package main
+package whisper
 
 import (
 	"fmt"
@@ -8,8 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() plugins.Actor { return &ActorWhisper{} })
+var formatMessage plugins.MsgFormatter
+
+func Register(args plugins.RegistrationArguments) error {
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor(func() plugins.Actor { return &ActorWhisper{} })
+
+	return nil
 }
 
 type ActorWhisper struct {
@@ -33,9 +39,6 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (p
 	}
 
 	channel := "#tmijs" // As a fallback, copied from tmi.js
-	if len(config.Channels) > 0 {
-		channel = fmt.Sprintf("#%s", config.Channels[0])
-	}
 
 	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{

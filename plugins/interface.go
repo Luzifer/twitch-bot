@@ -25,6 +25,8 @@ type (
 	RegisterFunc func(RegistrationArguments) error
 
 	RegistrationArguments struct {
+		// FormatMessage is a method to convert templates into strings using internally known variables / configs
+		FormatMessage MsgFormatter
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 	}
