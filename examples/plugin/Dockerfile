@@ -9,7 +9,7 @@ RUN set -ex \
       git \
  && go install \
       -mod=readonly \
-      github.com/Luzifer/twitch-bot@a134d30 \
+      github.com/Luzifer/twitch-bot@$(grep 'twitch-bot ' go.mod | sed -E 's/.*-([^-]+)$/\1/') \
  && go build \
       -buildmode=plugin \
       -mod=readonly \
