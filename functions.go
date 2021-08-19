@@ -46,7 +46,7 @@ func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGett
 	defer t.lock.Unlock()
 
 	if _, ok := t.funcs[name]; ok {
-		log.Fatalf("Duplicate registration of %q template function", name)
+		log.Fatalf("Duplicate registration of %q template function", name) //nolint:gocritic // Yeah, the unlock will not run but the process will end
 	}
 
 	t.funcs[name] = fg
