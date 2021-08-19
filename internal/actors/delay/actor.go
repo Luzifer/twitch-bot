@@ -1,22 +1,25 @@
-package main
+package delay
 
 import (
 	"math/rand"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 )
 
-func init() {
-	registerAction(func() Actor { return &ActorDelay{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
+
+	return nil
 }
 
-type ActorDelay struct {
+type actor struct {
 	Delay       time.Duration `json:"delay" yaml:"delay"`
 	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
 }
 
-func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Delay == 0 && a.DelayJitter == 0 {
 		return false, nil
 	}
@@ -30,5 +33,5 @@ func (a ActorDelay) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCool
 	return false, nil
 }
 
-func (a ActorDelay) IsAsync() bool { return false }
-func (a ActorDelay) Name() string  { return "delay" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "delay" }

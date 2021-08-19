@@ -73,7 +73,7 @@ func (a *autoMessage) CanSend() bool {
 	}
 
 	if a.OnlyOnLive {
-		streamLive, err := twitch.HasLiveStream(strings.TrimLeft(a.Channel, "#"))
+		streamLive, err := twitchClient.HasLiveStream(strings.TrimLeft(a.Channel, "#"))
 		if err != nil {
 			log.WithError(err).Error("Unable to determine channel live status")
 			return false

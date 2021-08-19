@@ -5,11 +5,15 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
-func formatMessage(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error) {
+// Compile-time assertion
+var _ plugins.MsgFormatter = formatMessage
+
+func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields map[string]interface{}) (string, error) {
 	compiledFields := map[string]interface{}{}
 
 	if config != nil {

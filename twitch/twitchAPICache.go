@@ -1,4 +1,4 @@
-package main
+package twitch
 
 import (
 	"crypto/sha256"
@@ -9,23 +9,24 @@ import (
 )
 
 type (
-	twitchAPICache struct {
+	APICache struct {
 		data map[string]twitchAPICacheEntry
 		lock sync.RWMutex
 	}
+
 	twitchAPICacheEntry struct {
 		Data       interface{}
 		ValidUntil time.Time
 	}
 )
 
-func newTwitchAPICache() *twitchAPICache {
-	return &twitchAPICache{
+func newTwitchAPICache() *APICache {
+	return &APICache{
 		data: make(map[string]twitchAPICacheEntry),
 	}
 }
 
-func (t *twitchAPICache) Get(key []string) interface{} {
+func (t *APICache) Get(key []string) interface{} {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
@@ -37,7 +38,7 @@ func (t *twitchAPICache) Get(key []string) interface{} {
 	return e.Data
 }
 
-func (t *twitchAPICache) Set(key []string, valid time.Duration, data interface{}) {
+func (t *APICache) Set(key []string, valid time.Duration, data interface{}) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -47,7 +48,7 @@ func (t *twitchAPICache) Set(key []string, valid time.Duration, data interface{}
 	}
 }
 
-func (*twitchAPICache) deriveKey(key []string) string {
+func (*APICache) deriveKey(key []string) string {
 	sha := sha256.New()
 
 	fmt.Fprintf(sha, "%s", strings.Join(key, ":"))

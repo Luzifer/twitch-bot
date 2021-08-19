@@ -1,21 +1,28 @@
-package main
+package respond
 
 import (
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() Actor { return &ActorRespond{} })
+var formatMessage plugins.MsgFormatter
+
+func Register(args plugins.RegistrationArguments) error {
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
+
+	return nil
 }
 
-type ActorRespond struct {
+type actor struct {
 	Respond         *string `json:"respond" yaml:"respond"`
 	RespondAsReply  *bool   `json:"respond_as_reply" yaml:"respond_as_reply"`
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 }
 
-func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Respond == nil {
 		return false, nil
 	}
@@ -54,5 +61,5 @@ func (a ActorRespond) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCo
 	)
 }
 
-func (a ActorRespond) IsAsync() bool { return false }
-func (a ActorRespond) Name() string  { return "respond" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "respond" }

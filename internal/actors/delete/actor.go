@@ -1,21 +1,24 @@
-package main
+package deleteactor
 
 import (
 	"fmt"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() Actor { return &ActorDelete{} })
+func Register(args plugins.RegistrationArguments) error {
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
+
+	return nil
 }
 
-type ActorDelete struct {
+type actor struct {
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 }
 
-func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.DeleteMessage == nil || !*a.DeleteMessage {
 		return false, nil
 	}
@@ -37,5 +40,5 @@ func (a ActorDelete) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCoo
 	)
 }
 
-func (a ActorDelete) IsAsync() bool { return false }
-func (a ActorDelete) Name() string  { return "delete" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "delete" }

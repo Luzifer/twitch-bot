@@ -1,19 +1,26 @@
-package main
+package raw
 
 import (
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() Actor { return &ActorRaw{} })
+var formatMessage plugins.MsgFormatter
+
+func Register(args plugins.RegistrationArguments) error {
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
+
+	return nil
 }
 
-type ActorRaw struct {
+type actor struct {
 	RawMessage *string `json:"raw_message" yaml:"raw_message"`
 }
 
-func (a ActorRaw) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.RawMessage == nil {
 		return false, nil
 	}
@@ -34,5 +41,5 @@ func (a ActorRaw) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldo
 	)
 }
 
-func (a ActorRaw) IsAsync() bool { return false }
-func (a ActorRaw) Name() string  { return "raw" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "raw" }

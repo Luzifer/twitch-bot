@@ -1,10 +1,11 @@
-package main
+package plugins
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/sirupsen/logrus"
 )
@@ -16,25 +17,25 @@ var (
 )
 
 func TestAllowExecuteBadgeBlacklist(t *testing.T) {
-	r := &Rule{DisableOn: []string{badgeBroadcaster}}
+	r := &Rule{DisableOn: []string{twitch.BadgeBroadcaster}}
 
-	if r.allowExecuteBadgeBlacklist(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if r.allowExecuteBadgeBlacklist(testLogger, nil, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Execution allowed on blacklisted badge")
 	}
 
-	if !r.allowExecuteBadgeBlacklist(testLogger, nil, nil, badgeCollection{badgeModerator: testBadgeLevel0}) {
+	if !r.allowExecuteBadgeBlacklist(testLogger, nil, nil, twitch.BadgeCollection{twitch.BadgeModerator: testBadgeLevel0}) {
 		t.Error("Execution denied without blacklisted badge")
 	}
 }
 
 func TestAllowExecuteBadgeWhitelist(t *testing.T) {
-	r := &Rule{EnableOn: []string{badgeBroadcaster}}
+	r := &Rule{EnableOn: []string{twitch.BadgeBroadcaster}}
 
-	if r.allowExecuteBadgeWhitelist(testLogger, nil, nil, badgeCollection{badgeModerator: testBadgeLevel0}) {
+	if r.allowExecuteBadgeWhitelist(testLogger, nil, nil, twitch.BadgeCollection{twitch.BadgeModerator: testBadgeLevel0}) {
 		t.Error("Execution allowed without whitelisted badge")
 	}
 
-	if !r.allowExecuteBadgeWhitelist(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteBadgeWhitelist(testLogger, nil, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Execution denied with whitelisted badge")
 	}
 }
@@ -52,7 +53,7 @@ func TestAllowExecuteChannelWhitelist(t *testing.T) {
 		":tmi.twitch.tv CLEARCHAT #dallas":                                                        false,
 		"@msg-id=slow_off :tmi.twitch.tv NOTICE #mychannel :This room is no longer in slow mode.": true,
 	} {
-		if res := r.allowExecuteChannelWhitelist(testLogger, irc.MustParseMessage(m), nil, badgeCollection{}); res != exp {
+		if res := r.allowExecuteChannelWhitelist(testLogger, irc.MustParseMessage(m), nil, twitch.BadgeCollection{}); res != exp {
 			t.Errorf("Message %q yield unxpected result: exp=%v res=%v", m, exp, res)
 		}
 	}
@@ -63,7 +64,7 @@ func TestAllowExecuteDisable(t *testing.T) {
 		true:  {Disable: testPtrBool(false)},
 		false: {Disable: testPtrBool(true)},
 	} {
-		if res := r.allowExecuteDisable(testLogger, nil, nil, badgeCollection{}); res != exp {
+		if res := r.allowExecuteDisable(testLogger, nil, nil, twitch.BadgeCollection{}); res != exp {
 			t.Errorf("Disable status %v yield unexpected result: exp=%v res=%v", *r.Disable, exp, res)
 		}
 	}
@@ -73,58 +74,58 @@ func TestAllowExecuteDisableOnOffline(t *testing.T) {
 	r := &Rule{DisableOnOffline: testPtrBool(true)}
 
 	// Fake cache entries to prevent calling the real Twitch API
-	twitch.apiCache.Set([]string{"hasLiveStream", "channel1"}, time.Minute, true)
-	twitch.apiCache.Set([]string{"hasLiveStream", "channel2"}, time.Minute, false)
+	r.twitchClient = twitch.New("", "")
+	r.twitchClient.APICache().Set([]string{"hasLiveStream", "channel1"}, time.Minute, true)
+	r.twitchClient.APICache().Set([]string{"hasLiveStream", "channel2"}, time.Minute, false)
 
 	for ch, exp := range map[string]bool{
 		"channel1": true,
 		"channel2": false,
 	} {
-		if res := r.allowExecuteDisableOnOffline(testLogger, irc.MustParseMessage(fmt.Sprintf("PRIVMSG #%s :test", ch)), nil, badgeCollection{}); res != exp {
+		if res := r.allowExecuteDisableOnOffline(testLogger, irc.MustParseMessage(fmt.Sprintf("PRIVMSG #%s :test", ch)), nil, twitch.BadgeCollection{}); res != exp {
 			t.Errorf("Channel %q yield an unexpected result: exp=%v res=%v", ch, exp, res)
 		}
 	}
 }
 
 func TestAllowExecuteChannelCooldown(t *testing.T) {
-	r := &Rule{ChannelCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{ChannelCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{twitch.BadgeBroadcaster}}
 	c1 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
 	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #otherchannel :Testing")
 
-	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{}) {
+	r.timerStore = newTestTimerStore()
+
+	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, twitch.BadgeCollection{}) {
 		t.Error("Initial call was not allowed")
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, c1.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
+	r.timerStore.AddCooldown(TimerTypeCooldown, c1.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
 
-	if r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{}) {
+	if r.allowExecuteChannelCooldown(testLogger, c1, nil, twitch.BadgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
 	}
 
-	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteChannelCooldown(testLogger, c1, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with skip badge was not allowed")
 	}
 
-	if !r.allowExecuteChannelCooldown(testLogger, c2, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteChannelCooldown(testLogger, c2, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with different channel was not allowed")
 	}
 }
 
 func TestAllowExecuteDisableOnPermit(t *testing.T) {
 	r := &Rule{DisableOnPermit: testPtrBool(true)}
-
-	// Permit is using global configuration, so we must fake that one
-	config = &configFile{PermitTimeout: time.Minute}
-	defer func() { config = nil }()
+	r.timerStore = newTestTimerStore()
 
 	m := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
-	if !r.allowExecuteDisableOnPermit(testLogger, m, nil, badgeCollection{}) {
+	if !r.allowExecuteDisableOnPermit(testLogger, m, nil, twitch.BadgeCollection{}) {
 		t.Error("Execution was not allowed without permit")
 	}
 
-	timerStore.AddPermit(m.Params[0], m.User)
-	if r.allowExecuteDisableOnPermit(testLogger, m, nil, badgeCollection{}) {
+	r.timerStore.AddPermit(m.Params[0], m.User)
+	if r.allowExecuteDisableOnPermit(testLogger, m, nil, twitch.BadgeCollection{}) {
 		t.Error("Execution was allowed with permit")
 	}
 }
@@ -133,10 +134,16 @@ func TestAllowExecuteDisableOnTemplate(t *testing.T) {
 	r := &Rule{DisableOnTemplate: func(s string) *string { return &s }(`{{ ne .username "amy" }}`)}
 
 	for msg, exp := range map[string]bool{
-		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing": true,
-		":bob!bob@foo.example.com PRIVMSG #mychannel :Testing": false,
+		"false": true,
+		"true":  false,
 	} {
-		if res := r.allowExecuteDisableOnTemplate(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
+		// We don't test the message formatter here but only the disable functionality
+		// so we fake the result of the evaluation
+		r.msgFormatter = func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error) {
+			return msg, nil
+		}
+
+		if res := r.allowExecuteDisableOnTemplate(testLogger, irc.MustParseMessage(msg), nil, twitch.BadgeCollection{}); exp != res {
 			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
 		}
 	}
@@ -149,7 +156,7 @@ func TestAllowExecuteEventWhitelist(t *testing.T) {
 		"foobar": false,
 		"test":   true,
 	} {
-		if res := r.allowExecuteEventWhitelist(testLogger, nil, &evt, badgeCollection{}); exp != res {
+		if res := r.allowExecuteEventWhitelist(testLogger, nil, &evt, twitch.BadgeCollection{}); exp != res {
 			t.Errorf("Event %q yield unexpected result: exp=%v res=%v", evt, exp, res)
 		}
 	}
@@ -162,7 +169,7 @@ func TestAllowExecuteMessageMatcherBlacklist(t *testing.T) {
 		"PRIVMSG #test :Random message":    true,
 		"PRIVMSG #test :!disable this one": false,
 	} {
-		if res := r.allowExecuteMessageMatcherBlacklist(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
+		if res := r.allowExecuteMessageMatcherBlacklist(testLogger, irc.MustParseMessage(msg), nil, twitch.BadgeCollection{}); exp != res {
 			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
 		}
 	}
@@ -175,52 +182,55 @@ func TestAllowExecuteMessageMatcherWhitelist(t *testing.T) {
 		"PRIVMSG #test :Random message": false,
 		"PRIVMSG #test :!test this one": true,
 	} {
-		if res := r.allowExecuteMessageMatcherWhitelist(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
+		if res := r.allowExecuteMessageMatcherWhitelist(testLogger, irc.MustParseMessage(msg), nil, twitch.BadgeCollection{}); exp != res {
 			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
 		}
 	}
 }
 
 func TestAllowExecuteRuleCooldown(t *testing.T) {
-	r := &Rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{Cooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{twitch.BadgeBroadcaster}}
+	r.timerStore = newTestTimerStore()
 
-	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, twitch.BadgeCollection{}) {
 		t.Error("Initial call was not allowed")
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
+	r.timerStore.AddCooldown(TimerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
 
-	if r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{}) {
+	if r.allowExecuteRuleCooldown(testLogger, nil, nil, twitch.BadgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
 	}
 
-	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteRuleCooldown(testLogger, nil, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with skip badge was not allowed")
 	}
 }
 
 func TestAllowExecuteUserCooldown(t *testing.T) {
-	r := &Rule{UserCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{badgeBroadcaster}}
+	r := &Rule{UserCooldown: func(i time.Duration) *time.Duration { return &i }(time.Minute), SkipCooldownFor: []string{twitch.BadgeBroadcaster}}
 	c1 := irc.MustParseMessage(":ben!ben@foo.example.com PRIVMSG #mychannel :Testing")
 	c2 := irc.MustParseMessage(":amy!amy@foo.example.com PRIVMSG #mychannel :Testing")
 
-	if !r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{}) {
+	r.timerStore = newTestTimerStore()
+
+	if !r.allowExecuteUserCooldown(testLogger, c1, nil, twitch.BadgeCollection{}) {
 		t.Error("Initial call was not allowed")
 	}
 
 	// Add cooldown
-	timerStore.AddCooldown(timerTypeCooldown, c1.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
+	r.timerStore.AddCooldown(TimerTypeCooldown, c1.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
 
-	if r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{}) {
+	if r.allowExecuteUserCooldown(testLogger, c1, nil, twitch.BadgeCollection{}) {
 		t.Error("Call after cooldown added was allowed")
 	}
 
-	if !r.allowExecuteUserCooldown(testLogger, c1, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteUserCooldown(testLogger, c1, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with skip badge was not allowed")
 	}
 
-	if !r.allowExecuteUserCooldown(testLogger, c2, nil, badgeCollection{badgeBroadcaster: testBadgeLevel0}) {
+	if !r.allowExecuteUserCooldown(testLogger, c2, nil, twitch.BadgeCollection{twitch.BadgeBroadcaster: testBadgeLevel0}) {
 		t.Error("Call in cooldown with different user was not allowed")
 	}
 }
@@ -232,7 +242,7 @@ func TestAllowExecuteUserWhitelist(t *testing.T) {
 		":amy!amy@foo.example.com PRIVMSG #mychannel :Testing": true,
 		":bob!bob@foo.example.com PRIVMSG #mychannel :Testing": false,
 	} {
-		if res := r.allowExecuteUserWhitelist(testLogger, irc.MustParseMessage(msg), nil, badgeCollection{}); exp != res {
+		if res := r.allowExecuteUserWhitelist(testLogger, irc.MustParseMessage(msg), nil, twitch.BadgeCollection{}); exp != res {
 			t.Errorf("Message %q yield unexpected result: exp=%v res=%v", msg, exp, res)
 		}
 	}

@@ -1,22 +1,29 @@
-package main
+package whisper
 
 import (
 	"fmt"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
-func init() {
-	registerAction(func() Actor { return &ActorWhisper{} })
+var formatMessage plugins.MsgFormatter
+
+func Register(args plugins.RegistrationArguments) error {
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor(func() plugins.Actor { return &actor{} })
+
+	return nil
 }
 
-type ActorWhisper struct {
+type actor struct {
 	WhisperMessage *string `json:"whisper_message" yaml:"whisper_message"`
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
 		return false, nil
 	}
@@ -32,9 +39,6 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCo
 	}
 
 	channel := "#tmijs" // As a fallback, copied from tmi.js
-	if len(config.Channels) > 0 {
-		channel = fmt.Sprintf("#%s", config.Channels[0])
-	}
 
 	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
@@ -48,5 +52,5 @@ func (a ActorWhisper) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCo
 	)
 }
 
-func (a ActorWhisper) IsAsync() bool { return false }
-func (a ActorWhisper) Name() string  { return "whisper" }
+func (a actor) IsAsync() bool { return false }
+func (a actor) Name() string  { return "whisper" }

@@ -3,12 +3,13 @@ package main
 import (
 	"strings"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
 func init() {
-	tplFuncs.Register("arg", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("arg", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(arg int) (string, error) {
 			msgParts := strings.Split(m.Trailing(), " ")
 			if len(msgParts) <= arg {
@@ -21,9 +22,9 @@ func init() {
 
 	tplFuncs.Register("fixUsername", genericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
-	tplFuncs.Register("group", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(idx int) (string, error) {
-			fields := r.matchMessage.FindStringSubmatch(m.Trailing())
+			fields := r.GetMatchMessage().FindStringSubmatch(m.Trailing())
 			if len(fields) <= idx {
 				return "", errors.New("group not found")
 			}
@@ -32,7 +33,7 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("tag", func(m *irc.Message, r *Rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("tag", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(tag string) string {
 			s, _ := m.GetTag(tag)
 			return s

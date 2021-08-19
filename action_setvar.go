@@ -1,12 +1,13 @@
 package main
 
 import (
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
 func init() {
-	registerAction(func() Actor { return &ActorSetVariable{} })
+	registerAction(func() plugins.Actor { return &ActorSetVariable{} })
 }
 
 type ActorSetVariable struct {
@@ -15,7 +16,7 @@ type ActorSetVariable struct {
 	Set      string `json:"set" yaml:"set"`
 }
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *Rule) (preventCooldown bool, err error) {
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
 	if a.Variable == "" {
 		return false, nil
 	}
