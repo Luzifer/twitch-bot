@@ -3,6 +3,8 @@ FROM golang:alpine as builder
 COPY . /go/src/github.com/Luzifer/twitch-bot
 WORKDIR /go/src/github.com/Luzifer/twitch-bot
 
+ENV CGO_ENABLED=0
+
 RUN set -ex \
  && apk add --update git \
  && go install \
