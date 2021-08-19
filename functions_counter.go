@@ -20,7 +20,7 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("counterValue", genericTemplateFunctionGetter(func(name string, _ ...string) int64 {
+	tplFuncs.Register("counterValue", plugins.GenericTemplateFunctionGetter(func(name string, _ ...string) int64 {
 		return store.GetCounterValue(name)
 	}))
 }

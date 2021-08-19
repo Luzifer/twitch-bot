@@ -20,7 +20,7 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("fixUsername", genericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
+	tplFuncs.Register("fixUsername", plugins.GenericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
 	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(idx int) (string, error) {

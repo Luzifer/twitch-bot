@@ -36,9 +36,18 @@ type (
 		GetLogger LoggerCreationFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
+		// RegisterTemplateFunction can be used to register a new template functions
+		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event
 		SendMessage SendMessageFunc
 	}
 
 	SendMessageFunc func(*irc.Message) error
+
+	TemplateFuncGetter   func(*irc.Message, *Rule, map[string]interface{}) interface{}
+	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
 )
+
+func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {
+	return func(*irc.Message, *Rule, map[string]interface{}) interface{} { return f }
+}

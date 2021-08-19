@@ -33,9 +33,10 @@ func init() {
 
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
-		FormatMessage: formatMessage,
-		GetLogger:     func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
-		RegisterActor: registerAction,
-		SendMessage:   sendMessage,
+		FormatMessage:            formatMessage,
+		GetLogger:                func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		RegisterActor:            registerAction,
+		RegisterTemplateFunction: tplFuncs.Register,
+		SendMessage:              sendMessage,
 	}
 }

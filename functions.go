@@ -9,21 +9,19 @@ import (
 	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
+	log "github.com/sirupsen/logrus"
 )
 
 var tplFuncs = newTemplateFuncProvider()
 
-type (
-	templateFuncGetter   func(*irc.Message, *plugins.Rule, map[string]interface{}) interface{}
-	templateFuncProvider struct {
-		funcs map[string]templateFuncGetter
-		lock  *sync.RWMutex
-	}
-)
+type templateFuncProvider struct {
+	funcs map[string]plugins.TemplateFuncGetter
+	lock  *sync.RWMutex
+}
 
 func newTemplateFuncProvider() *templateFuncProvider {
 	out := &templateFuncProvider{
-		funcs: map[string]templateFuncGetter{},
+		funcs: map[string]plugins.TemplateFuncGetter{},
 		lock:  new(sync.RWMutex),
 	}
 
@@ -43,28 +41,28 @@ func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, field
 	return out
 }
 
-func (t *templateFuncProvider) Register(name string, fg templateFuncGetter) {
+func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	t.funcs[name] = fg
-}
+	if _, ok := t.funcs[name]; ok {
+		log.Fatalf("Duplicate registration of %q template function", name)
+	}
 
-func genericTemplateFunctionGetter(f interface{}) templateFuncGetter {
-	return func(*irc.Message, *plugins.Rule, map[string]interface{}) interface{} { return f }
+	t.funcs[name] = fg
 }
 
 func init() {
 	// Register Korvike functions
 	for n, f := range korvike.GetFunctionMap() {
-		tplFuncs.Register(n, genericTemplateFunctionGetter(f))
+		tplFuncs.Register(n, plugins.GenericTemplateFunctionGetter(f))
 	}
 
-	tplFuncs.Register("toLower", genericTemplateFunctionGetter(strings.ToLower))
-	tplFuncs.Register("toUpper", genericTemplateFunctionGetter(strings.ToUpper))
-	tplFuncs.Register("followDate", genericTemplateFunctionGetter(func(from, to string) (time.Time, error) { return twitchClient.GetFollowDate(from, to) }))
-	tplFuncs.Register("concat", genericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
-	tplFuncs.Register("variable", genericTemplateFunctionGetter(func(name string, defVal ...string) string {
+	tplFuncs.Register("toLower", plugins.GenericTemplateFunctionGetter(strings.ToLower))
+	tplFuncs.Register("toUpper", plugins.GenericTemplateFunctionGetter(strings.ToUpper))
+	tplFuncs.Register("followDate", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Time, error) { return twitchClient.GetFollowDate(from, to) }))
+	tplFuncs.Register("concat", plugins.GenericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
+	tplFuncs.Register("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) string {
 		value := store.GetVariable(name)
 		if value == "" && len(defVal) > 0 {
 			return defVal[0]
