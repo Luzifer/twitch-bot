@@ -1,3 +1,15 @@
+# 0.16.0 / 2021-08-21
+
+  * Update dependencies and bring plugin example to work with master
+  * Lint: Ignore gocritic for fatal program exit not running unlock
+  * Move to Go1.17 mod-file, update dependencies
+  * Disable CGO for default container
+  * Allow plugins to register template functions
+  * Add plugin support to allow extending of functionality (#6)
+  * Add support to disable cooldown through the action module
+  * Add method to send messages from within the bot without trigger
+  * Add validation mode for config
+
 # 0.15.0 / 2021-06-30
 
   * Wiki: Add example for generic chat-addable commands
