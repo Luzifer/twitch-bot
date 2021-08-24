@@ -36,6 +36,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		FormatMessage:            formatMessage,
 		GetLogger:                func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		RegisterActor:            registerAction,
+		RegisterCron:             cronService.AddFunc,
 		RegisterTemplateFunction: tplFuncs.Register,
 		SendMessage:              sendMessage,
 	}

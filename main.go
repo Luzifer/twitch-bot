@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/str"
@@ -34,6 +35,8 @@ var (
 
 	config     *configFile
 	configLock = new(sync.RWMutex)
+
+	cronService *cron.Cron
 
 	sendMessage func(m *irc.Message) error
 
@@ -73,11 +76,12 @@ func init() {
 func main() {
 	var err error
 
+	cronService = cron.New()
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
+
 	if err = loadPlugins(cfg.PluginDir); err != nil {
 		log.WithError(err).Fatal("Unable to load plugins")
 	}
-
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
 	if err = loadConfig(cfg.Config); err != nil {
 		log.WithError(err).Fatal("Initial config load failed")
@@ -106,6 +110,8 @@ func main() {
 		ircDisconnected   = make(chan struct{}, 1)
 		autoMessageTicker = time.NewTicker(time.Second)
 	)
+
+	cronService.Start()
 
 	ircDisconnected <- struct{}{}
 

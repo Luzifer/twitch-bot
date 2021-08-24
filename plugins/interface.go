@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/go-irc/irc"
+	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,6 +23,8 @@ type (
 
 	ActorRegistrationFunc func(ActorCreationFunc)
 
+	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
+
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
@@ -36,6 +39,8 @@ type (
 		GetLogger LoggerCreationFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
+		// RegisterCron is a method to register cron functions in the global cron instance
+		RegisterCron CronRegistrationFunc
 		// RegisterTemplateFunction can be used to register a new template functions
 		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event
