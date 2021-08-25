@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-irc/irc"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -37,6 +39,7 @@ var (
 	configLock = new(sync.RWMutex)
 
 	cronService *cron.Cron
+	router      *mux.Router
 
 	sendMessage func(m *irc.Message) error
 
@@ -77,6 +80,7 @@ func main() {
 	var err error
 
 	cronService = cron.New()
+	router = mux.NewRouter()
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
 	if err = loadPlugins(cfg.PluginDir); err != nil {
@@ -112,6 +116,11 @@ func main() {
 	)
 
 	cronService.Start()
+
+	if config.HTTPListen != "" {
+		// If listen address is configured start HTTP server
+		go http.ListenAndServe(config.HTTPListen, router)
+	}
 
 	ircDisconnected <- struct{}{}
 

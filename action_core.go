@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
@@ -9,6 +11,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,6 +37,7 @@ func init() {
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:            formatMessage,
+		GetHTTPRouter:            func(name string) *mux.Router { return router.PathPrefix(fmt.Sprintf("/%s/", name)).Subrouter() },
 		GetLogger:                func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		RegisterActor:            registerAction,
 		RegisterCron:             cronService.AddFunc,

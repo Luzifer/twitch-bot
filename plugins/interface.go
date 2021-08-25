@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/go-irc/irc"
+	"github.com/gorilla/mux"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,6 +26,8 @@ type (
 
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 
+	HTTPRouterCreationFunc func(name string) *mux.Router
+
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
@@ -35,6 +38,8 @@ type (
 	RegistrationArguments struct {
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
+		// GetHTTPRouter returns a new mux.Router with `/{name}/` prefix
+		GetHTTPRouter HTTPRouterCreationFunc
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
 		GetLogger LoggerCreationFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface

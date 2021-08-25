@@ -7,6 +7,10 @@
 channels:
   - mychannel
 
+# Enable HTTP server to control plugins / core functionality
+# if unset the server is not started, to change the bot must be restarted
+http_listen: "127.0.0.1:3000"
+
 # Allow moderators to hand out permits (if set to false only broadcaster can do this)
 permit_allow_moderator: true
 # How long to permit on !permit command
