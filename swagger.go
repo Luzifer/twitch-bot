@@ -54,6 +54,7 @@ func handleSwaggerRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//nolint:gocyclo // Makes no sense to split just to spare a little complexity
 func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	fullPath := strings.Join([]string{
 		"",

@@ -132,7 +132,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		value    int64
 	)
 
-	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil {
+	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil { //nolint:gomnd // Those numbers are static enough
 		http.Error(w, errors.Wrap(err, "parsing value").Error(), http.StatusBadRequest)
 		return
 	}
