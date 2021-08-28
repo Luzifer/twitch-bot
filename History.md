@@ -1,3 +1,9 @@
+# 0.17.0 / 2021-08-28
+
+  * Create API for counter and setvariable modules
+  * Provide HTTP server and registration function
+  * Provide central cron service to plugins
+
 # 0.16.0 / 2021-08-21
 
   * Update dependencies and bring plugin example to work with master
