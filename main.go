@@ -39,7 +39,7 @@ var (
 	configLock = new(sync.RWMutex)
 
 	cronService *cron.Cron
-	router      *mux.Router
+	router      = mux.NewRouter()
 
 	sendMessage func(m *irc.Message) error
 
@@ -80,8 +80,10 @@ func main() {
 	var err error
 
 	cronService = cron.New()
-	router = mux.NewRouter()
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
+
+	router.HandleFunc("/", handleSwaggerHTML)
+	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
 	if err = loadPlugins(cfg.PluginDir); err != nil {
 		log.WithError(err).Fatal("Unable to load plugins")

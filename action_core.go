@@ -11,7 +11,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,12 +34,33 @@ func init() {
 	}
 }
 
+func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
+	r := router.
+		PathPrefix(fmt.Sprintf("/%s/", route.Module)).
+		Subrouter()
+
+	if route.IsPrefix {
+		r.PathPrefix(route.Path).
+			HandlerFunc(route.HandlerFunc).
+			Methods(route.Method)
+	} else {
+		r.HandleFunc(route.Path, route.HandlerFunc).
+			Methods(route.Method)
+	}
+
+	if !route.SkipDocumentation {
+		return errors.Wrap(registerSwaggerRoute(route), "registering documentation")
+	}
+
+	return nil
+}
+
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:            formatMessage,
-		GetHTTPRouter:            func(name string) *mux.Router { return router.PathPrefix(fmt.Sprintf("/%s/", name)).Subrouter() },
 		GetLogger:                func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		RegisterActor:            registerAction,
+		RegisterAPIRoute:         registerRoute,
 		RegisterCron:             cronService.AddFunc,
 		RegisterTemplateFunction: tplFuncs.Register,
 		SendMessage:              sendMessage,

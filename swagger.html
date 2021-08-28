@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.min.css">
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdn.jsdelivr.net/combine/npm/swagger-ui-dist@3/swagger-ui-bundle.min.js,npm/swagger-ui-dist@3/swagger-ui-standalone-preset.min.js"></script>
+    <script>
+      window.onload = function() {
+        
+        // Begin Swagger UI call region
+        const ui = SwaggerUIBundle({
+          urls: [{ name: 'Bot-API specification', url: '/openapi.json' }],
+          "dom_id": "#swagger-ui",
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl
+          ],
+          layout: "StandaloneLayout",
+        })
+
+        window.ui = ui;
+      };
+    </script>
+  </body>
+</html>
