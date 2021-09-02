@@ -20,12 +20,12 @@ type actor struct {
 	RawMessage *string `json:"raw_message" yaml:"raw_message"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.RawMessage == nil {
 		return false, nil
 	}
 
-	rawMsg, err := formatMessage(*a.RawMessage, m, r, nil)
+	rawMsg, err := formatMessage(*a.RawMessage, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing raw message")
 	}

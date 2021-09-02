@@ -23,17 +23,17 @@ type actor struct {
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
 		return false, nil
 	}
 
-	to, err := formatMessage(*a.WhisperTo, m, r, nil)
+	to, err := formatMessage(*a.WhisperTo, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper receiver")
 	}
 
-	msg, err := formatMessage(*a.WhisperMessage, m, r, nil)
+	msg, err := formatMessage(*a.WhisperMessage, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper message")
 	}

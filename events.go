@@ -12,4 +12,9 @@ var (
 	eventTypeSub     = ptrStr("sub")
 	eventTypeSubgift = ptrStr("subgift")
 	eventTypeWhisper = ptrStr("whisper")
+
+	eventTypeTwitchCategoryUpdate = ptrStr("category_update")
+	eventTypeTwitchStreamOffline  = ptrStr("stream_offline")
+	eventTypeTwitchStreamOnline   = ptrStr("stream_online")
+	eventTypeTwitchTitleUpdate    = ptrStr("title_update")
 )

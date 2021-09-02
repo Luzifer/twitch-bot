@@ -22,17 +22,17 @@ type actor struct {
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Respond == nil {
 		return false, nil
 	}
 
-	msg, err := formatMessage(*a.Respond, m, r, nil)
+	msg, err := formatMessage(*a.Respond, m, r, eventData)
 	if err != nil {
 		if a.RespondFallback == nil {
 			return false, errors.Wrap(err, "preparing response")
 		}
-		if msg, err = formatMessage(*a.RespondFallback, m, r, nil); err != nil {
+		if msg, err = formatMessage(*a.RespondFallback, m, r, eventData); err != nil {
 			return false, errors.Wrap(err, "preparing response fallback")
 		}
 	}

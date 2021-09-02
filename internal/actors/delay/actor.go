@@ -19,7 +19,7 @@ type actor struct {
 	DelayJitter time.Duration `json:"delay_jitter" yaml:"delay_jitter"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Delay == 0 && a.DelayJitter == 0 {
 		return false, nil
 	}

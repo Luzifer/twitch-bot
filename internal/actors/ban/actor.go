@@ -18,7 +18,7 @@ type actor struct {
 	Ban *string `json:"ban" yaml:"ban"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Ban == nil {
 		return false, nil
 	}

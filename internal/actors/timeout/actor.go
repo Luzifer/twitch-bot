@@ -19,7 +19,7 @@ type actor struct {
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Timeout == nil {
 		return false, nil
 	}

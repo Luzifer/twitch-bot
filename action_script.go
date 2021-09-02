@@ -21,14 +21,14 @@ type ActorScript struct {
 	Command []string `json:"command" yaml:"command"`
 }
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if len(a.Command) == 0 {
 		return false, nil
 	}
 
 	var command []string
 	for _, arg := range a.Command {
-		tmp, err := formatMessage(arg, m, r, nil)
+		tmp, err := formatMessage(arg, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute command argument template")
 		}
@@ -80,7 +80,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (pr
 	}
 
 	for _, action := range actions {
-		apc, err := triggerActions(c, m, r, action)
+		apc, err := triggerActions(c, m, r, action, eventData)
 		if err != nil {
 			return preventCooldown, errors.Wrap(err, "execute returned action")
 		}

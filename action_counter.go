@@ -74,18 +74,18 @@ type ActorCounter struct {
 	Counter     *string `json:"counter" yaml:"counter"`
 }
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Counter == nil {
 		return false, nil
 	}
 
-	counterName, err := formatMessage(*a.Counter, m, r, nil)
+	counterName, err := formatMessage(*a.Counter, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
 	}
 
 	if a.CounterSet != nil {
-		parseValue, err := formatMessage(*a.CounterSet, m, r, nil)
+		parseValue, err := formatMessage(*a.CounterSet, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute counter value template")
 		}

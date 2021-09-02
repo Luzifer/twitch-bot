@@ -18,7 +18,7 @@ type actor struct {
 	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.DeleteMessage == nil || !*a.DeleteMessage {
 		return false, nil
 	}

@@ -174,11 +174,11 @@ func (ircHandler) getChannel(m *irc.Message) string {
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypeJoin)
+	go handleMessage(i.c, m, eventTypeJoin, nil)
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypePart)
+	go handleMessage(i.c, m, eventTypePart, nil)
 }
 
 func (i ircHandler) handlePermit(m *irc.Message) {
@@ -198,7 +198,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	log.WithField("user", username).Debug("Added permit")
 	timerStore.AddPermit(m.Params[0], username)
 
-	go handleMessage(i.c, m, eventTypePermit)
+	go handleMessage(i.c, m, eventTypePermit, nil)
 }
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
@@ -216,7 +216,7 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 	case "host_success", "host_success_viewers":
 		log.WithField("trailing", m.Trailing()).Warn("Incoming host")
 
-		go handleMessage(i.c, m, eventTypeHost)
+		go handleMessage(i.c, m, eventTypeHost, nil)
 
 	}
 }
@@ -244,7 +244,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		return
 	}
 
-	go handleMessage(i.c, m, nil)
+	go handleMessage(i.c, m, nil, nil)
 }
 
 func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
@@ -265,20 +265,20 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 			"viewercount": m.Tags["msg-param-viewerCount"],
 		}).Info("Incoming raid")
 
-		go handleMessage(i.c, m, eventTypeRaid)
+		go handleMessage(i.c, m, eventTypeRaid, nil)
 
 	case "resub":
-		go handleMessage(i.c, m, eventTypeResub)
+		go handleMessage(i.c, m, eventTypeResub, nil)
 
 	case "sub":
-		go handleMessage(i.c, m, eventTypeSub)
+		go handleMessage(i.c, m, eventTypeSub, nil)
 
 	case "subgift", "anonsubgift":
-		go handleMessage(i.c, m, eventTypeSubgift)
+		go handleMessage(i.c, m, eventTypeSubgift, nil)
 
 	}
 }
 
 func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypeWhisper)
+	go handleMessage(i.c, m, eventTypeWhisper, nil)
 }

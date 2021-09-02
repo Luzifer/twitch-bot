@@ -24,7 +24,7 @@ func registerAction(af plugins.ActorCreationFunc) {
 	availableActions = append(availableActions, af)
 }
 
-func triggerActions(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction) (preventCooldown bool, err error) {
+func triggerActions(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
@@ -41,14 +41,14 @@ func triggerActions(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugi
 
 		if a.IsAsync() {
 			go func() {
-				if _, err := a.Execute(c, m, rule); err != nil {
+				if _, err := a.Execute(c, m, rule, eventData); err != nil {
 					logger.WithError(err).Error("Error in async actor")
 				}
 			}()
 			continue
 		}
 
-		apc, err := a.Execute(c, m, rule)
+		apc, err := a.Execute(c, m, rule, eventData)
 		preventCooldown = preventCooldown || apc
 		if err != nil {
 			return preventCooldown, errors.Wrap(err, "execute action")
@@ -58,12 +58,12 @@ func triggerActions(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugi
 	return preventCooldown, nil
 }
 
-func handleMessage(c *irc.Client, m *irc.Message, event *string) {
+func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData map[string]interface{}) {
 	for _, r := range config.GetMatchingRules(m, event) {
 		var preventCooldown bool
 
 		for _, a := range r.Actions {
-			apc, err := triggerActions(c, m, r, a)
+			apc, err := triggerActions(c, m, r, a, eventData)
 			if err != nil {
 				log.WithError(err).Error("Unable to trigger action")
 			}

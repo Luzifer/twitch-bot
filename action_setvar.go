@@ -59,12 +59,12 @@ type ActorSetVariable struct {
 	Set      string `json:"set" yaml:"set"`
 }
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule) (preventCooldown bool, err error) {
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
 	if a.Variable == "" {
 		return false, nil
 	}
 
-	varName, err := formatMessage(a.Variable, m, r, nil)
+	varName, err := formatMessage(a.Variable, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
 	}
@@ -76,7 +76,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 		)
 	}
 
-	value, err := formatMessage(a.Set, m, r, nil)
+	value, err := formatMessage(a.Set, m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing value")
 	}

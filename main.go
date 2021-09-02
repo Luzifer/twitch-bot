@@ -82,6 +82,9 @@ func main() {
 	cronService = cron.New()
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
+	twitchWatch := newTwitchWatcher()
+	cronService.AddFunc("* * * * *", twitchWatch.Check)
+
 	router.HandleFunc("/", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
@@ -170,11 +173,20 @@ func main() {
 			}
 
 			irc.ExecuteJoins(config.Channels)
+			for _, c := range config.Channels {
+				if err := twitchWatch.AddChannel(c); err != nil {
+					log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
+				}
+			}
 
 			for _, c := range previousChannels {
 				if !str.StringInSlice(c, config.Channels) {
 					log.WithField("channel", c).Info("Leaving removed channel...")
 					irc.ExecutePart(c)
+
+					if err := twitchWatch.RemoveChannel(c); err != nil {
+						log.WithError(err).WithField("channel", c).Error("Unable to remove channel from watcher")
+					}
 				}
 			}
 

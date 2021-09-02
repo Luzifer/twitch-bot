@@ -128,7 +128,8 @@ rules: # See below for examples
     match_users: ['mychannel'] # List of users, all names MUST be all lower-case
 
     # Execute actions when this event occurs
-    # Available events: join, host, part, permit, raid, resub, sub, subgift, whisper
+    # Available events: category_update, join, host, part, permit, raid, resub,
+    #                   stream_offline, stream_online, sub, subgift, title_update, whisper
     match_event: 'permit'
 
     # Execute action when the chat message matches this regular expression
