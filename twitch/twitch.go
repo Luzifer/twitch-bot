@@ -16,6 +16,8 @@ import (
 const (
 	timeDay = 24 * time.Hour
 
+	twitchMinCacheTime = time.Second * 30
+
 	twitchRequestRetries = 5
 	twitchRequestTimeout = 2 * time.Second
 )
@@ -163,7 +165,7 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 	}
 
 	// Live status might change recently, cache for one minute
-	c.apiCache.Set(cacheKey, time.Minute, len(payload.Data) == 1 && payload.Data[0].Type == "live")
+	c.apiCache.Set(cacheKey, twitchMinCacheTime, len(payload.Data) == 1 && payload.Data[0].Type == "live")
 
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
 }
@@ -236,7 +238,7 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 	}
 
 	// Stream-info can be changed at any moment, cache for a short period of time
-	c.apiCache.Set(cacheKey, time.Minute, [2]string{payload.Data[0].GameName, payload.Data[0].Title})
+	c.apiCache.Set(cacheKey, twitchMinCacheTime, [2]string{payload.Data[0].GameName, payload.Data[0].Title})
 
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
