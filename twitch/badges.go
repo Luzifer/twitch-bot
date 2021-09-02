@@ -19,6 +19,10 @@ type BadgeCollection map[string]*int
 func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 	out := BadgeCollection{}
 
+	if m == nil {
+		return out
+	}
+
 	badgeString, ok := m.GetTag("badges")
 	if !ok || len(badgeString) == 0 {
 		return out
