@@ -16,11 +16,11 @@ var (
 
 type FieldCollection map[string]interface{}
 
-func (m FieldCollection) Expect(keys ...string) error {
+func (f FieldCollection) Expect(keys ...string) error {
 	var missing []string
 
 	for _, k := range keys {
-		if _, ok := m[k]; !ok {
+		if _, ok := f[k]; !ok {
 			missing = append(missing, k)
 		}
 	}
