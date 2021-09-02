@@ -97,6 +97,7 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				"category": status.Category,
 			}).Debug("Twitch metadata changed")
 			go handleMessage(nil, nil, eventTypeTwitchCategoryUpdate, map[string]interface{}{
+				"channel":  channel,
 				"category": status.Category,
 			})
 		}
@@ -107,7 +108,8 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				"title":   status.Title,
 			}).Debug("Twitch metadata changed")
 			go handleMessage(nil, nil, eventTypeTwitchTitleUpdate, map[string]interface{}{
-				"title": status.Title,
+				"channel": channel,
+				"title":   status.Title,
 			})
 		}
 
@@ -122,7 +124,9 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				evt = eventTypeTwitchStreamOffline
 			}
 
-			go handleMessage(nil, nil, evt, nil)
+			go handleMessage(nil, nil, evt, map[string]interface{}{
+				"channel": channel,
+			})
 		}
 	}
 
