@@ -103,6 +103,12 @@ func main() {
 		return
 	}
 
+	for _, c := range config.Channels {
+		if err := twitchWatch.AddChannel(c); err != nil {
+			log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
+		}
+	}
+
 	if err = startCheck(); err != nil {
 		log.WithError(err).Fatal("Missing required parameters")
 	}
