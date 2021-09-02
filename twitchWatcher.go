@@ -90,6 +90,10 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 		return nil
 	}
 
+	if r.ChannelStatus[channel] == nil {
+		r.ChannelStatus[channel] = &status
+	}
+
 	if r.ChannelStatus[channel].Category != status.Category {
 		log.WithFields(log.Fields{
 			"channel":  channel,
