@@ -31,12 +31,9 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields plu
 
 	if m != nil {
 		compiledFields["msg"] = m
-		compiledFields["username"] = m.User
-
-		if len(m.Params) > 0 {
-			compiledFields["channel"] = m.Params[0]
-		}
 	}
+	compiledFields["username"] = plugins.DeriveUser(m, fields)
+	compiledFields["channel"] = plugins.DeriveChannel(m, fields)
 
 	// Parse and execute template
 	tpl, err := template.
