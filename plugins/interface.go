@@ -29,6 +29,9 @@ type (
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
 
+	RawMessageHandlerFunc         func(m *irc.Message) error
+	RawMessageHandlerRegisterFunc func(RawMessageHandlerFunc) error
+
 	// RegisterFunc is the type of function your plugin must expose with the name Register
 	RegisterFunc func(RegistrationArguments) error
 
@@ -43,6 +46,8 @@ type (
 		RegisterAPIRoute HTTPRouteRegistrationFunc
 		// RegisterCron is a method to register cron functions in the global cron instance
 		RegisterCron CronRegistrationFunc
+		// RegisterRawMessageHandler is a method to register an handler to receive ALL messages received
+		RegisterRawMessageHandler RawMessageHandlerRegisterFunc
 		// RegisterTemplateFunction can be used to register a new template functions
 		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event

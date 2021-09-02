@@ -4,12 +4,41 @@ import (
 	"crypto/tls"
 	"fmt"
 	"strings"
+	"sync"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
+
+var (
+	rawMessageHandlers     []plugins.RawMessageHandlerFunc
+	rawMessageHandlersLock sync.Mutex
+)
+
+func notifyRawMessageHandlers(m *irc.Message) error {
+	rawMessageHandlersLock.Lock()
+	defer rawMessageHandlersLock.Unlock()
+
+	for _, fn := range rawMessageHandlers {
+		if err := fn(m); err != nil {
+			return errors.Wrap(err, "executing raw message handlers")
+		}
+	}
+
+	return nil
+}
+
+func registerRawMessageHandler(fn plugins.RawMessageHandlerFunc) error {
+	rawMessageHandlersLock.Lock()
+	defer rawMessageHandlersLock.Unlock()
+
+	rawMessageHandlers = append(rawMessageHandlers, fn)
+
+	return nil
+}
 
 type ircHandler struct {
 	conn *tls.Conn
@@ -126,6 +155,10 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 			"trailing": m.Trailing(),
 		}).Trace("Unhandled message")
 		// Unhandled message type, not yet needed
+	}
+
+	if err := notifyRawMessageHandlers(m); err != nil {
+		log.WithError(err).Error("Unable to notify raw message handlers")
 	}
 }
 

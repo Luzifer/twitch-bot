@@ -57,12 +57,13 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
-		FormatMessage:            formatMessage,
-		GetLogger:                func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
-		RegisterActor:            registerAction,
-		RegisterAPIRoute:         registerRoute,
-		RegisterCron:             cronService.AddFunc,
-		RegisterTemplateFunction: tplFuncs.Register,
-		SendMessage:              sendMessage,
+		FormatMessage:             formatMessage,
+		GetLogger:                 func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		RegisterActor:             registerAction,
+		RegisterAPIRoute:          registerRoute,
+		RegisterCron:              cronService.AddFunc,
+		RegisterRawMessageHandler: registerRawMessageHandler,
+		RegisterTemplateFunction:  tplFuncs.Register,
+		SendMessage:               sendMessage,
 	}
 }
