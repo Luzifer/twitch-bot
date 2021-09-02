@@ -90,42 +90,40 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 		return nil
 	}
 
-	if r.ChannelStatus[channel] == nil {
-		r.ChannelStatus[channel] = &status
-	}
-
-	if r.ChannelStatus[channel].Category != status.Category {
-		log.WithFields(log.Fields{
-			"channel":  channel,
-			"category": status.Category,
-		}).Debug("Twitch metadata changed")
-		go handleMessage(nil, nil, eventTypeTwitchCategoryUpdate, map[string]interface{}{
-			"category": status.Category,
-		})
-	}
-
-	if r.ChannelStatus[channel].Title != status.Title {
-		log.WithFields(log.Fields{
-			"channel": channel,
-			"title":   status.Title,
-		}).Debug("Twitch metadata changed")
-		go handleMessage(nil, nil, eventTypeTwitchTitleUpdate, map[string]interface{}{
-			"title": status.Title,
-		})
-	}
-
-	if r.ChannelStatus[channel].IsLive != status.IsLive {
-		log.WithFields(log.Fields{
-			"channel": channel,
-			"isLive":  status.IsLive,
-		}).Debug("Twitch metadata changed")
-
-		evt := eventTypeTwitchStreamOnline
-		if !status.IsLive {
-			evt = eventTypeTwitchStreamOffline
+	if sendUpdate && r.ChannelStatus[channel] != nil {
+		if r.ChannelStatus[channel].Category != status.Category {
+			log.WithFields(log.Fields{
+				"channel":  channel,
+				"category": status.Category,
+			}).Debug("Twitch metadata changed")
+			go handleMessage(nil, nil, eventTypeTwitchCategoryUpdate, map[string]interface{}{
+				"category": status.Category,
+			})
 		}
 
-		go handleMessage(nil, nil, evt, nil)
+		if r.ChannelStatus[channel].Title != status.Title {
+			log.WithFields(log.Fields{
+				"channel": channel,
+				"title":   status.Title,
+			}).Debug("Twitch metadata changed")
+			go handleMessage(nil, nil, eventTypeTwitchTitleUpdate, map[string]interface{}{
+				"title": status.Title,
+			})
+		}
+
+		if r.ChannelStatus[channel].IsLive != status.IsLive {
+			log.WithFields(log.Fields{
+				"channel": channel,
+				"isLive":  status.IsLive,
+			}).Debug("Twitch metadata changed")
+
+			evt := eventTypeTwitchStreamOnline
+			if !status.IsLive {
+				evt = eventTypeTwitchStreamOffline
+			}
+
+			go handleMessage(nil, nil, evt, nil)
+		}
 	}
 
 	r.ChannelStatus[channel] = &status
