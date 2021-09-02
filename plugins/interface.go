@@ -9,7 +9,7 @@ import (
 type (
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
-		Execute(*irc.Client, *irc.Message, *Rule, map[string]interface{}) (preventCooldown bool, err error)
+		Execute(*irc.Client, *irc.Message, *Rule, FieldCollection) (preventCooldown bool, err error)
 		// IsAsync may return true if the Execute function is to be executed
 		// in a Go routine as of long runtime. Normally it should return false
 		// except in very specific cases
@@ -27,7 +27,7 @@ type (
 
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
-	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields map[string]interface{}) (string, error)
+	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields FieldCollection) (string, error)
 
 	RawMessageHandlerFunc         func(m *irc.Message) error
 	RawMessageHandlerRegisterFunc func(RawMessageHandlerFunc) error

@@ -22,7 +22,7 @@ type actor struct {
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.Respond == nil {
 		return false, nil
 	}
@@ -40,12 +40,12 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	ircMessage := &irc.Message{
 		Command: "PRIVMSG",
 		Params: []string{
-			m.Params[0],
+			plugins.DeriveChannel(m, eventData),
 			msg,
 		},
 	}
 
-	if a.RespondAsReply != nil && *a.RespondAsReply {
+	if a.RespondAsReply != nil && *a.RespondAsReply && m != nil {
 		id, ok := m.GetTag("id")
 		if ok {
 			if ircMessage.Tags == nil {

@@ -21,7 +21,7 @@ type ActorScript struct {
 	Command []string `json:"command" yaml:"command"`
 }
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if len(a.Command) == 0 {
 		return false, nil
 	}
@@ -44,13 +44,18 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 		stdout = new(bytes.Buffer)
 	)
 
-	if err := json.NewEncoder(stdin).Encode(map[string]interface{}{
+	scriptInput := map[string]interface{}{
 		"badges":   twitch.ParseBadgeLevels(m),
-		"channel":  m.Params[0],
-		"message":  m.Trailing(),
-		"tags":     m.Tags,
-		"username": m.User,
-	}); err != nil {
+		"channel":  plugins.DeriveChannel(m, eventData),
+		"username": plugins.DeriveUser(m, eventData),
+	}
+
+	if m != nil {
+		scriptInput["message"] = m.Trailing()
+		scriptInput["tags"] = m.Tags
+	}
+
+	if err := json.NewEncoder(stdin).Encode(scriptInput); err != nil {
 		return false, errors.Wrap(err, "encoding script input")
 	}
 

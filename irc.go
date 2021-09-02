@@ -75,6 +75,8 @@ func newIRCHandler() (*ircHandler, error) {
 	return h, nil
 }
 
+func (i ircHandler) Client() *irc.Client { return i.c }
+
 func (i ircHandler) Close() error { return i.conn.Close() }
 
 func (i ircHandler) ExecuteJoins(channels []string) {

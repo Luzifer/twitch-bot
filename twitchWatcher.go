@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -96,7 +97,7 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				"channel":  channel,
 				"category": status.Category,
 			}).Debug("Twitch metadata changed")
-			go handleMessage(nil, nil, eventTypeTwitchCategoryUpdate, map[string]interface{}{
+			go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollection{
 				"channel":  channel,
 				"category": status.Category,
 			})
@@ -107,7 +108,7 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				"channel": channel,
 				"title":   status.Title,
 			}).Debug("Twitch metadata changed")
-			go handleMessage(nil, nil, eventTypeTwitchTitleUpdate, map[string]interface{}{
+			go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollection{
 				"channel": channel,
 				"title":   status.Title,
 			})
@@ -124,7 +125,7 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 				evt = eventTypeTwitchStreamOffline
 			}
 
-			go handleMessage(nil, nil, evt, map[string]interface{}{
+			go handleMessage(ircHdl.Client(), nil, evt, plugins.FieldCollection{
 				"channel": channel,
 			})
 		}

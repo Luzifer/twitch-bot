@@ -39,6 +39,7 @@ var (
 	configLock = new(sync.RWMutex)
 
 	cronService *cron.Cron
+	ircHdl      *ircHandler
 	router      = mux.NewRouter()
 
 	sendMessage func(m *irc.Message) error
@@ -83,7 +84,7 @@ func main() {
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
 
 	twitchWatch := newTwitchWatcher()
-	cronService.AddFunc("* * * * *", twitchWatch.Check)
+	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
 
 	router.HandleFunc("/", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
@@ -121,7 +122,6 @@ func main() {
 	go watchConfigChanges(cfg.Config, fsEvents)
 
 	var (
-		irc               *ircHandler
 		ircDisconnected   = make(chan struct{}, 1)
 		autoMessageTicker = time.NewTicker(time.Second)
 	)
@@ -139,18 +139,18 @@ func main() {
 		select {
 
 		case <-ircDisconnected:
-			if irc != nil {
+			if ircHdl != nil {
 				sendMessage = nil
-				irc.Close()
+				ircHdl.Close()
 			}
 
-			if irc, err = newIRCHandler(); err != nil {
+			if ircHdl, err = newIRCHandler(); err != nil {
 				log.WithError(err).Fatal("Unable to create IRC client")
 			}
 
 			go func() {
-				sendMessage = irc.SendMessage
-				if err := irc.Run(); err != nil {
+				sendMessage = ircHdl.SendMessage
+				if err := ircHdl.Run(); err != nil {
 					log.WithError(err).Error("IRC run exited unexpectedly")
 				}
 				sendMessage = nil
@@ -178,7 +178,7 @@ func main() {
 				continue
 			}
 
-			irc.ExecuteJoins(config.Channels)
+			ircHdl.ExecuteJoins(config.Channels)
 			for _, c := range config.Channels {
 				if err := twitchWatch.AddChannel(c); err != nil {
 					log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
@@ -188,7 +188,7 @@ func main() {
 			for _, c := range previousChannels {
 				if !str.StringInSlice(c, config.Channels) {
 					log.WithField("channel", c).Info("Leaving removed channel...")
-					irc.ExecutePart(c)
+					ircHdl.ExecutePart(c)
 
 					if err := twitchWatch.RemoveChannel(c); err != nil {
 						log.WithError(err).WithField("channel", c).Error("Unable to remove channel from watcher")
@@ -203,7 +203,7 @@ func main() {
 					continue
 				}
 
-				if err := am.Send(irc.c); err != nil {
+				if err := am.Send(ircHdl.c); err != nil {
 					log.WithError(err).Error("Unable to send automated message")
 				}
 			}

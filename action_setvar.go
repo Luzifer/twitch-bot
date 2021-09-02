@@ -59,7 +59,7 @@ type ActorSetVariable struct {
 	Set      string `json:"set" yaml:"set"`
 }
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.Variable == "" {
 		return false, nil
 	}

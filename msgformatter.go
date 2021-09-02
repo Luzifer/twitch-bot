@@ -13,7 +13,7 @@ import (
 // Compile-time assertion
 var _ plugins.MsgFormatter = formatMessage
 
-func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields map[string]interface{}) (string, error) {
+func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) (string, error) {
 	compiledFields := map[string]interface{}{}
 
 	if config != nil {

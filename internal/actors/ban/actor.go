@@ -18,7 +18,7 @@ type actor struct {
 	Ban *string `json:"ban" yaml:"ban"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.Ban == nil {
 		return false, nil
 	}
@@ -27,8 +27,8 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{
-				m.Params[0],
-				fmt.Sprintf("/ban %s %s", m.User, *a.Ban),
+				plugins.DeriveChannel(m, eventData),
+				fmt.Sprintf("/ban %s %s", plugins.DeriveUser(m, eventData), *a.Ban),
 			},
 		}),
 		"sending timeout",

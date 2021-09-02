@@ -74,7 +74,7 @@ type ActorCounter struct {
 	Counter     *string `json:"counter" yaml:"counter"`
 }
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.Counter == nil {
 		return false, nil
 	}

@@ -127,14 +127,14 @@ func (c *configFile) CloseRawMessageWriter() error {
 	return c.rawLogWriter.Close()
 }
 
-func (c configFile) GetMatchingRules(m *irc.Message, event *string) []*plugins.Rule {
+func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData map[string]interface{}) []*plugins.Rule {
 	configLock.RLock()
 	defer configLock.RUnlock()
 
 	var out []*plugins.Rule
 
 	for _, r := range c.Rules {
-		if r.Matches(m, event, timerStore, formatMessage, twitchClient) {
+		if r.Matches(m, event, timerStore, formatMessage, twitchClient, eventData) {
 			out = append(out, r)
 		}
 	}

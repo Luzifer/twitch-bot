@@ -19,7 +19,7 @@ type actor struct {
 	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.Timeout == nil {
 		return false, nil
 	}
@@ -28,8 +28,8 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{
-				m.Params[0],
-				fmt.Sprintf("/timeout %s %d", m.User, fixDurationValue(*a.Timeout)/time.Second),
+				plugins.DeriveChannel(m, eventData),
+				fmt.Sprintf("/timeout %s %d", plugins.DeriveUser(m, eventData), fixDurationValue(*a.Timeout)/time.Second),
 			},
 		}),
 		"sending timeout",

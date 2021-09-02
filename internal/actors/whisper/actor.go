@@ -23,7 +23,7 @@ type actor struct {
 	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
 }
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData map[string]interface{}) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	if a.WhisperTo == nil || a.WhisperMessage == nil {
 		return false, nil
 	}
