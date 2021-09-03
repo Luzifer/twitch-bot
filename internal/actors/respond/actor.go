@@ -1,6 +1,9 @@
 package respond
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
@@ -20,6 +23,7 @@ type actor struct {
 	Respond         *string `json:"respond" yaml:"respond"`
 	RespondAsReply  *bool   `json:"respond_as_reply" yaml:"respond_as_reply"`
 	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
+	ToChannel       *string `json:"to_channel" yaml:"to_channel"`
 }
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
@@ -37,10 +41,15 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 	}
 
+	toChannel := plugins.DeriveChannel(m, eventData)
+	if a.ToChannel != nil {
+		toChannel = fmt.Sprintf("#%s", strings.TrimLeft(*a.ToChannel, "#"))
+	}
+
 	ircMessage := &irc.Message{
 		Command: "PRIVMSG",
 		Params: []string{
-			plugins.DeriveChannel(m, eventData),
+			toChannel,
 			msg,
 		},
 	}

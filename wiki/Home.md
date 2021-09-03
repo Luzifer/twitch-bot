@@ -69,6 +69,7 @@ rules: # See below for examples
       respond_as_reply: true      # Boolean, optional, use Twitch-Reply feature in respond
       respond_fallback: 'Oh noes' # String, text to send if the template function causes
                                   # an error, applies templating (default: unset)
+      to_channel: '#myotherchan'  # String, channel to send the response to (default: unset)
 
     # Issue a timeout on the user who wrote the chat-line
     - timeout: 1s # Duration value: 1s / 1m / 1h
