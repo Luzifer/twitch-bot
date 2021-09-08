@@ -160,7 +160,7 @@ Additionally there are some functions available in the templates:
 - `displayName <username> [fallback]` - Returns the display name the specified user set for themselves
 - `fixUsername <username>` - Ensures the username no longer contains the `@` or `#` prefix
 - `followDate <from> <to>` - Looks up when `from` followed `to`
-- `group <idx>` - Gets matching group specified by index from `match_message` regular expression
+- `group <idx> [fallback]` - Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
 - `recentGame <username> [fallback]` - Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
 - `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified
 - `toLower <string>` - Converts the given string to lower-case

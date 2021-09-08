@@ -23,10 +23,14 @@ func init() {
 	tplFuncs.Register("fixUsername", plugins.GenericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
 	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
-		return func(idx int) (string, error) {
+		return func(idx int, fallback ...string) (string, error) {
 			fields := r.GetMatchMessage().FindStringSubmatch(m.Trailing())
 			if len(fields) <= idx {
 				return "", errors.New("group not found")
+			}
+
+			if fields[idx] == "" && len(fallback) > 0 {
+				return fallback[0], nil
 			}
 
 			return fields[idx], nil
