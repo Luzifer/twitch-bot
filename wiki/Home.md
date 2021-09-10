@@ -74,6 +74,11 @@ rules: # See below for examples
     # Issue a timeout on the user who wrote the chat-line
     - timeout: 1s # Duration value: 1s / 1m / 1h
 
+    # Update channel information (one of `update_game` and `update_title` must be defined)
+    - channel: '{{ .channel }}'         # String, applies templating
+      update_game: 'Just Chatting'      # String, optional, set game to given category
+      update_title: 'My special title'  # String, optional, set title to given title
+
     # Set a variable to value defined for later usage
     - variable: myvar       # String, name of the variable to set (applies templating)
       clear: false          # Boolean, clear the variable
