@@ -1,11 +1,13 @@
 package twitch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
@@ -22,12 +24,20 @@ const (
 	twitchRequestTimeout = 2 * time.Second
 )
 
-type Client struct {
-	clientID string
-	token    string
+type (
+	Category struct {
+		BoxArtURL string `json:"box_art_url"`
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+	}
 
-	apiCache *APICache
-}
+	Client struct {
+		clientID string
+		token    string
+
+		apiCache *APICache
+	}
+)
 
 func New(clientID, token string) *Client {
 	return &Client{
@@ -140,6 +150,38 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
+func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
+	var out []Category
+
+	params := make(url.Values)
+	params.Set("query", name)
+	params.Set("first", "100")
+
+	var resp struct {
+		Data       []Category `json:"data"`
+		Pagination struct {
+			Cursor string `json:"cursor"`
+		} `json:"pagination"`
+	}
+
+	for {
+		if err := c.request(ctx, http.MethodGet, fmt.Sprintf("https://api.twitch.tv/helix/search/categories?%s", params.Encode()), nil, &resp); err != nil {
+			return nil, errors.Wrap(err, "executing request")
+		}
+
+		out = append(out, resp.Data...)
+
+		if resp.Pagination.Cursor == "" {
+			break
+		}
+
+		params.Set("after", resp.Pagination.Cursor)
+		resp.Pagination.Cursor = "" // Clear from struct as struct is reused
+	}
+
+	return out, nil
+}
+
 func (c Client) HasLiveStream(username string) (bool, error) {
 	cacheKey := []string{"hasLiveStream", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
@@ -243,6 +285,58 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
+func (c Client) ModifyChannelInformation(ctx context.Context, broadcaster string, game, title *string) error {
+	if game == nil && title == nil {
+		return errors.New("netiher game nor title provided")
+	}
+
+	data := struct {
+		GameID *string `json:"game_id,omitempty"`
+		Title  *string `json:"title,omitempty"`
+	}{
+		Title: title,
+	}
+
+	if game != nil {
+		categories, err := c.SearchCategories(ctx, *game)
+		if err != nil {
+			return errors.Wrap(err, "searching for game")
+		}
+
+		switch len(categories) {
+		case 0:
+			return errors.New("no matching game found")
+
+		case 1:
+			data.GameID = &categories[0].ID
+
+		default:
+			// Multiple matches: Search for exact one
+			for _, c := range categories {
+				if c.Name == *game {
+					data.GameID = &c.ID
+					break
+				}
+			}
+
+			if data.GameID == nil {
+				// No exact match found: This is an error
+				return errors.New("no exact game match found")
+			}
+		}
+	}
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(data); err != nil {
+		return errors.Wrap(err, "encoding payload")
+	}
+
+	return errors.Wrap(
+		c.request(ctx, http.MethodPost, fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster), body, nil),
+		"executing request",
+	)
+}
+
 func (c Client) request(ctx context.Context, method, url string, body io.Reader, out interface{}) error {
 	log.WithFields(log.Fields{
 		"method": method,
@@ -266,6 +360,10 @@ func (c Client) request(ctx context.Context, method, url string, body io.Reader,
 			return errors.Wrap(err, "execute request")
 		}
 		defer resp.Body.Close()
+
+		if out == nil {
+			return nil
+		}
 
 		return errors.Wrap(
 			json.NewDecoder(resp.Body).Decode(out),
