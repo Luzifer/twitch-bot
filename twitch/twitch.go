@@ -337,7 +337,7 @@ func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName st
 	}
 
 	return errors.Wrap(
-		c.request(ctx, http.MethodPost, fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster), body, nil),
+		c.request(ctx, http.MethodPatch, fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster), body, nil),
 		"executing request",
 	)
 }
