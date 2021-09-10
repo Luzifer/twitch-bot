@@ -66,6 +66,7 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData plugi
 			apc, err := triggerActions(c, m, r, a, eventData)
 			if err != nil {
 				log.WithError(err).Error("Unable to trigger action")
+				return // Break execution when one action fails
 			}
 			preventCooldown = preventCooldown || apc
 		}
