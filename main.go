@@ -89,6 +89,10 @@ func main() {
 	router.HandleFunc("/", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
+	if err = initCorePlugins(); err != nil {
+		log.WithError(err).Fatal("Unable to load core plugins")
+	}
+
 	if err = loadPlugins(cfg.PluginDir); err != nil {
 		log.WithError(err).Fatal("Unable to load plugins")
 	}
