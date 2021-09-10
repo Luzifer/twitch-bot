@@ -11,6 +11,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -59,6 +60,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:             formatMessage,
 		GetLogger:                 func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		GetTwitchClient:           func() *twitch.Client { return twitchClient },
 		RegisterActor:             registerAction,
 		RegisterAPIRoute:          registerRoute,
 		RegisterCron:              cronService.AddFunc,

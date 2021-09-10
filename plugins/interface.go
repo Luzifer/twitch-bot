@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -40,6 +41,8 @@ type (
 		FormatMessage MsgFormatter
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
 		GetLogger LoggerCreationFunc
+		// GetTwitchClient retrieves a fully configured Twitch client with initialized cache
+		GetTwitchClient func() *twitch.Client
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 		// RegisterAPIRoute registers a new HTTP handler function including documentation
