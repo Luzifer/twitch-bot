@@ -285,9 +285,14 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
-func (c Client) ModifyChannelInformation(ctx context.Context, broadcaster string, game, title *string) error {
+func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
 	if game == nil && title == nil {
 		return errors.New("netiher game nor title provided")
+	}
+
+	broadcaster, err := c.GetIDForUsername(broadcasterName)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for broadcaster name")
 	}
 
 	data := struct {
