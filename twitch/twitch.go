@@ -105,11 +105,11 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 		return d.(time.Time), nil
 	}
 
-	fromID, err := c.getIDForUsername(from)
+	fromID, err := c.GetIDForUsername(from)
 	if err != nil {
 		return time.Time{}, errors.Wrap(err, "getting id for 'from' user")
 	}
-	toID, err := c.getIDForUsername(to)
+	toID, err := c.GetIDForUsername(to)
 	if err != nil {
 		return time.Time{}, errors.Wrap(err, "getting id for 'to' user")
 	}
@@ -170,7 +170,7 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
 }
 
-func (c Client) getIDForUsername(username string) (string, error) {
+func (c Client) GetIDForUsername(username string) (string, error) {
 	cacheKey := []string{"idForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -209,7 +209,7 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 		return d.([2]string)[0], d.([2]string)[1], nil
 	}
 
-	id, err := c.getIDForUsername(username)
+	id, err := c.GetIDForUsername(username)
 	if err != nil {
 		return "", "", errors.Wrap(err, "getting ID for username")
 	}
