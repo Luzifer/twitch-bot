@@ -319,7 +319,8 @@ func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName st
 			// Multiple matches: Search for exact one
 			for _, c := range categories {
 				if c.Name == *game {
-					data.GameID = &c.ID
+					gid := c.ID
+					data.GameID = &gid
 					break
 				}
 			}
