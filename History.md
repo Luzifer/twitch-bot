@@ -1,3 +1,18 @@
+# 0.18.0 / 2021-09-17
+
+  * [script] Allow to skip cooldown on script error
+  * [modchannel] Add modchannel core module
+  * [core] Break actions execution when one action fails
+  * [core] Transform broadcaster name into ID
+  * [core] Add category search and channel update
+  * [core] Expose GetIDForUsername function
+  * [core] Expose TwitchClient to plugins
+  * [core] Add fallback support to group template matches
+  * [respond] Support sending message to different channel
+  * [core] Reduce cache time for stream info
+  * [core] Add Twitch events
+  * [core] Add registration for raw-message-handlers
+
 # 0.17.0 / 2021-08-28
 
   * Create API for counter and setvariable modules
