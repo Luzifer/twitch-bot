@@ -47,6 +47,8 @@ rules: # See below for examples
 
     # Command to execute for the chat message, must return an JSON encoded array of actions
     - command: [/bin/bash, -c, "echo '[{\"respond\": \"Text\"}]'"]
+      skip_cooldown_on_error: true  # Boolean, optional, if set to true a non-zero exit-code
+                                    # will prevent the cooldown to be started for the rule
 
     # Modify an internal counter value (does NOT send a chat line)
     - counter: "counterid" # String to identify the counter, applies templating

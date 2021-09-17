@@ -18,7 +18,8 @@ func init() {
 }
 
 type ActorScript struct {
-	Command []string `json:"command" yaml:"command"`
+	Command             []string `json:"command" yaml:"command"`
+	SkipCooldownOnError bool     `json:"skip_cooldown_on_error" yaml:"skip_cooldown_on_error"`
 }
 
 func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
@@ -66,7 +67,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		return false, errors.Wrap(err, "running command")
+		return a.SkipCooldownOnError, errors.Wrap(err, "running command")
 	}
 
 	if stdout.Len() == 0 {
