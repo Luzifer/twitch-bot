@@ -22,7 +22,7 @@ type (
 
 	ActorCreationFunc func() Actor
 
-	ActorRegistrationFunc func(ActorCreationFunc)
+	ActorRegistrationFunc func(name string, acf ActorCreationFunc)
 
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 

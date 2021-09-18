@@ -10,52 +10,49 @@ import (
 )
 
 var (
-	availableActions     []plugins.ActorCreationFunc
+	availableActions     = map[string]plugins.ActorCreationFunc{}
 	availableActionsLock = new(sync.RWMutex)
 )
 
 // Compile-time assertion
 var _ plugins.ActorRegistrationFunc = registerAction
 
-func registerAction(af plugins.ActorCreationFunc) {
+func registerAction(name string, acf plugins.ActorCreationFunc) {
 	availableActionsLock.Lock()
 	defer availableActionsLock.Unlock()
 
-	availableActions = append(availableActions, af)
+	if _, ok := availableActions[name]; ok {
+		log.WithField("name", name).Fatal("Duplicate registration of actor")
+	}
+
+	availableActions[name] = acf
 }
 
-func triggerActions(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
+func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
-	for _, acf := range availableActions {
-		var (
-			a      = acf()
-			logger = log.WithField("actor", a.Name())
-		)
-
-		if err := ra.Unmarshal(a); err != nil {
-			logger.WithError(err).Trace("Unable to unmarshal config")
-			continue
-		}
-
-		if a.IsAsync() {
-			go func() {
-				if _, err := a.Execute(c, m, rule, eventData); err != nil {
-					logger.WithError(err).Error("Error in async actor")
-				}
-			}()
-			continue
-		}
-
-		apc, err := a.Execute(c, m, rule, eventData)
-		preventCooldown = preventCooldown || apc
-		if err != nil {
-			return preventCooldown, errors.Wrap(err, "execute action")
-		}
+	acf, ok := availableActions[ra.Type]
+	if !ok {
+		return false, errors.Errorf("undefined actor %q called", ra.Type)
 	}
 
-	return preventCooldown, nil
+	var (
+		a      = acf()
+		logger = log.WithField("actor", a.Name())
+	)
+
+	if a.IsAsync() {
+		go func() {
+			if _, err := a.Execute(c, m, rule, eventData); err != nil {
+				logger.WithError(err).Error("Error in async actor")
+			}
+		}()
+		return preventCooldown, nil
+	}
+
+	apc, err := a.Execute(c, m, rule, eventData)
+	return apc, errors.Wrap(err, "execute action")
 }
 
 func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData plugins.FieldCollection) {
@@ -63,7 +60,7 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData plugi
 		var preventCooldown bool
 
 		for _, a := range r.Actions {
-			apc, err := triggerActions(c, m, r, a, eventData)
+			apc, err := triggerAction(c, m, r, a, eventData)
 			if err != nil {
 				log.WithError(err).Error("Unable to trigger action")
 				break // Break execution when one action fails
