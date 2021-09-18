@@ -17,6 +17,18 @@ var (
 // Compile-time assertion
 var _ plugins.ActorRegistrationFunc = registerAction
 
+func getActorByName(name string) (plugins.Actor, error) {
+	availableActionsLock.RLock()
+	defer availableActionsLock.RUnlock()
+
+	acf, ok := availableActions[name]
+	if !ok {
+		return nil, errors.Errorf("undefined actor %q called", name)
+	}
+
+	return acf(), nil
+}
+
 func registerAction(name string, acf plugins.ActorCreationFunc) {
 	availableActionsLock.Lock()
 	defer availableActionsLock.Unlock()
@@ -32,26 +44,23 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
-	acf, ok := availableActions[ra.Type]
-	if !ok {
-		return false, errors.Errorf("undefined actor %q called", ra.Type)
+	a, err := getActorByName(ra.Type)
+	if err != nil {
+		return false, errors.Wrap(err, "getting actor")
 	}
 
-	var (
-		a      = acf()
-		logger = log.WithField("actor", a.Name())
-	)
+	logger := log.WithField("actor", a.Name())
 
 	if a.IsAsync() {
 		go func() {
-			if _, err := a.Execute(c, m, rule, eventData); err != nil {
+			if _, err := a.Execute(c, m, rule, eventData, ra.Attributes); err != nil {
 				logger.WithError(err).Error("Error in async actor")
 			}
 		}()
 		return preventCooldown, nil
 	}
 
-	apc, err := a.Execute(c, m, rule, eventData)
+	apc, err := a.Execute(c, m, rule, eventData, ra.Attributes)
 	return apc, errors.Wrap(err, "execute action")
 }
 
