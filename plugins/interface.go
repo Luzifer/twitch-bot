@@ -18,6 +18,10 @@ type (
 		// Name must return an unique name for the actor in order to identify
 		// it in the logs for debugging purposes
 		Name() string
+		// Validate will be called to validate the loaded configuration. It should
+		// return an error if required keys are missing from the AttributeStore
+		// or if keys contain broken configs
+		Validate(AttributeStore) error
 	}
 
 	ActorCreationFunc func() Actor
