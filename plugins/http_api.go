@@ -11,17 +11,18 @@ type (
 	}
 
 	HTTPRouteRegistrationArgs struct {
-		Description       string
-		HandlerFunc       http.HandlerFunc
-		IsPrefix          bool
-		Method            string
-		Module            string
-		Name              string
-		Path              string
-		QueryParams       []HTTPRouteParamDocumentation
-		ResponseType      HTTPRouteResponseType
-		RouteParams       []HTTPRouteParamDocumentation
-		SkipDocumentation bool
+		Description         string
+		HandlerFunc         http.HandlerFunc
+		IsPrefix            bool
+		Method              string
+		Module              string
+		Name                string
+		Path                string
+		QueryParams         []HTTPRouteParamDocumentation
+		RequiresEditorsAuth bool
+		ResponseType        HTTPRouteResponseType
+		RouteParams         []HTTPRouteParamDocumentation
+		SkipDocumentation   bool
 	}
 
 	HTTPRouteResponseType uint64

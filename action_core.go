@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
@@ -43,12 +44,17 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		PathPrefix(fmt.Sprintf("/%s/", route.Module)).
 		Subrouter()
 
+	var hdl http.Handler = route.HandlerFunc
+	if route.RequiresEditorsAuth {
+		hdl = botEditorAuthMiddleware(hdl)
+	}
+
 	if route.IsPrefix {
 		r.PathPrefix(route.Path).
-			HandlerFunc(route.HandlerFunc).
+			Handler(hdl).
 			Methods(route.Method)
 	} else {
-		r.HandleFunc(route.Path, route.HandlerFunc).
+		r.Handle(route.Path, hdl).
 			Methods(route.Method)
 	}
 

@@ -48,11 +48,12 @@ func init() {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}
 			},
-			Method:       http.MethodGet,
-			Module:       "config-editor",
-			Name:         "Get current configuration",
-			Path:         "/rules",
-			ResponseType: plugins.HTTPRouteResponseTypeJSON,
+			Method:              http.MethodGet,
+			Module:              "config-editor",
+			Name:                "Get current configuration",
+			Path:                "/rules",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
 		},
 		{
 			Description: "Validate a cron expression and return the next executions",

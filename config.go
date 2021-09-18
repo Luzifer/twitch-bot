@@ -27,6 +27,7 @@ type (
 
 	configFile struct {
 		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
+		BotEditors           []string               `yaml:"bot_editors"`
 		Channels             []string               `yaml:"channels"`
 		HTTPListen           string                 `yaml:"http_listen"`
 		PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
