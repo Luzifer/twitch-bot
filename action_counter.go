@@ -14,6 +14,42 @@ import (
 func init() {
 	registerAction("counter", func() plugins.Actor { return &ActorCounter{} })
 
+	registerActorDocumentation(plugins.ActionDocumentation{
+		Description: "Update counter values",
+		Name:        "Counter",
+		Type:        "counter",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Name of the counter to update",
+				Key:             "counter",
+				Name:            "Counter",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "1",
+				Description:     "Value to add to the counter",
+				Key:             "counter_step",
+				Name:            "Counter Step",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeInt64,
+			},
+			{
+				Default:         "",
+				Description:     "Value to set the counter to",
+				Key:             "counter_set",
+				Name:            "Counter Set",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Returns the (formatted) value as a plain string",
 		HandlerFunc: routeActorCounterGetValue,

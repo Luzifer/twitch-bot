@@ -13,6 +13,42 @@ import (
 func init() {
 	registerAction("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
 
+	registerActorDocumentation(plugins.ActionDocumentation{
+		Description: "Modify variable contents",
+		Name:        "SetVariable",
+		Type:        "setvariable",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Name of the variable to update",
+				Key:             "variable",
+				Name:            "Variable",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "false",
+				Description:     "Clear variable content and unset the variable",
+				Key:             "clear",
+				Name:            "Clear",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeBool,
+			},
+			{
+				Default:         "",
+				Description:     "Value to set the variable to",
+				Key:             "set",
+				Name:            "Set Content",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Returns the value as a plain string",
 		HandlerFunc:  routeActorSetVarGetValue,

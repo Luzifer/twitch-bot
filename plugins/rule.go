@@ -15,28 +15,28 @@ import (
 )
 
 type Rule struct {
-	UUID string `hash:"-" json:"uuid" yaml:"uuid"`
+	UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid"`
 
-	Actions []*RuleAction `json:"actions" yaml:"actions"`
+	Actions []*RuleAction `json:"actions,omitempty" yaml:"actions"`
 
-	Cooldown        *time.Duration `json:"cooldown" yaml:"cooldown"`
-	ChannelCooldown *time.Duration `json:"channel_cooldown" yaml:"channel_cooldown"`
-	UserCooldown    *time.Duration `json:"user_cooldown" yaml:"user_cooldown"`
-	SkipCooldownFor []string       `json:"skip_cooldown_for" yaml:"skip_cooldown_for"`
+	Cooldown        *time.Duration `json:"cooldown,omitempty" yaml:"cooldown"`
+	ChannelCooldown *time.Duration `json:"channel_cooldown,omitempty" yaml:"channel_cooldown"`
+	UserCooldown    *time.Duration `json:"user_cooldown,omitempty" yaml:"user_cooldown"`
+	SkipCooldownFor []string       `json:"skip_cooldown_for,omitempty" yaml:"skip_cooldown_for"`
 
-	MatchChannels []string `json:"match_channels" yaml:"match_channels"`
-	MatchEvent    *string  `json:"match_event" yaml:"match_event"`
-	MatchMessage  *string  `json:"match_message" yaml:"match_message"`
-	MatchUsers    []string `json:"match_users" yaml:"match_users" `
+	MatchChannels []string `json:"match_channels,omitempty" yaml:"match_channels"`
+	MatchEvent    *string  `json:"match_event,omitempty" yaml:"match_event"`
+	MatchMessage  *string  `json:"match_message,omitempty" yaml:"match_message"`
+	MatchUsers    []string `json:"match_users,omitempty" yaml:"match_users" `
 
-	DisableOnMatchMessages []string `json:"disable_on_match_messages" yaml:"disable_on_match_messages"`
+	DisableOnMatchMessages []string `json:"disable_on_match_messages,omitempty" yaml:"disable_on_match_messages"`
 
-	Disable           *bool    `json:"disable" yaml:"disable"`
-	DisableOnOffline  *bool    `json:"disable_on_offline" yaml:"disable_on_offline"`
-	DisableOnPermit   *bool    `json:"disable_on_permit" yaml:"disable_on_permit"`
-	DisableOnTemplate *string  `json:"disable_on_template" yaml:"disable_on_template"`
-	DisableOn         []string `json:"disable_on" yaml:"disable_on"`
-	EnableOn          []string `json:"enable_on" yaml:"enable_on"`
+	Disable           *bool    `json:"disable,omitempty" yaml:"disable"`
+	DisableOnOffline  *bool    `json:"disable_on_offline,omitempty" yaml:"disable_on_offline"`
+	DisableOnPermit   *bool    `json:"disable_on_permit,omitempty" yaml:"disable_on_permit"`
+	DisableOnTemplate *string  `json:"disable_on_template,omitempty" yaml:"disable_on_template"`
+	DisableOn         []string `json:"disable_on,omitempty" yaml:"disable_on"`
+	EnableOn          []string `json:"enable_on,omitempty" yaml:"enable_on"`
 
 	matchMessage           *regexp.Regexp
 	disableOnMatchMessages []*regexp.Regexp

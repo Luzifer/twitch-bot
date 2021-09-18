@@ -28,6 +28,8 @@ type (
 
 	ActorRegistrationFunc func(name string, acf ActorCreationFunc)
 
+	ActorDocumentationRegistrationFunc func(ActionDocumentation)
+
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 
 	LoggerCreationFunc func(moduleName string) *log.Entry
@@ -49,6 +51,8 @@ type (
 		GetTwitchClient func() *twitch.Client
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
+		// RegisterActorDocumentation is used to register an ActorDocumentation for the config editor
+		RegisterActorDocumentation ActorDocumentationRegistrationFunc
 		// RegisterAPIRoute registers a new HTTP handler function including documentation
 		RegisterAPIRoute HTTPRouteRegistrationFunc
 		// RegisterCron is a method to register cron functions in the global cron instance
