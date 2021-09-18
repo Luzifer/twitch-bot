@@ -23,8 +23,9 @@ type (
 )
 
 const (
-	ActionDocumentationFieldTypeBool     ActionDocumentationFieldType = "bool"
-	ActionDocumentationFieldTypeDuration ActionDocumentationFieldType = "duration"
-	ActionDocumentationFieldTypeInt64    ActionDocumentationFieldType = "int64"
-	ActionDocumentationFieldTypeString   ActionDocumentationFieldType = "string"
+	ActionDocumentationFieldTypeBool        ActionDocumentationFieldType = "bool"
+	ActionDocumentationFieldTypeDuration    ActionDocumentationFieldType = "duration"
+	ActionDocumentationFieldTypeInt64       ActionDocumentationFieldType = "int64"
+	ActionDocumentationFieldTypeString      ActionDocumentationFieldType = "string"
+	ActionDocumentationFieldTypeStringSlice ActionDocumentationFieldType = "stringslice"
 )

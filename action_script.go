@@ -15,6 +15,33 @@ import (
 
 func init() {
 	registerAction("script", func() plugins.Actor { return &ActorScript{} })
+
+	registerActorDocumentation(plugins.ActionDocumentation{
+		Description: "Execute external script / command",
+		Name:        "Script / Command",
+		Type:        "script",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Command to execute",
+				Key:             "command",
+				Name:            "Command",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeStringSlice,
+			},
+			{
+				Default:         "false",
+				Description:     "Do not activate cooldown for route when command exits non-zero",
+				Key:             "skip_cooldown_on_error",
+				Name:            "Skip Cooldown on Error",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeBool,
+			},
+		},
+	})
 }
 
 type ActorScript struct{}
