@@ -70,20 +70,8 @@ func loadConfig(filename string) error {
 		log.Warn("Loaded config with empty ruleset")
 	}
 
-	for _, r := range tmpConfig.Rules {
-		logger := log.WithField("rule", r.MatcherID())
-		for idx, a := range r.Actions {
-			actor, err := getActorByName(a.Type)
-			if err != nil {
-				logger.WithField("index", idx).WithError(err).Error("Cannot get actor by type")
-				return errors.Wrap(err, "getting actor by type")
-			}
-
-			if err = actor.Validate(a.Attributes); err != nil {
-				logger.WithField("index", idx).WithError(err).Error("Actor reported invalid config")
-				return errors.Wrap(err, "validating action attributes")
-			}
-		}
+	if err = tmpConfig.validateRuleActions(); err != nil {
+		return errors.Wrap(err, "validating rule actions")
 	}
 
 	configLock.Lock()
@@ -226,4 +214,24 @@ func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
 			oam.lock.Unlock()
 		}
 	}
+}
+
+func (c configFile) validateRuleActions() error {
+	for _, r := range c.Rules {
+		logger := log.WithField("rule", r.MatcherID())
+		for idx, a := range r.Actions {
+			actor, err := getActorByName(a.Type)
+			if err != nil {
+				logger.WithField("index", idx).WithError(err).Error("Cannot get actor by type")
+				return errors.Wrap(err, "getting actor by type")
+			}
+
+			if err = actor.Validate(a.Attributes); err != nil {
+				logger.WithField("index", idx).WithError(err).Error("Actor reported invalid config")
+				return errors.Wrap(err, "validating action attributes")
+			}
+		}
+	}
+
+	return nil
 }
