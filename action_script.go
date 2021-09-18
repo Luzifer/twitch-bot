@@ -19,7 +19,7 @@ func init() {
 
 type ActorScript struct{}
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.AttributeStore) (preventCooldown bool, err error) {
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	command, err := attrs.StringSlice("command")
 	if err != nil {
 		return false, errors.Wrap(err, "getting command")
@@ -96,7 +96,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 func (a ActorScript) IsAsync() bool { return false }
 func (a ActorScript) Name() string  { return "script" }
 
-func (a ActorScript) Validate(attrs plugins.AttributeStore) (err error) {
+func (a ActorScript) Validate(attrs plugins.FieldCollection) (err error) {
 	if cmd, err := attrs.StringSlice("command"); err != nil || len(cmd) == 0 {
 		return errors.New("command must be slice of strings with length > 0")
 	}

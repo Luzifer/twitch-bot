@@ -1,6 +1,6 @@
 package plugins
 
 type RuleAction struct {
-	Type       string         `json:"type" yaml:"type"`
-	Attributes AttributeStore `json:"attributes" yaml:"attributes"`
+	Type       string          `json:"type" yaml:"type"`
+	Attributes FieldCollection `json:"attributes" yaml:"attributes"`
 }

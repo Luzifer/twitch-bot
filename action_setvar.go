@@ -55,7 +55,7 @@ func init() {
 
 type ActorSetVariable struct{}
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.AttributeStore) (preventCooldown bool, err error) {
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
@@ -82,7 +82,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 func (a ActorSetVariable) IsAsync() bool { return false }
 func (a ActorSetVariable) Name() string  { return "setvariable" }
 
-func (a ActorSetVariable) Validate(attrs plugins.AttributeStore) (err error) {
+func (a ActorSetVariable) Validate(attrs plugins.FieldCollection) (err error) {
 	return attrs.Expect("variable")
 }
 

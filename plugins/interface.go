@@ -10,7 +10,7 @@ import (
 type (
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
-		Execute(*irc.Client, *irc.Message, *Rule, FieldCollection, AttributeStore) (preventCooldown bool, err error)
+		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData FieldCollection, attrs FieldCollection) (preventCooldown bool, err error)
 		// IsAsync may return true if the Execute function is to be executed
 		// in a Go routine as of long runtime. Normally it should return false
 		// except in very specific cases
@@ -21,7 +21,7 @@ type (
 		// Validate will be called to validate the loaded configuration. It should
 		// return an error if required keys are missing from the AttributeStore
 		// or if keys contain broken configs
-		Validate(AttributeStore) error
+		Validate(FieldCollection) error
 	}
 
 	ActorCreationFunc func() Actor
