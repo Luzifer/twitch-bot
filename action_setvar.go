@@ -119,7 +119,11 @@ func (a ActorSetVariable) IsAsync() bool { return false }
 func (a ActorSetVariable) Name() string  { return "setvariable" }
 
 func (a ActorSetVariable) Validate(attrs plugins.FieldCollection) (err error) {
-	return attrs.Expect("variable")
+	if v, err := attrs.String("variable"); err != nil || v == "" {
+		return errors.New("variable name must be non-empty string")
+	}
+
+	return nil
 }
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
