@@ -108,7 +108,11 @@ func (a ActorCounter) IsAsync() bool { return false }
 func (a ActorCounter) Name() string  { return "counter" }
 
 func (a ActorCounter) Validate(attrs plugins.AttributeStore) (err error) {
-	return attrs.Expect("counter")
+	if cn, err := attrs.String("counter"); err != nil || cn == "" {
+		return errors.New("counter name must be non-empty string")
+	}
+
+	return nil
 }
 
 func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
