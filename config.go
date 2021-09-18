@@ -14,18 +14,28 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type configFile struct {
-	AutoMessages         []*autoMessage         `yaml:"auto_messages"`
-	Channels             []string               `yaml:"channels"`
-	HTTPListen           string                 `yaml:"http_listen"`
-	PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration          `yaml:"permit_timeout"`
-	RawLog               string                 `yaml:"raw_log"`
-	Rules                []*plugins.Rule        `yaml:"rules"`
-	Variables            map[string]interface{} `yaml:"variables"`
+const expectedMinConfigVersion = 2
 
-	rawLogWriter io.WriteCloser
-}
+type (
+	configFileVersioner struct {
+		ConfigVersion int64 `ymal:"config_version"`
+	}
+
+	configFile struct {
+		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
+		Channels             []string               `yaml:"channels"`
+		HTTPListen           string                 `yaml:"http_listen"`
+		PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
+		PermitTimeout        time.Duration          `yaml:"permit_timeout"`
+		RawLog               string                 `yaml:"raw_log"`
+		Rules                []*plugins.Rule        `yaml:"rules"`
+		Variables            map[string]interface{} `yaml:"variables"`
+
+		rawLogWriter io.WriteCloser
+
+		configFileVersioner
+	}
+)
 
 func newConfigFile() *configFile {
 	return &configFile{
@@ -35,19 +45,20 @@ func newConfigFile() *configFile {
 
 func loadConfig(filename string) error {
 	var (
-		err       error
-		tmpConfig *configFile
+		configVersion *configFileVersioner
+		err           error
+		tmpConfig     *configFile
 	)
 
-	switch path.Ext(filename) {
-	case ".yaml", ".yml":
-		tmpConfig, err = parseConfigFromYAML(filename)
-
-	default:
-		return errors.Errorf("Unknown config format %q", path.Ext(filename))
+	if err = parseConfigFromYAML(filename, configVersion, false); err != nil {
+		return errors.Wrap(err, "parsing config version")
 	}
 
-	if err != nil {
+	if configVersion.ConfigVersion < expectedMinConfigVersion {
+		return errors.Errorf("config version too old: %d < %d", configVersion.ConfigVersion, expectedMinConfigVersion)
+	}
+
+	if err = parseConfigFromYAML(filename, tmpConfig, true); err != nil {
 		return errors.Wrap(err, "parsing config")
 	}
 
@@ -99,25 +110,17 @@ func loadConfig(filename string) error {
 	return nil
 }
 
-func parseConfigFromYAML(filename string) (*configFile, error) {
+func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "open config file")
+		return errors.Wrap(err, "open config file")
 	}
 	defer f.Close()
 
-	var (
-		decoder   = yaml.NewDecoder(f)
-		tmpConfig = newConfigFile()
-	)
+	decoder := yaml.NewDecoder(f)
+	decoder.SetStrict(strict)
 
-	decoder.SetStrict(true)
-
-	if err = decoder.Decode(&tmpConfig); err != nil {
-		return nil, errors.Wrap(err, "decode config file")
-	}
-
-	return tmpConfig, nil
+	return errors.Wrap(decoder.Decode(obj), "decode config file")
 }
 
 func (c *configFile) CloseRawMessageWriter() error {
