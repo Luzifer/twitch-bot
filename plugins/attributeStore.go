@@ -14,13 +14,13 @@ var (
 	errValueMismatch = errors.New("specified value has different format")
 )
 
-type moduleAttributeStore map[string]interface{}
+type AttributeStore map[string]interface{}
 
-func (m moduleAttributeStore) Expect(keys ...string) error {
+func (a AttributeStore) Expect(keys ...string) error {
 	var missing []string
 
 	for _, k := range keys {
-		if _, ok := m[k]; !ok {
+		if _, ok := a[k]; !ok {
 			missing = append(missing, k)
 		}
 	}
@@ -32,8 +32,8 @@ func (m moduleAttributeStore) Expect(keys ...string) error {
 	return nil
 }
 
-func (m moduleAttributeStore) MustBool(name string, defVal *bool) bool {
-	v, err := m.Bool(name)
+func (a AttributeStore) MustBool(name string, defVal *bool) bool {
+	v, err := a.Bool(name)
 	if err != nil {
 		if defVal != nil {
 			return *defVal
@@ -43,8 +43,8 @@ func (m moduleAttributeStore) MustBool(name string, defVal *bool) bool {
 	return v
 }
 
-func (m moduleAttributeStore) MustDuration(name string, defVal *time.Duration) time.Duration {
-	v, err := m.Duration(name)
+func (a AttributeStore) MustDuration(name string, defVal *time.Duration) time.Duration {
+	v, err := a.Duration(name)
 	if err != nil {
 		if defVal != nil {
 			return *defVal
@@ -54,8 +54,8 @@ func (m moduleAttributeStore) MustDuration(name string, defVal *time.Duration) t
 	return v
 }
 
-func (m moduleAttributeStore) MustInt64(name string, defVal *int64) int64 {
-	v, err := m.Int64(name)
+func (a AttributeStore) MustInt64(name string, defVal *int64) int64 {
+	v, err := a.Int64(name)
 	if err != nil {
 		if defVal != nil {
 			return *defVal
@@ -65,8 +65,8 @@ func (m moduleAttributeStore) MustInt64(name string, defVal *int64) int64 {
 	return v
 }
 
-func (m moduleAttributeStore) MustString(name string, defVal *string) string {
-	v, err := m.String(name)
+func (a AttributeStore) MustString(name string, defVal *string) string {
+	v, err := a.String(name)
 	if err != nil {
 		if defVal != nil {
 			return *defVal
@@ -76,8 +76,8 @@ func (m moduleAttributeStore) MustString(name string, defVal *string) string {
 	return v
 }
 
-func (m moduleAttributeStore) Bool(name string) (bool, error) {
-	v, ok := m[name]
+func (a AttributeStore) Bool(name string) (bool, error) {
+	v, ok := a[name]
 	if !ok {
 		return false, errValueNotSet
 	}
@@ -93,8 +93,8 @@ func (m moduleAttributeStore) Bool(name string) (bool, error) {
 	return false, errValueMismatch
 }
 
-func (m moduleAttributeStore) Duration(name string) (time.Duration, error) {
-	v, err := m.String(name)
+func (a AttributeStore) Duration(name string) (time.Duration, error) {
+	v, err := a.String(name)
 	if err != nil {
 		return 0, errors.Wrap(err, "getting string value")
 	}
@@ -103,8 +103,8 @@ func (m moduleAttributeStore) Duration(name string) (time.Duration, error) {
 	return d, errors.Wrap(err, "parsing value")
 }
 
-func (m moduleAttributeStore) Int64(name string) (int64, error) {
-	v, ok := m[name]
+func (a AttributeStore) Int64(name string) (int64, error) {
+	v, ok := a[name]
 	if !ok {
 		return 0, errValueNotSet
 	}
@@ -123,8 +123,8 @@ func (m moduleAttributeStore) Int64(name string) (int64, error) {
 	return 0, errValueMismatch
 }
 
-func (m moduleAttributeStore) String(name string) (string, error) {
-	v, ok := m[name]
+func (a AttributeStore) String(name string) (string, error) {
+	v, ok := a[name]
 	if !ok {
 		return "", errValueNotSet
 	}
@@ -140,8 +140,8 @@ func (m moduleAttributeStore) String(name string) (string, error) {
 	return "", errValueMismatch
 }
 
-func (m moduleAttributeStore) StringSlice(name string) ([]string, error) {
-	v, ok := m[name]
+func (a AttributeStore) StringSlice(name string) ([]string, error) {
+	v, ok := a[name]
 	if !ok {
 		return nil, errValueNotSet
 	}
