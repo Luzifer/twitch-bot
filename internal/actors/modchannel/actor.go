@@ -23,6 +23,42 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Update stream information",
+		Name:        "Modify Channel",
+		Type:        "modchannel",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Channel to update",
+				Key:             "channel",
+				Name:            "Channel",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "Category / Game to set",
+				Key:             "game",
+				Name:            "Game",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "Stream title to set",
+				Key:             "title",
+				Name:            "Title",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	return nil
 }
 
@@ -31,8 +67,8 @@ type actor struct{}
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		ptrStringEmpty = func(v string) *string { return &v }("")
-		game           = attrs.MustString("update_game", ptrStringEmpty)
-		title          = attrs.MustString("update_title", ptrStringEmpty)
+		game           = attrs.MustString("game", ptrStringEmpty)
+		title          = attrs.MustString("title", ptrStringEmpty)
 	)
 
 	if game == "" && title == "" {

@@ -13,6 +13,24 @@ const actorName = "ban"
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Ban user from chat",
+		Name:        "Ban",
+		Type:        "ban",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Reason why the user was banned",
+				Key:             "reason",
+				Name:            "Reason",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	return nil
 }
 

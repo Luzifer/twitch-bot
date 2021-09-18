@@ -13,6 +13,12 @@ const actorName = "delete"
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Delete message which caused the rule to be executed",
+		Name:        "Delete",
+		Type:        "delete",
+	})
+
 	return nil
 }
 

@@ -22,6 +22,51 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Respond to message with a new message",
+		Name:        "Respond",
+		Type:        "respond",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Message text to send",
+				Key:             "message",
+				Name:            "Message",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "Fallback message text to send if message cannot be generated",
+				Key:             "fallback",
+				Name:            "Fallback",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "false",
+				Description:     "Send message as a native Twitch-reply to the original message",
+				Key:             "as_reply",
+				Name:            "As Reply",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeBool,
+			},
+			{
+				Default:         "",
+				Description:     "Send message to a different channel than the original message",
+				Key:             "to_channel",
+				Name:            "To Channel",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	return nil
 }
 

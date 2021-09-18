@@ -13,6 +13,33 @@ const actorName = "delay"
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Delay next action",
+		Name:        "Delay",
+		Type:        "delay",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Static delay to wait",
+				Key:             "delay",
+				Name:            "Delay",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeDuration,
+			},
+			{
+				Default:         "",
+				Description:     "Dynamic jitter to add to the static delay (the added extra delay will be between 0 and this value)",
+				Key:             "jitter",
+				Name:            "Jitter",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeDuration,
+			},
+		},
+	})
+
 	return nil
 }
 
@@ -22,7 +49,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	var (
 		ptrZeroDuration = func(v time.Duration) *time.Duration { return &v }(0)
 		delay           = attrs.MustDuration("delay", ptrZeroDuration)
-		jitter          = attrs.MustDuration("delay_jitter", ptrZeroDuration)
+		jitter          = attrs.MustDuration("jitter", ptrZeroDuration)
 	)
 
 	if delay == 0 && jitter == 0 {

@@ -17,6 +17,33 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Send a whisper (requires a verified bot!)",
+		Name:        "Whisper",
+		Type:        "whisper",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Message to whisper to the user",
+				Key:             "message",
+				Name:            "Message",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "User to send the message to",
+				Key:             "to",
+				Name:            "To User",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	return nil
 }
 

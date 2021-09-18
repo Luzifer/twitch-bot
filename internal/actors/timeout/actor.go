@@ -14,6 +14,24 @@ const actorName = "timeout"
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Timeout user from chat",
+		Name:        "Timeout",
+		Type:        "timeout",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Duration of the timeout",
+				Key:             "duration",
+				Name:            "Duration",
+				Optional:        false,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeDuration,
+			},
+		},
+	})
+
 	return nil
 }
 

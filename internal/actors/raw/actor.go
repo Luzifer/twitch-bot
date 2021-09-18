@@ -15,6 +15,24 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Send raw IRC message",
+		Name:        "RAW",
+		Type:        "raw",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Raw message to send (must be a valid IRC protocol message)",
+				Key:             "message",
+				Name:            "Message",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
+
 	return nil
 }
 
