@@ -68,24 +68,16 @@ func init() {
 	})
 }
 
-type ActorCounter struct {
-	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
-	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
-	Counter     *string `json:"counter" yaml:"counter"`
-}
+type ActorCounter struct{}
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Counter == nil {
-		return false, nil
-	}
-
-	counterName, err := formatMessage(*a.Counter, m, r, eventData)
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.AttributeStore) (preventCooldown bool, err error) {
+	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
 	}
 
-	if a.CounterSet != nil {
-		parseValue, err := formatMessage(*a.CounterSet, m, r, eventData)
+	if counterSet := attrs.MustString("counter_set", ptrStringEmpty); counterSet != "" {
+		parseValue, err := formatMessage(counterSet, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute counter value template")
 		}
@@ -102,8 +94,8 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	var counterStep int64 = 1
-	if a.CounterStep != nil {
-		counterStep = *a.CounterStep
+	if s := attrs.MustInt64("counter_step", ptrIntZero); s != 0 {
+		counterStep = s
 	}
 
 	return false, errors.Wrap(
@@ -114,6 +106,10 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 
 func (a ActorCounter) IsAsync() bool { return false }
 func (a ActorCounter) Name() string  { return "counter" }
+
+func (a ActorCounter) Validate(attrs plugins.AttributeStore) (err error) {
+	return attrs.Expect("counter")
+}
 
 func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 	template := r.FormValue("template")
