@@ -47,7 +47,7 @@ func loadConfig(filename string) error {
 	var (
 		configVersion *configFileVersioner
 		err           error
-		tmpConfig     *configFile
+		tmpConfig     = newConfigFile()
 	)
 
 	if err = parseConfigFromYAML(filename, configVersion, false); err != nil {
