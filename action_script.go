@@ -17,24 +17,21 @@ func init() {
 	registerAction("script", func() plugins.Actor { return &ActorScript{} })
 }
 
-type ActorScript struct {
-	Command             []string `json:"command" yaml:"command"`
-	SkipCooldownOnError bool     `json:"skip_cooldown_on_error" yaml:"skip_cooldown_on_error"`
-}
+type ActorScript struct{}
 
-func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if len(a.Command) == 0 {
-		return false, nil
+func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.AttributeStore) (preventCooldown bool, err error) {
+	command, err := attrs.StringSlice("command")
+	if err != nil {
+		return false, errors.Wrap(err, "getting command")
 	}
 
-	var command []string
-	for _, arg := range a.Command {
-		tmp, err := formatMessage(arg, m, r, eventData)
+	for i := range command {
+		tmp, err := formatMessage(command[i], m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute command argument template")
 		}
 
-		command = append(command, tmp)
+		command[i] = tmp
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.CommandTimeout)
@@ -67,7 +64,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		return a.SkipCooldownOnError, errors.Wrap(err, "running command")
+		return attrs.MustBool("skip_cooldown_on_error", ptrBoolFalse), errors.Wrap(err, "running command")
 	}
 
 	if stdout.Len() == 0 {
@@ -98,3 +95,11 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 
 func (a ActorScript) IsAsync() bool { return false }
 func (a ActorScript) Name() string  { return "script" }
+
+func (a ActorScript) Validate(attrs plugins.AttributeStore) (err error) {
+	if cmd, err := attrs.StringSlice("command"); err != nil || len(cmd) == 0 {
+		return errors.New("command must be slice of strings with length > 0")
+	}
+
+	return nil
+}
