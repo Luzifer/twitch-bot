@@ -18,7 +18,7 @@ const expectedMinConfigVersion = 2
 
 type (
 	configFileVersioner struct {
-		ConfigVersion int64 `ymal:"config_version"`
+		ConfigVersion int64 `yaml:"config_version"`
 	}
 
 	configFile struct {
@@ -33,7 +33,7 @@ type (
 
 		rawLogWriter io.WriteCloser
 
-		configFileVersioner
+		configFileVersioner `yaml:",inline"`
 	}
 )
 
@@ -45,7 +45,7 @@ func newConfigFile() *configFile {
 
 func loadConfig(filename string) error {
 	var (
-		configVersion *configFileVersioner
+		configVersion = &configFileVersioner{}
 		err           error
 		tmpConfig     = newConfigFile()
 	)
@@ -55,7 +55,7 @@ func loadConfig(filename string) error {
 	}
 
 	if configVersion.ConfigVersion < expectedMinConfigVersion {
-		return errors.Errorf("config version too old: %d < %d", configVersion.ConfigVersion, expectedMinConfigVersion)
+		return errors.Errorf("config version too old: %d < %d - Please have a look at the documentation!", configVersion.ConfigVersion, expectedMinConfigVersion)
 	}
 
 	if err = parseConfigFromYAML(filename, tmpConfig, true); err != nil {
