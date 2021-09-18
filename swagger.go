@@ -31,6 +31,9 @@ var (
 				"inputErrorResponse":   spec.TextPlainResponse(nil).WithDescription("Data sent to API is invalid: See error message"),
 				"notFoundResponse":     spec.TextPlainResponse(nil).WithDescription("Document was not found or insufficient permissions"),
 			},
+			SecuritySchemes: map[string]*spec.SecurityScheme{
+				"authenticated": spec.APIKeyAuth("Authorization", spec.InHeader),
+			},
 		},
 	}
 
@@ -85,6 +88,12 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 			"404": spec.RefResponse("notFoundResponse"),
 			"500": spec.RefResponse("genericErrorResponse"),
 		},
+	}
+
+	if route.RequiresEditorsAuth {
+		op.Security = []map[string]spec.SecurityRequirement{
+			{"authenticated": {}},
+		}
 	}
 
 	switch route.ResponseType {

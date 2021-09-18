@@ -8,8 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const twitchClientID = ""
-
 func botEditorAuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
@@ -18,7 +16,7 @@ func botEditorAuthMiddleware(h http.Handler) http.Handler {
 			return
 		}
 
-		tc := twitch.New(twitchClientID, token)
+		tc := twitch.New(cfg.TwitchClient, token)
 
 		user, err := tc.GetAuthorizedUsername()
 		if err != nil {

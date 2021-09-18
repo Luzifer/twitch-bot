@@ -42,6 +42,20 @@ func init() {
 			ResponseType: plugins.HTTPRouteResponseTypeJSON,
 		},
 		{
+			Description: "Returns the current set of configured auto-messages in JSON format",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				if err := json.NewEncoder(w).Encode(config.AutoMessages); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			},
+			Method:              http.MethodGet,
+			Module:              "config-editor",
+			Name:                "Get current auto-messages",
+			Path:                "/auto-messages",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
 			Description: "Returns the current set of configured rules in JSON format",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
 				if err := json.NewEncoder(w).Encode(config.Rules); err != nil {
@@ -50,7 +64,7 @@ func init() {
 			},
 			Method:              http.MethodGet,
 			Module:              "config-editor",
-			Name:                "Get current configuration",
+			Name:                "Get current rules",
 			Path:                "/rules",
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
