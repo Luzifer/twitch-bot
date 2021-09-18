@@ -53,30 +53,22 @@ func init() {
 	})
 }
 
-type ActorSetVariable struct {
-	Variable string `json:"variable" yaml:"variable"`
-	Clear    bool   `json:"clear" yaml:"clear"`
-	Set      string `json:"set" yaml:"set"`
-}
+type ActorSetVariable struct{}
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Variable == "" {
-		return false, nil
-	}
-
-	varName, err := formatMessage(a.Variable, m, r, eventData)
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.AttributeStore) (preventCooldown bool, err error) {
+	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
 	}
 
-	if a.Clear {
+	if attrs.MustBool("clear", ptrBoolFalse) {
 		return false, errors.Wrap(
 			store.RemoveVariable(varName),
 			"removing variable",
 		)
 	}
 
-	value, err := formatMessage(a.Set, m, r, eventData)
+	value, err := formatMessage(attrs.MustString("set", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing value")
 	}
@@ -89,6 +81,10 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 
 func (a ActorSetVariable) IsAsync() bool { return false }
 func (a ActorSetVariable) Name() string  { return "setvariable" }
+
+func (a ActorSetVariable) Validate(attrs plugins.AttributeStore) (err error) {
+	return attrs.Expect("variable")
+}
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text-plain")
