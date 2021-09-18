@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	registerAction(func() plugins.Actor { return &ActorScript{} })
+	registerAction("script", func() plugins.Actor { return &ActorScript{} })
 }
 
 type ActorScript struct {
@@ -86,7 +86,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	}
 
 	for _, action := range actions {
-		apc, err := triggerActions(c, m, r, action, eventData)
+		apc, err := triggerAction(c, m, r, action, eventData)
 		if err != nil {
 			return preventCooldown, errors.Wrap(err, "execute returned action")
 		}

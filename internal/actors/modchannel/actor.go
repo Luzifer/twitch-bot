@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "modchannel"
+
 var (
 	formatMessage plugins.MsgFormatter
 	twitchClient  *twitch.Client
@@ -19,7 +21,7 @@ func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	twitchClient = args.GetTwitchClient()
 
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	return nil
 }
@@ -67,4 +69,4 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "modchannel" }
+func (a actor) Name() string  { return actorName }

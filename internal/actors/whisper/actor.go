@@ -8,12 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "whisper"
+
 var formatMessage plugins.MsgFormatter
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	return nil
 }
@@ -53,4 +55,4 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "whisper" }
+func (a actor) Name() string  { return actorName }

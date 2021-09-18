@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	registerAction(func() plugins.Actor { return &ActorCounter{} })
+	registerAction("counter", func() plugins.Actor { return &ActorCounter{} })
 
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Returns the (formatted) value as a plain string",

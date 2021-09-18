@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	registerAction(func() plugins.Actor { return &ActorSetVariable{} })
+	registerAction("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
 
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Returns the value as a plain string",

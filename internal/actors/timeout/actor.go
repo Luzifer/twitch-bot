@@ -9,8 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "timeout"
+
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	return nil
 }
@@ -37,7 +39,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "timeout" }
+func (a actor) Name() string  { return actorName }
 
 func fixDurationValue(d time.Duration) time.Duration {
 	if d >= time.Second {
