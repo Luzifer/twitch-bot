@@ -1,7 +1,7 @@
 package ban
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
@@ -16,13 +16,18 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct {
-	Ban *string `json:"ban" yaml:"ban"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Ban == nil {
-		return false, nil
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	ptrStringEmpty := func(v string) *string { return &v }("")
+
+	cmd := []string{
+		"/ban",
+		plugins.DeriveUser(m, eventData),
+	}
+
+	if reason := attrs.MustString("reason", ptrStringEmpty); reason != "" {
+		cmd = append(cmd, reason)
 	}
 
 	return false, errors.Wrap(
@@ -30,12 +35,14 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			Command: "PRIVMSG",
 			Params: []string{
 				plugins.DeriveChannel(m, eventData),
-				fmt.Sprintf("/ban %s %s", plugins.DeriveUser(m, eventData), *a.Ban),
+				strings.Join(cmd, " "),
 			},
 		}),
-		"sending timeout",
+		"sending ban",
 	)
 }
 
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) { return nil }

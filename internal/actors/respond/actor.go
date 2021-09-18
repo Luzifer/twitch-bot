@@ -11,7 +11,11 @@ import (
 
 const actorName = "respond"
 
-var formatMessage plugins.MsgFormatter
+var (
+	formatMessage plugins.MsgFormatter
+
+	ptrBoolFalse = func(v bool) *bool { return &v }(false)
+)
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
@@ -21,31 +25,22 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct {
-	Respond         *string `json:"respond" yaml:"respond"`
-	RespondAsReply  *bool   `json:"respond_as_reply" yaml:"respond_as_reply"`
-	RespondFallback *string `json:"respond_fallback" yaml:"respond_fallback"`
-	ToChannel       *string `json:"to_channel" yaml:"to_channel"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Respond == nil {
-		return false, nil
-	}
-
-	msg, err := formatMessage(*a.Respond, m, r, eventData)
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
-		if a.RespondFallback == nil {
+		if attrs.CanString("fallback") {
 			return false, errors.Wrap(err, "preparing response")
 		}
-		if msg, err = formatMessage(*a.RespondFallback, m, r, eventData); err != nil {
+		if msg, err = formatMessage(attrs.MustString("fallback", nil), m, r, eventData); err != nil {
 			return false, errors.Wrap(err, "preparing response fallback")
 		}
 	}
 
 	toChannel := plugins.DeriveChannel(m, eventData)
-	if a.ToChannel != nil {
-		toChannel = fmt.Sprintf("#%s", strings.TrimLeft(*a.ToChannel, "#"))
+	if attrs.CanString("to_channel") {
+		toChannel = fmt.Sprintf("#%s", strings.TrimLeft(attrs.MustString("to_channel", nil), "#"))
 	}
 
 	ircMessage := &irc.Message{
@@ -56,7 +51,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		},
 	}
 
-	if a.RespondAsReply != nil && *a.RespondAsReply && m != nil {
+	if attrs.MustBool("as_reply", ptrBoolFalse) {
 		id, ok := m.GetTag("id")
 		if ok {
 			if ircMessage.Tags == nil {
@@ -74,3 +69,11 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.String("message"); err != nil || v == "" {
+		return errors.New("message must be non-empty string")
+	}
+
+	return nil
+}

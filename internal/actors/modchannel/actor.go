@@ -26,47 +26,57 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct {
-	Channel     string  `json:"channel" yaml:"channel"`
-	UpdateGame  *string `json:"update_game" yaml:"update_game"`
-	UpdateTitle *string `json:"update_title" yaml:"update_title"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.UpdateGame == nil && a.UpdateTitle == nil {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	var (
+		ptrStringEmpty = func(v string) *string { return &v }("")
+		game           = attrs.MustString("update_game", ptrStringEmpty)
+		title          = attrs.MustString("update_title", ptrStringEmpty)
+	)
+
+	if game == "" && title == "" {
 		return false, nil
 	}
 
-	var game, title *string
+	var updGame, updTitle *string
 
-	channel, err := formatMessage(a.Channel, m, r, eventData)
+	channel, err := formatMessage(attrs.MustString("channel", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "parsing channel")
 	}
 
-	if a.UpdateGame != nil {
-		parsedGame, err := formatMessage(*a.UpdateGame, m, r, eventData)
+	if game != "" {
+		parsedGame, err := formatMessage(game, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "parsing game")
 		}
 
-		game = &parsedGame
+		updGame = &parsedGame
 	}
 
-	if a.UpdateTitle != nil {
-		parsedTitle, err := formatMessage(*a.UpdateTitle, m, r, eventData)
+	if title != "" {
+		parsedTitle, err := formatMessage(title, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "parsing title")
 		}
 
-		title = &parsedTitle
+		updTitle = &parsedTitle
 	}
 
 	return false, errors.Wrap(
-		twitchClient.ModifyChannelInformation(context.Background(), strings.TrimLeft(channel, "#"), game, title),
+		twitchClient.ModifyChannelInformation(context.Background(), strings.TrimLeft(channel, "#"), updGame, updTitle),
 		"updating channel info",
 	)
 }
 
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.String("channel"); err != nil || v == "" {
+		return errors.New("channel must be non-empty string")
+	}
+
+	return nil
+}

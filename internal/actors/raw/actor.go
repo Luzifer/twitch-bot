@@ -18,16 +18,10 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct {
-	RawMessage *string `json:"raw_message" yaml:"raw_message"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.RawMessage == nil {
-		return false, nil
-	}
-
-	rawMsg, err := formatMessage(*a.RawMessage, m, r, eventData)
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	rawMsg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing raw message")
 	}
@@ -45,3 +39,11 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.String("message"); err != nil || v == "" {
+		return errors.New("message must be non-empty string")
+	}
+
+	return nil
+}
