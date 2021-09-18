@@ -1,0 +1,29 @@
+---
+
+# This must be the config version you've used below. Current version
+# is version 2 so probably keep it at 2 until the bot tells you to
+# upgrade.
+config_version: 2
+
+# List of strings: Either Twitch user-ids or nicknames (best to stick
+# with IDs as they can't change while nicknames can be changed every
+# 60 days). Those users are able to use the config editor web-interface.
+bot_editors: []
+
+# List of channels to join. Channels not listed here will not be
+# joined and therefore cannot be actioned on.
+channels: []
+
+# IP/Port to start the web-interface on. Format: IP:Port
+# The default is 127.0.0.1:0 - Listen on localhost with random port
+http_listen: "127.0.0.1:0"
+
+# List of auto-messages. See documentation for details or use
+# web-interface to configure.
+auto_messages: []
+
+# List of rules. See documentation for details or use web-interface
+# to configure.
+rules: []
+
+...

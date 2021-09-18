@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -15,6 +16,9 @@ import (
 )
 
 const expectedMinConfigVersion = 2
+
+//go:embed default_config.yaml
+var defaultConfigurationYAML []byte
 
 type (
 	configFileVersioner struct {
@@ -125,6 +129,17 @@ func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	decoder.SetStrict(strict)
 
 	return errors.Wrap(decoder.Decode(obj), "decode config file")
+}
+
+func writeDefaultConfigFile(filename string) error {
+	f, err := os.Create(filename)
+	if err != nil {
+		return errors.Wrap(err, "creating config file")
+	}
+	defer f.Close()
+
+	_, err = f.Write(defaultConfigurationYAML)
+	return errors.Wrap(err, "writing default config")
 }
 
 func (c *configFile) CloseRawMessageWriter() error {

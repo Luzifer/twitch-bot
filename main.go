@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -98,6 +99,15 @@ func main() {
 	}
 
 	if err = loadConfig(cfg.Config); err != nil {
+		if os.IsNotExist(errors.Cause(err)) {
+			if err = writeDefaultConfigFile(cfg.Config); err != nil {
+				log.WithError(err).Fatal("Initial config not found and not able to create example config")
+			}
+
+			log.WithField("filename", cfg.Config).Warn("No config was found, created example config: Please review that config!")
+			return
+		}
+
 		log.WithError(err).Fatal("Initial config load failed")
 	}
 	defer func() { config.CloseRawMessageWriter() }()
@@ -134,7 +144,13 @@ func main() {
 
 	if config.HTTPListen != "" {
 		// If listen address is configured start HTTP server
-		go http.ListenAndServe(config.HTTPListen, router)
+		listener, err := net.Listen("tcp", config.HTTPListen)
+		if err != nil {
+			log.WithError(err).Fatal("Unable to open http_listen port")
+		}
+
+		go http.Serve(listener, router)
+		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
 	}
 
 	ircDisconnected <- struct{}{}
