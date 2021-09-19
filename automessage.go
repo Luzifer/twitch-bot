@@ -17,18 +17,18 @@ import (
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
 type autoMessage struct {
-	UUID string `hash:"-" yaml:"uuid"`
+	UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid"`
 
-	Channel   string `yaml:"channel"`
-	Message   string `yaml:"message"`
-	UseAction bool   `yaml:"use_action"`
+	Channel   string `json:"channel,omitempty" yaml:"channel"`
+	Message   string `json:"message,omitempty" yaml:"message"`
+	UseAction bool   `json:"use_action,omitempty" yaml:"use_action"`
 
-	DisableOnTemplate *string `yaml:"disable_on_template"`
+	DisableOnTemplate *string `json:"disable_on_template,omitempty" yaml:"disable_on_template"`
 
-	Cron            string        `yaml:"cron"`
-	MessageInterval int64         `yaml:"message_interval"`
-	OnlyOnLive      bool          `yaml:"only_on_live"`
-	TimeInterval    time.Duration `yaml:"time_interval"`
+	Cron            string        `json:"cron,omitempty" yaml:"cron"`
+	MessageInterval int64         `json:"message_interval,omitempty" yaml:"message_interval"`
+	OnlyOnLive      bool          `json:"only_on_live,omitempty" yaml:"only_on_live"`
+	TimeInterval    time.Duration `json:"time_interval,omitempty" yaml:"time_interval"`
 
 	disabled              bool
 	lastMessageSent       time.Time
