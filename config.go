@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"time"
@@ -130,6 +131,45 @@ func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	decoder.SetStrict(strict)
 
 	return errors.Wrap(decoder.Decode(obj), "decode config file")
+}
+
+func patchConfig(filename string, patcher func(*configFile) error) error {
+	var (
+		cfgFile = newConfigFile()
+		err     error
+	)
+
+	if err = parseConfigFromYAML(filename, cfgFile, true); err != nil {
+		return errors.Wrap(err, "loading current config")
+	}
+
+	if err = patcher(cfgFile); err != nil {
+		return errors.Wrap(err, "patching config")
+	}
+
+	return errors.Wrap(
+		writeConfigToYAML(filename, cfgFile),
+		"replacing config",
+	)
+}
+
+func writeConfigToYAML(filename string, obj interface{}) error {
+	tmpFile, err := ioutil.TempFile(path.Dir(filename), "twitch-bot-*.yaml")
+	if err != nil {
+		return errors.Wrap(err, "opening tempfile")
+	}
+	tmpFileName := tmpFile.Name()
+
+	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
+		tmpFile.Close()
+		return errors.Wrap(err, "encoding config")
+	}
+	tmpFile.Close()
+
+	return errors.Wrap(
+		os.Rename(tmpFileName, filename),
+		"moving config to location",
+	)
 }
 
 func writeDefaultConfigFile(filename string) error {
