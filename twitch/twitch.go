@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
@@ -37,6 +38,13 @@ type (
 
 		apiCache *APICache
 	}
+
+	User struct {
+		DisplayName     string `json:"display_name"`
+		ID              string `json:"id"`
+		Login           string `json:"login"`
+		ProfileImageURL string `json:"profile_image_url"`
+	}
 )
 
 func New(clientID, token string) *Client {
@@ -52,10 +60,7 @@ func (c Client) APICache() *APICache { return c.apiCache }
 
 func (c Client) GetAuthorizedUsername() (string, error) {
 	var payload struct {
-		Data []struct {
-			ID    string `json:"id"`
-			Login string `json:"login"`
-		} `json:"data"`
+		Data []User `json:"data"`
 	}
 
 	if err := c.request(
@@ -82,11 +87,7 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 	}
 
 	var payload struct {
-		Data []struct {
-			ID          string `json:"id"`
-			DisplayName string `json:"display_name"`
-			Login       string `json:"login"`
-		} `json:"data"`
+		Data []User `json:"data"`
 	}
 
 	if err := c.request(
@@ -148,6 +149,46 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	c.apiCache.Set(cacheKey, timeDay, payload.Data[0].FollowedAt)
 
 	return payload.Data[0].FollowedAt, nil
+}
+
+func (c Client) GetUserInformation(user string) (*User, error) {
+	var (
+		out     User
+		param   = "login"
+		payload struct {
+			Data []User `json:"data"`
+		}
+	)
+
+	cacheKey := []string{"userInformation", user}
+	if d := c.apiCache.Get(cacheKey); d != nil {
+		out = d.(User)
+		return &out, nil
+	}
+
+	if _, err := strconv.ParseInt(user, 10, 64); err == nil {
+		param = "id"
+	}
+
+	if err := c.request(
+		context.Background(),
+		http.MethodGet,
+		fmt.Sprintf("https://api.twitch.tv/helix/users?%s=%s", param, user),
+		nil,
+		&payload,
+	); err != nil {
+		return nil, errors.Wrap(err, "request user info")
+	}
+
+	if l := len(payload.Data); l != 1 {
+		return nil, errors.Errorf("unexpected number of records returned: %d", l)
+	}
+
+	// Follow date will not change that often, cache for a long time
+	c.apiCache.Set(cacheKey, timeDay, payload.Data[0])
+	out = payload.Data[0]
+
+	return &out, nil
 }
 
 func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
@@ -219,10 +260,7 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 	}
 
 	var payload struct {
-		Data []struct {
-			ID    string `json:"id"`
-			Login string `json:"login"`
-		} `json:"data"`
+		Data []User `json:"data"`
 	}
 
 	if err := c.request(
