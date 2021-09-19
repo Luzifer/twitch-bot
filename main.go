@@ -88,7 +88,7 @@ func main() {
 	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
 
 	router.Use(corsMiddleware)
-	router.HandleFunc("/", handleSwaggerHTML)
+	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
 	if err = initCorePlugins(); err != nil {
