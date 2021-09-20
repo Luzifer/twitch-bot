@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -51,8 +52,10 @@ func init() {
 
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(struct {
+			IRCBadges      []string
 			TwitchClientID string
 		}{
+			IRCBadges:      twitch.KnownBadges,
 			TwitchClientID: cfg.TwitchClient,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -195,7 +198,7 @@ func init() {
 			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
 			RouteParams: []plugins.HTTPRouteParamDocumentation{
 				{
-					Description: "UUID of the auto-message to delete",
+					Description: "UUID of the auto-message to update",
 					Name:        "uuid",
 					Required:    false,
 					Type:        "string",
@@ -271,6 +274,116 @@ func init() {
 			Path:                "/rules",
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description: "Adds a new Rule",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				msg := &plugins.Rule{}
+				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				msg.UUID = uuid.Must(uuid.NewV4()).String()
+
+				if err := patchConfig(cfg.Config, func(c *configFile) error {
+					c.Rules = append(c.Rules, msg)
+					return nil
+				}); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusCreated)
+			},
+			Method:              http.MethodPost,
+			Module:              "config-editor",
+			Name:                "Add Rule",
+			Path:                "/rules",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
+		},
+		{
+			Description: "Deletes the given Rule",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				if err := patchConfig(cfg.Config, func(c *configFile) error {
+					var (
+						id  = mux.Vars(r)["uuid"]
+						tmp []*plugins.Rule
+					)
+
+					for i := range c.Rules {
+						if c.Rules[i].MatcherID() == id {
+							continue
+						}
+						tmp = append(tmp, c.Rules[i])
+					}
+
+					c.Rules = tmp
+
+					return nil
+				}); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusNoContent)
+			},
+			Method:              http.MethodDelete,
+			Module:              "config-editor",
+			Name:                "Delete Rule",
+			Path:                "/rules/{uuid}",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
+			RouteParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "UUID of the rule to delete",
+					Name:        "uuid",
+					Required:    false,
+					Type:        "string",
+				},
+			},
+		},
+		{
+			Description: "Updates the given Rule",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				msg := &plugins.Rule{}
+				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				if err := patchConfig(cfg.Config, func(c *configFile) error {
+					id := mux.Vars(r)["uuid"]
+
+					for i := range c.Rules {
+						if c.Rules[i].MatcherID() == id {
+							c.Rules[i] = msg
+						}
+					}
+
+					return nil
+				}); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.WriteHeader(http.StatusNoContent)
+			},
+			Method:              http.MethodPut,
+			Module:              "config-editor",
+			Name:                "Update Rule",
+			Path:                "/rules/{uuid}",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
+			RouteParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "UUID of the rule to update",
+					Name:        "uuid",
+					Required:    false,
+					Type:        "string",
+				},
+			},
 		},
 		{
 			Description: "Returns information about a Twitch user to properly display bot editors",

@@ -1,3 +1,7 @@
+/* global axios, Vue */
+
+/* eslint-disable camelcase --- We are working with data from a Go JSON API */
+
 const CRON_VALIDATION = /^(?:(?:@every (?:\d+(?:s|m|h))+)|(?:(?:(?:(?:\d+,)+\d+|(?:\d+(?:\/|-)\d+)|\d+|\*|\*\/\d+)(?: |$)){5}))$/
 
 Vue.config.devtools = true
@@ -13,6 +17,10 @@ new Vue({
       params.set('scope', scopes.join(' '))
 
       return `https://id.twitch.tv/oauth2/authorize?${params.toString()}`
+    },
+
+    availableActionsForAdd() {
+      return this.actions.map(a => ({ text: a.name, value: a.type }))
     },
 
     axiosOptions() {
@@ -77,60 +85,163 @@ new Vue({
     validateAutoMessageMessageLength() {
       return this.models.autoMessage.use_action ? 496 : 500
     },
+
+
+    validateRule() {
+      if (!this.models.rule.match_message__validation) {
+        this.validateReason = 'rule.match_message__validation'
+        return false
+      }
+
+      if (!this.validateDuration(this.models.rule.cooldown, false)) {
+        this.validateReason = 'rule.cooldown'
+        return false
+      }
+
+      if (!this.validateDuration(this.models.rule.user_cooldown, false)) {
+        this.validateReason = 'rule.user_cooldown'
+        return false
+      }
+
+      if (!this.validateDuration(this.models.rule.channel_cooldown, false)) {
+        this.validateReason = 'rule.channel_cooldown'
+        return false
+      }
+
+      for (const action of this.models.rule.actions || []) {
+        const def = this.getActionDefinitionByType(action.type)
+        if (!def) {
+          this.validateReason = `nodef: ${action.type}`
+          return false
+        }
+
+        if (!def.fields) {
+          // No fields to check
+          continue
+        }
+
+        for (const field of def.fields) {
+          if (!field.optional && !action.attributes[field.key]) {
+            this.validateReason = `${action.type} -> ${field.key} -> opt`
+            return false
+          }
+        }
+      }
+
+      return true
+    },
   },
 
   data: {
+    actions: [],
     authToken: null,
     autoMessageFields: [
       {
+        class: 'col-1 text-nowrap',
         key: 'channel',
         sortable: true,
-        class: 'col-1 text-nowrap',
         thClass: 'align-middle',
       },
       {
+        class: 'col-9',
         key: 'message',
         sortable: true,
-        class: 'col-9',
         thClass: 'align-middle',
       },
       {
-        key: 'cron',
         class: 'col-1 text-nowrap',
+        key: 'cron',
         thClass: 'align-middle',
       },
       {
+        class: 'col-1 text-right',
         key: 'actions',
         label: '',
-        class: 'col-1 text-right',
         thClass: 'align-middle',
       },
     ],
 
-    autoMessages: [],
     autoMessageSendModes: [
       { text: 'Cron', value: 'cron' },
       { text: 'Number of lines', value: 'lines' },
     ],
 
-    editMode: 'automessages', // 'general', FIXME
+    autoMessages: [],
+
+    editMode: 'rules', // 'general', FIXME
     error: null,
     generalConfig: {},
     models: {
+      addAction: '',
       addChannel: '',
       addEditor: '',
       autoMessage: {},
+      rule: {},
     },
 
     rules: [],
+    rulesFields: [
+      {
+        class: 'col-3',
+        key: '_match',
+        label: 'Match',
+        thClass: 'align-middle',
+      },
+      {
+        class: 'col-8',
+        key: '_description',
+        label: 'Description',
+        thClass: 'align-middle',
+      },
+      {
+        class: 'col-1 text-right',
+        key: '_actions',
+        label: '',
+        thClass: 'align-middle',
+      },
+    ],
+
     showAutoMessageEditModal: false,
+    showRuleEditModal: false,
     userProfiles: {},
+    validateReason: null,
     vars: {},
   },
 
   el: '#app',
 
   methods: {
+    addAction() {
+      const attributes = {}
+
+      for (const field of this.getActionDefinitionByType(this.models.addAction).fields) {
+        let defaultValue = null
+
+        switch (field.type) {
+        case 'bool':
+          defaultValue = field.default === 'true'
+          break
+        case 'int64':
+          defaultValue = field.default ? Number(field.default) : 0
+          break
+        case 'string':
+          defaultValue = field.default
+          break
+        case 'stringslice':
+          defaultValue = []
+          break
+        }
+
+        attributes[field.key] = defaultValue
+      }
+
+      if (!this.models.rule.actions) {
+        Vue.set(this.models.rule, 'actions', [])
+      }
+
+      this.models.rule.actions.push({ attributes, type: this.models.addAction })
+    },
+
     addChannel() {
       this.generalConfig.channels.push(this.models.addChannel.replace(/^#*/, ''))
       this.models.addChannel = ''
@@ -146,9 +257,19 @@ new Vue({
       this.updateGeneralConfig()
     },
 
+    delayedReload() {
+      window.setTimeout(() => this.reload(), 1000)
+    },
+
     deleteAutoMessage(uuid) {
       axios.delete(`config-editor/auto-messages/${uuid}`, this.axiosOptions)
-        .then(() => window.setTimeout(() => this.reload(), 1000))
+        .then(() => this.delayedReload())
+        .catch(err => this.handleFetchError(err))
+    },
+
+    deleteRule(uuid) {
+      axios.delete(`config-editor/rules/${uuid}`, this.axiosOptions)
+        .then(() => this.delayedReload())
         .catch(err => this.handleFetchError(err))
     },
 
@@ -158,6 +279,21 @@ new Vue({
         sendMode: msg.cron ? 'cron' : 'lines',
       })
       this.showAutoMessageEditModal = true
+    },
+
+    editRule(msg) {
+      Vue.set(this.models, 'rule', {
+        ...msg,
+      })
+      this.showRuleEditModal = true
+    },
+
+    fetchActions() {
+      axios.get('config-editor/actions')
+        .then(resp => {
+          this.actions = resp.data
+        })
+        .catch(err => this.handleFetchError(err))
     },
 
     fetchAutoMessages() {
@@ -202,6 +338,54 @@ new Vue({
         })
     },
 
+    formatRuleActions(rule) {
+      const badges = []
+
+      for (const action of rule.actions) {
+        for (const actionDefinition of this.actions) {
+          if (actionDefinition.type !== action.type) {
+            continue
+          }
+
+          badges.push(actionDefinition.name)
+        }
+      }
+
+      return badges
+    },
+
+    formatRuleMatch(rule) {
+      const badges = []
+
+      if (rule.match_channels) {
+        badges.push({ key: 'Channels', value: rule.match_channels.join(', ') })
+      }
+
+      if (rule.match_event) {
+        badges.push({ key: 'Event', value: rule.match_event })
+      }
+
+      if (rule.match_message) {
+        badges.push({ key: 'Message', value: rule.match_message })
+      }
+
+      if (rule.match_users) {
+        badges.push({ key: 'Users', value: rule.match_users.join(', ') })
+      }
+
+      return badges
+    },
+
+    getActionDefinitionByType(type) {
+      for (const ad of this.actions) {
+        if (ad.type === type) {
+          return ad
+        }
+      }
+
+      return null
+    },
+
     handleFetchError(err) {
       switch (err.response.status) {
       case 403:
@@ -221,10 +405,19 @@ new Vue({
       this.showAutoMessageEditModal = true
     },
 
+    newRule() {
+      Vue.set(this.models, 'rule', {})
+      this.showRuleEditModal = true
+    },
+
     reload() {
       this.fetchAutoMessages()
       this.fetchGeneralConfig()
       this.fetchRules()
+    },
+
+    removeAction(idx) {
+      this.models.rule.actions = this.models.rule.actions.filter((_, i) => i !== idx)
     },
 
     removeChannel(channel) {
@@ -257,23 +450,54 @@ new Vue({
       if (obj.uuid) {
         axios.put(`config-editor/auto-messages/${obj.uuid}`, obj, this.axiosOptions)
           .catch(err => this.handleFetchError(err))
-          .then(() => window.setTimeout(() => this.reload(), 1000))
+          .then(() => this.delayedReload())
       } else {
         axios.post(`config-editor/auto-messages`, obj, this.axiosOptions)
           .catch(err => this.handleFetchError(err))
-          .then(() => window.setTimeout(() => this.reload(), 1000))
+          .then(() => this.delayedReload())
+      }
+    },
+
+    saveRule(evt) {
+      if (!this.validateRule) {
+        evt.preventDefault()
+      }
+
+      const obj = { ...this.models.rule }
+
+      if (obj.uuid) {
+        axios.put(`config-editor/rules/${obj.uuid}`, obj, this.axiosOptions)
+          .catch(err => this.handleFetchError(err))
+          .then(() => this.delayedReload())
+      } else {
+        axios.post(`config-editor/rules`, obj, this.axiosOptions)
+          .catch(err => this.handleFetchError(err))
+          .then(() => this.delayedReload())
       }
     },
 
     updateGeneralConfig() {
       axios.put('config-editor/general', this.generalConfig, this.axiosOptions)
         .catch(err => this.handleFetchError(err))
-        .then(() => window.setTimeout(() => this.reload(), 1000))
+        .then(() => this.delayedReload())
+    },
+
+    validateDuration(duration, required) {
+      if (!duration && !required) {
+        return true
+      }
+
+      return Boolean(duration.match(/(?:\d+(?:s|m|h))+/))
+    },
+
+    validateTwitchBadge(tag) {
+      return this.vars.IRCBadges.includes(tag)
     },
   },
 
   mounted() {
     this.fetchVars()
+    this.fetchActions()
 
     const params = new URLSearchParams(window.location.hash.substring(1))
     this.authToken = params.get('access_token') || null
@@ -284,5 +508,25 @@ new Vue({
     }
   },
 
-  watch: {},
+  name: 'ConfigEditor',
+
+  watch: {
+    'models.rule.match_message'(to, from) {
+      if (to === from) {
+        return
+      }
+
+      if (to === '') {
+        Vue.set(this.models.rule, 'match_message__validation', true)
+      }
+
+      return axios.put(`config-editor/validate-regex?regexp=${encodeURIComponent(to)}`)
+        .then(() => {
+          Vue.set(this.models.rule, 'match_message__validation', true)
+        })
+        .catch(() => {
+          Vue.set(this.models.rule, 'match_message__validation', false)
+        })
+    },
+  },
 })

@@ -165,6 +165,7 @@
               :fields="autoMessageFields"
               hover
               :items="autoMessages"
+              key="autoMessagesTable"
               striped
             >
               <template #cell(actions)="data">
@@ -193,12 +194,54 @@
         </b-row>
 
         <b-row v-else-if="editMode === 'rules'">
+          <b-col>
+            <b-table
+              :busy="!rules"
+              :fields="rulesFields"
+              hover
+              :items="rules"
+              key="rulesTable"
+              striped
+            >
+              <template #cell(_actions)="data">
+                <b-button-group size="sm">
+                  <b-button @click="editRule(data.item)"><i class="fas fa-fw fa-pen"></i></b-button>
+                  <b-button @click="deleteRule(data.item.uuid)" variant="danger"><i class="fas fa-fw fa-minus"></i></b-button>
+                </b-button-group>
+              </template>
+
+              <template #cell(_match)="data">
+                <b-badge
+                  class="m-1 text-truncate text-left col-12"
+                  v-for="badge in formatRuleMatch(data.item)"
+                >
+                  <strong>{{ badge.key }}</strong> <code class="ml-2">{{ badge.value }}</code>
+                </b-badge>
+              </template>
+
+              <template #cell(_description)="data">
+                <template v-if="data.item.description">{{ data.item.description }}<br></template>
+                <b-badge
+                  class="m-1"
+                  v-for="badge in formatRuleActions(data.item)"
+                >
+                  {{ badge }}
+                </b-badge>
+              </template>
+
+              <template #head(_actions)="data">
+                <b-button-group size="sm">
+                  <b-button @click="newRule" variant="success"><i class="fas fa-fw fa-plus"></i></b-button>
+                </b-button-group>
+              </template>
+            </b-table>
+          </b-col>
         </b-row>
 
       </template>
 
+      <!-- Auto-Message Editor -->
       <b-modal
-        centered
         @hidden="showAutoMessageEditModal=false"
         hide-header-close
         @ok="saveAutoMessage"
@@ -207,120 +250,441 @@
         size="lg"
         :visible="showAutoMessageEditModal"
         title="Edit Auto-Message"
+        v-if="showAutoMessageEditModal"
       >
         <b-row>
-          <b-col cols="7">
+          <b-col cols="8">
 
-        <b-form-group
-          label="Channel"
-          label-for="formAutoMessageChannel"
-        >
-          <b-input-group
-            prepend="#"
-          >
-            <b-form-input
-              id="formAutoMessageChannel"
-              :state="validateAutoMessageChannel"
-              type="text"
-              required
-              v-model="models.autoMessage.channel"
-            ></b-form-input>
-          </b-input-group>
-        </b-form-group>
+            <b-form-group
+              label="Channel"
+              label-for="formAutoMessageChannel"
+            >
+              <b-input-group
+                prepend="#"
+              >
+                <b-form-input
+                  id="formAutoMessageChannel"
+                  :state="validateAutoMessageChannel"
+                  type="text"
+                  required
+                  v-model="models.autoMessage.channel"
+                ></b-form-input>
+              </b-input-group>
+            </b-form-group>
 
-        <hr>
+            <hr>
 
-        <b-form-group
-          :description="`${models.autoMessage.message?.length || 0} / ${validateAutoMessageMessageLength}`"
-          label="Message"
-          label-for="formAutoMessageMessage"
-        >
-          <b-form-textarea
-            id="formAutoMessageMessage"
-            max-rows="6"
-            required
-            rows="3"
-            :state="models.autoMessage.message?.length <= validateAutoMessageMessageLength"
-            v-model="models.autoMessage.message"
-          ></b-form-textarea>
-        </b-form-group>
+            <b-form-group
+              :description="`${models.autoMessage.message?.length || 0} / ${validateAutoMessageMessageLength}`"
+              label="Message"
+              label-for="formAutoMessageMessage"
+            >
+              <b-form-textarea
+                id="formAutoMessageMessage"
+                max-rows="6"
+                required
+                rows="3"
+                :state="models.autoMessage.message?.length <= validateAutoMessageMessageLength"
+                v-model="models.autoMessage.message"
+              ></b-form-textarea>
+            </b-form-group>
 
-        <b-form-group>
-          <b-form-checkbox
-            switch
-            v-model="models.autoMessage.use_action"
-          >
-            Send message as action (<code>/me</code>)
-          </b-form-checkbox>
-        </b-form-group>
+            <b-form-group>
+              <b-form-checkbox
+                switch
+                v-model="models.autoMessage.use_action"
+              >
+                Send message as action (<code>/me</code>)
+              </b-form-checkbox>
+            </b-form-group>
 
-        <hr>
+            <hr>
 
-        <b-form-group
-          label="Sending Mode"
-          label-for="formAutoMessageSendMode"
-        >
-          <b-form-select
-            id="formAutoMessageSendMode"
-            :options="autoMessageSendModes"
-            v-model="models.autoMessage.sendMode"
-          ></b-form-select>
-        </b-form-group>
+            <b-form-group
+              label="Sending Mode"
+              label-for="formAutoMessageSendMode"
+            >
+              <b-form-select
+                id="formAutoMessageSendMode"
+                :options="autoMessageSendModes"
+                v-model="models.autoMessage.sendMode"
+              ></b-form-select>
+            </b-form-group>
 
-        <b-form-group
-          label="Send at"
-          label-for="formAutoMessageCron"
-          v-if="models.autoMessage.sendMode === 'cron'"
-        >
-          <b-form-input
-            id="formAutoMessageCron"
-            v-model="models.autoMessage.cron"
-            :state="validateAutoMessageCron"
-            type="text"
-          ></b-form-input>
+            <b-form-group
+              label="Send at"
+              label-for="formAutoMessageCron"
+              v-if="models.autoMessage.sendMode === 'cron'"
+            >
+              <b-form-input
+                id="formAutoMessageCron"
+                v-model="models.autoMessage.cron"
+                :state="validateAutoMessageCron"
+                type="text"
+              ></b-form-input>
 
-          <div slot="description">
-            <code>@every [time]</code> or Cron syntax
-          </div>
-        </b-form-group>
+              <div slot="description">
+                <code>@every [time]</code> or Cron syntax
+              </div>
+            </b-form-group>
 
-        <b-form-group
-          label="Send every"
-          label-for="formAutoMessageNLines"
-          v-if="models.autoMessage.sendMode === 'lines'"
-        >
-          <b-input-group
-            append="Lines"
-          >
-            <b-form-input
-              id="formAutoMessageNLines"
-              v-model="models.autoMessage.message_interval"
-              type="number"
-            ></b-form-input>
-          </b-input-group>
-        </b-form-group>
+            <b-form-group
+              label="Send every"
+              label-for="formAutoMessageNLines"
+              v-if="models.autoMessage.sendMode === 'lines'"
+            >
+              <b-input-group
+                append="Lines"
+              >
+                <b-form-input
+                  id="formAutoMessageNLines"
+                  v-model="models.autoMessage.message_interval"
+                  type="number"
+                ></b-form-input>
+              </b-input-group>
+            </b-form-group>
 
-        <hr>
+            <hr>
 
-        <b-form-group>
-          <b-form-checkbox
-            switch
-              v-model="models.autoMessage.only_on_live"
-          >
-            Send only when channel is live
-          </b-form-checkbox>
-        </b-form-group>
+            <b-form-group>
+              <b-form-checkbox
+                switch
+                  v-model="models.autoMessage.only_on_live"
+              >
+                Send only when channel is live
+              </b-form-checkbox>
+            </b-form-group>
 
           </b-col>
 
-          <b-col cols="5">
-            <h6>Help</h6>
+          <b-col cols="4">
+            <h6>Getting Help</h6>
             <p>
               For information about available template functions and variables to use in the <strong>Message</strong> see the <a href="https://github.com/Luzifer/twitch-bot/wiki#templating" target="_blank">Templating</a> section of the Wiki.
             </p>
             <p>
               For information about the <strong>Cron</strong> syntax have a look at the <a href="https://cron.help/" target="_blank">cron.help</a> site. Aditionally you can use <code>@every [time]</code> syntax. The <code>[time]</code> part is in format <code>1h30m20s</code>. You can leave out every segment but need to specify the unit of every segment. So for example <code>@every 1h</code> or <code>@every 10m</code> would be a valid specification.
             </p>
+          </b-col>
+        </b-row>
+
+      </b-modal>
+
+      <!-- Rule Editor -->
+      <b-modal
+        @hidden="showRuleEditModal=false"
+        hide-header-close
+        @ok="saveRule"
+        :ok-disabled="!validateRule"
+        ok-title="Save"
+        scrollable
+        size="xl"
+        :visible="showRuleEditModal"
+        title="Edit Rule"
+        v-if="showRuleEditModal"
+      >
+        <b-row>
+          <b-col cols="6">
+
+            <b-form-group
+              description="Human readable description for the rules list"
+              label="Description"
+              label-for="formRuleDescription"
+            >
+              <b-form-input
+                id="formRuleDescription"
+                type="text"
+                v-model="models.rule.description"
+              ></b-form-input>
+            </b-form-group>
+
+            <hr>
+
+            <b-tabs content-class="mt-3">
+              <b-tab title="Matcher">
+
+                <b-form-group
+                  description="Channel with leading hash: #mychannel - matches all channels if none are given"
+                  label="Match Channels"
+                  label-for="formRuleMatchChannels"
+                >
+                  <b-form-tags
+                      id="formRuleMatchChannels"
+                    no-add-on-enter
+                    placeholder="Enter channels separated by space or comma"
+                    remove-on-delete
+                    separator=" ,"
+                    :tag-validator="(tag) => Boolean(tag.match(/^#[a-zA-Z0-9_]{4,25}$/))"
+                    v-model="models.rule.match_channels"
+                  ></b-form-tags>
+                </b-form-group>
+
+                <b-form-group
+                  description="Matches no events if not set"
+                  label="Match Event"
+                  label-for="formRuleMatchEvent"
+                >
+                  <b-form-input
+                    id="formRuleMatchEvent"
+                    type="text"
+                    v-model="models.rule.match_event"
+                  ></b-form-input>
+                </b-form-group>
+
+                <b-form-group
+                  description="Regular expression to match the message, matches all messages when not set"
+                  label="Match Message"
+                  label-for="formRuleMatchMessage"
+                >
+                  <b-form-input
+                    id="formRuleMatchMessage"
+                    :state="models.rule.match_message__validation"
+                    type="text"
+                    v-model="models.rule.match_message"
+                  ></b-form-input>
+                </b-form-group>
+
+                <b-form-group
+                  description="Matches all users if none are given"
+                  label="Match Users"
+                  label-for="formRuleMatchUsers"
+                >
+                  <b-form-tags
+                    id="formRuleMatchUsers"
+                    no-add-on-enter
+                    placeholder="Enter usernames separated by space or comma"
+                    remove-on-delete
+                    separator=" ,"
+                    :tag-validator="(tag) => Boolean(tag.match(/^[a-z0-9_]{4,25}$/))"
+                    v-model="models.rule.match_users"
+                  ></b-form-tags>
+                </b-form-group>
+
+              </b-tab>
+              <b-tab title="Cooldown">
+
+                <b-row>
+                  <b-col>
+                    <b-form-group
+                      label="Rule Cooldown"
+                      label-for="formRuleRuleCooldown"
+                    >
+                      <b-form-input
+                        id="formRuleRuleCooldown"
+                        placeholder="No Cooldown"
+                        :state="validateDuration(models.rule.cooldown, false)"
+                        type="text"
+                        v-model="models.rule.cooldown"
+                      ></b-form-input>
+                    </b-form-group>
+                  </b-col>
+                  <b-col>
+                    <b-form-group
+                      label="Channel Cooldown"
+                      label-for="formRuleChannelCooldown"
+                    >
+                      <b-form-input
+                        id="formRuleChannelCooldown"
+                        placeholder="No Cooldown"
+                        :state="validateDuration(models.rule.channel_cooldown, false)"
+                        type="text"
+                        v-model="models.rule.channel_cooldown"
+                      ></b-form-input>
+                    </b-form-group>
+                  </b-col>
+                  <b-col>
+                    <b-form-group
+                      label="User Cooldown"
+                      label-for="formRuleUserCooldown"
+                    >
+                      <b-form-input
+                        id="formRuleUserCooldown"
+                        placeholder="No Cooldown"
+                        :state="validateDuration(models.rule.user_cooldown, false)"
+                        type="text"
+                        v-model="models.rule.user_cooldown"
+                      ></b-form-input>
+                    </b-form-group>
+                </b-row>
+
+                <b-form-group
+                  :description="`Available badges: ${vars.IRCBadges?.join(', ')}`"
+                  label="Skip Cooldown for"
+                  label-for="formRuleSkipCooldown"
+                >
+                  <b-form-tags
+                    id="formRuleSkipCooldown"
+                    no-add-on-enter
+                    placeholder="Enter badges separated by space or comma"
+                    remove-on-delete
+                    separator=" ,"
+                    :tag-validator="validateTwitchBadge"
+                    v-model="models.rule.skip_cooldown_for"
+                  ></b-form-tags>
+                </b-form-group>
+
+              </b-tab>
+              <b-tab title="Conditions">
+
+                <p>Disable rule&hellip;</p>
+                <b-row>
+                  <b-col>
+                    <b-form-group>
+                      <b-form-checkbox
+                        switch
+                        v-model="models.rule.disable"
+                      >
+                        completely
+                      </b-form-checkbox>
+                    </b-form-group>
+                  </b-col>
+                  <b-col>
+                    <b-form-group>
+                      <b-form-checkbox
+                        switch
+                        v-model="models.rule.disable_on_offline"
+                      >
+                        when channel is offline
+                      </b-form-checkbox>
+                    </b-form-group>
+                  </b-col>
+                  <b-col>
+                    <b-form-group>
+                      <b-form-checkbox
+                        switch
+                        v-model="models.rule.disable_on_permit"
+                      >
+                        when user has permit
+                      </b-form-checkbox>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+
+                <b-form-group
+                  :description="`Available badges: ${vars.IRCBadges?.join(', ')}`"
+                  label="Disable Rule for"
+                  label-for="formRuleDisableOn"
+                >
+                  <b-form-tags
+                    id="formRuleDisableOn"
+                    no-add-on-enter
+                    placeholder="Enter badges separated by space or comma"
+                    remove-on-delete
+                    separator=" ,"
+                    :tag-validator="validateTwitchBadge"
+                    v-model="models.rule.disable_on"
+                  ></b-form-tags>
+                </b-form-group>
+
+                <b-form-group
+                  :description="`Available badges: ${vars.IRCBadges?.join(', ')}`"
+                  label="Enable Rule for"
+                  label-for="formRuleEnableOn"
+                >
+                  <b-form-tags
+                    id="formRuleEnableOn"
+                    no-add-on-enter
+                    placeholder="Enter badges separated by space or comma"
+                    remove-on-delete
+                    separator=" ,"
+                    :tag-validator="validateTwitchBadge"
+                    v-model="models.rule.enable_on"
+                  ></b-form-tags>
+                </b-form-group>
+
+              </b-tab>
+            </b-tabs>
+
+          </b-col>
+
+          <b-col cols="6">
+
+            <div class="accordion" role="tablist">
+              <b-card
+                no-body
+                class="mb-1"
+                v-for="(action, idx) in models.rule.actions"
+              >
+                <b-card-header header-tag="header" class="p-1 d-flex" role="tab">
+                  <b-button-group class="flex-fill">
+                    <b-button
+                      block
+                      v-b-toggle="`${models.rule.uuid}-action-${idx}`"
+                      variant="primary"
+                    >
+                      {{ getActionDefinitionByType(action.type).name }}
+                    </b-button>
+                    <b-button @click="removeAction(idx)" variant="danger"><i class="fas fa-fw fa-trash"></i></b-button>
+                  </b-button-group>
+                </b-card-header>
+                <b-collapse
+                  :id="`${models.rule.uuid}-action-${idx}`"
+                  accordion="my-accordion"
+                  role="tabpanel"
+                >
+                  <b-card-body v-if="getActionDefinitionByType(action.type).fields?.length > 0">
+                    <template 
+                      v-for="field in getActionDefinitionByType(action.type).fields"
+                    >
+                      <b-form-group
+                        :description="field.description"
+                        v-if="field.type === 'bool'"
+                      >
+                        <b-form-checkbox
+                          switch
+                          v-model="models.rule.actions[idx].attributes[field.key]"
+                        >
+                          {{ field.name }}
+                        </b-form-checkbox>
+                      </b-form-group>
+
+                      <b-form-group
+                        :description="field.description"
+                        :label="field.name"
+                        :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                        v-else-if="field.type === 'stringslice'"
+                      >
+                        <b-form-tags
+                          :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                          placeholder="Enter elements and press enter to add the element"
+                          remove-on-delete
+                          v-model="models.rule.actions[idx].attributes[field.key]"
+                        ></b-form-tags>
+                      </b-form-group>
+
+                      <b-form-group
+                        :description="field.description"
+                        :label="field.name"
+                        :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                        v-else
+                      >
+
+                        <b-form-input
+                          :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                          :placeholder="field.default"
+                          :required="!field.optional"
+                          type="text"
+                          v-model="models.rule.actions[idx].attributes[field.key]"
+                        ></b-form-input>
+
+                      </b-form-group>
+
+                    </template>
+                  </b-card-body>
+                  <b-card-body v-else>
+                    This action has no attributes.
+                  </b-card-body>
+                </b-collapse>
+              </b-card>
+
+              <b-input-group>
+                <b-form-select :options="availableActionsForAdd" v-model="models.addAction"></b-form-select>
+                <b-input-group-append>
+                  <b-button @click="addAction" variant="success"><i class="fas fa-fw fa-plus mr-1"></i> Add</b-button>
+                </b-input-group-append>
+              </b-input-group>
+            <div>
+
           </b-col>
         </b-row>
 

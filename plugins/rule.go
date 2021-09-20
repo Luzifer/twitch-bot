@@ -16,7 +16,8 @@ import (
 
 type (
 	Rule struct {
-		UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
+		UUID        string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
+		Description string `json:"description,omitempty" yaml:"description,omitempty"`
 
 		Actions []*RuleAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 

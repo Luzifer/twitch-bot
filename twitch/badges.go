@@ -12,7 +12,16 @@ const (
 	BadgeFounder     = "founder"
 	BadgeModerator   = "moderator"
 	BadgeSubscriber  = "subscriber"
+	BadgeVIP         = "vip"
 )
+
+var KnownBadges = []string{
+	BadgeBroadcaster,
+	BadgeFounder,
+	BadgeModerator,
+	BadgeSubscriber,
+	BadgeVIP,
+}
 
 type BadgeCollection map[string]*int
 
