@@ -31,7 +31,6 @@ auto_messages:
     # Even though all of these are optional, at least one MUST be specified for the entry to be valid
     cron: '*/10 * * * *'  # String, optional, cron syntax when to send the message
     message_interval: 3   # Integer, optional, how many non-bot-messages must be sent in between
-    time_interval: 900s   # Duration, optional, how long to wait before repeating the message
 
     only_on_live: true    # Boolean, optional, only send the message when channel is live
 

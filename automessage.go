@@ -14,21 +14,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 
 type autoMessage struct {
-	UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid"`
+	UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
 
-	Channel   string `json:"channel,omitempty" yaml:"channel"`
-	Message   string `json:"message,omitempty" yaml:"message"`
-	UseAction bool   `json:"use_action,omitempty" yaml:"use_action"`
+	Channel   string `json:"channel,omitempty" yaml:"channel,omitempty"`
+	Message   string `json:"message,omitempty" yaml:"message,omitempty"`
+	UseAction bool   `json:"use_action,omitempty" yaml:"use_action,omitempty"`
 
-	DisableOnTemplate *string `json:"disable_on_template,omitempty" yaml:"disable_on_template"`
+	DisableOnTemplate *string `json:"disable_on_template,omitempty" yaml:"disable_on_template,omitempty"`
 
-	Cron            string        `json:"cron,omitempty" yaml:"cron"`
-	MessageInterval int64         `json:"message_interval,omitempty" yaml:"message_interval"`
-	OnlyOnLive      bool          `json:"only_on_live,omitempty" yaml:"only_on_live"`
-	TimeInterval    time.Duration `json:"time_interval,omitempty" yaml:"time_interval"`
+	Cron            string `json:"cron,omitempty" yaml:"cron,omitempty"`
+	MessageInterval int64  `json:"message_interval,omitempty" yaml:"message_interval,omitempty"`
+	OnlyOnLive      bool   `json:"only_on_live,omitempty" yaml:"only_on_live,omitempty"`
 
 	disabled              bool
 	lastMessageSent       time.Time
@@ -52,10 +51,6 @@ func (a *autoMessage) CanSend() bool {
 
 	case a.MessageInterval > a.linesSinceLastMessage:
 		// Not enough chatted lines
-		return false
-
-	case a.TimeInterval > 0 && a.lastMessageSent.Add(a.TimeInterval).After(time.Now()):
-		// Simple timer is not yet expired
 		return false
 
 	case a.Cron != "":
@@ -126,7 +121,7 @@ func (a *autoMessage) IsValid() bool {
 		}
 	}
 
-	if a.MessageInterval == 0 && a.TimeInterval == 0 && a.Cron == "" {
+	if a.MessageInterval == 0 && a.Cron == "" {
 		return false
 	}
 
