@@ -7,11 +7,13 @@ require (
 	github.com/Luzifer/korvike/functions v0.6.1
 	github.com/Luzifer/rconfig/v2 v2.3.0
 	github.com/go-irc/irc v2.1.0+incompatible
+	github.com/gofrs/uuid/v3 v3.1.2
 	github.com/gorilla/mux v1.7.4
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -32,7 +34,6 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
