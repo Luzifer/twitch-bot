@@ -16,28 +16,28 @@ import (
 
 type (
 	Rule struct {
-		UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid"`
+		UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
 
-		Actions []*RuleAction `json:"actions,omitempty" yaml:"actions"`
+		Actions []*RuleAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 
-		Cooldown        *time.Duration `json:"cooldown,omitempty" yaml:"cooldown"`
-		ChannelCooldown *time.Duration `json:"channel_cooldown,omitempty" yaml:"channel_cooldown"`
-		UserCooldown    *time.Duration `json:"user_cooldown,omitempty" yaml:"user_cooldown"`
-		SkipCooldownFor []string       `json:"skip_cooldown_for,omitempty" yaml:"skip_cooldown_for"`
+		Cooldown        *time.Duration `json:"cooldown,omitempty" yaml:"cooldown,omitempty"`
+		ChannelCooldown *time.Duration `json:"channel_cooldown,omitempty" yaml:"channel_cooldown,omitempty"`
+		UserCooldown    *time.Duration `json:"user_cooldown,omitempty" yaml:"user_cooldown,omitempty"`
+		SkipCooldownFor []string       `json:"skip_cooldown_for,omitempty" yaml:"skip_cooldown_for,omitempty"`
 
-		MatchChannels []string `json:"match_channels,omitempty" yaml:"match_channels"`
-		MatchEvent    *string  `json:"match_event,omitempty" yaml:"match_event"`
-		MatchMessage  *string  `json:"match_message,omitempty" yaml:"match_message"`
-		MatchUsers    []string `json:"match_users,omitempty" yaml:"match_users" `
+		MatchChannels []string `json:"match_channels,omitempty" yaml:"match_channels,omitempty"`
+		MatchEvent    *string  `json:"match_event,omitempty" yaml:"match_event,omitempty"`
+		MatchMessage  *string  `json:"match_message,omitempty" yaml:"match_message,omitempty"`
+		MatchUsers    []string `json:"match_users,omitempty" yaml:"match_users,omitempty" `
 
-		DisableOnMatchMessages []string `json:"disable_on_match_messages,omitempty" yaml:"disable_on_match_messages"`
+		DisableOnMatchMessages []string `json:"disable_on_match_messages,omitempty" yaml:"disable_on_match_messages,omitempty"`
 
-		Disable           *bool    `json:"disable,omitempty" yaml:"disable"`
-		DisableOnOffline  *bool    `json:"disable_on_offline,omitempty" yaml:"disable_on_offline"`
-		DisableOnPermit   *bool    `json:"disable_on_permit,omitempty" yaml:"disable_on_permit"`
-		DisableOnTemplate *string  `json:"disable_on_template,omitempty" yaml:"disable_on_template"`
-		DisableOn         []string `json:"disable_on,omitempty" yaml:"disable_on"`
-		EnableOn          []string `json:"enable_on,omitempty" yaml:"enable_on"`
+		Disable           *bool    `json:"disable,omitempty" yaml:"disable,omitempty"`
+		DisableOnOffline  *bool    `json:"disable_on_offline,omitempty" yaml:"disable_on_offline,omitempty"`
+		DisableOnPermit   *bool    `json:"disable_on_permit,omitempty" yaml:"disable_on_permit,omitempty"`
+		DisableOnTemplate *string  `json:"disable_on_template,omitempty" yaml:"disable_on_template,omitempty"`
+		DisableOn         []string `json:"disable_on,omitempty" yaml:"disable_on,omitempty"`
+		EnableOn          []string `json:"enable_on,omitempty" yaml:"enable_on,omitempty"`
 
 		matchMessage           *regexp.Regexp
 		disableOnMatchMessages []*regexp.Regexp
@@ -48,8 +48,8 @@ type (
 	}
 
 	RuleAction struct {
-		Type       string          `json:"type" yaml:"type"`
-		Attributes FieldCollection `json:"attributes" yaml:"attributes"`
+		Type       string          `json:"type" yaml:"type,omitempty"`
+		Attributes FieldCollection `json:"attributes" yaml:"attributes,omitempty"`
 	}
 )
 
