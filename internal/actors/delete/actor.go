@@ -15,7 +15,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Delete message which caused the rule to be executed",
-		Name:        "Delete",
+		Name:        "Delete Message",
 		Type:        "delete",
 	})
 
