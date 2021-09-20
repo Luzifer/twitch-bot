@@ -84,7 +84,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	toChannel := plugins.DeriveChannel(m, eventData)
-	if attrs.CanString("to_channel") {
+	if attrs.CanString("to_channel") && attrs.MustString("to_channel", nil) != "" {
 		toChannel = fmt.Sprintf("#%s", strings.TrimLeft(attrs.MustString("to_channel", nil), "#"))
 	}
 
