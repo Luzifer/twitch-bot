@@ -1,0 +1,334 @@
+<html>
+
+  <title>Twitch-Bot: Config-Editor</title>
+  <link rel="stylesheet" href="editor/bundle.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+
+  <style>
+    [v-cloak] {
+      display: none;
+    }
+    .btn-twitch {
+      background-color: #6441a5;
+    }
+  </style>
+
+  <div id="app" v-cloak>
+    <b-navbar  toggleable="lg" type="dark" variant="primary" class="mb-3">
+      <b-navbar-brand href="#"><i class="fas fa-fw fa-robot mr-1"></i> Twitch-Bot</b-navbar-brand>
+
+      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+
+      <b-collapse id="nav-collapse" is-nav>
+        <b-navbar-nav v-if="authToken">
+          <b-nav-item :active="editMode === 'general'" @click="editMode = 'general'">
+            <i class="fas fa-fw fa-cog mr-1"></i>
+            General
+          </b-nav-item>
+          <b-nav-item :active="editMode === 'automessages'" @click="editMode = 'automessages'">
+            <i class="fas fa-fw fa-envelope-open-text mr-1"></i>
+            Auto-Messages
+            <b-badge pill>{{ autoMessages.length }}
+          </b-badge></b-nav-item>
+          <b-nav-item :active="editMode === 'rules'" @click="editMode = 'rules'">
+            <i class="fas fa-fw fa-inbox mr-1"></i>
+            Rules
+            <b-badge pill>{{ rules.length }}</b-badge>
+          </b-nav-item>
+        </b-navbar-nav>
+
+        <b-navbar-nav class="ml-auto">
+          <b-nav-item @click="reload">
+            <i class="fas fa-fw fa-sync mr-1"></i>
+            Reload Config
+          </b-nav-item>
+        </b-navbar-nav>
+      </b-collapse>
+
+    </b-navbar>
+
+    <b-container>
+      <!-- Error display -->
+      <b-row v-if="error">
+        <b-col>
+          <b-alert
+            dismissible
+            @dismissed="error = null"
+            show
+            variant="danger"
+          >
+            <i class="fas fa-fw fa-exclamation-circle mr-1"></i> {{ error }}
+          </b-alert>
+        </b-col>
+      </b-row>
+
+      <!-- Logged-out state -->
+      <b-row
+        v-if="!authToken"
+      >
+
+        <b-col
+          class="text-center"
+        >
+          <b-button
+            :disabled="!vars.TwitchClientID"
+            :href="authURL"
+            variant="twitch"
+          >
+            <i class="fab fa-fw fa-twitch mr-1"></i> Login with Twitch
+          </b-button>
+        </b-col>
+
+      </b-row>
+
+      <!-- Logged-in state -->
+      <template v-else>
+
+        <b-row v-if="editMode === 'general'">
+          <b-col>
+            <b-card-group columns>
+
+              <b-card no-body>
+                <b-card-header>
+                  <i class="fas fa-fw fa-hashtag mr-1"></i> Channels
+                </b-card-header>
+                <b-list-group flush>
+                  <b-list-group-item
+                    class="d-flex align-items-center align-middle"
+                    :key="channel"
+                    v-for="channel in sortedChannels"
+                  >
+                    <span class="mr-auto">
+                      <i class="fas fa-fw fa-hashtag mr-1"></i>
+                      {{ channel }}
+                    </span>
+                    <b-button
+                      @click="removeChannel(channel)"
+                      size="sm"
+                      variant="danger"
+                    >
+                      <i class="fas fa-fw fa-minus"></i>
+                    </b-button>
+                  </b-list-group-item>
+
+                  <b-list-group-item>
+                    <b-input-group>
+                      <b-form-input @keyup.enter="addChannel" v-model="models.addChannel"></b-form-input>
+                      <b-input-group-append>
+                        <b-button @click="addChannel" variant="success"><i class="fas fa-fw fa-plus mr-1"></i> Add</b-button>
+                      </b-input-group-append>
+                    </b-input-group>
+                  </b-list-group-item>
+                </b-list-group>
+              </b-card>
+
+              <b-card no-body>
+                <b-card-header>
+                  <i class="fas fa-fw fa-users mr-1"></i> Bot-Editors
+                </b-card-header>
+                <b-list-group flush>
+                  <b-list-group-item
+                    class="d-flex align-items-center align-middle"
+                    :key="editor"
+                    v-for="editor in sortedEditors"
+                  >
+                    <b-avatar class="mr-3" :src="userProfiles[editor]?.profile_image_url"></b-avatar>
+                    <span class="mr-auto">{{ userProfiles[editor] ? userProfiles[editor].display_name : editor }}</span>
+                    <b-button
+                      @click="removeEditor(editor)"
+                      size="sm"
+                      variant="danger"
+                    >
+                      <i class="fas fa-fw fa-minus"></i>
+                    </b-button>
+                  </b-list-group-item>
+
+                  <b-list-group-item>
+                    <b-input-group>
+                      <b-form-input @keyup.enter="addEditor" v-model="models.addEditor"></b-form-input>
+                      <b-input-group-append>
+                        <b-button @click="addEditor" variant="success"><i class="fas fa-fw fa-plus mr-1"></i> Add</b-button>
+                      </b-input-group-append>
+                    </b-input-group>
+                  </b-list-group-item>
+                </b-list-group>
+              </b-card>
+
+            </b-card-group>
+          </b-col>
+        </b-row>
+
+        <b-row v-else-if="editMode === 'automessages'">
+          <b-col>
+            <b-table
+              :busy="!autoMessages"
+              :fields="autoMessageFields"
+              hover
+              :items="autoMessages"
+              striped
+            >
+              <template #cell(actions)="data">
+                <b-button-group size="sm">
+                  <b-button @click="editAutoMessage(data.item)"><i class="fas fa-fw fa-pen"></i></b-button>
+                  <b-button @click="deleteAutoMessage(data.item.uuid)" variant="danger"><i class="fas fa-fw fa-minus"></i></b-button>
+                </b-button-group>
+              </template>
+
+              <template #cell(channel)="data">
+                <i class="fas fa-fw fa-hashtag mr-1"></i>
+                {{ data.value }}
+              </template>
+
+              <template #cell(cron)="data">
+                <code>{{ data.value }}</code>
+              </template>
+
+              <template #head(actions)="data">
+                <b-button-group size="sm">
+                  <b-button @click="newAutoMessage" variant="success"><i class="fas fa-fw fa-plus"></i></b-button>
+                </b-button-group>
+              </template>
+            </b-table>
+          </b-col>
+        </b-row>
+
+        <b-row v-else-if="editMode === 'rules'">
+        </b-row>
+
+      </template>
+
+      <b-modal
+        centered
+        @hidden="showAutoMessageEditModal=false"
+        hide-header-close
+        @ok="saveAutoMessage"
+        :ok-disabled="!validateAutoMessage"
+        ok-title="Save"
+        size="lg"
+        :visible="showAutoMessageEditModal"
+        title="Edit Auto-Message"
+      >
+        <b-row>
+          <b-col cols="7">
+
+        <b-form-group
+          label="Channel"
+          label-for="formAutoMessageChannel"
+        >
+          <b-input-group
+            prepend="#"
+          >
+            <b-form-input
+              id="formAutoMessageChannel"
+              :state="validateAutoMessageChannel"
+              type="text"
+              required
+              v-model="models.autoMessage.channel"
+            ></b-form-input>
+          </b-input-group>
+        </b-form-group>
+
+        <hr>
+
+        <b-form-group
+          :description="`${models.autoMessage.message?.length || 0} / ${validateAutoMessageMessageLength}`"
+          label="Message"
+          label-for="formAutoMessageMessage"
+        >
+          <b-form-textarea
+            id="formAutoMessageMessage"
+            max-rows="6"
+            required
+            rows="3"
+            :state="models.autoMessage.message?.length <= validateAutoMessageMessageLength"
+            v-model="models.autoMessage.message"
+          ></b-form-textarea>
+        </b-form-group>
+
+        <b-form-group>
+          <b-form-checkbox
+            switch
+            v-model="models.autoMessage.use_action"
+          >
+            Send message as action (<code>/me</code>)
+          </b-form-checkbox>
+        </b-form-group>
+
+        <hr>
+
+        <b-form-group
+          label="Sending Mode"
+          label-for="formAutoMessageSendMode"
+        >
+          <b-form-select
+            id="formAutoMessageSendMode"
+            :options="autoMessageSendModes"
+            v-model="models.autoMessage.sendMode"
+          ></b-form-select>
+        </b-form-group>
+
+        <b-form-group
+          label="Send at"
+          label-for="formAutoMessageCron"
+          v-if="models.autoMessage.sendMode === 'cron'"
+        >
+          <b-form-input
+            id="formAutoMessageCron"
+            v-model="models.autoMessage.cron"
+            :state="validateAutoMessageCron"
+            type="text"
+          ></b-form-input>
+
+          <div slot="description">
+            <code>@every [time]</code> or Cron syntax
+          </div>
+        </b-form-group>
+
+        <b-form-group
+          label="Send every"
+          label-for="formAutoMessageNLines"
+          v-if="models.autoMessage.sendMode === 'lines'"
+        >
+          <b-input-group
+            append="Lines"
+          >
+            <b-form-input
+              id="formAutoMessageNLines"
+              v-model="models.autoMessage.message_interval"
+              type="number"
+            ></b-form-input>
+          </b-input-group>
+        </b-form-group>
+
+        <hr>
+
+        <b-form-group>
+          <b-form-checkbox
+            switch
+              v-model="models.autoMessage.only_on_live"
+          >
+            Send only when channel is live
+          </b-form-checkbox>
+        </b-form-group>
+
+          </b-col>
+
+          <b-col cols="5">
+            <h6>Help</h6>
+            <p>
+              For information about available template functions and variables to use in the <strong>Message</strong> see the <a href="https://github.com/Luzifer/twitch-bot/wiki#templating" target="_blank">Templating</a> section of the Wiki.
+            </p>
+            <p>
+              For information about the <strong>Cron</strong> syntax have a look at the <a href="https://cron.help/" target="_blank">cron.help</a> site. Aditionally you can use <code>@every [time]</code> syntax. The <code>[time]</code> part is in format <code>1h30m20s</code>. You can leave out every segment but need to specify the unit of every segment. So for example <code>@every 1h</code> or <code>@every 10m</code> would be a valid specification.
+            </p>
+          </b-col>
+        </b-row>
+
+      </b-modal>
+
+    </b-container>
+  </div>
+
+  <script src="editor/bundle.js"></script>
+  <script src="editor/app.js"></script>
+</html>
