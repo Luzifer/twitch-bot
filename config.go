@@ -11,6 +11,7 @@ import (
 
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
+	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -18,8 +19,12 @@ import (
 
 const expectedMinConfigVersion = 2
 
-//go:embed default_config.yaml
-var defaultConfigurationYAML []byte
+var (
+	//go:embed default_config.yaml
+	defaultConfigurationYAML []byte
+
+	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
+)
 
 type (
 	configFileVersioner struct {
@@ -85,6 +90,7 @@ func loadConfig(filename string) error {
 
 	tmpConfig.updateAutoMessagesFromConfig(config)
 	tmpConfig.fixDurations()
+	tmpConfig.fixMissingUUIDs()
 
 	switch {
 	case config != nil && config.RawLog == tmpConfig.RawLog:
@@ -143,6 +149,8 @@ func patchConfig(filename string, patcher func(*configFile) error) error {
 		return errors.Wrap(err, "loading current config")
 	}
 
+	cfgFile.fixMissingUUIDs()
+
 	if err = patcher(cfgFile); err != nil {
 		return errors.Wrap(err, "patching config")
 	}
@@ -159,6 +167,8 @@ func writeConfigToYAML(filename string, obj interface{}) error {
 		return errors.Wrap(err, "opening tempfile")
 	}
 	tmpFileName := tmpFile.Name()
+
+	fmt.Fprintf(tmpFile, "# Automatically updated by Config-Editor frontend, last update: %s\n", time.Now().Format(time.RFC3339))
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
 		tmpFile.Close()
@@ -218,11 +228,6 @@ func (c *configFile) fixDurations() {
 	for _, r := range c.Rules {
 		r.Cooldown = c.fixedDurationPtr(r.Cooldown)
 	}
-
-	// Fix auto-messages
-	for _, a := range c.AutoMessages {
-		a.TimeInterval = c.fixedDuration(a.TimeInterval)
-	}
 }
 
 func (configFile) fixedDuration(d time.Duration) time.Duration {
@@ -238,6 +243,22 @@ func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
 	}
 	fd := *d * time.Second
 	return &fd
+}
+
+func (c *configFile) fixMissingUUIDs() {
+	for i := range c.AutoMessages {
+		if c.AutoMessages[i].UUID != "" {
+			continue
+		}
+		c.AutoMessages[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.AutoMessages[i].ID()).String()
+	}
+
+	for i := range c.Rules {
+		if c.Rules[i].UUID != "" {
+			continue
+		}
+		c.Rules[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.Rules[i].MatcherID()).String()
+	}
 }
 
 func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
