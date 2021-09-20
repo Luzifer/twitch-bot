@@ -128,9 +128,7 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		specParam := spec.QueryParam(param.Name, ps).
 			WithDescription(param.Description)
 
-		if !param.Required {
-			specParam = specParam.AsOptional()
-		}
+		specParam.Required = param.Required
 
 		op.Parameters = append(
 			op.Parameters,
