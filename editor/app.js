@@ -214,7 +214,7 @@ new Vue({
     addAction() {
       const attributes = {}
 
-      for (const field of this.getActionDefinitionByType(this.models.addAction).fields) {
+      for (const field of this.getActionDefinitionByType(this.models.addAction).fields || []) {
         let defaultValue = null
 
         switch (field.type) {
