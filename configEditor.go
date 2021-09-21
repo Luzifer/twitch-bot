@@ -40,47 +40,16 @@ type (
 )
 
 func init() {
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		f, err := configEditorFrontend.Open("editor/index.html")
-		if err != nil {
-			http.Error(w, errors.Wrap(err, "opening index.html").Error(), http.StatusNotFound)
-			return
-		}
+	registerEditorAutoMessageRoutes()
+	registerEditorFrontend()
+	registerEditorGeneralConfigRoutes()
+	registerEditorGlobalMethods()
+	registerEditorRulesRoutes()
+}
 
-		io.Copy(w, f)
-	})
-
-	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewEncoder(w).Encode(struct {
-			IRCBadges      []string
-			TwitchClientID string
-		}{
-			IRCBadges:      twitch.KnownBadges,
-			TwitchClientID: cfg.TwitchClient,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
-	router.PathPrefix("/editor").Handler(http.FileServer(http.FS(configEditorFrontend)))
-
+//nolint:funlen // This is a logic unit and shall not be split up
+func registerEditorAutoMessageRoutes() {
 	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
-		{
-			Description: "Returns the documentation for available actions",
-			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				availableActorDocsLock.Lock()
-				defer availableActorDocsLock.Unlock()
-
-				if err := json.NewEncoder(w).Encode(availableActorDocs); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-			},
-			Method:       http.MethodGet,
-			Module:       "config-editor",
-			Name:         "Get available actions",
-			Path:         "/actions",
-			ResponseType: plugins.HTTPRouteResponseTypeJSON,
-		},
 		{
 			Description: "Returns the current set of configured auto-messages in JSON format",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
@@ -205,6 +174,41 @@ func init() {
 				},
 			},
 		},
+	} {
+		if err := registerRoute(rd); err != nil {
+			log.WithError(err).Fatal("Unable to register config editor route")
+		}
+	}
+}
+
+func registerEditorFrontend() {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		f, err := configEditorFrontend.Open("editor/index.html")
+		if err != nil {
+			http.Error(w, errors.Wrap(err, "opening index.html").Error(), http.StatusNotFound)
+			return
+		}
+
+		io.Copy(w, f)
+	})
+
+	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewEncoder(w).Encode(struct {
+			IRCBadges      []string
+			TwitchClientID string
+		}{
+			IRCBadges:      twitch.KnownBadges,
+			TwitchClientID: cfg.TwitchClient,
+		}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	router.PathPrefix("/editor").Handler(http.FileServer(http.FS(configEditorFrontend)))
+}
+
+func registerEditorGeneralConfigRoutes() {
+	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
 			Description: "Returns the current general config",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
@@ -261,6 +265,147 @@ func init() {
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
 		},
+	} {
+		if err := registerRoute(rd); err != nil {
+			log.WithError(err).Fatal("Unable to register config editor route")
+		}
+	}
+}
+
+//nolint:funlen // This is a logic unit and shall not be split up
+func registerEditorGlobalMethods() {
+	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
+		{
+			Description: "Returns the documentation for available actions",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				availableActorDocsLock.Lock()
+				defer availableActorDocsLock.Unlock()
+
+				if err := json.NewEncoder(w).Encode(availableActorDocs); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			},
+			Method:       http.MethodGet,
+			Module:       "config-editor",
+			Name:         "Get available actions",
+			Path:         "/actions",
+			ResponseType: plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description: "Returns information about a Twitch user to properly display bot editors",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				usr, err := twitchClient.GetUserInformation(r.FormValue("user"))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				if err := json.NewEncoder(w).Encode(usr); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			},
+			Method: http.MethodGet,
+			Module: "config-editor",
+			Name:   "Get user information",
+			Path:   "/user",
+			QueryParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "The user to query the information for",
+					Name:        "user",
+					Required:    true,
+					Type:        "string",
+				},
+			},
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description: "Validate a cron expression and return the next executions",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				sched, err := cronParser.Parse(r.FormValue("cron"))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				var (
+					lt  = time.Now()
+					out []time.Time
+				)
+
+				if id := r.FormValue("uuid"); id != "" {
+					for _, a := range config.AutoMessages {
+						if a.ID() != id {
+							continue
+						}
+						lt = a.lastMessageSent
+						break
+					}
+				}
+
+				for i := 0; i < 3; i++ {
+					lt = sched.Next(lt)
+					out = append(out, lt)
+				}
+
+				if err := json.NewEncoder(w).Encode(out); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			},
+			Method: http.MethodPut,
+			Module: "config-editor",
+			Name:   "Validate cron expression",
+			Path:   "/validate-cron",
+			QueryParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "The cron expression to test",
+					Name:        "cron",
+					Required:    true,
+					Type:        "string",
+				},
+				{
+					Description: "Check cron with last execution of auto-message",
+					Name:        "uuid",
+					Required:    false,
+					Type:        "string",
+				},
+			},
+			ResponseType: plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description: "Validate a regular expression against the RE2 regex parser",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				if _, err := regexp.Compile(r.FormValue("regexp")); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				w.WriteHeader(http.StatusNoContent)
+			},
+			Method: http.MethodPut,
+			Module: "config-editor",
+			Name:   "Validate regular expression",
+			Path:   "/validate-regex",
+			QueryParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "The regular expression to test",
+					Name:        "regexp",
+					Required:    true,
+					Type:        "string",
+				},
+			},
+			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		},
+	} {
+		if err := registerRoute(rd); err != nil {
+			log.WithError(err).Fatal("Unable to register config editor route")
+		}
+	}
+}
+
+//nolint:funlen // This is a logic unit and shall not be split up
+func registerEditorRulesRoutes() {
+	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
 			Description: "Returns the current set of configured rules in JSON format",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
@@ -384,111 +529,6 @@ func init() {
 					Type:        "string",
 				},
 			},
-		},
-		{
-			Description: "Returns information about a Twitch user to properly display bot editors",
-			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				usr, err := twitchClient.GetUserInformation(r.FormValue("user"))
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				if err := json.NewEncoder(w).Encode(usr); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-			},
-			Method: http.MethodGet,
-			Module: "config-editor",
-			Name:   "Get user information",
-			Path:   "/user",
-			QueryParams: []plugins.HTTPRouteParamDocumentation{
-				{
-					Description: "The user to query the information for",
-					Name:        "user",
-					Required:    true,
-					Type:        "string",
-				},
-			},
-			RequiresEditorsAuth: true,
-			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
-		},
-		{
-			Description: "Validate a cron expression and return the next executions",
-			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				sched, err := cronParser.Parse(r.FormValue("cron"))
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				var (
-					lt  = time.Now()
-					out []time.Time
-				)
-
-				if id := r.FormValue("uuid"); id != "" {
-					for _, a := range config.AutoMessages {
-						if a.ID() != id {
-							continue
-						}
-						lt = a.lastMessageSent
-						break
-					}
-				}
-
-				for i := 0; i < 3; i++ {
-					lt = sched.Next(lt)
-					out = append(out, lt)
-				}
-
-				if err := json.NewEncoder(w).Encode(out); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-			},
-			Method: http.MethodPut,
-			Module: "config-editor",
-			Name:   "Validate cron expression",
-			Path:   "/validate-cron",
-			QueryParams: []plugins.HTTPRouteParamDocumentation{
-				{
-					Description: "The cron expression to test",
-					Name:        "cron",
-					Required:    true,
-					Type:        "string",
-				},
-				{
-					Description: "Check cron with last execution of auto-message",
-					Name:        "uuid",
-					Required:    false,
-					Type:        "string",
-				},
-			},
-			ResponseType: plugins.HTTPRouteResponseTypeJSON,
-		},
-		{
-			Description: "Validate a regular expression against the RE2 regex parser",
-			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				if _, err := regexp.Compile(r.FormValue("regexp")); err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				w.WriteHeader(http.StatusNoContent)
-			},
-			Method: http.MethodPut,
-			Module: "config-editor",
-			Name:   "Validate regular expression",
-			Path:   "/validate-regex",
-			QueryParams: []plugins.HTTPRouteParamDocumentation{
-				{
-					Description: "The regular expression to test",
-					Name:        "regexp",
-					Required:    true,
-					Type:        "string",
-				},
-			},
-			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
 		},
 	} {
 		if err := registerRoute(rd); err != nil {
