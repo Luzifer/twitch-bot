@@ -460,16 +460,16 @@ new Vue({
 
       this.configNotifySocket = new WebSocket(`${window.location.href.replace(/^http/, 'ws')}config-editor/notify-config`)
       this.configNotifySocket.onopen = () => {
-        console.log('[notify] Socket connected')
+        console.debug('[notify] Socket connected')
         this.configNotifySocketConnected = true
       }
       this.configNotifySocket.onmessage = () => {
-        console.log('[notify] Config reload detected')
+        console.debug('[notify] Config reload detected')
         this.configNotifyBackoff = 100 // We've received a message, reset backoff
         this.reload()
       }
       this.configNotifySocket.onclose = evt => {
-        console.log(`[notify] Socket was closed wasClean=${evt.wasClean}`)
+        console.debug(`[notify] Socket was closed wasClean=${evt.wasClean}`)
         this.configNotifySocketConnected = false
         updateBackoffAndReconnect()
       }
