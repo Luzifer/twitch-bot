@@ -3,6 +3,7 @@
 /* eslint-disable camelcase --- We are working with data from a Go JSON API */
 
 const CRON_VALIDATION = /^(?:(?:@every (?:\d+(?:s|m|h))+)|(?:(?:(?:(?:\d+,)+\d+|(?:\d+(?:\/|-)\d+)|\d+|\*|\*\/\d+)(?: |$)){5}))$/
+const NANO = 1000000000
 
 Vue.config.devtools = true
 new Vue({
@@ -308,6 +309,9 @@ new Vue({
     editRule(msg) {
       Vue.set(this.models, 'rule', {
         ...msg,
+        cooldown: this.fixDurationRepresentationToString(msg.cooldown),
+        channel_cooldown: this.fixDurationRepresentationToString(msg.channel_cooldown),
+        user_cooldown: this.fixDurationRepresentationToString(msg.user_cooldown),
       })
       this.showRuleEditModal = true
       this.validateMatcherRegex()
@@ -363,6 +367,46 @@ new Vue({
         .then(resp => {
           this.vars = resp.data
         })
+    },
+
+    fixDurationRepresentationToInt64(value) {
+      switch (typeof value) {
+      case 'string':
+        const match = value.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/)
+        return ((Number(match[1]) || 0) * 3600 + (Number(match[2]) || 0) * 60 + (Number(match[3]) || 0)) * NANO
+
+      default:
+        return value
+      }
+    },
+
+    fixDurationRepresentationToString(value) {
+      switch (typeof value) {
+      case 'number':
+        value /= NANO
+        let repr = ''
+
+        if (value >= 3600) {
+          const h = Math.floor(value / 3600)
+          repr += `${h}h`
+          value -= h * 3600
+        }
+
+        if (value >= 60) {
+          const m = Math.floor(value / 60)
+          repr += `${m}m`
+          value -= m * 60
+        }
+
+        if (value > 0) {
+          repr += `${value}s`
+        }
+
+        return repr
+
+      default:
+        return value
+      }
     },
 
     formatRuleActions(rule) {
@@ -542,6 +586,18 @@ new Vue({
       }
 
       const obj = { ...this.models.rule }
+
+      if (obj.cooldown) {
+        obj.cooldown = this.fixDurationRepresentationToInt64(obj.cooldown)
+      }
+
+      if (obj.channel_cooldown) {
+        obj.channel_cooldown = this.fixDurationRepresentationToInt64(obj.channel_cooldown)
+      }
+
+      if (obj.user_cooldown) {
+        obj.user_cooldown = this.fixDurationRepresentationToInt64(obj.user_cooldown)
+      }
 
       if (obj.uuid) {
         axios.put(`config-editor/rules/${obj.uuid}`, obj, this.axiosOptions)
