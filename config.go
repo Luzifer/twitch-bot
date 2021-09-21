@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -24,7 +25,25 @@ var (
 	defaultConfigurationYAML []byte
 
 	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
+
+	configReloadHooks     map[string]func()
+	configReloadHooksLock sync.RWMutex
 )
+
+func registerConfigReloadHook(hook func()) func() {
+	configReloadHooksLock.Lock()
+	defer configReloadHooksLock.Unlock()
+
+	id := uuid.Must(uuid.NewV4()).String()
+	configReloadHooks[id] = hook
+
+	return func() {
+		configReloadHooksLock.Lock()
+		defer configReloadHooksLock.Unlock()
+
+		delete(configReloadHooks, id)
+	}
+}
 
 type (
 	configFileVersioner struct {
@@ -122,6 +141,13 @@ func loadConfig(filename string) error {
 		"rules":         len(config.Rules),
 		"channels":      len(config.Channels),
 	}).Info("Config file (re)loaded")
+
+	// Notify listener config has changed
+	configReloadHooksLock.RLock()
+	defer configReloadHooksLock.RUnlock()
+	for _, fn := range configReloadHooks {
+		fn()
+	}
 
 	return nil
 }
