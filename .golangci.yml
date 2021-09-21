@@ -3,16 +3,19 @@
 ---
 
 run:
-  skip-dirs:
-    - config
-  skip-files:
-    - assets.go
-    - bindata.go
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 5m
+  # Force readonly modules usage for checking
+  modules-download-mode: readonly
 
 output:
   format: tab
 
 linters-settings:
+  forbidigo:
+    forbid:
+      - 'fmt\.Errorf' # Should use github.com/pkg/errors
+
   funlen:
     lines: 100
     statements: 60
@@ -20,6 +23,11 @@ linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
     min-complexity: 15
+
+  gomnd:
+    settings:
+      mnd:
+        ignored-functions: 'strconv.(?:Format|Parse)\B+'
 
 linters:
   disable-all: true
@@ -30,6 +38,7 @@ linters:
     - depguard      # Go linter that checks if package imports are in a list of acceptable packages [fast: true, auto-fix: false]
     - dogsled       # Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f()) [fast: true, auto-fix: false]
     - exportloopref # checks for pointers to enclosing loop variables [fast: true, auto-fix: false]
+    - forbidigo     # Forbids identifiers [fast: true, auto-fix: false]
     - funlen        # Tool for detection of long functions [fast: true, auto-fix: false]
     - gocognit      # Computes and checks the cognitive complexity of functions [fast: true, auto-fix: false]
     - goconst       # Finds repeated strings that could be replaced by a constant [fast: true, auto-fix: false]
@@ -37,6 +46,7 @@ linters:
     - gocyclo       # Computes and checks the cyclomatic complexity of functions [fast: true, auto-fix: false]
     - godox         # Tool for detection of FIXME, TODO and other comment keywords [fast: true, auto-fix: false]
     - gofmt         # Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification [fast: true, auto-fix: true]
+    - gofumpt       # Gofumpt checks whether code was gofumpt-ed. [fast: true, auto-fix: true]
     - goimports     # Goimports does everything that gofmt does. Additionally it checks unused imports [fast: true, auto-fix: true]
     - gomnd         # An analyzer to detect magic numbers. [fast: true, auto-fix: false]
     - gosec         # Inspects source code for security problems [fast: true, auto-fix: false]
