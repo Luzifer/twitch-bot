@@ -341,7 +341,7 @@ new Vue({
     formatRuleActions(rule) {
       const badges = []
 
-      for (const action of rule.actions) {
+      for (const action of rule.actions || []) {
         for (const actionDefinition of this.actions) {
           if (actionDefinition.type !== action.type) {
             continue
