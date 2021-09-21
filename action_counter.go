@@ -118,7 +118,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 			return false, errors.Wrap(err, "execute counter value template")
 		}
 
-		counterValue, err := strconv.ParseInt(parseValue, 10, 64) //nolint:gomnd // Those numbers are static enough
+		counterValue, err := strconv.ParseInt(parseValue, 10, 64)
 		if err != nil {
 			return false, errors.Wrap(err, "parse counter value")
 		}
@@ -168,7 +168,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		value    int64
 	)
 
-	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil { //nolint:gomnd // Those numbers are static enough
+	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil {
 		http.Error(w, errors.Wrap(err, "parsing value").Error(), http.StatusBadRequest)
 		return
 	}
