@@ -168,7 +168,7 @@ new Vue({
 
     autoMessages: [],
 
-    editMode: 'rules', // 'general', FIXME
+    editMode: 'general',
     error: null,
     generalConfig: {},
     models: {
