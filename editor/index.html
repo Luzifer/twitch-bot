@@ -660,6 +660,7 @@
                       >
                         <b-form-tags
                           :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                          :state="validateActionArgument(idx, field.key)"
                           placeholder="Enter elements and press enter to add the element"
                           remove-on-delete
                           v-model="models.rule.actions[idx].attributes[field.key]"
@@ -677,6 +678,7 @@
                           max-rows="6"
                           :required="!field.optional"
                           rows="3"
+                          :state="validateActionArgument(idx, field.key)"
                           v-model="models.rule.actions[idx].attributes[field.key]"
                         ></b-form-textarea>
                       </b-form-group>
@@ -692,6 +694,7 @@
                           :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
                           :placeholder="field.default"
                           :required="!field.optional"
+                          :state="validateActionArgument(idx, field.key)"
                           type="text"
                           v-model="models.rule.actions[idx].attributes[field.key]"
                         ></b-form-input>

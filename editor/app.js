@@ -500,9 +500,68 @@ new Vue({
         .then(() => this.delayedReload())
     },
 
+    validateActionArgument(idx, key) {
+      const action = this.models.rule.actions[idx]
+      const def = this.getActionDefinitionByType(action.type)
+
+      if (!def || !def.fields) {
+        return false
+      }
+
+      for (const field of def.fields) {
+        if (field.key !== key) {
+          continue
+        }
+
+        switch (field.type) {
+        case 'bool':
+          if (!field.optional && !action.attributes[field.key]) {
+            return false
+          }
+          break
+
+        case 'duration':
+          if (!this.validateDuration(action.attributes[field.key], !field.optional)) {
+            return false
+          }
+          break
+
+        case 'int64':
+          if (!field.optional && !action.attributes[field.key]) {
+            return false
+          }
+
+          if (action.attributes[field.key] && Number(action.attributes[field.key]) === NaN) {
+            return false
+          }
+
+          break
+
+        case 'string':
+          if (!field.optional && !action.attributes[field.key]) {
+            return false
+          }
+          break
+
+        case 'stringslice':
+          if (!field.optional && !action.attributes[field.key]) {
+            return false
+          }
+          break
+        }
+        break
+      }
+
+      return true
+    },
+
     validateDuration(duration, required) {
       if (!duration && !required) {
         return true
+      }
+
+      if (!duration && required) {
+        return false
       }
 
       return Boolean(duration.match(/(?:\d+(?:s|m|h))+/))
