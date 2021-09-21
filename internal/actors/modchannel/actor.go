@@ -25,7 +25,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Update stream information",
-		Name:        "Modify Channel",
+		Name:        "Modify Stream",
 		Type:        "modchannel",
 
 		Fields: []plugins.ActionDocumentationField{

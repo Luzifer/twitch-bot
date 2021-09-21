@@ -16,7 +16,7 @@ func init() {
 
 	registerActorDocumentation(plugins.ActionDocumentation{
 		Description: "Update counter values",
-		Name:        "Counter",
+		Name:        "Modify Counter",
 		Type:        "counter",
 
 		Fields: []plugins.ActionDocumentationField{

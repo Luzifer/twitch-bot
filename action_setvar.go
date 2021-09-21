@@ -15,7 +15,7 @@ func init() {
 
 	registerActorDocumentation(plugins.ActionDocumentation{
 		Description: "Modify variable contents",
-		Name:        "SetVariable",
+		Name:        "Modify Variable",
 		Type:        "setvariable",
 
 		Fields: []plugins.ActionDocumentationField{

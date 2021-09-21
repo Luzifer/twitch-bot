@@ -19,7 +19,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Send a whisper (requires a verified bot!)",
-		Name:        "Whisper",
+		Name:        "Send Whisper",
 		Type:        "whisper",
 
 		Fields: []plugins.ActionDocumentationField{

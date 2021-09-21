@@ -16,7 +16,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Timeout user from chat",
-		Name:        "Timeout",
+		Name:        "Timeout User",
 		Type:        "timeout",
 
 		Fields: []plugins.ActionDocumentationField{

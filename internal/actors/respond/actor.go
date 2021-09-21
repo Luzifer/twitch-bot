@@ -24,7 +24,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Respond to message with a new message",
-		Name:        "Respond",
+		Name:        "Respond to Message",
 		Type:        "respond",
 
 		Fields: []plugins.ActionDocumentationField{

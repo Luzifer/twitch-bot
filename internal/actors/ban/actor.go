@@ -15,7 +15,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Ban user from chat",
-		Name:        "Ban",
+		Name:        "Ban User",
 		Type:        "ban",
 
 		Fields: []plugins.ActionDocumentationField{

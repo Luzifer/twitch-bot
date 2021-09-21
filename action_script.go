@@ -18,7 +18,7 @@ func init() {
 
 	registerActorDocumentation(plugins.ActionDocumentation{
 		Description: "Execute external script / command",
-		Name:        "Script / Command",
+		Name:        "Execute Script / Command",
 		Type:        "script",
 
 		Fields: []plugins.ActionDocumentationField{
