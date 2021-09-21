@@ -54,7 +54,7 @@ func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
 func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
-	if v, err := attrs.Duration("duration"); err != nil || v >= time.Second {
+	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
 		return errors.New("duration must be of type duration greater or equal one second")
 	}
 
