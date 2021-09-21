@@ -699,9 +699,17 @@
                       v-for="field in getActionDefinitionByType(action.type).fields"
                     >
                       <b-form-group
-                        :description="field.description"
                         v-if="field.type === 'bool'"
                       >
+                        <div slot="description">
+                          <i
+                            class="fas fa-fw fa-code mr-1 text-success"
+                            title="Supports Templating"
+                            v-if="field.support_template"
+                          ></i>
+                          {{ field.description }}
+                        </div>
+
                         <b-form-checkbox
                           switch
                           v-model="models.rule.actions[idx].attributes[field.key]"
@@ -711,11 +719,19 @@
                       </b-form-group>
 
                       <b-form-group
-                        :description="field.description"
                         :label="field.name"
                         :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-else-if="field.type === 'stringslice'"
                       >
+                        <div slot="description">
+                          <i
+                            class="fas fa-fw fa-code mr-1 text-success"
+                            title="Supports Templating"
+                            v-if="field.support_template"
+                          ></i>
+                          {{ field.description }}
+                        </div>
+
                         <b-form-tags
                           :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
                           :state="validateActionArgument(idx, field.key)"
@@ -726,11 +742,19 @@
                       </b-form-group>
 
                       <b-form-group
-                        :description="field.description"
                         :label="field.name"
                         :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-else-if="field.type === 'string' && field.long"
                       >
+                        <div slot="description">
+                          <i
+                            class="fas fa-fw fa-code mr-1 text-success"
+                            title="Supports Templating"
+                            v-if="field.support_template"
+                          ></i>
+                          {{ field.description }}
+                        </div>
+
                         <b-form-textarea
                           :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
                           max-rows="6"
@@ -742,11 +766,18 @@
                       </b-form-group>
 
                       <b-form-group
-                        :description="field.description"
                         :label="field.name"
                         :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-else
                       >
+                        <div slot="description">
+                          <i
+                            class="fas fa-fw fa-code mr-1 text-success"
+                            title="Supports Templating"
+                            v-if="field.support_template"
+                          ></i>
+                          {{ field.description }}
+                        </div>
 
                         <b-form-input
                           :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
@@ -756,7 +787,6 @@
                           type="text"
                           v-model="models.rule.actions[idx].attributes[field.key]"
                         ></b-form-input>
-
                       </b-form-group>
 
                     </template>
