@@ -424,11 +424,11 @@
                   label="Match Event"
                   label-for="formRuleMatchEvent"
                 >
-                  <b-form-input
+                  <b-form-select
                     id="formRuleMatchEvent"
-                    type="text"
+                    :options="availableEvents"
                     v-model="models.rule.match_event"
-                  ></b-form-input>
+                  ></b-form-select>
                 </b-form-group>
 
                 <b-form-group

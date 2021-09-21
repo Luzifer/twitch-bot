@@ -195,9 +195,11 @@ func registerEditorFrontend() {
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(struct {
 			IRCBadges      []string
+			KnownEvents    []*string
 			TwitchClientID string
 		}{
 			IRCBadges:      twitch.KnownBadges,
+			KnownEvents:    knownEvents,
 			TwitchClientID: cfg.TwitchClient,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

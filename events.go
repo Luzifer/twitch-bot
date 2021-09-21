@@ -17,4 +17,21 @@ var (
 	eventTypeTwitchStreamOffline  = ptrStr("stream_offline")
 	eventTypeTwitchStreamOnline   = ptrStr("stream_online")
 	eventTypeTwitchTitleUpdate    = ptrStr("title_update")
+
+	knownEvents = []*string{
+		eventTypeJoin,
+		eventTypeHost,
+		eventTypePart,
+		eventTypePermit,
+		eventTypeRaid,
+		eventTypeResub,
+		eventTypeSub,
+		eventTypeSubgift,
+		eventTypeWhisper,
+
+		eventTypeTwitchCategoryUpdate,
+		eventTypeTwitchStreamOffline,
+		eventTypeTwitchStreamOnline,
+		eventTypeTwitchTitleUpdate,
+	}
 )

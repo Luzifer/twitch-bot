@@ -23,6 +23,13 @@ new Vue({
       return this.actions.map(a => ({ text: a.name, value: a.type }))
     },
 
+    availableEvents() {
+      return [
+        { text: 'Clear Event-Matching', value: null },
+        ...this.vars.KnownEvents,
+      ]
+    },
+
     axiosOptions() {
       return {
         headers: {
