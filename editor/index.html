@@ -614,6 +614,7 @@
                       variant="primary"
                     >
                       {{ getActionDefinitionByType(action.type).name }}
+                      <i class="fas fa-fw fa-exclamation-triangle text-danger" v-if="actionHasValidationError(idx)"></i>
                     </b-button>
                     <b-button
                       @click="moveAction(idx, -1)"

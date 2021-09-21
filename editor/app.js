@@ -218,6 +218,19 @@ new Vue({
   el: '#app',
 
   methods: {
+    actionHasValidationError(idx) {
+      const action = this.models.rule.actions[idx]
+      const def = this.getActionDefinitionByType(action.type)
+
+      for (const field of def.fields || []) {
+        if (!this.validateActionArgument(idx, field.key)) {
+          return true
+        }
+      }
+
+      return false
+    },
+
     addAction() {
       const attributes = {}
 
