@@ -233,7 +233,7 @@ func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, ev
 }
 
 func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData FieldCollection) bool {
-	if r.DisableOnTemplate == nil {
+	if r.DisableOnTemplate == nil || *r.DisableOnTemplate == "" {
 		// No match criteria set, does not speak against matching
 		return true
 	}

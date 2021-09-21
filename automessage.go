@@ -158,7 +158,7 @@ func (a *autoMessage) Send(c *irc.Client) error {
 }
 
 func (a *autoMessage) allowExecuteDisableOnTemplate() bool {
-	if a.DisableOnTemplate == nil {
+	if a.DisableOnTemplate == nil || *a.DisableOnTemplate == "" {
 		// No match criteria set, does not speak against matching
 		return true
 	}

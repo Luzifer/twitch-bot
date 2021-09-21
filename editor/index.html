@@ -380,6 +380,22 @@
               </b-form-checkbox>
             </b-form-group>
 
+              <b-form-group
+                label="Disable on Template"
+                label-for="formAutoMessageDisableOnTemplate"
+              >
+                <div slot="description">
+                  Template expression resulting in <code>true</code> to disable the rule or <code>false</code> to enable it
+                </div>
+                <b-form-textarea
+                  id="formAutoMessageDisableOnTemplate"
+                  max-rows="6"
+                  required
+                  rows="1"
+                  v-model="models.autoMessage.disable_on_template"
+                ></b-form-textarea>
+              </b-form-group>
+
           </b-col>
 
           <b-col cols="4">
@@ -615,6 +631,22 @@
                     :tag-validator="validateTwitchBadge"
                     v-model="models.rule.enable_on"
                   ></b-form-tags>
+                </b-form-group>
+
+                <b-form-group
+                  label="Disable on Template"
+                  label-for="formRuleDisableOnTemplate"
+                >
+                  <div slot="description">
+                    Template expression resulting in <code>true</code> to disable the rule or <code>false</code> to enable it
+                  </div>
+                  <b-form-textarea
+                    id="formRuleDisableOnTemplate"
+                    max-rows="6"
+                    required
+                    rows="1"
+                    v-model="models.rule.disable_on_template"
+                  ></b-form-textarea>
                 </b-form-group>
 
               </b-tab>
