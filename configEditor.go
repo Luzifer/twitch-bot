@@ -277,7 +277,7 @@ func registerEditorGeneralConfigRoutes() {
 	}
 }
 
-//nolint:funlen // This is a logic unit and shall not be split up
+//nolint:funlen,gocognit,gocyclo // This is a logic unit and shall not be split up
 func registerEditorGlobalMethods() {
 	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
@@ -340,17 +340,14 @@ func registerEditorGlobalMethods() {
 				)
 				defer unsubscribe()
 
-				for {
-					select {
-					case <-configReloadNotify:
-						if err := conn.WriteJSON(struct {
-							ConfigReload time.Time `json:"config_reload"`
-						}{
-							ConfigReload: time.Now(),
-						}); err != nil {
-							log.WithError(err).Debug("Unable to send websocket notification")
-							return
-						}
+				for range configReloadNotify {
+					if err := conn.WriteJSON(struct {
+						ConfigReload time.Time `json:"config_reload"`
+					}{
+						ConfigReload: time.Now(),
+					}); err != nil {
+						log.WithError(err).Debug("Unable to send websocket notification")
+						return
 					}
 				}
 			},
