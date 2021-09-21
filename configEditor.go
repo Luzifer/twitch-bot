@@ -18,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const websocketPingInterval = 30 * time.Second
+
 var (
 	availableActorDocs     = []plugins.ActionDocumentation{}
 	availableActorDocsLock sync.RWMutex
@@ -336,18 +338,33 @@ func registerEditorGlobalMethods() {
 
 				var (
 					configReloadNotify = make(chan struct{}, 1)
+					pingTimer          = time.NewTicker(websocketPingInterval)
 					unsubscribe        = registerConfigReloadHook(func() { configReloadNotify <- struct{}{} })
 				)
 				defer unsubscribe()
 
-				for range configReloadNotify {
-					if err := conn.WriteJSON(struct {
-						ConfigReload time.Time `json:"config_reload"`
-					}{
-						ConfigReload: time.Now(),
-					}); err != nil {
-						log.WithError(err).Debug("Unable to send websocket notification")
-						return
+				type socketMsg struct {
+					MsgType string `json:"msg_type"`
+				}
+
+				for {
+					select {
+					case <-configReloadNotify:
+						if err := conn.WriteJSON(socketMsg{
+							MsgType: "configReload",
+						}); err != nil {
+							log.WithError(err).Debug("Unable to send websocket notification")
+							return
+						}
+
+					case <-pingTimer.C:
+						if err := conn.WriteJSON(socketMsg{
+							MsgType: "ping",
+						}); err != nil {
+							log.WithError(err).Debug("Unable to send websocket ping")
+							return
+						}
+
 					}
 				}
 			},

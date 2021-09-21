@@ -463,10 +463,15 @@ new Vue({
         console.debug('[notify] Socket connected')
         this.configNotifySocketConnected = true
       }
-      this.configNotifySocket.onmessage = () => {
-        console.debug('[notify] Config reload detected')
+      this.configNotifySocket.onmessage = evt => {
+        const msg = JSON.parse(evt.data)
+
+        console.debug(`[notify] Socket message received type=${msg.msg_type}`)
         this.configNotifyBackoff = 100 // We've received a message, reset backoff
-        this.reload()
+
+        if (msg.msg_type === 'configReload') {
+          this.reload()
+        }
       }
       this.configNotifySocket.onclose = evt => {
         console.debug(`[notify] Socket was closed wasClean=${evt.wasClean}`)
