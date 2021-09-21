@@ -286,6 +286,7 @@ new Vue({
         ...msg,
       })
       this.showRuleEditModal = true
+      this.validateMatcherRegex()
     },
 
     fetchActions() {
@@ -500,6 +501,21 @@ new Vue({
       return Boolean(duration.match(/(?:\d+(?:s|m|h))+/))
     },
 
+    validateMatcherRegex() {
+      if (this.models.rule.match_message === '') {
+        Vue.set(this.models.rule, 'match_message__validation', true)
+        return
+      }
+
+      return axios.put(`config-editor/validate-regex?regexp=${encodeURIComponent(this.models.rule.match_message)}`)
+        .then(() => {
+          Vue.set(this.models.rule, 'match_message__validation', true)
+        })
+        .catch(() => {
+          Vue.set(this.models.rule, 'match_message__validation', false)
+        })
+    },
+
     validateTwitchBadge(tag) {
       return this.vars.IRCBadges.includes(tag)
     },
@@ -526,17 +542,7 @@ new Vue({
         return
       }
 
-      if (to === '') {
-        Vue.set(this.models.rule, 'match_message__validation', true)
-      }
-
-      return axios.put(`config-editor/validate-regex?regexp=${encodeURIComponent(to)}`)
-        .then(() => {
-          Vue.set(this.models.rule, 'match_message__validation', true)
-        })
-        .catch(() => {
-          Vue.set(this.models.rule, 'match_message__validation', false)
-        })
+      this.validateMatcherRegex()
     },
   },
 })
