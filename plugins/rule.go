@@ -254,7 +254,7 @@ func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 }
 
 func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData FieldCollection) bool {
-	if r.MatchEvent == nil {
+	if r.MatchEvent == nil || *r.MatchEvent == "" {
 		// No match criteria set, does not speak against matching
 		return true
 	}
