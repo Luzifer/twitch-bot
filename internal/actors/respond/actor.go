@@ -32,6 +32,7 @@ func Register(args plugins.RegistrationArguments) error {
 				Default:         "",
 				Description:     "Message text to send",
 				Key:             "message",
+				Long:            true,
 				Name:            "Message",
 				Optional:        false,
 				SupportTemplate: true,

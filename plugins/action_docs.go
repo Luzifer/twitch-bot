@@ -13,6 +13,7 @@ type (
 		Default         string                       `json:"default"`
 		Description     string                       `json:"description"`
 		Key             string                       `json:"key"`
+		Long            bool                         `json:"long"`
 		Name            string                       `json:"name"`
 		Optional        bool                         `json:"optional"`
 		SupportTemplate bool                         `json:"support_template"`

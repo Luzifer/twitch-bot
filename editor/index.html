@@ -670,6 +670,21 @@
                         :description="field.description"
                         :label="field.name"
                         :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                        v-else-if="field.type === 'string' && field.long"
+                      >
+                        <b-form-textarea
+                          :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
+                          max-rows="6"
+                          :required="!field.optional"
+                          rows="3"
+                          v-model="models.rule.actions[idx].attributes[field.key]"
+                        ></b-form-textarea>
+                      </b-form-group>
+
+                      <b-form-group
+                        :description="field.description"
+                        :label="field.name"
+                        :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-else
                       >
 
