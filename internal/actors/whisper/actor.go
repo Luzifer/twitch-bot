@@ -78,11 +78,11 @@ func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
 func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("to"); err != nil || v != "" {
+	if v, err := attrs.String("to"); err != nil || v == "" {
 		return errors.New("to must be non-empty string")
 	}
 
-	if v, err := attrs.String("message"); err != nil || v != "" {
+	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
 	}
 
