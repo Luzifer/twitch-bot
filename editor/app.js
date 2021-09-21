@@ -400,6 +400,16 @@ new Vue({
       }
     },
 
+    moveAction(idx, direction) {
+      const tmp = [...this.models.rule.actions]
+
+      const eltmp = tmp[idx]
+      tmp[idx] = tmp[idx + direction]
+      tmp[idx + direction] = eltmp
+
+      Vue.set(this.models.rule, 'actions', tmp)
+    },
+
     newAutoMessage() {
       Vue.set(this.models, 'autoMessage', {})
       this.showAutoMessageEditModal = true

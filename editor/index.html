@@ -601,6 +601,7 @@
 
             <div class="accordion" role="tablist">
               <b-card
+                :key="`${models.rule.uuid}-action-${idx}`"
                 no-body
                 class="mb-1"
                 v-for="(action, idx) in models.rule.actions"
@@ -614,7 +615,20 @@
                     >
                       {{ getActionDefinitionByType(action.type).name }}
                     </b-button>
-                    <b-button @click="removeAction(idx)" variant="danger"><i class="fas fa-fw fa-trash"></i></b-button>
+                    <b-button
+                      @click="moveAction(idx, -1)"
+                      :disabled="idx === 0"
+                      variant="secondary"
+                    ><i class="fas fa-fw fa-chevron-up"></i></b-button>
+                    <b-button
+                      @click="moveAction(idx, +1)"
+                      :disabled="idx === models.rule.actions.length - 1"
+                      variant="secondary"
+                    ><i class="fas fa-fw fa-chevron-down"></i></b-button>
+                    <b-button
+                      @click="removeAction(idx)"
+                      variant="danger"
+                    ><i class="fas fa-fw fa-trash"></i></b-button>
                   </b-button-group>
                 </b-card-header>
                 <b-collapse
