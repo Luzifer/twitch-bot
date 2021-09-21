@@ -577,7 +577,7 @@ new Vue({
         return false
       }
 
-      return Boolean(duration.match(/(?:\d+(?:s|m|h))+/))
+      return Boolean(duration.match(/^(?:\d+(?:s|m|h))+$/))
     },
 
     validateMatcherRegex() {
