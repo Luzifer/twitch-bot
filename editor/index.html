@@ -706,16 +706,27 @@
                 </b-collapse>
               </b-card>
 
-              <b-input-group>
-                <b-form-select :options="availableActionsForAdd" v-model="models.addAction"></b-form-select>
-                <b-input-group-append>
-                  <b-button
-                    @click="addAction"
-                    :disabled="!models.addAction"
-                    variant="success"
-                  ><i class="fas fa-fw fa-plus mr-1"></i> Add</b-button>
-                </b-input-group-append>
-              </b-input-group>
+              <hr>
+
+              <b-form-group
+                label="Add Action"
+                label-for="ruleAddAction"
+              >
+                <b-input-group>
+                  <b-form-select
+                    id="ruleAddAction"
+                    :options="availableActionsForAdd"
+                    v-model="models.addAction"
+                  ></b-form-select>
+                  <b-input-group-append>
+                    <b-button
+                      @click="addAction"
+                      :disabled="!models.addAction"
+                      variant="success"
+                    ><i class="fas fa-fw fa-plus mr-1"></i> Add</b-button>
+                  </b-input-group-append>
+                </b-input-group>
+              </b-form-group>
             <div>
 
           </b-col>
