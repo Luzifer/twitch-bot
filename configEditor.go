@@ -13,6 +13,7 @@ import (
 	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -23,6 +24,8 @@ var (
 
 	//go:embed editor/*
 	configEditorFrontend embed.FS
+
+	upgrader = websocket.Upgrader{}
 )
 
 func registerActorDocumentation(doc plugins.ActionDocumentation) {
@@ -320,6 +323,42 @@ func registerEditorGlobalMethods() {
 			},
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description: "Subscribe for configuration changes",
+			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				conn, err := upgrader.Upgrade(w, r, nil)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer conn.Close()
+
+				var (
+					configReloadNotify = make(chan struct{}, 1)
+					unsubscribe        = registerConfigReloadHook(func() { configReloadNotify <- struct{}{} })
+				)
+				defer unsubscribe()
+
+				for {
+					select {
+					case <-configReloadNotify:
+						if err := conn.WriteJSON(struct {
+							ConfigReload time.Time `json:"config_reload"`
+						}{
+							ConfigReload: time.Now(),
+						}); err != nil {
+							log.WithError(err).Debug("Unable to send websocket notification")
+							return
+						}
+					}
+				}
+			},
+			Method:       http.MethodGet,
+			Module:       "config-editor",
+			Name:         "Websocket: Subscribe config changes",
+			Path:         "/notify-config",
+			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
 		},
 		{
 			Description: "Validate a cron expression and return the next executions",

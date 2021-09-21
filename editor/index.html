@@ -38,10 +38,22 @@
         </b-navbar-nav>
 
         <b-navbar-nav class="ml-auto">
-          <b-nav-item @click="reload">
-            <i class="fas fa-fw fa-sync mr-1"></i>
-            Reload Config
-          </b-nav-item>
+          <b-nav-text>
+            <span v-if="configNotifySocketConnected">
+              <i
+                class="fas fa-fw fa-ethernet mr-1 text-success"
+                title="Connected to Bot"
+                v-b-tooltip.hover
+              ></i>
+            </span>
+            <span v-else>
+              <i
+                class="fas fa-fw fa-ethernet mr-1 text-danger"
+                title="Disconnected from Bot"
+                v-b-tooltip.hover
+              ></i>
+            </span>
+          </b-nav-text>
         </b-navbar-nav>
       </b-collapse>
 
@@ -58,6 +70,19 @@
             variant="danger"
           >
             <i class="fas fa-fw fa-exclamation-circle mr-1"></i> {{ error }}
+          </b-alert>
+        </b-col>
+      </b-row>
+
+      <!-- Working display -->
+      <b-row v-if="changePending">
+        <b-col>
+          <b-alert
+            show
+            variant="info"
+          >
+            <i class="fas fa-fw fa-spinner fa-pulse mr-1"></i>
+            Your change was submitted and is pending, please wait for config to be updated!
           </b-alert>
         </b-col>
       </b-row>

@@ -26,7 +26,7 @@ var (
 
 	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
 
-	configReloadHooks     map[string]func()
+	configReloadHooks     = map[string]func(){}
 	configReloadHooksLock sync.RWMutex
 )
 

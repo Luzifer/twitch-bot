@@ -175,6 +175,10 @@ new Vue({
 
     autoMessages: [],
 
+    changePending: false,
+    configNotifySocket: null,
+    configNotifySocketConnected: false,
+    configNotifyBackoff: 100,
     editMode: 'general',
     error: null,
     generalConfig: {},
@@ -277,19 +281,19 @@ new Vue({
       this.updateGeneralConfig()
     },
 
-    delayedReload() {
-      window.setTimeout(() => this.reload(), 1000)
-    },
-
     deleteAutoMessage(uuid) {
       axios.delete(`config-editor/auto-messages/${uuid}`, this.axiosOptions)
-        .then(() => this.delayedReload())
+        .then(() => {
+          this.changePending = true
+        })
         .catch(err => this.handleFetchError(err))
     },
 
     deleteRule(uuid) {
       axios.delete(`config-editor/rules/${uuid}`, this.axiosOptions)
-        .then(() => this.delayedReload())
+        .then(() => {
+          this.changePending = true
+        })
         .catch(err => this.handleFetchError(err))
     },
 
@@ -310,7 +314,7 @@ new Vue({
     },
 
     fetchActions() {
-      axios.get('config-editor/actions')
+      return axios.get('config-editor/actions')
         .then(resp => {
           this.actions = resp.data
         })
@@ -318,7 +322,7 @@ new Vue({
     },
 
     fetchAutoMessages() {
-      axios.get('config-editor/auto-messages', this.axiosOptions)
+      return axios.get('config-editor/auto-messages', this.axiosOptions)
         .then(resp => {
           this.autoMessages = resp.data
         })
@@ -326,26 +330,28 @@ new Vue({
     },
 
     fetchGeneralConfig() {
-      axios.get('config-editor/general', this.axiosOptions)
+      return axios.get('config-editor/general', this.axiosOptions)
+        .catch(err => this.handleFetchError(err))
         .then(resp => {
           this.generalConfig = resp.data
-        })
-        .catch(err => this.handleFetchError(err))
-        .then(() => {
+
+          const promises = []
           for (const editor of this.generalConfig.bot_editors) {
-            this.fetchProfile(editor)
+            promises.push(this.fetchProfile(editor))
           }
+
+          return Promise.all(promises)
         })
     },
 
     fetchProfile(user) {
-      axios.get(`config-editor/user?user=${user}`, this.axiosOptions)
+      return axios.get(`config-editor/user?user=${user}`, this.axiosOptions)
         .then(resp => Vue.set(this.userProfiles, user, resp.data))
         .catch(err => this.handleFetchError(err))
     },
 
     fetchRules() {
-      axios.get('config-editor/rules', this.axiosOptions)
+      return axios.get('config-editor/rules', this.axiosOptions)
         .then(resp => {
           this.rules = resp.data
         })
@@ -353,7 +359,7 @@ new Vue({
     },
 
     fetchVars() {
-      axios.get('editor/vars.json')
+      return axios.get('editor/vars.json')
         .then(resp => {
           this.vars = resp.data
         })
@@ -441,10 +447,42 @@ new Vue({
       this.showRuleEditModal = true
     },
 
+    openConfigNotifySocket() {
+      if (this.configNotifySocket) {
+        this.configNotifySocket.close()
+        this.configNotifySocket = null
+      }
+
+      const updateBackoffAndReconnect = () => {
+        this.configNotifyBackoff = Math.min(this.configNotifyBackoff * 1.5, 10000)
+        window.setTimeout(() => this.openConfigNotifySocket(), this.configNotifyBackoff)
+      }
+
+      this.configNotifySocket = new WebSocket(`${window.location.href.replace(/^http/, 'ws')}config-editor/notify-config`)
+      this.configNotifySocket.onopen = () => {
+        console.log('[notify] Socket connected')
+        this.configNotifySocketConnected = true
+      }
+      this.configNotifySocket.onmessage = () => {
+        console.log('[notify] Config reload detected')
+        this.configNotifyBackoff = 100 // We've received a message, reset backoff
+        this.reload()
+      }
+      this.configNotifySocket.onclose = evt => {
+        console.log(`[notify] Socket was closed wasClean=${evt.wasClean}`)
+        this.configNotifySocketConnected = false
+        updateBackoffAndReconnect()
+      }
+    },
+
     reload() {
-      this.fetchAutoMessages()
-      this.fetchGeneralConfig()
-      this.fetchRules()
+      return Promise.all([
+        this.fetchAutoMessages(),
+        this.fetchGeneralConfig(),
+        this.fetchRules(),
+      ]).then(() => {
+        this.changePending = false
+      })
     },
 
     removeAction(idx) {
@@ -480,12 +518,16 @@ new Vue({
 
       if (obj.uuid) {
         axios.put(`config-editor/auto-messages/${obj.uuid}`, obj, this.axiosOptions)
+          .then(() => {
+            this.changePending = true
+          })
           .catch(err => this.handleFetchError(err))
-          .then(() => this.delayedReload())
       } else {
         axios.post(`config-editor/auto-messages`, obj, this.axiosOptions)
+          .then(() => {
+            this.changePending = true
+          })
           .catch(err => this.handleFetchError(err))
-          .then(() => this.delayedReload())
       }
     },
 
@@ -498,19 +540,25 @@ new Vue({
 
       if (obj.uuid) {
         axios.put(`config-editor/rules/${obj.uuid}`, obj, this.axiosOptions)
+          .then(() => {
+            this.changePending = true
+          })
           .catch(err => this.handleFetchError(err))
-          .then(() => this.delayedReload())
       } else {
         axios.post(`config-editor/rules`, obj, this.axiosOptions)
+          .then(() => {
+            this.changePending = true
+          })
           .catch(err => this.handleFetchError(err))
-          .then(() => this.delayedReload())
       }
     },
 
     updateGeneralConfig() {
       axios.put('config-editor/general', this.generalConfig, this.axiosOptions)
+        .then(() => {
+          this.changePending = true
+        })
         .catch(err => this.handleFetchError(err))
-        .then(() => this.delayedReload())
     },
 
     validateActionArgument(idx, key) {
@@ -609,6 +657,7 @@ new Vue({
 
     if (this.authToken) {
       window.history.replaceState(null, '', window.location.href.split('#')[0])
+      this.openConfigNotifySocket()
       this.reload()
     }
   },
