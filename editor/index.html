@@ -222,7 +222,7 @@
               <template #cell(_description)="data">
                 <template v-if="data.item.description">{{ data.item.description }}<br></template>
                 <b-badge
-                  class="m-1"
+                  class="mt-1 mr-1"
                   v-for="badge in formatRuleActions(data.item)"
                 >
                   {{ badge }}
