@@ -443,7 +443,7 @@ new Vue({
     },
 
     newRule() {
-      Vue.set(this.models, 'rule', {})
+      Vue.set(this.models, 'rule', { match_message__validation: true })
       this.showRuleEditModal = true
     },
 
