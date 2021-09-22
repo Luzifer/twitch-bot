@@ -14,37 +14,45 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Rule struct {
-	UUID string `hash:"-" yaml:"uuid"`
+type (
+	Rule struct {
+		UUID        string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
+		Description string `json:"description,omitempty" yaml:"description,omitempty"`
 
-	Actions []*RuleAction `yaml:"actions"`
+		Actions []*RuleAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 
-	Cooldown        *time.Duration `yaml:"cooldown"`
-	ChannelCooldown *time.Duration `yaml:"channel_cooldown"`
-	UserCooldown    *time.Duration `yaml:"user_cooldown"`
-	SkipCooldownFor []string       `yaml:"skip_cooldown_for"`
+		Cooldown        *time.Duration `json:"cooldown,omitempty" yaml:"cooldown,omitempty"`
+		ChannelCooldown *time.Duration `json:"channel_cooldown,omitempty" yaml:"channel_cooldown,omitempty"`
+		UserCooldown    *time.Duration `json:"user_cooldown,omitempty" yaml:"user_cooldown,omitempty"`
+		SkipCooldownFor []string       `json:"skip_cooldown_for,omitempty" yaml:"skip_cooldown_for,omitempty"`
 
-	MatchChannels []string `yaml:"match_channels"`
-	MatchEvent    *string  `yaml:"match_event"`
-	MatchMessage  *string  `yaml:"match_message"`
-	MatchUsers    []string `yaml:"match_users" `
+		MatchChannels []string `json:"match_channels,omitempty" yaml:"match_channels,omitempty"`
+		MatchEvent    *string  `json:"match_event,omitempty" yaml:"match_event,omitempty"`
+		MatchMessage  *string  `json:"match_message,omitempty" yaml:"match_message,omitempty"`
+		MatchUsers    []string `json:"match_users,omitempty" yaml:"match_users,omitempty" `
 
-	DisableOnMatchMessages []string `yaml:"disable_on_match_messages"`
+		DisableOnMatchMessages []string `json:"disable_on_match_messages,omitempty" yaml:"disable_on_match_messages,omitempty"`
 
-	Disable           *bool    `yaml:"disable"`
-	DisableOnOffline  *bool    `yaml:"disable_on_offline"`
-	DisableOnPermit   *bool    `yaml:"disable_on_permit"`
-	DisableOnTemplate *string  `yaml:"disable_on_template"`
-	DisableOn         []string `yaml:"disable_on"`
-	EnableOn          []string `yaml:"enable_on"`
+		Disable           *bool    `json:"disable,omitempty" yaml:"disable,omitempty"`
+		DisableOnOffline  *bool    `json:"disable_on_offline,omitempty" yaml:"disable_on_offline,omitempty"`
+		DisableOnPermit   *bool    `json:"disable_on_permit,omitempty" yaml:"disable_on_permit,omitempty"`
+		DisableOnTemplate *string  `json:"disable_on_template,omitempty" yaml:"disable_on_template,omitempty"`
+		DisableOn         []string `json:"disable_on,omitempty" yaml:"disable_on,omitempty"`
+		EnableOn          []string `json:"enable_on,omitempty" yaml:"enable_on,omitempty"`
 
-	matchMessage           *regexp.Regexp
-	disableOnMatchMessages []*regexp.Regexp
+		matchMessage           *regexp.Regexp
+		disableOnMatchMessages []*regexp.Regexp
 
-	msgFormatter MsgFormatter
-	timerStore   TimerStore
-	twitchClient *twitch.Client
-}
+		msgFormatter MsgFormatter
+		timerStore   TimerStore
+		twitchClient *twitch.Client
+	}
+
+	RuleAction struct {
+		Type       string          `json:"type" yaml:"type,omitempty"`
+		Attributes FieldCollection `json:"attributes" yaml:"attributes,omitempty"`
+	}
+)
 
 func (r Rule) MatcherID() string {
 	if r.UUID != "" {
@@ -225,7 +233,7 @@ func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, ev
 }
 
 func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData FieldCollection) bool {
-	if r.DisableOnTemplate == nil {
+	if r.DisableOnTemplate == nil || *r.DisableOnTemplate == "" {
 		// No match criteria set, does not speak against matching
 		return true
 	}
@@ -246,7 +254,7 @@ func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 }
 
 func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData FieldCollection) bool {
-	if r.MatchEvent == nil {
+	if r.MatchEvent == nil || *r.MatchEvent == "" {
 		// No match criteria set, does not speak against matching
 		return true
 	}

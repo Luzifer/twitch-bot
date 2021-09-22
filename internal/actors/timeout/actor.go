@@ -9,27 +9,41 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "timeout"
+
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
+
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Timeout user from chat",
+		Name:        "Timeout User",
+		Type:        "timeout",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Duration of the timeout",
+				Key:             "duration",
+				Name:            "Duration",
+				Optional:        false,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeDuration,
+			},
+		},
+	})
 
 	return nil
 }
 
-type actor struct {
-	Timeout *time.Duration `json:"timeout" yaml:"timeout"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Timeout == nil {
-		return false, nil
-	}
-
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{
 				plugins.DeriveChannel(m, eventData),
-				fmt.Sprintf("/timeout %s %d", plugins.DeriveUser(m, eventData), fixDurationValue(*a.Timeout)/time.Second),
+				fmt.Sprintf("/timeout %s %d", plugins.DeriveUser(m, eventData), attrs.MustDuration("duration", nil)/time.Second),
 			},
 		}),
 		"sending timeout",
@@ -37,12 +51,12 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "timeout" }
+func (a actor) Name() string  { return actorName }
 
-func fixDurationValue(d time.Duration) time.Duration {
-	if d >= time.Second {
-		return d
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
+		return errors.New("duration must be of type duration greater or equal one second")
 	}
 
-	return d * time.Second
+	return nil
 }

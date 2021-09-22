@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -86,7 +88,8 @@ func main() {
 	twitchWatch := newTwitchWatcher()
 	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
 
-	router.HandleFunc("/", handleSwaggerHTML)
+	router.Use(corsMiddleware)
+	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
 	if err = initCorePlugins(); err != nil {
@@ -97,7 +100,27 @@ func main() {
 		log.WithError(err).Fatal("Unable to load plugins")
 	}
 
+	if len(rconfig.Args()) == 2 && rconfig.Args()[1] == "actor-docs" {
+		doc, err := generateActorDocs()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to generate actor docs")
+		}
+		if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
+			log.WithError(err).Fatal("Unable to write actor docs to stdout")
+		}
+		return
+	}
+
 	if err = loadConfig(cfg.Config); err != nil {
+		if os.IsNotExist(errors.Cause(err)) {
+			if err = writeDefaultConfigFile(cfg.Config); err != nil {
+				log.WithError(err).Fatal("Initial config not found and not able to create example config")
+			}
+
+			log.WithField("filename", cfg.Config).Warn("No config was found, created example config: Please review that config!")
+			return
+		}
+
 		log.WithError(err).Fatal("Initial config load failed")
 	}
 	defer func() { config.CloseRawMessageWriter() }()
@@ -134,7 +157,13 @@ func main() {
 
 	if config.HTTPListen != "" {
 		// If listen address is configured start HTTP server
-		go http.ListenAndServe(config.HTTPListen, router)
+		listener, err := net.Listen("tcp", config.HTTPListen)
+		if err != nil {
+			log.WithError(err).Fatal("Unable to open http_listen port")
+		}
+
+		go http.Serve(listener, router)
+		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
 	}
 
 	ircDisconnected <- struct{}{}

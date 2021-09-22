@@ -12,7 +12,43 @@ import (
 )
 
 func init() {
-	registerAction(func() plugins.Actor { return &ActorCounter{} })
+	registerAction("counter", func() plugins.Actor { return &ActorCounter{} })
+
+	registerActorDocumentation(plugins.ActionDocumentation{
+		Description: "Update counter values",
+		Name:        "Modify Counter",
+		Type:        "counter",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Name of the counter to update",
+				Key:             "counter",
+				Name:            "Counter",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "1",
+				Description:     "Value to add to the counter",
+				Key:             "counter_step",
+				Name:            "Counter Step",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeInt64,
+			},
+			{
+				Default:         "",
+				Description:     "Value to set the counter to",
+				Key:             "counter_set",
+				Name:            "Counter Set",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
 
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Returns the (formatted) value as a plain string",
@@ -68,29 +104,21 @@ func init() {
 	})
 }
 
-type ActorCounter struct {
-	CounterSet  *string `json:"counter_set" yaml:"counter_set"`
-	CounterStep *int64  `json:"counter_step" yaml:"counter_step"`
-	Counter     *string `json:"counter" yaml:"counter"`
-}
+type ActorCounter struct{}
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Counter == nil {
-		return false, nil
-	}
-
-	counterName, err := formatMessage(*a.Counter, m, r, eventData)
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
 	}
 
-	if a.CounterSet != nil {
-		parseValue, err := formatMessage(*a.CounterSet, m, r, eventData)
+	if counterSet := attrs.MustString("counter_set", ptrStringEmpty); counterSet != "" {
+		parseValue, err := formatMessage(counterSet, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute counter value template")
 		}
 
-		counterValue, err := strconv.ParseInt(parseValue, 10, 64) //nolint:gomnd // Those numbers are static enough
+		counterValue, err := strconv.ParseInt(parseValue, 10, 64)
 		if err != nil {
 			return false, errors.Wrap(err, "parse counter value")
 		}
@@ -102,8 +130,8 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	var counterStep int64 = 1
-	if a.CounterStep != nil {
-		counterStep = *a.CounterStep
+	if s := attrs.MustInt64("counter_step", ptrIntZero); s != 0 {
+		counterStep = s
 	}
 
 	return false, errors.Wrap(
@@ -114,6 +142,14 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 
 func (a ActorCounter) IsAsync() bool { return false }
 func (a ActorCounter) Name() string  { return "counter" }
+
+func (a ActorCounter) Validate(attrs plugins.FieldCollection) (err error) {
+	if cn, err := attrs.String("counter"); err != nil || cn == "" {
+		return errors.New("counter name must be non-empty string")
+	}
+
+	return nil
+}
 
 func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 	template := r.FormValue("template")
@@ -132,7 +168,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		value    int64
 	)
 
-	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil { //nolint:gomnd // Those numbers are static enough
+	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil {
 		http.Error(w, errors.Wrap(err, "parsing value").Error(), http.StatusBadRequest)
 		return
 	}

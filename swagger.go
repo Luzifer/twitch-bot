@@ -31,6 +31,9 @@ var (
 				"inputErrorResponse":   spec.TextPlainResponse(nil).WithDescription("Data sent to API is invalid: See error message"),
 				"notFoundResponse":     spec.TextPlainResponse(nil).WithDescription("Document was not found or insufficient permissions"),
 			},
+			SecuritySchemes: map[string]*spec.SecurityScheme{
+				"authenticated": spec.APIKeyAuth("Authorization", spec.InHeader),
+			},
 		},
 	}
 
@@ -87,6 +90,12 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		},
 	}
 
+	if route.RequiresEditorsAuth {
+		op.Security = []map[string]spec.SecurityRequirement{
+			{"authenticated": {}},
+		}
+	}
+
 	switch route.ResponseType {
 	case plugins.HTTPRouteResponseTypeJSON:
 		op.Responses["200"] = spec.JSONResponse(nil).WithDescription("Successful execution with JSON object response")
@@ -119,9 +128,7 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		specParam := spec.QueryParam(param.Name, ps).
 			WithDescription(param.Description)
 
-		if !param.Required {
-			specParam = specParam.AsOptional()
-		}
+		specParam.Required = param.Required
 
 		op.Parameters = append(
 			op.Parameters,

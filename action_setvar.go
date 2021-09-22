@@ -11,7 +11,43 @@ import (
 )
 
 func init() {
-	registerAction(func() plugins.Actor { return &ActorSetVariable{} })
+	registerAction("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
+
+	registerActorDocumentation(plugins.ActionDocumentation{
+		Description: "Modify variable contents",
+		Name:        "Modify Variable",
+		Type:        "setvariable",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Name of the variable to update",
+				Key:             "variable",
+				Name:            "Variable",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "false",
+				Description:     "Clear variable content and unset the variable",
+				Key:             "clear",
+				Name:            "Clear",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeBool,
+			},
+			{
+				Default:         "",
+				Description:     "Value to set the variable to",
+				Key:             "set",
+				Name:            "Set Content",
+				Optional:        true,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
 
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Returns the value as a plain string",
@@ -53,30 +89,22 @@ func init() {
 	})
 }
 
-type ActorSetVariable struct {
-	Variable string `json:"variable" yaml:"variable"`
-	Clear    bool   `json:"clear" yaml:"clear"`
-	Set      string `json:"set" yaml:"set"`
-}
+type ActorSetVariable struct{}
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.Variable == "" {
-		return false, nil
-	}
-
-	varName, err := formatMessage(a.Variable, m, r, eventData)
+func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
 	}
 
-	if a.Clear {
+	if attrs.MustBool("clear", ptrBoolFalse) {
 		return false, errors.Wrap(
 			store.RemoveVariable(varName),
 			"removing variable",
 		)
 	}
 
-	value, err := formatMessage(a.Set, m, r, eventData)
+	value, err := formatMessage(attrs.MustString("set", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing value")
 	}
@@ -89,6 +117,14 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 
 func (a ActorSetVariable) IsAsync() bool { return false }
 func (a ActorSetVariable) Name() string  { return "setvariable" }
+
+func (a ActorSetVariable) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.String("variable"); err != nil || v == "" {
+		return errors.New("variable name must be non-empty string")
+	}
+
+	return nil
+}
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text-plain")

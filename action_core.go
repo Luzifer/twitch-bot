@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
@@ -43,12 +44,17 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		PathPrefix(fmt.Sprintf("/%s/", route.Module)).
 		Subrouter()
 
+	var hdl http.Handler = route.HandlerFunc
+	if route.RequiresEditorsAuth {
+		hdl = botEditorAuthMiddleware(hdl)
+	}
+
 	if route.IsPrefix {
 		r.PathPrefix(route.Path).
-			HandlerFunc(route.HandlerFunc).
+			Handler(hdl).
 			Methods(route.Method)
 	} else {
-		r.HandleFunc(route.Path, route.HandlerFunc).
+		r.Handle(route.Path, hdl).
 			Methods(route.Method)
 	}
 
@@ -61,14 +67,15 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
-		FormatMessage:             formatMessage,
-		GetLogger:                 func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
-		GetTwitchClient:           func() *twitch.Client { return twitchClient },
-		RegisterActor:             registerAction,
-		RegisterAPIRoute:          registerRoute,
-		RegisterCron:              cronService.AddFunc,
-		RegisterRawMessageHandler: registerRawMessageHandler,
-		RegisterTemplateFunction:  tplFuncs.Register,
-		SendMessage:               sendMessage,
+		FormatMessage:              formatMessage,
+		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		GetTwitchClient:            func() *twitch.Client { return twitchClient },
+		RegisterActor:              registerAction,
+		RegisterActorDocumentation: registerActorDocumentation,
+		RegisterAPIRoute:           registerRoute,
+		RegisterCron:               cronService.AddFunc,
+		RegisterRawMessageHandler:  registerRawMessageHandler,
+		RegisterTemplateFunction:   tplFuncs.Register,
+		SendMessage:                sendMessage,
 	}
 }

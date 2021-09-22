@@ -8,21 +8,23 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "delete"
+
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
+
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Delete message which caused the rule to be executed",
+		Name:        "Delete Message",
+		Type:        "delete",
+	})
 
 	return nil
 }
 
-type actor struct {
-	DeleteMessage *bool `json:"delete_message" yaml:"delete_message"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.DeleteMessage == nil || !*a.DeleteMessage || m == nil {
-		return false, nil
-	}
-
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	msgID, ok := m.Tags.GetTag("id")
 	if !ok || msgID == "" {
 		return false, nil
@@ -41,4 +43,6 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "delete" }
+func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) { return nil }

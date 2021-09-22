@@ -1,6 +1,7 @@
 config
 config.hcl
 config.yaml
+editor/bundle.*
 .env
 storage.json.gz
 twitch-bot

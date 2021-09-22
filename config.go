@@ -1,31 +1,71 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
+	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
-type configFile struct {
-	AutoMessages         []*autoMessage         `yaml:"auto_messages"`
-	Channels             []string               `yaml:"channels"`
-	HTTPListen           string                 `yaml:"http_listen"`
-	PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
-	PermitTimeout        time.Duration          `yaml:"permit_timeout"`
-	RawLog               string                 `yaml:"raw_log"`
-	Rules                []*plugins.Rule        `yaml:"rules"`
-	Variables            map[string]interface{} `yaml:"variables"`
+const expectedMinConfigVersion = 2
 
-	rawLogWriter io.WriteCloser
+var (
+	//go:embed default_config.yaml
+	defaultConfigurationYAML []byte
+
+	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
+
+	configReloadHooks     = map[string]func(){}
+	configReloadHooksLock sync.RWMutex
+)
+
+func registerConfigReloadHook(hook func()) func() {
+	configReloadHooksLock.Lock()
+	defer configReloadHooksLock.Unlock()
+
+	id := uuid.Must(uuid.NewV4()).String()
+	configReloadHooks[id] = hook
+
+	return func() {
+		configReloadHooksLock.Lock()
+		defer configReloadHooksLock.Unlock()
+
+		delete(configReloadHooks, id)
+	}
 }
+
+type (
+	configFileVersioner struct {
+		ConfigVersion int64 `yaml:"config_version"`
+	}
+
+	configFile struct {
+		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
+		BotEditors           []string               `yaml:"bot_editors"`
+		Channels             []string               `yaml:"channels"`
+		HTTPListen           string                 `yaml:"http_listen"`
+		PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
+		PermitTimeout        time.Duration          `yaml:"permit_timeout"`
+		RawLog               string                 `yaml:"raw_log"`
+		Rules                []*plugins.Rule        `yaml:"rules"`
+		Variables            map[string]interface{} `yaml:"variables"`
+
+		rawLogWriter io.WriteCloser
+
+		configFileVersioner `yaml:",inline"`
+	}
+)
 
 func newConfigFile() *configFile {
 	return &configFile{
@@ -35,19 +75,20 @@ func newConfigFile() *configFile {
 
 func loadConfig(filename string) error {
 	var (
-		err       error
-		tmpConfig *configFile
+		configVersion = &configFileVersioner{}
+		err           error
+		tmpConfig     = newConfigFile()
 	)
 
-	switch path.Ext(filename) {
-	case ".yaml", ".yml":
-		tmpConfig, err = parseConfigFromYAML(filename)
-
-	default:
-		return errors.Errorf("Unknown config format %q", path.Ext(filename))
+	if err = parseConfigFromYAML(filename, configVersion, false); err != nil {
+		return errors.Wrap(err, "parsing config version")
 	}
 
-	if err != nil {
+	if configVersion.ConfigVersion < expectedMinConfigVersion {
+		return errors.Errorf("config version too old: %d < %d - Please have a look at the documentation!", configVersion.ConfigVersion, expectedMinConfigVersion)
+	}
+
+	if err = parseConfigFromYAML(filename, tmpConfig, true); err != nil {
 		return errors.Wrap(err, "parsing config")
 	}
 
@@ -59,11 +100,16 @@ func loadConfig(filename string) error {
 		log.Warn("Loaded config with empty ruleset")
 	}
 
+	if err = tmpConfig.validateRuleActions(); err != nil {
+		return errors.Wrap(err, "validating rule actions")
+	}
+
 	configLock.Lock()
 	defer configLock.Unlock()
 
 	tmpConfig.updateAutoMessagesFromConfig(config)
 	tmpConfig.fixDurations()
+	tmpConfig.fixMissingUUIDs()
 
 	switch {
 	case config != nil && config.RawLog == tmpConfig.RawLog:
@@ -96,28 +142,81 @@ func loadConfig(filename string) error {
 		"channels":      len(config.Channels),
 	}).Info("Config file (re)loaded")
 
+	// Notify listener config has changed
+	configReloadHooksLock.RLock()
+	defer configReloadHooksLock.RUnlock()
+	for _, fn := range configReloadHooks {
+		fn()
+	}
+
 	return nil
 }
 
-func parseConfigFromYAML(filename string) (*configFile, error) {
+func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "open config file")
+		return errors.Wrap(err, "open config file")
 	}
 	defer f.Close()
 
+	decoder := yaml.NewDecoder(f)
+	decoder.SetStrict(strict)
+
+	return errors.Wrap(decoder.Decode(obj), "decode config file")
+}
+
+func patchConfig(filename string, patcher func(*configFile) error) error {
 	var (
-		decoder   = yaml.NewDecoder(f)
-		tmpConfig = newConfigFile()
+		cfgFile = newConfigFile()
+		err     error
 	)
 
-	decoder.SetStrict(true)
-
-	if err = decoder.Decode(&tmpConfig); err != nil {
-		return nil, errors.Wrap(err, "decode config file")
+	if err = parseConfigFromYAML(filename, cfgFile, true); err != nil {
+		return errors.Wrap(err, "loading current config")
 	}
 
-	return tmpConfig, nil
+	cfgFile.fixMissingUUIDs()
+
+	if err = patcher(cfgFile); err != nil {
+		return errors.Wrap(err, "patching config")
+	}
+
+	return errors.Wrap(
+		writeConfigToYAML(filename, cfgFile),
+		"replacing config",
+	)
+}
+
+func writeConfigToYAML(filename string, obj interface{}) error {
+	tmpFile, err := ioutil.TempFile(path.Dir(filename), "twitch-bot-*.yaml")
+	if err != nil {
+		return errors.Wrap(err, "opening tempfile")
+	}
+	tmpFileName := tmpFile.Name()
+
+	fmt.Fprintf(tmpFile, "# Automatically updated by Config-Editor frontend, last update: %s\n", time.Now().Format(time.RFC3339))
+
+	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
+		tmpFile.Close()
+		return errors.Wrap(err, "encoding config")
+	}
+	tmpFile.Close()
+
+	return errors.Wrap(
+		os.Rename(tmpFileName, filename),
+		"moving config to location",
+	)
+}
+
+func writeDefaultConfigFile(filename string) error {
+	f, err := os.Create(filename)
+	if err != nil {
+		return errors.Wrap(err, "creating config file")
+	}
+	defer f.Close()
+
+	_, err = f.Write(defaultConfigurationYAML)
+	return errors.Wrap(err, "writing default config")
 }
 
 func (c *configFile) CloseRawMessageWriter() error {
@@ -155,11 +254,6 @@ func (c *configFile) fixDurations() {
 	for _, r := range c.Rules {
 		r.Cooldown = c.fixedDurationPtr(r.Cooldown)
 	}
-
-	// Fix auto-messages
-	for _, a := range c.AutoMessages {
-		a.TimeInterval = c.fixedDuration(a.TimeInterval)
-	}
 }
 
 func (configFile) fixedDuration(d time.Duration) time.Duration {
@@ -175,6 +269,22 @@ func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
 	}
 	fd := *d * time.Second
 	return &fd
+}
+
+func (c *configFile) fixMissingUUIDs() {
+	for i := range c.AutoMessages {
+		if c.AutoMessages[i].UUID != "" {
+			continue
+		}
+		c.AutoMessages[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.AutoMessages[i].ID()).String()
+	}
+
+	for i := range c.Rules {
+		if c.Rules[i].UUID != "" {
+			continue
+		}
+		c.Rules[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.Rules[i].MatcherID()).String()
+	}
 }
 
 func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
@@ -207,4 +317,24 @@ func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
 			oam.lock.Unlock()
 		}
 	}
+}
+
+func (c configFile) validateRuleActions() error {
+	for _, r := range c.Rules {
+		logger := log.WithField("rule", r.MatcherID())
+		for idx, a := range r.Actions {
+			actor, err := getActorByName(a.Type)
+			if err != nil {
+				logger.WithField("index", idx).WithError(err).Error("Cannot get actor by type")
+				return errors.Wrap(err, "getting actor by type")
+			}
+
+			if err = actor.Validate(a.Attributes); err != nil {
+				logger.WithField("index", idx).WithError(err).Error("Actor reported invalid config")
+				return errors.Wrap(err, "validating action attributes")
+			}
+		}
+	}
+
+	return nil
 }

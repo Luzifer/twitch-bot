@@ -16,6 +16,26 @@ var (
 
 type FieldCollection map[string]interface{}
 
+func (f FieldCollection) CanBool(name string) bool {
+	_, err := f.Bool(name)
+	return err == nil
+}
+
+func (f FieldCollection) CanDuration(name string) bool {
+	_, err := f.Duration(name)
+	return err == nil
+}
+
+func (f FieldCollection) CanInt64(name string) bool {
+	_, err := f.Int64(name)
+	return err == nil
+}
+
+func (f FieldCollection) CanString(name string) bool {
+	_, err := f.String(name)
+	return err == nil
+}
+
 func (f FieldCollection) Expect(keys ...string) error {
 	var missing []string
 
@@ -30,6 +50,16 @@ func (f FieldCollection) Expect(keys ...string) error {
 	}
 
 	return nil
+}
+
+func (f FieldCollection) HasAll(keys ...string) bool {
+	for _, k := range keys {
+		if _, ok := f[k]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (f FieldCollection) MustBool(name string, defVal *bool) bool {

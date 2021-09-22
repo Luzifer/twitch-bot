@@ -8,32 +8,54 @@ import (
 	"github.com/pkg/errors"
 )
 
+const actorName = "whisper"
+
 var formatMessage plugins.MsgFormatter
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
-	args.RegisterActor(func() plugins.Actor { return &actor{} })
+	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
+
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Send a whisper (requires a verified bot!)",
+		Name:        "Send Whisper",
+		Type:        "whisper",
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "Message to whisper to the user",
+				Key:             "message",
+				Name:            "Message",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "User to send the message to",
+				Key:             "to",
+				Name:            "To User",
+				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
 
 	return nil
 }
 
-type actor struct {
-	WhisperMessage *string `json:"whisper_message" yaml:"whisper_message"`
-	WhisperTo      *string `json:"whisper_to" yaml:"whisper_to"`
-}
+type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
-	if a.WhisperTo == nil || a.WhisperMessage == nil {
-		return false, nil
-	}
-
-	to, err := formatMessage(*a.WhisperTo, m, r, eventData)
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+	to, err := formatMessage(attrs.MustString("to", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper receiver")
 	}
 
-	msg, err := formatMessage(*a.WhisperMessage, m, r, eventData)
+	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper message")
 	}
@@ -53,4 +75,16 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 }
 
 func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return "whisper" }
+func (a actor) Name() string  { return actorName }
+
+func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+	if v, err := attrs.String("to"); err != nil || v == "" {
+		return errors.New("to must be non-empty string")
+	}
+
+	if v, err := attrs.String("message"); err != nil || v == "" {
+		return errors.New("message must be non-empty string")
+	}
+
+	return nil
+}
