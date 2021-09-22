@@ -238,6 +238,7 @@
               <template #cell(_match)="data">
                 <b-badge
                   class="m-1 text-truncate text-left col-12"
+                  style="max-width: 250px;"
                   v-for="badge in formatRuleMatch(data.item)"
                 >
                   <strong>{{ badge.key }}</strong> <code class="ml-2">{{ badge.value }}</code>
