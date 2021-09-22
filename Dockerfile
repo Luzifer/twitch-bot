@@ -6,7 +6,12 @@ WORKDIR /go/src/github.com/Luzifer/twitch-bot
 ENV CGO_ENABLED=0
 
 RUN set -ex \
- && apk add --update git \
+ && apk add --update \
+      bash \
+      curl \
+      git \
+      make \
+ && make frontend \
  && go install \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)" \
       -mod=readonly
