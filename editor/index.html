@@ -247,6 +247,7 @@
 
               <template #cell(_description)="data">
                 <template v-if="data.item.description">{{ data.item.description }}<br></template>
+                <b-badge class="mt-1 mr-1" variant="danger" v-if="data.item.disable">Disabled</b-badge>
                 <b-badge
                   class="mt-1 mr-1"
                   v-for="badge in formatRuleActions(data.item)"
