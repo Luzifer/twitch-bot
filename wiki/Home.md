@@ -3,7 +3,18 @@
 ```yaml
 ---
 
-# Channels to join (only those can be acted on)
+# This must be the config version you've used below. Current version
+# is version 2 so probably keep it at 2 until the bot tells you to
+# upgrade.
+config_version: 2
+
+# List of strings: Either Twitch user-ids or nicknames (best to stick
+# with IDs as they can't change while nicknames can be changed every
+# 60 days). Those users are able to use the config editor web-interface.
+bot_editors: []
+
+# List of channels to join. Channels not listed here will not be
+# joined and therefore cannot be actioned on.
 channels:
   - mychannel
 
@@ -23,6 +34,8 @@ variables:
   myvariable: true
   anothervariable: "string"
 
+# List of auto-messages. See documentation for details or use
+# web-interface to configure.
 auto_messages:
   - channel: 'mychannel'          # String, channel to send message to
     message: 'Automated message'  # String, message to send
@@ -37,6 +50,8 @@ auto_messages:
     # Disable message using templating, must yield string `true` to disable the automated message
     disable_on_template: '{{ ne .myvariable true }}'
 
+# List of rules. See documentation for details or use web-interface
+# to configure.
 rules: # See below for examples
 
   - actions: # Array of actions to take when this rule matches
