@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"net/http"
@@ -97,6 +98,17 @@ func main() {
 
 	if err = loadPlugins(cfg.PluginDir); err != nil {
 		log.WithError(err).Fatal("Unable to load plugins")
+	}
+
+	if len(rconfig.Args()) == 2 && rconfig.Args()[1] == "actor-docs" {
+		doc, err := generateActorDocs()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to generate actor docs")
+		}
+		if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
+			log.WithError(err).Fatal("Unable to write actor docs to stdout")
+		}
+		return
 	}
 
 	if err = loadConfig(cfg.Config); err != nil {

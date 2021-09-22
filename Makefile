@@ -27,6 +27,9 @@ editor/bundle.css:
 
 # --- Wiki Updates
 
+actor_docs:
+	go run . actor-docs >wiki/Actors.md
+
 pull_wiki:
 	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
 
