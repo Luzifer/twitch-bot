@@ -41,55 +41,11 @@ rules: # See below for examples
 
   - actions: # Array of actions to take when this rule matches
 
-    # Issue a ban on the user who wrote the chat-line
-    - ban: "reason of ban"
-
-    # Command to execute for the chat message, must return an JSON encoded array of actions
-    - command: [/bin/bash, -c, "echo '[{\"respond\": \"Text\"}]'"]
-      skip_cooldown_on_error: true  # Boolean, optional, if set to true a non-zero exit-code
-                                    # will prevent the cooldown to be started for the rule
-
-    # Modify an internal counter value (does NOT send a chat line)
-    - counter: "counterid" # String to identify the counter, applies templating
-      counter_set: 25      # String, set counter to value (counter_step is ignored if set),
-                           # applies templating but MUST result in a parseable integer
-      counter_step: 1      # Integer, can be negative or positive, default: +1
-
-    # Introduce a delay between two actions
-    - delay: 1m         # Duration, how long to wait (fixed)
-      delay_jitter: 1m  # Duration, add random delay to fixed delay between 0 and this value
-
-    # Issue a delete on the message caught
-    - delete_message: true # Bool, set to true to delete
-
-    # Send raw IRC message to Twitch servers
-    - raw_message: 'PRIVMSG #{{ .channel }} :Test' # String, applies templating
-
-    # Send responding message to the channel the original message was received in
-    - respond: 'Hello chatter'    # String, applies templating
-      respond_as_reply: true      # Boolean, optional, use Twitch-Reply feature in respond
-      respond_fallback: 'Oh noes' # String, text to send if the template function causes
-                                  # an error, applies templating (default: unset)
-      to_channel: '#myotherchan'  # String, channel to send the response to (default: unset)
-
-    # Issue a timeout on the user who wrote the chat-line
-    - timeout: 1s # Duration value: 1s / 1m / 1h
-
-    # Update channel information (one of `update_game` and `update_title` must be defined)
-    - channel: '{{ .channel }}'         # String, applies templating
-      update_game: 'Just Chatting'      # String, optional, set game to given category
-      update_title: 'My special title'  # String, optional, set title to given title
-
-    # Set a variable to value defined for later usage
-    - variable: myvar       # String, name of the variable to set (applies templating)
-      clear: false          # Boolean, clear the variable
-      set: '{{ .channel }}' # String, value to set the variable to (applies templating)
-
-    # Send a whisper (ATTENTION: You need to have a known / verified bot for this!)
-    # Without being known / verified your whisper will just silently get dropped by Twitch
-    # Go here to get that verification: https://dev.twitch.tv/limit-increase
-    - whisper_to: '{{ .username }}' # String, username to send to, applies templating
-      whisper_message: 'Ohai!'      # String, message to send, applies templating
+    # See the Actors page in the Wiki for available actors:
+    # https://github.com/Luzifer/twitch-bot/wiki/Actors
+    - type: "<actor type>"
+      attributes:
+        key: value
 
     # Add a cooldown to the rule in general (not to trigger counters twice, ...)
     # Using this will prevent the rule to be executed in all matching channels
