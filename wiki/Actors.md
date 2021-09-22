@@ -1,65 +1,6 @@
 # Available Actions
 
 
-## Modify Counter
-
-Update counter values
-
-```yaml
-- type: counter
-  attributes:
-    # Name of the counter to update
-    # Optional: false
-    # Type:     string (Supports Templating) 
-    counter: ""
-    # Value to add to the counter
-    # Optional: true
-    # Type:     int64
-    counter_step: 1
-    # Value to set the counter to
-    # Optional: true
-    # Type:     string (Supports Templating) 
-    counter_set: ""
-```
-
-## Execute Script / Command
-
-Execute external script / command
-
-```yaml
-- type: script
-  attributes:
-    # Command to execute
-    # Optional: false
-    # Type:     array of strings (Supports Templating in each string) 
-    command: []
-    # Do not activate cooldown for route when command exits non-zero
-    # Optional: true
-    # Type:     bool
-    skip_cooldown_on_error: false
-```
-
-## Modify Variable
-
-Modify variable contents
-
-```yaml
-- type: setvariable
-  attributes:
-    # Name of the variable to update
-    # Optional: false
-    # Type:     string (Supports Templating) 
-    variable: ""
-    # Clear variable content and unset the variable
-    # Optional: true
-    # Type:     bool
-    clear: false
-    # Value to set the variable to
-    # Optional: true
-    # Type:     string (Supports Templating) 
-    set: ""
-```
-
 ## Ban User
 
 Ban user from chat
@@ -99,6 +40,44 @@ Delete message which caused the rule to be executed
   # Does not have configuration attributes
 ```
 
+## Execute Script / Command
+
+Execute external script / command
+
+```yaml
+- type: script
+  attributes:
+    # Command to execute
+    # Optional: false
+    # Type:     array of strings (Supports Templating in each string) 
+    command: []
+    # Do not activate cooldown for route when command exits non-zero
+    # Optional: true
+    # Type:     bool
+    skip_cooldown_on_error: false
+```
+
+## Modify Counter
+
+Update counter values
+
+```yaml
+- type: counter
+  attributes:
+    # Name of the counter to update
+    # Optional: false
+    # Type:     string (Supports Templating) 
+    counter: ""
+    # Value to add to the counter
+    # Optional: true
+    # Type:     int64
+    counter_step: 1
+    # Value to set the counter to
+    # Optional: true
+    # Type:     string (Supports Templating) 
+    counter_set: ""
+```
+
 ## Modify Stream
 
 Update stream information
@@ -120,17 +99,25 @@ Update stream information
     title: ""
 ```
 
-## Send RAW Message
+## Modify Variable
 
-Send raw IRC message
+Modify variable contents
 
 ```yaml
-- type: raw
+- type: setvariable
   attributes:
-    # Raw message to send (must be a valid IRC protocol message)
+    # Name of the variable to update
     # Optional: false
     # Type:     string (Supports Templating) 
-    message: ""
+    variable: ""
+    # Clear variable content and unset the variable
+    # Optional: true
+    # Type:     bool
+    clear: false
+    # Value to set the variable to
+    # Optional: true
+    # Type:     string (Supports Templating) 
+    set: ""
 ```
 
 ## Respond to Message
@@ -158,17 +145,17 @@ Respond to message with a new message
     to_channel: ""
 ```
 
-## Timeout User
+## Send RAW Message
 
-Timeout user from chat
+Send raw IRC message
 
 ```yaml
-- type: timeout
+- type: raw
   attributes:
-    # Duration of the timeout
+    # Raw message to send (must be a valid IRC protocol message)
     # Optional: false
-    # Type:     duration
-    duration: 0s
+    # Type:     string (Supports Templating) 
+    message: ""
 ```
 
 ## Send Whisper
@@ -186,4 +173,17 @@ Send a whisper (requires a verified bot!)
     # Optional: false
     # Type:     string (Supports Templating) 
     to: ""
+```
+
+## Timeout User
+
+Timeout user from chat
+
+```yaml
+- type: timeout
+  attributes:
+    # Duration of the timeout
+    # Optional: false
+    # Type:     duration
+    duration: 0s
 ```

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"sort"
 	"sync"
 	"time"
 
@@ -35,6 +36,9 @@ func registerActorDocumentation(doc plugins.ActionDocumentation) {
 	defer availableActorDocsLock.Unlock()
 
 	availableActorDocs = append(availableActorDocs, doc)
+	sort.Slice(availableActorDocs, func(i, j int) bool {
+		return availableActorDocs[i].Name < availableActorDocs[j].Name
+	})
 }
 
 type (
