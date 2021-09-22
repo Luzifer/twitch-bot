@@ -39,6 +39,35 @@ new Vue({
       }
     },
 
+    countRuleConditions() {
+      let count = 0
+      count += this.models.rule.disable ? 1 : 0
+      count += this.models.rule.disable_on_offline ? 1 : 0
+      count += this.models.rule.disable_on_permit ? 1 : 0
+      count += this.models.rule.disable_on ? 1 : 0
+      count += this.models.rule.enable_on ? 1 : 0
+      count += this.models.rule.disable_on_template ? 1 : 0
+      return count
+    },
+
+    countRuleCooldowns() {
+      let count = 0
+      count += this.models.rule.cooldown ? 1 : 0
+      count += this.models.rule.channel_cooldown ? 1 : 0
+      count += this.models.rule.user_cooldown ? 1 : 0
+      count += this.models.rule.skip_cooldown_for ? 1 : 0
+      return count
+    },
+
+    countRuleMatchers() {
+      let count = 0
+      count += this.models.rule.match_channels ? 1 : 0
+      count += this.models.rule.match_event ? 1 : 0
+      count += this.models.rule.match_message ? 1 : 0
+      count += this.models.rule.match_users ? 1 : 0
+      return count
+    },
+
     sortedChannels() {
       return this.generalConfig?.channels
         ?.sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase()))
