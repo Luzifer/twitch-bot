@@ -1,3 +1,7 @@
+# 1.0.0 / 2021-09-22
+
+  * Breaking: Add configuration interface and switch to more generic config format (#7)
+
 # 0.18.0 / 2021-09-17
 
   * [script] Allow to skip cooldown on script error
