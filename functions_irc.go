@@ -20,6 +20,12 @@ func init() {
 		}
 	})
 
+	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
+		return func(badge string) bool {
+			return botUserstate.Get(plugins.DeriveChannel(m, nil)).Badges.Has(badge)
+		}
+	})
+
 	tplFuncs.Register("fixUsername", plugins.GenericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
 	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {

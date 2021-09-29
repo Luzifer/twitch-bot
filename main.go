@@ -40,9 +40,10 @@ var (
 	config     *configFile
 	configLock = new(sync.RWMutex)
 
-	cronService *cron.Cron
-	ircHdl      *ircHandler
-	router      = mux.NewRouter()
+	botUserstate = newTwitchUserStateStore()
+	cronService  *cron.Cron
+	ircHdl       *ircHandler
+	router       = mux.NewRouter()
 
 	sendMessage func(m *irc.Message) error
 
