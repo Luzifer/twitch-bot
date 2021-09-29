@@ -1,13 +1,11 @@
 package main
 
 import (
-	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -15,7 +13,7 @@ type (
 		Badges      twitch.BadgeCollection
 		Color       string
 		DisplayName string
-		EmoteSets   []int64
+		EmoteSets   []string
 	}
 
 	twitchUserStateStore struct {
@@ -34,18 +32,12 @@ func parseTwitchUserState(m *irc.Message) (*twitchUserState, error) {
 	var (
 		color, _       = m.GetTag("color")
 		displayName, _ = m.GetTag("display-name")
-		emoteSets      []int64
+		emoteSets      []string
 		rawSets, _     = m.GetTag("emote-sets")
 	)
 
 	if rawSets != "" {
-		for _, sid := range strings.Split(rawSets, ",") {
-			id, err := strconv.ParseInt(sid, 10, 64)
-			if err != nil {
-				return nil, errors.Wrap(err, "parsing emote-set id")
-			}
-			emoteSets = append(emoteSets, id)
-		}
+		emoteSets = strings.Split(rawSets, ",")
 	}
 
 	return &twitchUserState{
