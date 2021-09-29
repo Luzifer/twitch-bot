@@ -6,6 +6,7 @@ import (
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -22,7 +23,13 @@ func init() {
 
 	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(badge string) bool {
-			state := botUserstate.Get(plugins.DeriveChannel(m, nil))
+			channel, ok := fields["channel"].(string)
+			if !ok {
+				log.Trace("Fields for botHasBadge function had no channel")
+				return false
+			}
+
+			state := botUserstate.Get(channel)
 			if state == nil {
 				return false
 			}
