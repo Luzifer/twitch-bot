@@ -22,7 +22,12 @@ func init() {
 
 	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
 		return func(badge string) bool {
-			return botUserstate.Get(plugins.DeriveChannel(m, nil)).Badges.Has(badge)
+			state := botUserstate.Get(plugins.DeriveChannel(m, nil))
+			if state == nil {
+				return false
+			}
+
+			return state.Badges.Has(badge)
 		}
 	})
 
