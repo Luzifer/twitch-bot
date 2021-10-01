@@ -1,3 +1,8 @@
+# 1.1.0 / 2021-10-01
+
+  * [templating] Add `botHasBadge` function
+  * [editor] Mark fully disabled rules in list
+
 # 1.0.0 / 2021-09-22
 
   * Breaking: Add configuration interface and switch to more generic config format (#7)
