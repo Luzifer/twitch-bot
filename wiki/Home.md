@@ -131,6 +131,7 @@ There are certain variables available in the strings with templating enabled:
 Additionally there are some functions available in the templates:
 
 - `arg <idx>` - Takes the message sent to the channel, splits by space and returns the Nth element
+- `botHasBadge <badge>` - Checks whether bot has the given badge in the current channel
 - `channelCounter <counter name>` - Wraps the counter name into a channel specific counter name including the channel name
 - `concat <delimiter> <...parts>` - Join the given string parts with delimiter
 - `counterValue <counter name>` - Returns the current value of the counter which identifier was supplied
