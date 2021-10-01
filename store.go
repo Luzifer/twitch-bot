@@ -16,6 +16,8 @@ type storageFile struct {
 	Timers    map[string]plugins.TimerEntry `json:"timers"`
 	Variables map[string]string             `json:"variables"`
 
+	ModuleStorage map[string]json.RawMessage `json:"module_storage"`
+
 	inMem bool
 	lock  *sync.RWMutex
 }
@@ -26,9 +28,20 @@ func newStorageFile(inMemStore bool) *storageFile {
 		Timers:    map[string]plugins.TimerEntry{},
 		Variables: map[string]string{},
 
+		ModuleStorage: map[string]json.RawMessage{},
+
 		inMem: inMemStore,
 		lock:  new(sync.RWMutex),
 	}
+}
+
+func (s *storageFile) DeleteModuleStore(moduleUUID string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	delete(s.ModuleStorage, moduleUUID)
+
+	return errors.Wrap(s.Save(), "saving store")
 }
 
 func (s *storageFile) GetCounterValue(counter string) int64 {
@@ -36,6 +49,16 @@ func (s *storageFile) GetCounterValue(counter string) int64 {
 	defer s.lock.RUnlock()
 
 	return s.Counters[counter]
+}
+
+func (s *storageFile) GetModuleStore(moduleUUID string, storedObject json.Unmarshaler) error {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return errors.Wrap(
+		storedObject.UnmarshalJSON(s.ModuleStorage[moduleUUID]),
+		"unmarshalling stored object",
+	)
 }
 
 func (s *storageFile) GetVariable(key string) string {
@@ -120,6 +143,20 @@ func (s *storageFile) Save() error {
 		json.NewEncoder(zf).Encode(s),
 		"encode storage object",
 	)
+}
+
+func (s *storageFile) SetModuleStore(moduleUUID string, storedObject json.Marshaler) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	data, err := storedObject.MarshalJSON()
+	if err != nil {
+		return errors.Wrap(err, "marshalling stored object")
+	}
+
+	s.ModuleStorage[moduleUUID] = data
+
+	return errors.Wrap(s.Save(), "saving store")
 }
 
 func (s *storageFile) SetTimer(kind plugins.TimerType, id string, expiry time.Time) error {

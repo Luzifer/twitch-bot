@@ -69,6 +69,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:              formatMessage,
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		GetStorageManager:          func() plugins.StorageManager { return store },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,
