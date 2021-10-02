@@ -93,6 +93,14 @@ func main() {
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 
+	if err = startCheck(); err != nil {
+		log.WithError(err).Fatal("Missing required parameters")
+	}
+
+	if err = store.Load(); err != nil {
+		log.WithError(err).Fatal("Unable to load storage file")
+	}
+
 	if err = initCorePlugins(); err != nil {
 		log.WithError(err).Fatal("Unable to load core plugins")
 	}
@@ -136,14 +144,6 @@ func main() {
 		if err := twitchWatch.AddChannel(c); err != nil {
 			log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
 		}
-	}
-
-	if err = startCheck(); err != nil {
-		log.WithError(err).Fatal("Missing required parameters")
-	}
-
-	if err = store.Load(); err != nil {
-		log.WithError(err).Fatal("Unable to load storage file")
 	}
 
 	fsEvents := make(chan configChangeEvent, 1)
