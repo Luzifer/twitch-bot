@@ -17,11 +17,13 @@ const (
 	actorNamePunish      = "punish"
 	actorNameResetPunish = "reset-punish"
 	moduleUUID           = "44ab4646-ce50-4e16-9353-c1f0eb68962b"
+
+	oneWeek = 168 * time.Hour
 )
 
 var (
 	formatMessage      plugins.MsgFormatter
-	ptrDefaultCooldown = func(v time.Duration) *time.Duration { return &v }(168 * time.Hour)
+	ptrDefaultCooldown = func(v time.Duration) *time.Duration { return &v }(oneWeek)
 	ptrStringEmpty     = func(v string) *string { return &v }("")
 	store              plugins.StorageManager
 	storedObject       = newStorage()
@@ -274,7 +276,7 @@ func (s *storage) GetPunishment(channel, user, uuid string) *levelConfig {
 	)
 
 	if lvl == nil {
-		// Initalize a non-triggered state
+		// Initialize a non-triggered state
 		lvl = &levelConfig{LastLevel: -1}
 		s.ActiveLevels[id] = lvl
 	}
