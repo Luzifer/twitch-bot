@@ -51,12 +51,12 @@ func (s *storageFile) GetCounterValue(counter string) int64 {
 	return s.Counters[counter]
 }
 
-func (s *storageFile) GetModuleStore(moduleUUID string, storedObject json.Unmarshaler) error {
+func (s *storageFile) GetModuleStore(moduleUUID string, storedObject plugins.StorageUnmarshaller) error {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
 	return errors.Wrap(
-		storedObject.UnmarshalJSON(s.ModuleStorage[moduleUUID]),
+		storedObject.UnmarshalStoredObject(s.ModuleStorage[moduleUUID]),
 		"unmarshalling stored object",
 	)
 }
@@ -145,11 +145,11 @@ func (s *storageFile) Save() error {
 	)
 }
 
-func (s *storageFile) SetModuleStore(moduleUUID string, storedObject json.Marshaler) error {
+func (s *storageFile) SetModuleStore(moduleUUID string, storedObject plugins.StorageMarshaller) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	data, err := storedObject.MarshalJSON()
+	data, err := storedObject.MarshalStoredObject()
 	if err != nil {
 		return errors.Wrap(err, "marshalling stored object")
 	}

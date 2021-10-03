@@ -1,8 +1,6 @@
 package plugins
 
 import (
-	"encoding/json"
-
 	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/robfig/cron/v3"
@@ -73,8 +71,16 @@ type (
 
 	StorageManager interface {
 		DeleteModuleStore(moduleUUID string) error
-		GetModuleStore(moduleUUID string, storedObject json.Unmarshaler) error
-		SetModuleStore(moduleUUID string, storedObject json.Marshaler) error
+		GetModuleStore(moduleUUID string, storedObject StorageUnmarshaller) error
+		SetModuleStore(moduleUUID string, storedObject StorageMarshaller) error
+	}
+
+	StorageMarshaller interface {
+		MarshalStoredObject() ([]byte, error)
+	}
+
+	StorageUnmarshaller interface {
+		UnmarshalStoredObject([]byte) error
 	}
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, map[string]interface{}) interface{}

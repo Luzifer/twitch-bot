@@ -136,7 +136,7 @@ type (
 	storage struct {
 		ActiveLevels map[string]*levelConfig `json:"active_levels"`
 
-		lock sync.RWMutex
+		lock sync.Mutex
 	}
 )
 
@@ -260,7 +260,9 @@ func (a actorResetPunish) Validate(attrs plugins.FieldCollection) (err error) {
 // Storage
 
 func newStorage() *storage {
-	return &storage{}
+	return &storage{
+		ActiveLevels: make(map[string]*levelConfig),
+	}
 }
 
 func (s *storage) GetPunishment(channel, user, uuid string) *levelConfig {
@@ -302,7 +304,7 @@ func (s *storage) calculateCooldowns() {
 
 	for id, lvl := range s.ActiveLevels {
 		for {
-			cooldownTime := lvl.Executed.Add(-lvl.Cooldown)
+			cooldownTime := lvl.Executed.Add(lvl.Cooldown)
 			if cooldownTime.After(time.Now()) {
 				break
 			}
@@ -322,17 +324,23 @@ func (s *storage) calculateCooldowns() {
 	}
 }
 
-// Implement JSON marshaller interfaces
-func (s *storage) MarshalJSON() ([]byte, error) {
+// Implement marshaller interfaces
+func (s *storage) MarshalStoredObject() ([]byte, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	s.calculateCooldowns()
 	return json.Marshal(s)
 }
 
-func (s *storage) UnmarshalJSON(data []byte) error {
+func (s *storage) UnmarshalStoredObject(data []byte) error {
 	if data == nil {
 		// No data set yet, don't try to unmarshal
 		return nil
 	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
 	return json.Unmarshal(data, s)
 }
