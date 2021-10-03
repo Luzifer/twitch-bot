@@ -120,6 +120,52 @@ Modify variable contents
     set: ""
 ```
 
+## Punish User
+
+Apply increasing punishments to user
+
+```yaml
+- type: punish
+  attributes:
+    # When to lower the punishment level after the last punishment
+    # Optional: true
+    # Type:     duration
+    cooldown: 168h
+    # Actions for each punishment level (ban, delete, duration-value i.e. 1m)
+    # Optional: false
+    # Type:     array of strings
+    levels: []
+    # Reason why the user was banned / timeouted
+    # Optional: true
+    # Type:     string
+    reason: ""
+    # User to apply the action to
+    # Optional: false
+    # Type:     string (Supports Templating) 
+    user: ""
+    # Unique identifier for this punishment to differentiate between punishments in the same channel
+    # Optional: true
+    # Type:     string
+    uuid: ""
+```
+
+## Reset User Punishment
+
+Reset punishment level for user
+
+```yaml
+- type: reset-punish
+  attributes:
+    # User to reset the level for
+    # Optional: false
+    # Type:     string (Supports Templating) 
+    user: ""
+    # Unique identifier for this punishment to differentiate between punishments in the same channel
+    # Optional: true
+    # Type:     string
+    uuid: ""
+```
+
 ## Respond to Message
 
 Respond to message with a new message

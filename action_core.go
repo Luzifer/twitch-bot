@@ -8,6 +8,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
+	"github.com/Luzifer/twitch-bot/internal/actors/punish"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
@@ -23,6 +24,7 @@ var coreActorRegistations = []plugins.RegisterFunc{
 	delay.Register,
 	deleteactor.Register,
 	modchannel.Register,
+	punish.Register,
 	raw.Register,
 	respond.Register,
 	timeout.Register,
@@ -69,6 +71,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:              formatMessage,
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		GetStorageManager:          func() plugins.StorageManager { return store },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,

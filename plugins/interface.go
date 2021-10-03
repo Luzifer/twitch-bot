@@ -47,6 +47,8 @@ type (
 		FormatMessage MsgFormatter
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
 		GetLogger LoggerCreationFunc
+		// GetStorageManager returns an interface to access the modules storage
+		GetStorageManager func() StorageManager
 		// GetTwitchClient retrieves a fully configured Twitch client with initialized cache
 		GetTwitchClient func() *twitch.Client
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
@@ -66,6 +68,20 @@ type (
 	}
 
 	SendMessageFunc func(*irc.Message) error
+
+	StorageManager interface {
+		DeleteModuleStore(moduleUUID string) error
+		GetModuleStore(moduleUUID string, storedObject StorageUnmarshaller) error
+		SetModuleStore(moduleUUID string, storedObject StorageMarshaller) error
+	}
+
+	StorageMarshaller interface {
+		MarshalStoredObject() ([]byte, error)
+	}
+
+	StorageUnmarshaller interface {
+		UnmarshalStoredObject([]byte) error
+	}
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, map[string]interface{}) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
