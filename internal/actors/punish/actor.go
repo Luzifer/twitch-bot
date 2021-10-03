@@ -328,4 +328,11 @@ func (s *storage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-func (s *storage) UnmarshalJSON(data []byte) error { return json.Unmarshal(data, s) }
+func (s *storage) UnmarshalJSON(data []byte) error {
+	if data == nil {
+		// No data set yet, don't try to unmarshal
+		return nil
+	}
+
+	return json.Unmarshal(data, s)
+}
