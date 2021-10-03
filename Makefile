@@ -31,7 +31,7 @@ editor/bundle.css:
 # --- Wiki Updates
 
 actor_docs:
-	go run . --twitch-client=noop --twitch-token=noop actor-docs >wiki/Actors.md
+	go run . actor-docs >wiki/Actors.md
 
 pull_wiki:
 	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
