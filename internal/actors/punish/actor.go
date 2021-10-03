@@ -62,7 +62,7 @@ func Register(args plugins.RegistrationArguments) error {
 			},
 			{
 				Default:         "",
-				Description:     "Reason why the user was banned",
+				Description:     "Reason why the user was banned / timeouted",
 				Key:             "reason",
 				Name:            "Reason",
 				Optional:        true,

@@ -135,7 +135,7 @@ Apply increasing punishments to user
     # Optional: false
     # Type:     array of strings
     levels: []
-    # Reason why the user was banned
+    # Reason why the user was banned / timeouted
     # Optional: true
     # Type:     string
     reason: ""
