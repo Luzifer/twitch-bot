@@ -8,6 +8,18 @@ const NANO = 1000000000
 Vue.config.devtools = true
 new Vue({
   computed: {
+    addActionDescription() {
+      if (!this.models.addAction) {
+        return ''
+      }
+
+      for (const action of this.actions) {
+        if (action.type === this.models.addAction) {
+          return action.description
+        }
+      }
+    },
+
     authURL() {
       const scopes = []
 
