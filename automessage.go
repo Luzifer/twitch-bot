@@ -64,7 +64,7 @@ func (a *autoMessage) CanSend() bool {
 			"lastMessage":   a.lastMessageSent,
 			"nextExecution": nextExecute,
 			"now":           time.Now(),
-		}).Debug("Auto-Message was allowed through cron")
+		}).Trace("Auto-Message was allowed through cron")
 	}
 
 	if a.OnlyOnLive {
