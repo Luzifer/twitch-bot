@@ -213,7 +213,7 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 		"channel":  i.getChannel(m),
 		"tags":     m.Tags,
 		"trailing": m.Trailing(),
-	}).Debug("IRC NOTICE event")
+	}).Trace("IRC NOTICE event")
 
 	switch m.Tags["msg-id"] {
 	case "":
@@ -259,7 +259,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		"channel":  i.getChannel(m),
 		"tags":     m.Tags,
 		"trailing": m.Trailing(),
-	}).Debug("IRC USERNOTICE event")
+	}).Trace("IRC USERNOTICE event")
 
 	switch m.Tags["msg-id"] {
 	case "":
@@ -268,6 +268,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "raid":
 		log.WithFields(log.Fields{
+			"channel":     i.getChannel(m),
 			"from":        m.Tags["login"],
 			"viewercount": m.Tags["msg-param-viewerCount"],
 		}).Info("Incoming raid")
@@ -275,12 +276,34 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeRaid, nil)
 
 	case "resub":
+		log.WithFields(log.Fields{
+			"channel":           i.getChannel(m),
+			"from":              m.Tags["login"],
+			"subscribed_months": m.Tags["msg-param-cumulative-months"],
+			"plan":              m.Tags["msg-param-sub-plan"],
+		}).Info("User re-subscribed")
+
 		go handleMessage(i.c, m, eventTypeResub, nil)
 
 	case "sub":
+		log.WithFields(log.Fields{
+			"channel": i.getChannel(m),
+			"from":    m.Tags["login"],
+			"plan":    m.Tags["msg-param-sub-plan"],
+		}).Info("User subscribed")
+
 		go handleMessage(i.c, m, eventTypeSub, nil)
 
 	case "subgift", "anonsubgift":
+		log.WithFields(log.Fields{
+			"channel":           i.getChannel(m),
+			"from":              m.Tags["login"],
+			"gifted_months":     m.Tags["msg-param-gift-months"],
+			"subscribed_months": m.Tags["msg-param-cumulative-months"],
+			"plan":              m.Tags["msg-param-sub-plan"],
+			"to":                m.Tags["msg-param-recipient-user-name"],
+		}).Info("User gifted a sub")
+
 		go handleMessage(i.c, m, eventTypeSubgift, nil)
 
 	}
