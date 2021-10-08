@@ -1,3 +1,11 @@
+# 1.2.0 / 2021-10-08
+
+  * [core] Log submysterygift
+  * [automessage] Move spammy message to trace-level
+  * [core] Improve logs for USERNOTICE events
+  * [editor] Add description to "Add Action" form group
+  * Add "punish", "reset-punish" actors and storage manager (#8)
+
 # 1.1.0 / 2021-10-01
 
   * [templating] Add `botHasBadge` function
