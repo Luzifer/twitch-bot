@@ -306,6 +306,14 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 		go handleMessage(i.c, m, eventTypeSubgift, nil)
 
+	case "submysterygift":
+		log.WithFields(log.Fields{
+			"channel": i.getChannel(m),
+			"from":    m.Tags["login"],
+			"number":  m.Tags["msg-param-mass-gift-count"],
+			"plan":    m.Tags["msg-param-sub-plan"],
+		}).Info("User gifted subs to the community")
+
 	}
 }
 
