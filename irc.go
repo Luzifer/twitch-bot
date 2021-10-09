@@ -296,12 +296,11 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "subgift", "anonsubgift":
 		log.WithFields(log.Fields{
-			"channel":           i.getChannel(m),
-			"from":              m.Tags["login"],
-			"gifted_months":     m.Tags["msg-param-gift-months"],
-			"subscribed_months": m.Tags["msg-param-cumulative-months"],
-			"plan":              m.Tags["msg-param-sub-plan"],
-			"to":                m.Tags["msg-param-recipient-user-name"],
+			"channel":       i.getChannel(m),
+			"from":          m.Tags["login"],
+			"gifted_months": m.Tags["msg-param-gift-months"],
+			"plan":          m.Tags["msg-param-sub-plan"],
+			"to":            m.Tags["msg-param-recipient-user-name"],
 		}).Info("User gifted a sub")
 
 		go handleMessage(i.c, m, eventTypeSubgift, nil)
