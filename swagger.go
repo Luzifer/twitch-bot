@@ -22,7 +22,7 @@ var (
 			Version: "v1",
 		},
 		Servers: []*spec.Server{
-			{URL: "/", Description: "Current bot instance"},
+			{URL: "./", Description: "Current bot instance"},
 		},
 		Paths: make(spec.Paths),
 		Components: &spec.Components{
