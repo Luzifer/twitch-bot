@@ -76,7 +76,7 @@ type actor struct{}
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
-		if attrs.CanString("fallback") {
+		if !attrs.CanString("fallback") {
 			return false, errors.Wrap(err, "preparing response")
 		}
 		if msg, err = formatMessage(attrs.MustString("fallback", nil), m, r, eventData); err != nil {
