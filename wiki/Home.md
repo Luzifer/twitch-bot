@@ -137,9 +137,11 @@ Additionally there are some functions available in the templates:
 - `counterValue <counter name>` - Returns the current value of the counter which identifier was supplied
 - `displayName <username> [fallback]` - Returns the display name the specified user set for themselves
 - `fixUsername <username>` - Ensures the username no longer contains the `@` or `#` prefix
+- `formatDuration <duration> <hours> <minutes> <seconds>` - Returns a formated duration. Pass empty strings to leave out the part: `{{ formatDuration .dur "hours" "minutes" "" }}` yields `N hours, M minutes`
 - `followDate <from> <to>` - Looks up when `from` followed `to`
 - `group <idx> [fallback]` - Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
 - `recentGame <username> [fallback]` - Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
+- `streamUptime <username>` - Returns the duration the stream is online (causes an error if no current stream is found)
 - `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified
 - `toLower <string>` - Converts the given string to lower-case
 - `toUpper <string>` - Converts the given string to upper-case

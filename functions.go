@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"text/template"
@@ -58,10 +59,33 @@ func init() {
 		tplFuncs.Register(n, plugins.GenericTemplateFunctionGetter(f))
 	}
 
+	tplFuncs.Register("concat", plugins.GenericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
+
+	tplFuncs.Register("formatDuration", plugins.GenericTemplateFunctionGetter(func(dur time.Duration, units ...string) string {
+		dLeft := dur
+
+		if len(units) == 0 {
+			return ""
+		}
+
+		var parts []string
+		for idx, div := range []time.Duration{time.Hour, time.Minute, time.Second} {
+			part := dLeft / div
+			dLeft -= part * div
+
+			if len(units) <= idx || units[idx] == "" {
+				continue
+			}
+
+			parts = append(parts, fmt.Sprintf("%d %s", part, units[idx]))
+		}
+
+		return strings.Join(parts, ", ")
+	}))
+
 	tplFuncs.Register("toLower", plugins.GenericTemplateFunctionGetter(strings.ToLower))
 	tplFuncs.Register("toUpper", plugins.GenericTemplateFunctionGetter(strings.ToUpper))
-	tplFuncs.Register("followDate", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Time, error) { return twitchClient.GetFollowDate(from, to) }))
-	tplFuncs.Register("concat", plugins.GenericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
+
 	tplFuncs.Register("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) string {
 		value := store.GetVariable(name)
 		if value == "" && len(defVal) > 0 {

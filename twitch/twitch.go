@@ -39,6 +39,23 @@ type (
 		apiCache *APICache
 	}
 
+	StreamInfo struct {
+		ID           string    `json:"id"`
+		UserID       string    `json:"user_id"`
+		UserLogin    string    `json:"user_login"`
+		UserName     string    `json:"user_name"`
+		GameID       string    `json:"game_id"`
+		GameName     string    `json:"game_name"`
+		Type         string    `json:"type"`
+		Title        string    `json:"title"`
+		ViewerCount  int64     `json:"viewer_count"`
+		StartedAt    time.Time `json:"started_at"`
+		Language     string    `json:"language"`
+		ThumbnailURL string    `json:"thumbnail_url"`
+		TagIds       []string  `json:"tag_ids"`
+		IsMature     bool      `json:"is_mature"`
+	}
+
 	User struct {
 		DisplayName     string `json:"display_name"`
 		ID              string `json:"id"`
@@ -251,6 +268,41 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 	c.apiCache.Set(cacheKey, twitchMinCacheTime, len(payload.Data) == 1 && payload.Data[0].Type == "live")
 
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
+}
+
+func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
+	cacheKey := []string{"currentStreamInfo", username}
+	if si := c.apiCache.Get(cacheKey); si != nil {
+		return si.(*StreamInfo), nil
+	}
+
+	id, err := c.GetIDForUsername(username)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting ID for username")
+	}
+
+	var payload struct {
+		Data []*StreamInfo `json:"data"`
+	}
+
+	if err := c.request(
+		context.Background(),
+		http.MethodGet,
+		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", id),
+		nil,
+		&payload,
+	); err != nil {
+		return nil, errors.Wrap(err, "request channel info")
+	}
+
+	if l := len(payload.Data); l != 1 {
+		return nil, errors.Errorf("unexpected number of users returned: %d", l)
+	}
+
+	// Stream-info can be changed at any moment, cache for a short period of time
+	c.apiCache.Set(cacheKey, twitchMinCacheTime, payload.Data[0])
+
+	return payload.Data[0], nil
 }
 
 func (c Client) GetIDForUsername(username string) (string, error) {
