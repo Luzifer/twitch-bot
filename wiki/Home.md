@@ -186,7 +186,9 @@ The example was dumped using this action:
 
 ```yaml
   - actions:
-    - command: [/usr/bin/bash, -c, "jq . >&2"]
+    - type: script
+      attributes:
+        command: [/usr/bin/bash, -c, "jq . >&2"]
     match_channels: ['#tezrian']
     match_message: '^!test'
 ```
