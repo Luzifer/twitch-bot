@@ -28,5 +28,9 @@ func DeriveUser(m *irc.Message, evtData FieldCollection) string {
 		return s
 	}
 
+	if s, err := evtData.String("username"); err == nil {
+		return s
+	}
+
 	return ""
 }

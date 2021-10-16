@@ -205,7 +205,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	log.WithField("user", username).Debug("Added permit")
 	timerStore.AddPermit(m.Params[0], username)
 
-	go handleMessage(i.c, m, eventTypePermit, nil)
+	go handleMessage(i.c, m, eventTypePermit, plugins.FieldCollection{"username": username})
 }
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
@@ -268,8 +268,9 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "raid":
 		evtData := plugins.FieldCollection{
-			"channel":     i.getChannel(m),
+			"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":        m.Tags["login"],
+			"user":        m.Tags["login"], // Compatibility to plugins.DeriveUser
 			"viewercount": m.Tags["msg-param-viewerCount"],
 		}
 		log.WithFields(log.Fields(evtData)).Info("Incoming raid")
@@ -278,10 +279,11 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "resub":
 		evtData := plugins.FieldCollection{
-			"channel":           i.getChannel(m),
+			"channel":           i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":              m.Tags["login"],
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
+			"user":              m.Tags["login"], // Compatibility to plugins.DeriveUser
 		}
 		log.WithFields(log.Fields(evtData)).Info("User re-subscribed")
 
@@ -289,9 +291,10 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "sub":
 		evtData := plugins.FieldCollection{
-			"channel": i.getChannel(m),
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":    m.Tags["login"],
 			"plan":    m.Tags["msg-param-sub-plan"],
+			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
 		}
 		log.WithFields(log.Fields(evtData)).Info("User subscribed")
 
@@ -299,11 +302,12 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "subgift", "anonsubgift":
 		evtData := plugins.FieldCollection{
-			"channel":       i.getChannel(m),
+			"channel":       i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":          m.Tags["login"],
 			"gifted_months": m.Tags["msg-param-gift-months"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
+			"user":          m.Tags["login"], // Compatibility to plugins.DeriveUser
 		}
 		log.WithFields(log.Fields(evtData)).Info("User gifted a sub")
 
@@ -311,10 +315,11 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "submysterygift":
 		evtData := plugins.FieldCollection{
-			"channel": i.getChannel(m),
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":    m.Tags["login"],
 			"number":  m.Tags["msg-param-mass-gift-count"],
 			"plan":    m.Tags["msg-param-sub-plan"],
+			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
 		}
 		log.WithFields(log.Fields(evtData)).Info("User gifted subs to the community")
 
