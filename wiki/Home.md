@@ -147,10 +147,6 @@ Additionally there are some functions available in the templates:
 - `toUpper <string>` - Converts the given string to upper-case
 - `variable <name> [default]` - Returns the variable value or default in case it is empty
 
-For some events special variables are made available:
-- `title` - Available in `title_update` - The new stream title
-- `category` - Available in `category_update` - The new stream category
-
 ## Command executions
 
 Your command will get a JSON object passed through `stdin` you can parse to gain details about the message. It is expected to yield an array of actions on `stdout` and exit with status `0`. If it does not the action will be marked failed. In case you need to output debug output you can use `stderr` which is directly piped to the bots `stderr`.
