@@ -106,8 +106,8 @@ rules: # See below for examples
     match_users: ['mychannel'] # List of users, all names MUST be all lower-case
 
     # Execute actions when this event occurs
-    # Available events: category_update, join, host, part, permit, raid, resub,
-    #                   stream_offline, stream_online, sub, subgift, title_update, whisper
+    # See the Events page in the Wiki for available events and field documentation
+    # https://github.com/Luzifer/twitch-bot/wiki/Events
     match_event: 'permit'
 
     # Execute action when the chat message matches this regular expression
