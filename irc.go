@@ -267,51 +267,58 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		log.WithField("msg", m).Warn("Received usernotice without msg-id")
 
 	case "raid":
-		log.WithFields(log.Fields{
+		evtData := plugins.FieldCollection{
 			"channel":     i.getChannel(m),
 			"from":        m.Tags["login"],
 			"viewercount": m.Tags["msg-param-viewerCount"],
-		}).Info("Incoming raid")
+		}
+		log.WithFields(log.Fields(evtData)).Info("Incoming raid")
 
-		go handleMessage(i.c, m, eventTypeRaid, nil)
+		go handleMessage(i.c, m, eventTypeRaid, evtData)
 
 	case "resub":
-		log.WithFields(log.Fields{
+		evtData := plugins.FieldCollection{
 			"channel":           i.getChannel(m),
 			"from":              m.Tags["login"],
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
-		}).Info("User re-subscribed")
+		}
+		log.WithFields(log.Fields(evtData)).Info("User re-subscribed")
 
-		go handleMessage(i.c, m, eventTypeResub, nil)
+		go handleMessage(i.c, m, eventTypeResub, evtData)
 
 	case "sub":
-		log.WithFields(log.Fields{
+		evtData := plugins.FieldCollection{
 			"channel": i.getChannel(m),
 			"from":    m.Tags["login"],
 			"plan":    m.Tags["msg-param-sub-plan"],
-		}).Info("User subscribed")
+		}
+		log.WithFields(log.Fields(evtData)).Info("User subscribed")
 
-		go handleMessage(i.c, m, eventTypeSub, nil)
+		go handleMessage(i.c, m, eventTypeSub, evtData)
 
 	case "subgift", "anonsubgift":
-		log.WithFields(log.Fields{
+		evtData := plugins.FieldCollection{
 			"channel":       i.getChannel(m),
 			"from":          m.Tags["login"],
 			"gifted_months": m.Tags["msg-param-gift-months"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
-		}).Info("User gifted a sub")
+		}
+		log.WithFields(log.Fields(evtData)).Info("User gifted a sub")
 
-		go handleMessage(i.c, m, eventTypeSubgift, nil)
+		go handleMessage(i.c, m, eventTypeSubgift, evtData)
 
 	case "submysterygift":
-		log.WithFields(log.Fields{
+		evtData := plugins.FieldCollection{
 			"channel": i.getChannel(m),
 			"from":    m.Tags["login"],
 			"number":  m.Tags["msg-param-mass-gift-count"],
 			"plan":    m.Tags["msg-param-sub-plan"],
-		}).Info("User gifted subs to the community")
+		}
+		log.WithFields(log.Fields(evtData)).Info("User gifted subs to the community")
+
+		go handleMessage(i.c, m, eventTypeSubmysterygift, evtData)
 
 	}
 }
