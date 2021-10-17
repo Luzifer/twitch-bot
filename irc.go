@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -249,6 +250,12 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	if strings.HasPrefix(m.Trailing(), "!permit") {
 		i.handlePermit(m)
 		return
+	}
+
+	if bits, err := strconv.ParseInt(string(m.Tags["bits"]), 10, 64); err == nil {
+		go handleMessage(i.c, m, eventTypeBits, plugins.FieldCollection{
+			"bits": bits,
+		})
 	}
 
 	go handleMessage(i.c, m, nil, nil)

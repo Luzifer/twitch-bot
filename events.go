@@ -3,6 +3,7 @@ package main
 func ptrStr(s string) *string { return &s }
 
 var (
+	eventTypeBits           = ptrStr("bits")
 	eventTypeJoin           = ptrStr("join")
 	eventTypeHost           = ptrStr("host")
 	eventTypePart           = ptrStr("part")

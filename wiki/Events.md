@@ -1,5 +1,15 @@
 # Available Events
 
+## `bits`
+
+User spent bits in the channel. The full message is available like in a normal chat message, additionally the `{{ .bits }}` field is added with the total amount of bits spent.
+
+Fields:
+
+- `bits` - Total amount of bits spent in the message
+- `channel` - The channel the event occurred in
+- `username` - The login-name of the user who spent the bits
+
 ## `category_update`
 
 The current category for the channel was changed. (This event has some delay to the real category change!)
