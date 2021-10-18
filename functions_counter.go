@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	tplFuncs.Register("channelCounter", func(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) interface{} {
+	tplFuncs.Register("channelCounter", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
 		return func(name string) (string, error) {
 			channel, ok := fields["channel"].(string)
 			if !ok {

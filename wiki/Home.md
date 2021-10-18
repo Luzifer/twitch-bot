@@ -140,6 +140,7 @@ Additionally there are some functions available in the templates:
 - `formatDuration <duration> <hours> <minutes> <seconds>` - Returns a formated duration. Pass empty strings to leave out the part: `{{ formatDuration .dur "hours" "minutes" "" }}` yields `N hours, M minutes`
 - `followDate <from> <to>` - Looks up when `from` followed `to`
 - `group <idx> [fallback]` - Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
+- `lastQuoteIndex` - Gets the last quote index in the quote database for the current channel
 - `recentGame <username> [fallback]` - Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
 - `streamUptime <username>` - Returns the duration the stream is online (causes an error if no current stream is found)
 - `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified

@@ -49,7 +49,7 @@ Execute external script / command
   attributes:
     # Command to execute
     # Optional: false
-    # Type:     array of strings (Supports Templating in each string) 
+    # Type:     array of strings (Supports Templating in each string)
     command: []
     # Do not activate cooldown for route when command exits non-zero
     # Optional: true
@@ -66,7 +66,7 @@ Update counter values
   attributes:
     # Name of the counter to update
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     counter: ""
     # Value to add to the counter
     # Optional: true
@@ -74,7 +74,7 @@ Update counter values
     counter_step: 1
     # Value to set the counter to
     # Optional: true
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     counter_set: ""
 ```
 
@@ -87,15 +87,15 @@ Update stream information
   attributes:
     # Channel to update
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     channel: ""
     # Category / Game to set
     # Optional: true
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     game: ""
     # Stream title to set
     # Optional: true
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     title: ""
 ```
 
@@ -108,7 +108,7 @@ Modify variable contents
   attributes:
     # Name of the variable to update
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     variable: ""
     # Clear variable content and unset the variable
     # Optional: true
@@ -116,7 +116,7 @@ Modify variable contents
     clear: false
     # Value to set the variable to
     # Optional: true
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     set: ""
 ```
 
@@ -141,12 +141,37 @@ Apply increasing punishments to user
     reason: ""
     # User to apply the action to
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     user: ""
     # Unique identifier for this punishment to differentiate between punishments in the same channel
     # Optional: true
     # Type:     string
     uuid: ""
+```
+
+## Quote Database
+
+Manage a database of quotes in your channel
+
+```yaml
+- type: quotedb
+  attributes:
+    # Action to execute (one of: add, del, get)
+    # Optional: false
+    # Type:     string
+    action: ""
+    # Index of the quote to work with, must yield a number (required on 'del', optional on 'get')
+    # Optional: true
+    # Type:     string (Supports Templating)
+    index: "0"
+    # Quote to add: Format like you like your quote, nothing is added (required on: add)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    quote: ""
+    # Format to use when posting a quote (required on: get)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    format: "Quote #{{ .index }}: {{ .quote }}"
 ```
 
 ## Reset User Punishment
@@ -158,7 +183,7 @@ Reset punishment level for user
   attributes:
     # User to reset the level for
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     user: ""
     # Unique identifier for this punishment to differentiate between punishments in the same channel
     # Optional: true
@@ -175,11 +200,11 @@ Respond to message with a new message
   attributes:
     # Message text to send
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     message: ""
     # Fallback message text to send if message cannot be generated
     # Optional: true
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     fallback: ""
     # Send message as a native Twitch-reply to the original message
     # Optional: true
@@ -200,7 +225,7 @@ Send raw IRC message
   attributes:
     # Raw message to send (must be a valid IRC protocol message)
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     message: ""
 ```
 
@@ -213,11 +238,11 @@ Send a whisper (requires a verified bot!)
   attributes:
     # Message to whisper to the user
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     message: ""
     # User to send the message to
     # Optional: false
-    # Type:     string (Supports Templating) 
+    # Type:     string (Supports Templating)
     to: ""
 ```
 

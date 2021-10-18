@@ -9,6 +9,7 @@ import (
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/internal/actors/punish"
+	"github.com/Luzifer/twitch-bot/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
@@ -25,6 +26,7 @@ var coreActorRegistations = []plugins.RegisterFunc{
 	deleteactor.Register,
 	modchannel.Register,
 	punish.Register,
+	quotedb.Register,
 	raw.Register,
 	respond.Register,
 	timeout.Register,

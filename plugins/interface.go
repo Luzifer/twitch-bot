@@ -83,10 +83,10 @@ type (
 		UnmarshalStoredObject([]byte) error
 	}
 
-	TemplateFuncGetter   func(*irc.Message, *Rule, map[string]interface{}) interface{}
+	TemplateFuncGetter   func(*irc.Message, *Rule, FieldCollection) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
 )
 
 func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {
-	return func(*irc.Message, *Rule, map[string]interface{}) interface{} { return f }
+	return func(*irc.Message, *Rule, FieldCollection) interface{} { return f }
 }
