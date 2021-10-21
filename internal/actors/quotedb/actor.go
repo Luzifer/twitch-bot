@@ -255,7 +255,7 @@ func (s *storage) GetQuote(channel string, quote int) (int, string) {
 	defer s.lock.RUnlock()
 
 	if quote == 0 {
-		quote = rand.Intn(len(s.ChannelQuotes[channel])) + 1
+		quote = rand.Intn(len(s.ChannelQuotes[channel])) + 1 // #nosec G404 // no need for cryptographic safety
 	}
 
 	if quote > len(s.ChannelQuotes[channel]) {
