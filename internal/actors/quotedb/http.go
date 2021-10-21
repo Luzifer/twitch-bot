@@ -82,7 +82,7 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 
 	register(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Updates quote with given {idx} from {channel}",
-		HandlerFunc:  handleDeleteQuote,
+		HandlerFunc:  handleUpdateQuote,
 		Method:       http.MethodPut,
 		Module:       "quotedb",
 		Name:         "Update Quote",
