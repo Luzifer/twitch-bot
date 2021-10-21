@@ -7,6 +7,7 @@ import (
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const actorName = "respond"
@@ -79,6 +80,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		if !attrs.CanString("fallback") || attrs.MustString("fallback", nil) == "" {
 			return false, errors.Wrap(err, "preparing response")
 		}
+		log.WithError(err).Error("Response message processing caused error, trying fallback")
 		if msg, err = formatMessage(attrs.MustString("fallback", nil), m, r, eventData); err != nil {
 			return false, errors.Wrap(err, "preparing response fallback")
 		}
