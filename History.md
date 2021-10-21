@@ -1,3 +1,16 @@
+# 1.3.0 / 2021-10-22
+
+  * [core] Add "bits" event
+  * [core] Add `streamUptime` / `formatDuration` template functions
+  * [core] Add submysterygift event, add more event data to events
+  * [core] Add username fields to events
+  * [core] Remove unused subscribed\_months field from subgifts
+  * [openapi] Allow subdir serving
+  * [quotedb] Add new actor
+  * [respond] Fix: Broken condition for fallback message
+  * [respond] Fix: Empty string fallback should not count as fallback
+  * [respond] Log message template errors even when fallback is set
+
 # 1.2.0 / 2021-10-08
 
   * [core] Log submysterygift
