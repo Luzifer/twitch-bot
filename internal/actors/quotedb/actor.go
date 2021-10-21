@@ -77,6 +77,8 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	registerAPI(args.RegisterAPIRoute)
+
 	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
 		return func() int {
 			return storedObject.GetMaxQuoteIdx(plugins.DeriveChannel(m, nil))
@@ -232,6 +234,15 @@ func (s *storage) DelQuote(channel string, quote int) {
 	s.ChannelQuotes[channel] = quotes
 }
 
+func (s *storage) GetChannelQuotes(channel string) []string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	var out []string
+	out = append(out, s.ChannelQuotes[channel]...)
+	return out
+}
+
 func (s *storage) GetMaxQuoteIdx(channel string) int {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -254,10 +265,34 @@ func (s *storage) GetQuote(channel string, quote int) (int, string) {
 	return quote, s.ChannelQuotes[channel][quote-1]
 }
 
-// Implement marshaller interfaces
-func (s *storage) MarshalStoredObject() ([]byte, error) {
+func (s *storage) SetQuotes(channel string, quotes []string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	s.ChannelQuotes[channel] = quotes
+}
+
+func (s *storage) UpdateQuote(channel string, idx int, quote string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	var quotes []string
+	for i := range s.ChannelQuotes[channel] {
+		if i == idx {
+			quotes = append(quotes, quote)
+			continue
+		}
+
+		quotes = append(quotes, s.ChannelQuotes[channel][i])
+	}
+
+	s.ChannelQuotes[channel] = quotes
+}
+
+// Implement marshaller interfaces
+func (s *storage) MarshalStoredObject() ([]byte, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 
 	return json.Marshal(s)
 }
