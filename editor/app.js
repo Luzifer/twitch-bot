@@ -278,34 +278,11 @@ new Vue({
     },
 
     addAction() {
-      const attributes = {}
-
-      for (const field of this.getActionDefinitionByType(this.models.addAction).fields || []) {
-        let defaultValue = null
-
-        switch (field.type) {
-        case 'bool':
-          defaultValue = field.default === 'true'
-          break
-        case 'int64':
-          defaultValue = field.default ? Number(field.default) : 0
-          break
-        case 'string':
-          defaultValue = field.default
-          break
-        case 'stringslice':
-          defaultValue = []
-          break
-        }
-
-        attributes[field.key] = defaultValue
-      }
-
       if (!this.models.rule.actions) {
         Vue.set(this.models.rule, 'actions', [])
       }
 
-      this.models.rule.actions.push({ attributes, type: this.models.addAction })
+      this.models.rule.actions.push({ attributes: {}, type: this.models.addAction })
     },
 
     addChannel() {
@@ -350,6 +327,7 @@ new Vue({
     editRule(msg) {
       Vue.set(this.models, 'rule', {
         ...msg,
+        actions: msg.actions?.map(action => ({ ...action, attributes: action.attributes || {} })) || [],
         cooldown: this.fixDurationRepresentationToString(msg.cooldown),
         channel_cooldown: this.fixDurationRepresentationToString(msg.channel_cooldown),
         user_cooldown: this.fixDurationRepresentationToString(msg.user_cooldown),
@@ -626,7 +604,62 @@ new Vue({
         evt.preventDefault()
       }
 
-      const obj = { ...this.models.rule }
+      const obj = {
+        ...this.models.rule,
+        actions: this.models.rule.actions.map(action => ({
+          ...action,
+          attributes: Object.fromEntries(Object.entries(action.attributes)
+            .filter(att => {
+              const def = this.getActionDefinitionByType(action.type)
+              const field = def.fields.filter(field => field.key == att[0])[0]
+
+              if (!field) {
+                // The field is not defined, drop it
+                return false
+              }
+
+              if (att[1] === null || att[1] === undefined) {
+                // Drop null / undefined values
+                return false
+              }
+
+              // Check for zero-values and drop the field on zero-value
+              switch (field.type) {
+              case 'bool':
+                if (att[1] === false) {
+                  return false
+                }
+                break
+
+              case 'duration':
+                if (att[1] === '0s' || att[1] === '') {
+                  return false
+                }
+                break
+
+              case 'int64':
+                if (att[1] === 0) {
+                  return false
+                }
+                break
+
+              case 'string':
+                if (att[1] == '') {
+                  return false
+                }
+                break
+
+              case 'stringslice':
+                if (att[1] === null || att[1].length == 0) {
+                  return false
+                }
+                break
+              }
+
+              return true
+            })),
+        })),
+      }
 
       if (obj.cooldown) {
         obj.cooldown = this.fixDurationRepresentationToInt64(obj.cooldown)
