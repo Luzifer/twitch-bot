@@ -46,7 +46,9 @@ new Vue({
     availableModules() {
       return [
         { text: 'ANY', value: '*' },
-        ...this.modules.sort().map(m => ({ text: m, value: m })),
+        ...this.modules.sort()
+          .filter(m => m !== 'config-editor')
+          .map(m => ({ text: m, value: m })),
       ]
     },
 
