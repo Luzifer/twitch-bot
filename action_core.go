@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
@@ -20,18 +21,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var coreActorRegistations = []plugins.RegisterFunc{
-	ban.Register,
-	delay.Register,
-	deleteactor.Register,
-	modchannel.Register,
-	punish.Register,
-	quotedb.Register,
-	raw.Register,
-	respond.Register,
-	timeout.Register,
-	whisper.Register,
-}
+var (
+	coreActorRegistations = []plugins.RegisterFunc{
+		ban.Register,
+		delay.Register,
+		deleteactor.Register,
+		modchannel.Register,
+		punish.Register,
+		quotedb.Register,
+		raw.Register,
+		respond.Register,
+		timeout.Register,
+		whisper.Register,
+	}
+	knownModules []string
+)
 
 func initCorePlugins() error {
 	args := getRegistrationArguments()
@@ -47,6 +51,10 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	r := router.
 		PathPrefix(fmt.Sprintf("/%s/", route.Module)).
 		Subrouter()
+
+	if !str.StringInSlice(route.Module, knownModules) {
+		knownModules = append(knownModules, route.Module)
+	}
 
 	var hdl http.Handler = route.HandlerFunc
 	switch {
