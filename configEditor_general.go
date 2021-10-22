@@ -41,6 +41,14 @@ func registerEditorGeneralConfigRoutes() {
 			Path:                "/auth-token/{handle}",
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
+			RouteParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "UUID of the auth-token to delete",
+					Name:        "handle",
+					Required:    true,
+					Type:        "string",
+				},
+			},
 		},
 		{
 			Description:         "List authorization tokens",
