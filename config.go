@@ -54,6 +54,7 @@ type (
 		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
 		BotEditors           []string               `yaml:"bot_editors"`
 		Channels             []string               `yaml:"channels"`
+		GitTrackConfig       bool                   `yaml:"git_track_config"`
 		HTTPListen           string                 `yaml:"http_listen"`
 		PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
 		PermitTimeout        time.Duration          `yaml:"permit_timeout"`
@@ -165,7 +166,7 @@ func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	return errors.Wrap(decoder.Decode(obj), "decode config file")
 }
 
-func patchConfig(filename string, patcher func(*configFile) error) error {
+func patchConfig(filename, authorName, authorEmail, summary string, patcher func(*configFile) error) error {
 	var (
 		cfgFile = newConfigFile()
 		err     error
@@ -182,19 +183,19 @@ func patchConfig(filename string, patcher func(*configFile) error) error {
 	}
 
 	return errors.Wrap(
-		writeConfigToYAML(filename, cfgFile),
+		writeConfigToYAML(filename, authorName, authorEmail, summary, cfgFile),
 		"replacing config",
 	)
 }
 
-func writeConfigToYAML(filename string, obj interface{}) error {
+func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *configFile) error {
 	tmpFile, err := ioutil.TempFile(path.Dir(filename), "twitch-bot-*.yaml")
 	if err != nil {
 		return errors.Wrap(err, "opening tempfile")
 	}
 	tmpFileName := tmpFile.Name()
 
-	fmt.Fprintf(tmpFile, "# Automatically updated by Config-Editor frontend, last update: %s\n", time.Now().Format(time.RFC3339))
+	fmt.Fprintf(tmpFile, "# Automatically updated by %s using Config-Editor frontend, last update: %s\n", authorName, time.Now().Format(time.RFC3339))
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
 		tmpFile.Close()
@@ -202,9 +203,23 @@ func writeConfigToYAML(filename string, obj interface{}) error {
 	}
 	tmpFile.Close()
 
+	if err = os.Rename(tmpFileName, filename); err != nil {
+		return errors.Wrap(err, "moving config to location")
+	}
+
+	if !obj.GitTrackConfig {
+		return nil
+	}
+
+	git := newGitHelper(path.Dir(filename))
+	if !git.HasRepo() {
+		log.Error("Instructed to track changes using Git, but config not in repo")
+		return nil
+	}
+
 	return errors.Wrap(
-		os.Rename(tmpFileName, filename),
-		"moving config to location",
+		git.CommitChange(path.Base(filename), authorName, authorEmail, summary),
+		"committing config changes",
 	)
 }
 

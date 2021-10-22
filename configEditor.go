@@ -76,6 +76,11 @@ func registerEditorAutoMessageRoutes() {
 		{
 			Description: "Adds a new Auto-Message",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
 				msg := &autoMessage{}
 				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -84,7 +89,7 @@ func registerEditorAutoMessageRoutes() {
 
 				msg.UUID = uuid.Must(uuid.NewV4()).String()
 
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				if err := patchConfig(cfg.Config, user, "", "Add auto-message", func(c *configFile) error {
 					c.AutoMessages = append(c.AutoMessages, msg)
 					return nil
 				}); err != nil {
@@ -104,7 +109,12 @@ func registerEditorAutoMessageRoutes() {
 		{
 			Description: "Deletes the given Auto-Message",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
+				if err := patchConfig(cfg.Config, user, "", "Delete auto-message", func(c *configFile) error {
 					var (
 						id  = mux.Vars(r)["uuid"]
 						tmp []*autoMessage
@@ -145,13 +155,18 @@ func registerEditorAutoMessageRoutes() {
 		{
 			Description: "Updates the given Auto-Message",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
 				msg := &autoMessage{}
 				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				if err := patchConfig(cfg.Config, user, "", "Update auto-message", func(c *configFile) error {
 					id := mux.Vars(r)["uuid"]
 
 					for i := range c.AutoMessages {
@@ -240,6 +255,11 @@ func registerEditorGeneralConfigRoutes() {
 		{
 			Description: "Updates the general config",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
 				var payload configEditorGeneralConfig
 
 				if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -257,7 +277,7 @@ func registerEditorGeneralConfigRoutes() {
 					payload.BotEditors[i] = usr.ID
 				}
 
-				if err := patchConfig(cfg.Config, func(cfg *configFile) error {
+				if err := patchConfig(cfg.Config, user, "", "Update general config", func(cfg *configFile) error {
 					cfg.Channels = payload.Channels
 					cfg.BotEditors = payload.BotEditors
 
@@ -482,6 +502,11 @@ func registerEditorRulesRoutes() {
 		{
 			Description: "Adds a new Rule",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
 				msg := &plugins.Rule{}
 				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
@@ -490,7 +515,7 @@ func registerEditorRulesRoutes() {
 
 				msg.UUID = uuid.Must(uuid.NewV4()).String()
 
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				if err := patchConfig(cfg.Config, user, "", "Add rule", func(c *configFile) error {
 					c.Rules = append(c.Rules, msg)
 					return nil
 				}); err != nil {
@@ -510,7 +535,12 @@ func registerEditorRulesRoutes() {
 		{
 			Description: "Deletes the given Rule",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
+				if err := patchConfig(cfg.Config, user, "", "Delete rule", func(c *configFile) error {
 					var (
 						id  = mux.Vars(r)["uuid"]
 						tmp []*plugins.Rule
@@ -551,13 +581,18 @@ func registerEditorRulesRoutes() {
 		{
 			Description: "Updates the given Rule",
 			HandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+				user, _, err := getAuthorizationFromRequest(r)
+				if err != nil {
+					http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+				}
+
 				msg := &plugins.Rule{}
 				if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
 
-				if err := patchConfig(cfg.Config, func(c *configFile) error {
+				if err := patchConfig(cfg.Config, user, "", "Update rule", func(c *configFile) error {
 					id := mux.Vars(r)["uuid"]
 
 					for i := range c.Rules {

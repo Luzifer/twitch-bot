@@ -8,17 +8,21 @@ import (
 	"github.com/pkg/errors"
 )
 
+func getAuthorizationFromRequest(r *http.Request) (string, *twitch.Client, error) {
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		return "", nil, errors.New("no authorization provided")
+	}
+
+	tc := twitch.New(cfg.TwitchClient, token)
+
+	user, err := tc.GetAuthorizedUsername()
+	return user, tc, errors.Wrap(err, "getting authorized user")
+}
+
 func botEditorAuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		if token == "" {
-			http.Error(w, "no auth-token provided", http.StatusForbidden)
-			return
-		}
-
-		tc := twitch.New(cfg.TwitchClient, token)
-
-		user, err := tc.GetAuthorizedUsername()
+		user, tc, err := getAuthorizationFromRequest(r)
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusForbidden)
 			return

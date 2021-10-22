@@ -18,6 +18,15 @@ bot_editors: []
 channels:
   - mychannel
 
+# The bot is able to track config changes made through the config-editor
+# web-interface using Git (https://git-scm.com/). To use this feature
+# create a Git repository in the folder the config is placed: `git init`
+#
+# Afterwards switch this option to `true` and you're good to go: Each
+# change made by the editor causes a Git commit with the logged in user
+# as author of the commit.
+git_track_config: false
+
 # Enable HTTP server to control plugins / core functionality
 # if unset the server is not started, to change the bot must be restarted
 http_listen: "127.0.0.1:3000"
