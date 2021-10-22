@@ -179,6 +179,47 @@
                 </b-list-group>
               </b-card>
 
+              <b-card no-body>
+                <b-card-header
+                  class="d-flex align-items-center align-middle"
+                >
+                  <span class="mr-auto"><i class="fas fa-fw fa-ticket-alt mr-1"></i> Auth-Tokens</span>
+                  <b-button-group size="sm">
+                    <b-button @click="newAPIToken" variant="success"><i class="fas fa-fw fa-plus"></i></b-button>
+                  </b-button-group>
+                </b-card-header>
+                <b-list-group flush>
+                  <b-list-group-item
+                    variant="success"
+                    v-if="createdAPIToken"
+                  >
+                    Token was created, copy it as you will not see it again:<br>
+                    <code>{{ createdAPIToken.token }}</code>
+                  </b-list-group-item>
+
+                  <b-list-group-item
+                    class="d-flex align-items-center align-middle"
+                    :key="uuid"
+                    v-for="(token, uuid) in apiTokens"
+                  >
+                    <span class="mr-auto">
+                      {{ token.name }}<br>
+                      <b-badge
+                        :key="module"
+                        v-for="module in token.modules"
+                      >{{ module }}</b-badge>
+                    </span>
+                    <b-button
+                      @click="removeAPIToken(uuid)"
+                      size="sm"
+                      variant="danger"
+                    >
+                      <i class="fas fa-fw fa-minus"></i>
+                    </b-button>
+                  </b-list-group-item>
+                </b-list-group>
+              </b-card>
+
             </b-card-group>
           </b-col>
         </b-row>
@@ -266,6 +307,43 @@
         </b-row>
 
       </template>
+
+      <!-- API-Token Editor -->
+      <b-modal
+        @hidden="showAPITokenEditModal=false"
+        hide-header-close
+        @ok="saveAPIToken"
+        :ok-disabled="!validateAPIToken"
+        ok-title="Save"
+        size="md"
+        :visible="showAPITokenEditModal"
+        title="New API-Token"
+        v-if="showAPITokenEditModal"
+      >
+        <b-form-group
+          label="Name"
+          label-for="formAPITokenName"
+        >
+          <b-form-input
+            id="formAPITokenName"
+            v-model="models.apiToken.name"
+            :state="Boolean(models.apiToken.name)"
+            type="text"
+          ></b-form-input>
+        </b-form-group>
+
+        <b-form-group
+          label="Enabled for Modules"
+        >
+          <b-form-checkbox-group
+            class="mb-3"
+            :options="availableModules"
+            text-field="text"
+            value-field="value"
+            v-model="models.apiToken.modules"
+          ></b-form-checkbox-group>
+        </b-form-group>
+      </b-modal>
 
       <!-- Auto-Message Editor -->
       <b-modal
