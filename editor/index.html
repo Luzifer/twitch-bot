@@ -193,7 +193,7 @@
                     variant="success"
                     v-if="createdAPIToken"
                   >
-                    Token was created, copy it as you will not see it again:<br>
+                    Token was created, copy it within 30s as you will not see it again:<br>
                     <code>{{ createdAPIToken.token }}</code>
                   </b-list-group-item>
 
@@ -207,7 +207,7 @@
                       <b-badge
                         :key="module"
                         v-for="module in token.modules"
-                      >{{ module }}</b-badge>
+                      >{{ module === '*' ? 'ANY' : module }}</b-badge>
                     </span>
                     <b-button
                       @click="removeAPIToken(uuid)"

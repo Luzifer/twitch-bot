@@ -46,7 +46,7 @@ new Vue({
     availableModules() {
       return [
         { text: 'ANY', value: '*' },
-        ...this.modules.map(m => ({ text: m, value: m })),
+        ...this.modules.sort().map(m => ({ text: m, value: m })),
       ]
     },
 
