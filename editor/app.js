@@ -638,7 +638,7 @@ new Vue({
                 break
 
               case 'int64':
-                if (att[1] === 0) {
+                if (att[1] === 0 || att[1] == '') {
                   return false
                 }
                 break
