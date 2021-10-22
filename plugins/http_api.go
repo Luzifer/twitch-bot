@@ -11,6 +11,7 @@ type (
 	}
 
 	HTTPRouteRegistrationArgs struct {
+		Accept              []string
 		Description         string
 		HandlerFunc         http.HandlerFunc
 		IsPrefix            bool
@@ -34,4 +35,5 @@ const (
 	HTTPRouteResponseTypeNo200 HTTPRouteResponseType = iota
 	HTTPRouteResponseTypeTextPlain
 	HTTPRouteResponseTypeJSON
+	HTTPRouteResponseTypeMultiple
 )

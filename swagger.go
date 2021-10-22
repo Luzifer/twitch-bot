@@ -100,6 +100,12 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	case plugins.HTTPRouteResponseTypeJSON:
 		op.Responses["200"] = spec.JSONResponse(nil).WithDescription("Successful execution with JSON object response")
 
+	case plugins.HTTPRouteResponseTypeMultiple:
+		op.Responses["200"] = (&spec.Response{}).WithDescription("Successful execution with variable response based on Accept header")
+		for _, a := range route.Accept {
+			op.Responses["200"].AddContent(a, &spec.MediaType{Schema: nil})
+		}
+
 	case plugins.HTTPRouteResponseTypeNo200:
 		// We don't add a 200 then
 
