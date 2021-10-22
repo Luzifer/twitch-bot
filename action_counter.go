@@ -95,6 +95,7 @@ func init() {
 				Type:        "int64",
 			},
 		},
+		RequiresWriteAuth: true,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Name of the counter to update",

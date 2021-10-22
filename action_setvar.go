@@ -80,6 +80,7 @@ func init() {
 				Type:        "string",
 			},
 		},
+		RequiresWriteAuth: true,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Name of the variable to update",
