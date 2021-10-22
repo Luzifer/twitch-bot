@@ -46,11 +46,18 @@ func registerConfigReloadHook(hook func()) func() {
 }
 
 type (
+	configAuthToken struct {
+		Hash    string
+		Modules []string
+		Name    string
+	}
+
 	configFileVersioner struct {
 		ConfigVersion int64 `yaml:"config_version"`
 	}
 
 	configFile struct {
+		AuthTokens           []configAuthToken      `yaml:"auth_tokens"`
 		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
 		BotEditors           []string               `yaml:"bot_editors"`
 		Channels             []string               `yaml:"channels"`

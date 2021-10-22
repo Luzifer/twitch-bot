@@ -49,8 +49,11 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		Subrouter()
 
 	var hdl http.Handler = route.HandlerFunc
-	if route.RequiresEditorsAuth {
+	switch {
+	case route.RequiresEditorsAuth:
 		hdl = botEditorAuthMiddleware(hdl)
+	case route.RequiresWriteAuth:
+		hdl = writeAuthMiddleware(hdl, route.Module)
 	}
 
 	if route.IsPrefix {

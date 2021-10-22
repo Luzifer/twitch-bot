@@ -31,15 +31,25 @@ var (
 				"inputErrorResponse":   spec.TextPlainResponse(nil).WithDescription("Data sent to API is invalid: See error message"),
 				"notFoundResponse":     spec.TextPlainResponse(nil).WithDescription("Document was not found or insufficient permissions"),
 			},
-			SecuritySchemes: map[string]*spec.SecurityScheme{
-				"authenticated": spec.APIKeyAuth("Authorization", spec.InHeader),
-			},
 		},
 	}
 
 	//go:embed swagger.html
 	swaggerHTML []byte
 )
+
+func init() {
+	secConfigEditor := spec.APIKeyAuth("Authorization", spec.InHeader)
+	secConfigEditor.Description = "Authorization token issued by Twitch"
+
+	secWriteAuth := spec.APIKeyAuth("Authorization", spec.InHeader)
+	secWriteAuth.Description = "Authorization token stored in the config"
+
+	swaggerDoc.Components.SecuritySchemes = map[string]*spec.SecurityScheme{
+		"configEditor": secConfigEditor,
+		"writeAuth":    secWriteAuth,
+	}
+}
 
 func handleSwaggerHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
@@ -90,9 +100,15 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		},
 	}
 
-	if route.RequiresEditorsAuth {
+	switch {
+	case route.RequiresEditorsAuth:
 		op.Security = []map[string]spec.SecurityRequirement{
-			{"authenticated": {}},
+			{"configEditor": {}},
+		}
+
+	case route.RequiresWriteAuth:
+		op.Security = []map[string]spec.SecurityRequirement{
+			{"writeAuth": {}},
 		}
 	}
 

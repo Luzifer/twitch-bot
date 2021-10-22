@@ -21,6 +21,7 @@ type (
 		Path                string
 		QueryParams         []HTTPRouteParamDocumentation
 		RequiresEditorsAuth bool
+		RequiresWriteAuth   bool
 		ResponseType        HTTPRouteResponseType
 		RouteParams         []HTTPRouteParamDocumentation
 		SkipDocumentation   bool
