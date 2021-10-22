@@ -1,6 +1,7 @@
 package quotedb
 
 import (
+	_ "embed"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -11,7 +12,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	//go:embed list.html
+	listFrontend []byte
+	//go:embed list.js
+	listScript []byte
+)
+
 func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
+	register(plugins.HTTPRouteRegistrationArgs{
+		HandlerFunc:       handleScript,
+		Method:            http.MethodGet,
+		Module:            "quotedb",
+		Path:              "/app.js",
+		SkipDocumentation: true,
+	})
+
 	register(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Add quotes for the given {channel}",
 		HandlerFunc:  handleAddQuotes,
@@ -49,13 +65,14 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 	})
 
 	register(plugins.HTTPRouteRegistrationArgs{
+		Accept:       []string{"application/json", "text/html"},
 		Description:  "Lists all quotes for the given {channel}",
 		HandlerFunc:  handleListQuotes,
 		Method:       http.MethodGet,
 		Module:       "quotedb",
 		Name:         "List Quotes",
 		Path:         "/{channel}",
-		ResponseType: plugins.HTTPRouteResponseTypeJSON,
+		ResponseType: plugins.HTTPRouteResponseTypeMultiple,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Channel to delete the quote in",
@@ -145,6 +162,12 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleListQuotes(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(listFrontend)
+		return
+	}
+
 	channel := "#" + strings.TrimLeft(mux.Vars(r)["channel"], "#")
 
 	quotes := storedObject.GetChannelQuotes(channel)
@@ -172,6 +195,11 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func handleScript(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/javascript")
+	w.Write(listScript)
 }
 
 func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {

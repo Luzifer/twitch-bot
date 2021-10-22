@@ -1,0 +1,30 @@
+<html>
+
+  <title>Quote-Database</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/combine/npm/bootstrap@4/dist/css/bootstrap.min.css,npm/bootstrap-vue@2/dist/bootstrap-vue.min.css,npm/bootswatch@4/dist/darkly/bootstrap.min.css">
+
+  <style>
+    [v-cloak] {
+      display: none;
+    }
+  </style>
+
+  <div id="app" v-cloak>
+    <b-container class="my-3">
+      <b-row>
+        <b-col>
+          <b-table
+            :fields="fields"
+            :items="quoteItems"
+            sort-by="id"
+            :sort-desc="true"
+            striped
+          ></b-table>
+        </b-col>
+      </b-row>
+    </b-container>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/combine/npm/axios@0.21.1/dist/axios.min.js,npm/vue@2,npm/bootstrap-vue@2/dist/bootstrap-vue.min.js"></script>
+  <script src="app.js"></script>
+</html>
