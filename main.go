@@ -116,12 +116,15 @@ func handleSubCommand(args []string) {
 			log.WithError(err).Fatal("Unable to output token info")
 		}
 
-	default:
-		log.Errorf("Unknown sub-command %q", args[0])
-		fallthrough
-
 	case "help":
-		log.Info("Supported commands are: actor-docs, api-token")
+		fmt.Println("Supported sub-commands are:")
+		fmt.Println("  actor-docs                     Generate markdown documentation for available actors")
+		fmt.Println("  api-token <name> <scope...>    Generate an api-token to be entered into the config")
+		fmt.Println("  help                           Prints this help message")
+
+	default:
+		handleSubCommand([]string{"help"})
+		log.Fatalf("Unknown sub-command %q", args[0])
 
 	}
 }
