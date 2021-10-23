@@ -20,7 +20,7 @@ func loadPlugins(pluginDir string) error {
 	d, err := os.Stat(pluginDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			logger.Warn("Plugin directory not found, skipping")
+			logger.Debug("Plugin directory not found, skipping")
 			return nil
 		}
 		return errors.Wrap(err, "getting plugin-dir info")
