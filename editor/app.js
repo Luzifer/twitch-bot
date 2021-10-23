@@ -43,6 +43,15 @@ new Vue({
       ]
     },
 
+    availableModules() {
+      return [
+        { text: 'ANY', value: '*' },
+        ...this.modules.sort()
+          .filter(m => m !== 'config-editor')
+          .map(m => ({ text: m, value: m })),
+      ]
+    },
+
     axiosOptions() {
       return {
         headers: {
@@ -93,6 +102,10 @@ new Vue({
 
           return an.localeCompare(bn)
         })
+    },
+
+    validateAPIToken() {
+      return this.models.apiToken.modules.length > 0 && Boolean(this.models.apiToken.name)
     },
 
     validateAutoMessage() {
@@ -183,6 +196,7 @@ new Vue({
 
   data: {
     actions: [],
+    apiTokens: {},
     authToken: null,
     autoMessageFields: [
       {
@@ -221,6 +235,7 @@ new Vue({
     configNotifySocket: null,
     configNotifySocketConnected: false,
     configNotifyBackoff: 100,
+    createdAPIToken: null,
     editMode: 'general',
     error: null,
     generalConfig: {},
@@ -228,10 +243,12 @@ new Vue({
       addAction: '',
       addChannel: '',
       addEditor: '',
+      apiToken: {},
       autoMessage: {},
       rule: {},
     },
 
+    modules: [],
     rules: [],
     rulesFields: [
       {
@@ -254,6 +271,7 @@ new Vue({
       },
     ],
 
+    showAPITokenEditModal: false,
     showAutoMessageEditModal: false,
     showRuleEditModal: false,
     userProfiles: {},
@@ -344,6 +362,14 @@ new Vue({
         .catch(err => this.handleFetchError(err))
     },
 
+    fetchAPITokens() {
+      return axios.get('config-editor/auth-tokens', this.axiosOptions)
+        .then(resp => {
+          this.apiTokens = resp.data
+        })
+        .catch(err => this.handleFetchError(err))
+    },
+
     fetchAutoMessages() {
       return axios.get('config-editor/auto-messages', this.axiosOptions)
         .then(resp => {
@@ -365,6 +391,14 @@ new Vue({
 
           return Promise.all(promises)
         })
+    },
+
+    fetchModules() {
+      return axios.get('config-editor/modules')
+        .then(resp => {
+          this.modules = resp.data
+        })
+        .catch(err => this.handleFetchError(err))
     },
 
     fetchProfile(user) {
@@ -500,6 +534,14 @@ new Vue({
       Vue.set(this.models.rule, 'actions', tmp)
     },
 
+    newAPIToken() {
+      Vue.set(this.models, 'apiToken', {
+        name: '',
+        modules: [],
+      })
+      this.showAPITokenEditModal = true
+    },
+
     newAutoMessage() {
       Vue.set(this.models, 'autoMessage', {})
       this.showAutoMessageEditModal = true
@@ -545,6 +587,7 @@ new Vue({
 
     reload() {
       return Promise.all([
+        this.fetchAPITokens(),
         this.fetchAutoMessages(),
         this.fetchGeneralConfig(),
         this.fetchRules(),
@@ -555,6 +598,14 @@ new Vue({
 
     removeAction(idx) {
       this.models.rule.actions = this.models.rule.actions.filter((_, i) => i !== idx)
+    },
+
+    removeAPIToken(uuid) {
+      axios.delete(`config-editor/auth-tokens/${uuid}`, this.axiosOptions)
+        .then(() => {
+          this.changePending = true
+        })
+        .catch(err => this.handleFetchError(err))
     },
 
     removeChannel(channel) {
@@ -571,9 +622,27 @@ new Vue({
       this.updateGeneralConfig()
     },
 
+    saveAPIToken() {
+      if (!this.validateAPIToken) {
+        evt.preventDefault()
+        return
+      }
+
+      axios.post(`config-editor/auth-tokens`, this.models.apiToken, this.axiosOptions)
+        .then(resp => {
+          this.createdAPIToken = resp.data
+          this.changePending = true
+          window.setTimeout(() => {
+            this.createdAPIToken = null
+          }, 30000)
+        })
+        .catch(err => this.handleFetchError(err))
+    },
+
     saveAutoMessage(evt) {
       if (!this.validateAutoMessage) {
         evt.preventDefault()
+        return
       }
 
       const obj = { ...this.models.autoMessage }
@@ -602,6 +671,7 @@ new Vue({
     saveRule(evt) {
       if (!this.validateRule) {
         evt.preventDefault()
+        return
       }
 
       const obj = {
@@ -786,6 +856,7 @@ new Vue({
   mounted() {
     this.fetchVars()
     this.fetchActions()
+    this.fetchModules()
 
     const params = new URLSearchParams(window.location.hash.substring(1))
     this.authToken = params.get('access_token') || null

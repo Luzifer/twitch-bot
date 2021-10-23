@@ -29,13 +29,14 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 	})
 
 	register(plugins.HTTPRouteRegistrationArgs{
-		Description:  "Add quotes for the given {channel}",
-		HandlerFunc:  handleAddQuotes,
-		Method:       http.MethodPost,
-		Module:       "quotedb",
-		Name:         "Add Quotes",
-		Path:         "/{channel}",
-		ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		Description:       "Add quotes for the given {channel}",
+		HandlerFunc:       handleAddQuotes,
+		Method:            http.MethodPost,
+		Module:            "quotedb",
+		Name:              "Add Quotes",
+		Path:              "/{channel}",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Channel to delete the quote in",
@@ -45,13 +46,14 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 	})
 
 	register(plugins.HTTPRouteRegistrationArgs{
-		Description:  "Deletes quote with given {idx} from {channel}",
-		HandlerFunc:  handleDeleteQuote,
-		Method:       http.MethodDelete,
-		Module:       "quotedb",
-		Name:         "Delete Quote",
-		Path:         "/{channel}/{idx:[0-9]+}",
-		ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		Description:       "Deletes quote with given {idx} from {channel}",
+		HandlerFunc:       handleDeleteQuote,
+		Method:            http.MethodDelete,
+		Module:            "quotedb",
+		Name:              "Delete Quote",
+		Path:              "/{channel}/{idx:[0-9]+}",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Channel to delete the quote in",
@@ -82,13 +84,14 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 	})
 
 	register(plugins.HTTPRouteRegistrationArgs{
-		Description:  "Set quotes for the given {channel} (will overwrite ALL quotes!)",
-		HandlerFunc:  handleReplaceQuotes,
-		Method:       http.MethodPut,
-		Module:       "quotedb",
-		Name:         "Set Quotes",
-		Path:         "/{channel}",
-		ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		Description:       "Set quotes for the given {channel} (will overwrite ALL quotes!)",
+		HandlerFunc:       handleReplaceQuotes,
+		Method:            http.MethodPut,
+		Module:            "quotedb",
+		Name:              "Set Quotes",
+		Path:              "/{channel}",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Channel to delete the quote in",
@@ -98,13 +101,14 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 	})
 
 	register(plugins.HTTPRouteRegistrationArgs{
-		Description:  "Updates quote with given {idx} from {channel}",
-		HandlerFunc:  handleUpdateQuote,
-		Method:       http.MethodPut,
-		Module:       "quotedb",
-		Name:         "Update Quote",
-		Path:         "/{channel}/{idx:[0-9]+}",
-		ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		Description:       "Updates quote with given {idx} from {channel}",
+		HandlerFunc:       handleUpdateQuote,
+		Method:            http.MethodPut,
+		Module:            "quotedb",
+		Name:              "Update Quote",
+		Path:              "/{channel}/{idx:[0-9]+}",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
 			{
 				Description: "Channel to delete the quote in",

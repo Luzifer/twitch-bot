@@ -46,21 +46,29 @@ func registerConfigReloadHook(hook func()) func() {
 }
 
 type (
+	configAuthToken struct {
+		Hash    string   `json:"-" yaml:"hash"`
+		Modules []string `json:"modules" yaml:"modules"`
+		Name    string   `json:"name" yaml:"name"`
+		Token   string   `json:"token" yaml:"-"`
+	}
+
 	configFileVersioner struct {
 		ConfigVersion int64 `yaml:"config_version"`
 	}
 
 	configFile struct {
-		AutoMessages         []*autoMessage         `yaml:"auto_messages"`
-		BotEditors           []string               `yaml:"bot_editors"`
-		Channels             []string               `yaml:"channels"`
-		GitTrackConfig       bool                   `yaml:"git_track_config"`
-		HTTPListen           string                 `yaml:"http_listen"`
-		PermitAllowModerator bool                   `yaml:"permit_allow_moderator"`
-		PermitTimeout        time.Duration          `yaml:"permit_timeout"`
-		RawLog               string                 `yaml:"raw_log"`
-		Rules                []*plugins.Rule        `yaml:"rules"`
-		Variables            map[string]interface{} `yaml:"variables"`
+		AuthTokens           map[string]configAuthToken `yaml:"auth_tokens"`
+		AutoMessages         []*autoMessage             `yaml:"auto_messages"`
+		BotEditors           []string                   `yaml:"bot_editors"`
+		Channels             []string                   `yaml:"channels"`
+		GitTrackConfig       bool                       `yaml:"git_track_config"`
+		HTTPListen           string                     `yaml:"http_listen"`
+		PermitAllowModerator bool                       `yaml:"permit_allow_moderator"`
+		PermitTimeout        time.Duration              `yaml:"permit_timeout"`
+		RawLog               string                     `yaml:"raw_log"`
+		Rules                []*plugins.Rule            `yaml:"rules"`
+		Variables            map[string]interface{}     `yaml:"variables"`
 
 		rawLogWriter io.WriteCloser
 
@@ -70,6 +78,7 @@ type (
 
 func newConfigFile() *configFile {
 	return &configFile{
+		AuthTokens:    map[string]configAuthToken{},
 		PermitTimeout: time.Minute,
 	}
 }

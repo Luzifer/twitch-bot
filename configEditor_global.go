@@ -22,6 +22,15 @@ func registerEditorGlobalMethods() {
 			ResponseType: plugins.HTTPRouteResponseTypeJSON,
 		},
 		{
+			Description:  "Returns all available modules for auth",
+			HandlerFunc:  configEditorGlobalGetModules,
+			Method:       http.MethodGet,
+			Module:       "config-editor",
+			Name:         "Get available modules",
+			Path:         "/modules",
+			ResponseType: plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
 			Description: "Returns information about a Twitch user to properly display bot editors",
 			HandlerFunc: configEditorGlobalGetUser,
 			Method:      http.MethodGet,
@@ -100,6 +109,12 @@ func configEditorGlobalGetActions(w http.ResponseWriter, r *http.Request) {
 	defer availableActorDocsLock.Unlock()
 
 	if err := json.NewEncoder(w).Encode(availableActorDocs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func configEditorGlobalGetModules(w http.ResponseWriter, r *http.Request) {
+	if err := json.NewEncoder(w).Encode(knownModules); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -27,4 +27,10 @@ Usage of twitch-bot:
       --twitch-token string        OAuth token valid for client
   -v, --validate-config            Loads the config, logs any errors and quits with status 0 on success
       --version                    Prints current version and exits
+
+# twitch-bot help
+Supported sub-commands are:
+  actor-docs                     Generate markdown documentation for available actors
+  api-token <name> <scope...>    Generate an api-token to be entered into the config
+  help                           Prints this help message
 ```

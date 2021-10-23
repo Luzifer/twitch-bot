@@ -8,6 +8,18 @@
 # upgrade.
 config_version: 2
 
+# List of tokens allowed to access the HTTP API with write access.
+# You can generate a token using the web-based config-editor or the
+# `api-token` sub-command:
+#     $ twitch-bot api-token 'mytoken' '*'
+# The token will only be printed ONCE and cannot be retrieved afterards.
+auth_tokens:
+  89196495-68eb-4f50-94f0-5c5d99f26be5:
+    hash: '243261[...]36532e'
+    modules:
+    - '*'
+    name: mytoken
+
 # List of strings: Either Twitch user-ids or nicknames (best to stick
 # with IDs as they can't change while nicknames can be changed every
 # 60 days). Those users are able to use the config editor web-interface.
