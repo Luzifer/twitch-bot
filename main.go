@@ -94,7 +94,7 @@ func handleSubCommand(args []string) {
 		}
 
 	case "api-token":
-		if len(args) < 3 {
+		if len(args) < 3 { //nolint:gomnd // Just a count of parameters
 			log.Fatalf("Usage: twitch-bot api-token <token name> <scope> [...scope]")
 		}
 
