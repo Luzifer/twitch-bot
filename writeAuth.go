@@ -5,9 +5,24 @@ import (
 	"net/http"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/gofrs/uuid/v3"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func fillAuthToken(token *configAuthToken) error {
+	token.Token = uuid.Must(uuid.NewV4()).String()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(token.Token), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Wrap(err, "hashing token")
+	}
+
+	token.Hash = hex.EncodeToString(hash)
+
+	return nil
+}
 
 func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

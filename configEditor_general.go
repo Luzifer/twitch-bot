@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type (
@@ -100,13 +98,10 @@ func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	payload.Token = uuid.Must(uuid.NewV4()).String()
-	hash, err := bcrypt.GenerateFromPassword([]byte(payload.Token), bcrypt.DefaultCost)
-	if err != nil {
+	if err = fillAuthToken(&payload); err != nil {
 		http.Error(w, errors.Wrap(err, "hashing token").Error(), http.StatusInternalServerError)
 		return
 	}
-	payload.Hash = hex.EncodeToString(hash)
 
 	if err := patchConfig(cfg.Config, user, "", "Add auth-token", func(cfg *configFile) error {
 		cfg.AuthTokens[uuid.Must(uuid.NewV4()).String()] = payload
