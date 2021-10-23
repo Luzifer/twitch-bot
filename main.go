@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/go-irc/irc"
+	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
@@ -79,6 +81,51 @@ func init() {
 	}
 }
 
+func handleSubCommand(args []string) {
+	switch args[0] {
+
+	case "actor-docs":
+		doc, err := generateActorDocs()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to generate actor docs")
+		}
+		if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
+			log.WithError(err).Fatal("Unable to write actor docs to stdout")
+		}
+
+	case "api-token":
+		if len(args) < 3 {
+			log.Fatalf("Usage: twitch-bot api-token <token name> <scope> [...scope]")
+		}
+
+		t := configAuthToken{
+			Name:    args[1],
+			Modules: args[2:],
+		}
+
+		if err := fillAuthToken(&t); err != nil {
+			log.WithError(err).Fatal("Unable to generate token")
+		}
+
+		log.WithField("token", t.Token).Info("Token generated, add this to your config:")
+		if err := yaml.NewEncoder(os.Stdout).Encode(map[string]map[string]configAuthToken{
+			"auth_tokens": {
+				uuid.Must(uuid.NewV4()).String(): t,
+			},
+		}); err != nil {
+			log.WithError(err).Fatal("Unable to output token info")
+		}
+
+	default:
+		log.Errorf("Unknown sub-command %q", args[0])
+		fallthrough
+
+	case "help":
+		log.Info("Supported commands are: actor-docs, api-token")
+
+	}
+}
+
 //nolint: funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
@@ -105,14 +152,8 @@ func main() {
 		log.WithError(err).Fatal("Unable to load plugins")
 	}
 
-	if len(rconfig.Args()) == 2 && rconfig.Args()[1] == "actor-docs" {
-		doc, err := generateActorDocs()
-		if err != nil {
-			log.WithError(err).Fatal("Unable to generate actor docs")
-		}
-		if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
-			log.WithError(err).Fatal("Unable to write actor docs to stdout")
-		}
+	if len(rconfig.Args()) > 1 {
+		handleSubCommand(rconfig.Args()[1:])
 		return
 	}
 
