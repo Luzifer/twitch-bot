@@ -1,3 +1,12 @@
+# 1.4.0 / 2021-10-25
+
+  * [core] Allow the bot to track config editor changes through Git
+  * [core] Implement write authorization for APIs (#9)
+  * [editor] Cleanup config by removing invalid / zero attributes
+  * [openapi] Allow multiple mime-types on single route
+  * [plugins] Move missing plugin-dir warning to debug level
+  * [quotedb] Add simple page to list quotes
+
 # 1.3.0 / 2021-10-22
 
   * [core] Add "bits" event
