@@ -120,6 +120,27 @@ Modify variable contents
     set: ""
 ```
 
+## Nuke Chat
+
+Mass ban, delete, or timeout messages based on regex. Be sure you REALLY know what you do before using this! Used wrongly this will cause a lot of damage!
+
+```yaml
+- type: nuke
+  attributes:
+    # How long to scan into the past, template must yield a duration (max 10m)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    scan: "10m"
+    # What action to take when message matches (delete / ban / <timeout duration>)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    action: "delete"
+    # Regular expression (RE2) to select matching messages
+    # Optional: false
+    # Type:     string (Supports Templating)
+    match: ""
+```
+
 ## Punish User
 
 Apply increasing punishments to user

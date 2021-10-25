@@ -9,6 +9,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
+	"github.com/Luzifer/twitch-bot/internal/actors/nuke"
 	"github.com/Luzifer/twitch-bot/internal/actors/punish"
 	"github.com/Luzifer/twitch-bot/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
@@ -27,6 +28,7 @@ var (
 		delay.Register,
 		deleteactor.Register,
 		modchannel.Register,
+		nuke.Register,
 		punish.Register,
 		quotedb.Register,
 		raw.Register,
