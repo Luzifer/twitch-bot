@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -27,6 +30,7 @@ const ircReconnectDelay = 100 * time.Millisecond
 
 var (
 	cfg = struct {
+		BaseURL        string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
 		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
 		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
 		IRCRateLimit   time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
@@ -46,6 +50,9 @@ var (
 	cronService  *cron.Cron
 	ircHdl       *ircHandler
 	router       = mux.NewRouter()
+
+	runID                 = uuid.Must(uuid.NewV4()).String()
+	externalHTTPAvailable bool
 
 	sendMessage func(m *irc.Message) error
 
@@ -142,6 +149,7 @@ func main() {
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
+	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
 
 	if err = store.Load(); err != nil {
 		log.WithError(err).Fatal("Unable to load storage file")
@@ -209,6 +217,8 @@ func main() {
 
 		go http.Serve(listener, router)
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
+
+		checkExternalHTTP()
 	}
 
 	ircDisconnected <- struct{}{}
@@ -289,6 +299,40 @@ func main() {
 
 		}
 	}
+}
+
+func checkExternalHTTP() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	base, err := url.Parse(cfg.BaseURL)
+	if err != nil {
+		log.WithError(err).Error("Unable to parse BaseURL")
+		return
+	}
+
+	if base.String() == "" {
+		log.Debug("No BaseURL set, disabling EventSub support")
+		return
+	}
+
+	base.Path = "/selfcheck"
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.WithError(err).Error("Unable to fetch selfcheck")
+		return
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithError(err).Error("Unable to read selfcheck response")
+		return
+	}
+
+	externalHTTPAvailable = strings.TrimSpace(string(data)) == runID
+	log.Debug("Self-Check successful, EventSub support is available")
 }
 
 func startCheck() error {
