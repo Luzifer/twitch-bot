@@ -324,6 +324,7 @@ func checkExternalHTTP() {
 		log.WithError(err).Error("Unable to fetch selfcheck")
 		return
 	}
+	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
