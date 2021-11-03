@@ -1,3 +1,7 @@
+# 1.5.0 / 2021-11-04
+
+  * [nuke] Add new moderation module
+
 # 1.4.0 / 2021-10-25
 
   * [core] Allow the bot to track config editor changes through Git
