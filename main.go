@@ -30,17 +30,18 @@ const ircReconnectDelay = 100 * time.Millisecond
 
 var (
 	cfg = struct {
-		BaseURL        string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
-		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
-		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
-		IRCRateLimit   time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
-		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		PluginDir      string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
-		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
-		ValidateConfig bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
-		VersionAndExit bool          `flag:"version" default:"false" description:"Prints current version and exits"`
+		BaseURL            string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
+		CommandTimeout     time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
+		Config             string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		IRCRateLimit       time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
+		LogLevel           string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		PluginDir          string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
+		StorageFile        string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		TwitchClient       string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
+		TwitchClientSecret string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
+		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
+		ValidateConfig     bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
+		VersionAndExit     bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
 	config     *configFile
@@ -56,8 +57,9 @@ var (
 
 	sendMessage func(m *irc.Message) error
 
-	store        = newStorageFile(false)
-	twitchClient *twitch.Client
+	store                = newStorageFile(false)
+	twitchClient         *twitch.Client
+	twitchEventSubClient *twitch.EventSubClient
 
 	version = "dev"
 )
@@ -219,6 +221,19 @@ func main() {
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
 
 		checkExternalHTTP()
+
+		if externalHTTPAvailable && cfg.TwitchClient != "" && cfg.TwitchClientSecret != "" {
+			twitchEventSubClient = twitch.NewEventSubClient(strings.Join([]string{
+				strings.TrimRight(cfg.BaseURL, "/"),
+				"eventsub",
+			}, "/"), "") // FIXME: Secret
+
+			if err = twitchEventSubClient.Authorize(cfg.TwitchClient, cfg.TwitchClientSecret); err != nil {
+				log.WithError(err).Fatal("Unable to authorize Twitch EventSub client")
+			}
+
+			router.HandleFunc("/eventsub", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
+		}
 	}
 
 	ircDisconnected <- struct{}{}

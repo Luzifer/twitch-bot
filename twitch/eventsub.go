@@ -192,7 +192,7 @@ func (e *EventSubClient) getTwitchAppAccessToken() (string, error) {
 	)
 }
 
-func (e *EventSubClient) handleEventsubPush(w http.ResponseWriter, r *http.Request) {
+func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Request) {
 	var (
 		body      = new(bytes.Buffer)
 		message   eventSubPostMessage
