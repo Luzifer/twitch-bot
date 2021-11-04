@@ -223,16 +223,22 @@ func main() {
 		checkExternalHTTP()
 
 		if externalHTTPAvailable && cfg.TwitchClient != "" && cfg.TwitchClientSecret != "" {
+			secret, handle, err := store.GetOrGenerateEventSubSecret()
+			if err != nil {
+				log.WithError(err).Fatal("Unable to get or create eventsub secret")
+			}
+
 			twitchEventSubClient = twitch.NewEventSubClient(strings.Join([]string{
 				strings.TrimRight(cfg.BaseURL, "/"),
 				"eventsub",
-			}, "/"), "") // FIXME: Secret
+				handle,
+			}, "/"), secret, handle)
 
 			if err = twitchEventSubClient.Authorize(cfg.TwitchClient, cfg.TwitchClientSecret); err != nil {
 				log.WithError(err).Fatal("Unable to authorize Twitch EventSub client")
 			}
 
-			router.HandleFunc("/eventsub", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
+			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
 		}
 	}
 

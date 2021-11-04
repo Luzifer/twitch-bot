@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/gorilla/mux"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -44,8 +45,9 @@ const (
 
 type (
 	EventSubClient struct {
-		apiURL string
-		secret string
+		apiURL       string
+		secret       string
+		secretHandle string
 
 		twitchClientID     string
 		twitchClientSecret string
@@ -128,10 +130,11 @@ func (e EventSubCondition) Hash() (string, error) {
 	return fmt.Sprintf("%x", h), nil
 }
 
-func NewEventSubClient(apiURL, secret string) *EventSubClient {
+func NewEventSubClient(apiURL, secret, secretHandle string) *EventSubClient {
 	return &EventSubClient{
-		apiURL: apiURL,
-		secret: secret,
+		apiURL:       apiURL,
+		secret:       secret,
+		secretHandle: secretHandle,
 
 		subscriptions: map[string]*registeredSubscription{},
 	}
@@ -195,9 +198,15 @@ func (e *EventSubClient) getTwitchAppAccessToken() (string, error) {
 func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Request) {
 	var (
 		body      = new(bytes.Buffer)
+		keyHandle = mux.Vars(r)["keyhandle"]
 		message   eventSubPostMessage
 		signature = r.Header.Get(eventSubHeaderMessageSignature)
 	)
+
+	if keyHandle != e.secretHandle {
+		http.Error(w, "deprecated callback used", http.StatusNotFound)
+		return
+	}
 
 	// Copy body for duplicate processing
 	if _, err := io.Copy(body, r.Body); err != nil {

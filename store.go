@@ -2,6 +2,8 @@ package main
 
 import (
 	"compress/gzip"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"sync"
@@ -11,12 +13,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+const eventSubSecretLength = 32
+
 type storageFile struct {
 	Counters  map[string]int64              `json:"counters"`
 	Timers    map[string]plugins.TimerEntry `json:"timers"`
 	Variables map[string]string             `json:"variables"`
 
 	ModuleStorage map[string]json.RawMessage `json:"module_storage"`
+
+	EventSubSecret string `json:"event_sub_secret,omitempty"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -49,6 +55,28 @@ func (s *storageFile) GetCounterValue(counter string) int64 {
 	defer s.lock.RUnlock()
 
 	return s.Counters[counter]
+}
+
+func (s *storageFile) GetOrGenerateEventSubSecret() (string, string, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.EventSubSecret != "" {
+		return s.EventSubSecret, s.EventSubSecret[:5], nil
+	}
+
+	key := make([]byte, eventSubSecretLength)
+	n, err := rand.Read(key)
+	if err != nil {
+		return "", "", errors.Wrap(err, "generating random secret")
+	}
+	if n != eventSubSecretLength {
+		return "", "", errors.Errorf("read only %d of %d byte", n, eventSubSecretLength)
+	}
+
+	s.EventSubSecret = hex.EncodeToString(key)
+
+	return s.EventSubSecret, s.EventSubSecret[:5], errors.Wrap(s.Save(), "saving store")
 }
 
 func (s *storageFile) GetModuleStore(moduleUUID string, storedObject plugins.StorageUnmarshaller) error {
