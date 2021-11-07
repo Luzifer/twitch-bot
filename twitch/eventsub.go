@@ -291,6 +291,7 @@ func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+//nolint:funlen,gocyclo // Not splitting to keep logic unit
 func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubCondition, callback func(json.RawMessage) error) (func(), error) {
 	condHash, err := condition.Hash()
 	if err != nil {
