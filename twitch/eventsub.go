@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
@@ -23,24 +24,24 @@ import (
 )
 
 const (
-	eventSubHeaderMessageID           = "Twitch-Eventsub-Message-Id"
-	eventSubHeaderMessageRetry        = "Twitch-Eventsub-Message-Retry"
-	eventSubHeaderMessageType         = "Twitch-Eventsub-Message-Type"
-	eventSubHeaderMessageSignature    = "Twitch-Eventsub-Message-Signature"
-	eventSubHeaderMessageTimestamp    = "Twitch-Eventsub-Message-Timestamp"
-	eventSubHeaderSubscriptionType    = "Twitch-Eventsub-Subscription-Type"
-	eventSubHeaderSubscriptionVersion = "Twitch-Eventsub-Subscription-Version"
+	eventSubHeaderMessageID        = "Twitch-Eventsub-Message-Id"
+	eventSubHeaderMessageType      = "Twitch-Eventsub-Message-Type"
+	eventSubHeaderMessageSignature = "Twitch-Eventsub-Message-Signature"
+	eventSubHeaderMessageTimestamp = "Twitch-Eventsub-Message-Timestamp"
+	// eventSubHeaderMessageRetry        = "Twitch-Eventsub-Message-Retry"
+	// eventSubHeaderSubscriptionType    = "Twitch-Eventsub-Subscription-Type"
+	// eventSubHeaderSubscriptionVersion = "Twitch-Eventsub-Subscription-Version"
 
-	eventSubMessageTypeNotification = "notification"
 	eventSubMessageTypeVerification = "webhook_callback_verification"
 	eventSubMessageTypeRevokation   = "revocation"
+	// eventSubMessageTypeNotification = "notification"
 
-	eventSubStatusAuthorizationRevoked = "authorization_revoked"
-	eventSubStatusEnabled              = "enabled"
-	eventSubStatusFailuresExceeded     = "notification_failures_exceeded"
-	eventSubStatusUserRemoved          = "user_removed"
-	eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
-	eventSubStatusVerificationPending  = "webhook_callback_verification_pending"
+	eventSubStatusEnabled             = "enabled"
+	eventSubStatusVerificationPending = "webhook_callback_verification_pending"
+	// eventSubStatusAuthorizationRevoked = "authorization_revoked"
+	// eventSubStatusFailuresExceeded     = "notification_failures_exceeded"
+	// eventSubStatusUserRemoved          = "user_removed"
+	// eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
 )
 
 type (
@@ -116,7 +117,7 @@ type (
 
 	registeredSubscription struct {
 		Type         string
-		Callbacks    []func(json.RawMessage) error
+		Callbacks    map[string]func(json.RawMessage) error
 		Subscription eventSubSubscription
 	}
 )
@@ -271,10 +272,10 @@ func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubCondition, callback func(json.RawMessage) error) error {
+func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubCondition, callback func(json.RawMessage) error) (func(), error) {
 	condHash, err := condition.Hash()
 	if err != nil {
-		return errors.Wrap(err, "hashing condition")
+		return nil, errors.Wrap(err, "hashing condition")
 	}
 
 	cacheKey := strings.Join([]string{event, condHash}, "::")
@@ -285,16 +286,18 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	if ok {
 		// Subscription already exists
-		e.subscriptions[cacheKey].Callbacks = append(
-			e.subscriptions[cacheKey].Callbacks,
-			callback,
-		)
-		return nil
+		e.subscriptionsLock.Lock()
+		defer e.subscriptionsLock.Unlock()
+
+		cbKey := uuid.Must(uuid.NewV4()).String()
+
+		e.subscriptions[cacheKey].Callbacks[cbKey] = callback
+		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
 
 	accessToken, err := e.getTwitchAppAccessToken()
 	if err != nil {
-		return errors.Wrap(err, "getting app-access-token")
+		return nil, errors.Wrap(err, "getting app-access-token")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
@@ -308,7 +311,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "requesting subscribscriptions")
+		return nil, errors.Wrap(err, "requesting subscribscriptions")
 	}
 	defer resp.Body.Close()
 
@@ -317,27 +320,40 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&subscriptionList); err != nil {
-		return errors.Wrap(err, "decoding subscription list")
+		return nil, errors.Wrap(err, "decoding subscription list")
 	}
 
 	// Register subscriptions
 	var (
-		logger             = log.WithField("event", event)
-		subscriptionExists bool
+		logger      = log.WithField("event", event)
+		existingSub *eventSubSubscription
 	)
-	for _, sub := range subscriptionList.Data {
+	for i, sub := range subscriptionList.Data {
 		if str.StringInSlice(sub.Status, []string{eventSubStatusEnabled, eventSubStatusVerificationPending}) && sub.Transport.Callback == e.apiURL && sub.Type == event {
 			logger = logger.WithFields(log.Fields{
 				"id":     sub.ID,
 				"status": sub.Status,
 			})
-			subscriptionExists = true
+			existingSub = &subscriptionList.Data[i]
 		}
 	}
 
-	if subscriptionExists {
+	if existingSub != nil {
 		logger.WithField("event", event).Debug("Not registering hook, already active")
-		return nil
+
+		e.subscriptionsLock.Lock()
+		defer e.subscriptionsLock.Unlock()
+
+		cbKey := uuid.Must(uuid.NewV4()).String()
+		e.subscriptions[cacheKey] = &registeredSubscription{
+			Type: event,
+			Callbacks: map[string]func(json.RawMessage) error{
+				cbKey: callback,
+			},
+			Subscription: *existingSub,
+		}
+
+		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
 
 	payload := eventSubSubscription{
@@ -353,7 +369,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
-		return errors.Wrap(err, "assemble subscribe payload")
+		return nil, errors.Wrap(err, "assemble subscribe payload")
 	}
 
 	ctx, cancel = context.WithTimeout(context.Background(), twitchRequestTimeout)
@@ -361,7 +377,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	req, err = http.NewRequestWithContext(ctx, http.MethodPost, "https://api.twitch.tv/helix/eventsub/subscriptions", buf)
 	if err != nil {
-		return errors.Wrap(err, "creating subscribe request")
+		return nil, errors.Wrap(err, "creating subscribe request")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Client-Id", e.twitchClientID)
@@ -369,35 +385,96 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "requesting subscribe")
+		return nil, errors.Wrap(err, "requesting subscribe")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusAccepted {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return errors.Wrapf(err, "unexpected status %d, unable to read body", resp.StatusCode)
+			return nil, errors.Wrapf(err, "unexpected status %d, unable to read body", resp.StatusCode)
 		}
-		return errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
+		return nil, errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
 	}
 
 	var response struct {
 		Data []eventSubSubscription `json:"data"`
 	}
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return errors.Wrap(err, "reading eventsub sub response")
+		return nil, errors.Wrap(err, "reading eventsub sub response")
 	}
 
 	e.subscriptionsLock.Lock()
 	defer e.subscriptionsLock.Unlock()
 
+	cbKey := uuid.Must(uuid.NewV4()).String()
 	e.subscriptions[cacheKey] = &registeredSubscription{
-		Type:         event,
-		Callbacks:    []func(json.RawMessage) error{callback},
+		Type: event,
+		Callbacks: map[string]func(json.RawMessage) error{
+			cbKey: callback,
+		},
 		Subscription: response.Data[0],
 	}
 
 	logger.Debug("Registered eventsub subscription")
 
-	return nil
+	return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
+}
+
+func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
+	e.subscriptionsLock.RLock()
+	regSub, ok := e.subscriptions[cacheKey]
+	e.subscriptionsLock.RUnlock()
+
+	if !ok {
+		// That subscription does not exist
+		log.WithField("cache_key", cacheKey).Debug("Subscription does not exist, not unregistering")
+		return
+	}
+
+	if _, ok = regSub.Callbacks[cbKey]; !ok {
+		// That callback does not exist
+		log.WithFields(log.Fields{
+			"cache_key": cacheKey,
+			"callback":  cbKey,
+		}).Debug("Callback does not exist, not unregistering")
+		return
+	}
+
+	delete(regSub.Callbacks, cbKey)
+
+	if len(regSub.Callbacks) > 0 {
+		// Still callbacks registered, not removing the subscription
+		return
+	}
+
+	accessToken, err := e.getTwitchAppAccessToken()
+	if err != nil {
+		log.WithError(err).Error("Unable to get access token")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?id=%s", regSub.Subscription.ID), nil)
+	if err != nil {
+		log.WithError(err).Error("Unable to create delete subscription request")
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Client-Id", e.twitchClientID)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.WithError(err).Error("Unable to execute delete subscription request")
+		return
+	}
+	defer resp.Body.Close()
+
+	e.subscriptionsLock.Lock()
+	defer e.subscriptionsLock.Unlock()
+
+	delete(e.subscriptions, cacheKey)
 }
