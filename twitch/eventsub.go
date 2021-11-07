@@ -42,6 +42,10 @@ const (
 	// eventSubStatusFailuresExceeded     = "notification_failures_exceeded"
 	// eventSubStatusUserRemoved          = "user_removed"
 	// eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
+
+	EventSubEventTypeChannelUpdate = "channel.update"
+	EventSubEventTypeStreamOffline = "stream.offline"
+	EventSubEventTypeStreamOnline  = "stream.online"
 )
 
 type (
@@ -90,6 +94,21 @@ type (
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		FollowedAt           time.Time `json:"followed_at"`
+	}
+
+	EventSubEventStreamOffline struct {
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
+	}
+
+	EventSubEventStreamOnline struct {
+		ID                   string    `json:"id"`
+		BroadcasterUserID    string    `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
+		BroadcasterUserName  string    `json:"broadcaster_user_name"`
+		Type                 string    `json:"type"`
+		StartedAt            time.Time `json:"started_at"`
 	}
 
 	eventSubPostMessage struct {
@@ -278,7 +297,10 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		return nil, errors.Wrap(err, "hashing condition")
 	}
 
-	cacheKey := strings.Join([]string{event, condHash}, "::")
+	var (
+		cacheKey = strings.Join([]string{event, condHash}, "::")
+		logger   = log.WithField("event", event)
+	)
 
 	e.subscriptionsLock.RLock()
 	_, ok := e.subscriptions[cacheKey]
@@ -288,6 +310,8 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		// Subscription already exists
 		e.subscriptionsLock.Lock()
 		defer e.subscriptionsLock.Unlock()
+
+		logger.Debug("Adding callback to existing callback")
 
 		cbKey := uuid.Must(uuid.NewV4()).String()
 
@@ -325,11 +349,22 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	// Register subscriptions
 	var (
-		logger      = log.WithField("event", event)
 		existingSub *eventSubSubscription
 	)
 	for i, sub := range subscriptionList.Data {
-		if str.StringInSlice(sub.Status, []string{eventSubStatusEnabled, eventSubStatusVerificationPending}) && sub.Transport.Callback == e.apiURL && sub.Type == event {
+		existingConditionHash, err := sub.Condition.Hash()
+		if err != nil {
+			return nil, errors.Wrap(err, "hashing existing condition")
+		}
+		newConditionHash, err := condition.Hash()
+		if err != nil {
+			return nil, errors.Wrap(err, "hashing new condition")
+		}
+
+		if str.StringInSlice(sub.Status, []string{eventSubStatusEnabled, eventSubStatusVerificationPending}) &&
+			sub.Transport.Callback == e.apiURL &&
+			existingConditionHash == newConditionHash &&
+			sub.Type == event {
 			logger = logger.WithFields(log.Fields{
 				"id":     sub.ID,
 				"status": sub.Status,
@@ -343,6 +378,8 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 		e.subscriptionsLock.Lock()
 		defer e.subscriptionsLock.Unlock()
+
+		logger.Debug("Found existing hook, registering and adding callback")
 
 		cbKey := uuid.Must(uuid.NewV4()).String()
 		e.subscriptions[cacheKey] = &registeredSubscription{
@@ -407,6 +444,8 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 	e.subscriptionsLock.Lock()
 	defer e.subscriptionsLock.Unlock()
 
+	logger.Debug("Registered new hook")
+
 	cbKey := uuid.Must(uuid.NewV4()).String()
 	e.subscriptions[cacheKey] = &registeredSubscription{
 		Type: event,
@@ -440,6 +479,8 @@ func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
 		}).Debug("Callback does not exist, not unregistering")
 		return
 	}
+
+	logger := log.WithField("event", regSub.Type)
 
 	delete(regSub.Callbacks, cbKey)
 
@@ -475,6 +516,8 @@ func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
 
 	e.subscriptionsLock.Lock()
 	defer e.subscriptionsLock.Unlock()
+
+	logger.Debug("Unregistered hook")
 
 	delete(e.subscriptions, cacheKey)
 }
