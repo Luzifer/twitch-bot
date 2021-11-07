@@ -337,7 +337,10 @@ func checkExternalHTTP() {
 		return
 	}
 
-	base.Path = "/selfcheck"
+	base.Path = strings.Join([]string{
+		strings.TrimRight(base.Path, "/"),
+		"selfcheck",
+	}, "/")
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
 	resp, err := http.DefaultClient.Do(req)
@@ -353,8 +356,13 @@ func checkExternalHTTP() {
 		return
 	}
 
-	externalHTTPAvailable = strings.TrimSpace(string(data)) == runID
-	log.Debug("Self-Check successful, EventSub support is available")
+	if strings.TrimSpace(string(data)) == runID {
+		externalHTTPAvailable = true
+		log.Debug("Self-Check successful, EventSub support is available")
+	} else {
+		externalHTTPAvailable = false
+		log.Debug("Self-Check failed, EventSub support is not available")
+	}
 }
 
 func startCheck() error {
