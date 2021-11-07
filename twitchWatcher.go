@@ -38,50 +38,50 @@ func newTwitchWatcher() *twitchWatcher {
 	}
 }
 
-func (r *twitchWatcher) AddChannel(channel string) error {
-	r.lock.RLock()
-	_, ok := r.ChannelStatus[channel]
-	r.lock.RUnlock()
+func (t *twitchWatcher) AddChannel(channel string) error {
+	t.lock.RLock()
+	_, ok := t.ChannelStatus[channel]
+	t.lock.RUnlock()
 
 	if ok {
 		return nil
 	}
 
-	return r.updateChannelFromAPI(channel, false)
+	return t.updateChannelFromAPI(channel, false)
 }
 
-func (r *twitchWatcher) Check() {
+func (t *twitchWatcher) Check() {
 	var channels []string
-	r.lock.RLock()
-	for c := range r.ChannelStatus {
-		if r.ChannelStatus[c].unregisterFunc != nil {
+	t.lock.RLock()
+	for c := range t.ChannelStatus {
+		if t.ChannelStatus[c].unregisterFunc != nil {
 			continue
 		}
 
 		channels = append(channels, c)
 	}
-	r.lock.RUnlock()
+	t.lock.RUnlock()
 
 	for _, ch := range channels {
-		if err := r.updateChannelFromAPI(ch, true); err != nil {
+		if err := t.updateChannelFromAPI(ch, true); err != nil {
 			log.WithError(err).WithField("channel", ch).Error("Unable to update channel status")
 		}
 	}
 }
 
-func (r *twitchWatcher) RemoveChannel(channel string) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
+func (t *twitchWatcher) RemoveChannel(channel string) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
 
-	if f := r.ChannelStatus[channel].unregisterFunc; f != nil {
+	if f := t.ChannelStatus[channel].unregisterFunc; f != nil {
 		f()
 	}
 
-	delete(r.ChannelStatus, channel)
+	delete(t.ChannelStatus, channel)
 	return nil
 }
 
-func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) error {
+func (t *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) error {
 	var (
 		err    error
 		status twitchChannelState
@@ -97,23 +97,23 @@ func (r *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) er
 		return errors.Wrap(err, "getting stream info")
 	}
 
-	r.lock.Lock()
-	defer r.lock.Unlock()
+	t.lock.Lock()
+	defer t.lock.Unlock()
 
-	if r.ChannelStatus[channel] != nil && r.ChannelStatus[channel].Equals(status) {
+	if t.ChannelStatus[channel] != nil && t.ChannelStatus[channel].Equals(status) {
 		return nil
 	}
 
-	if sendUpdate && r.ChannelStatus[channel] != nil {
-		r.triggerUpdate(channel, &status.Title, &status.Category, &status.IsLive)
+	if sendUpdate && t.ChannelStatus[channel] != nil {
+		t.triggerUpdate(channel, &status.Title, &status.Category, &status.IsLive)
 		return nil
 	}
 
-	if status.unregisterFunc, err = r.registerEventSubCallbacks(channel); err != nil {
+	if status.unregisterFunc, err = t.registerEventSubCallbacks(channel); err != nil {
 		return errors.Wrap(err, "registering eventsub callbacks")
 	}
 
-	r.ChannelStatus[channel] = &status
+	t.ChannelStatus[channel] = &status
 	return nil
 }
 
@@ -189,9 +189,9 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 	}, nil
 }
 
-func (r *twitchWatcher) triggerUpdate(channel string, title, category *string, online *bool) {
-	if category != nil && r.ChannelStatus[channel].Category != *category {
-		r.ChannelStatus[channel].Category = *category
+func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, online *bool) {
+	if category != nil && t.ChannelStatus[channel].Category != *category {
+		t.ChannelStatus[channel].Category = *category
 		log.WithFields(log.Fields{
 			"channel":  channel,
 			"category": *category,
@@ -202,8 +202,8 @@ func (r *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		})
 	}
 
-	if title != nil && r.ChannelStatus[channel].Title != *title {
-		r.ChannelStatus[channel].Title = *title
+	if title != nil && t.ChannelStatus[channel].Title != *title {
+		t.ChannelStatus[channel].Title = *title
 		log.WithFields(log.Fields{
 			"channel": channel,
 			"title":   *title,
@@ -214,8 +214,8 @@ func (r *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		})
 	}
 
-	if online != nil && r.ChannelStatus[channel].IsLive != *online {
-		r.ChannelStatus[channel].IsLive = *online
+	if online != nil && t.ChannelStatus[channel].IsLive != *online {
+		t.ChannelStatus[channel].IsLive = *online
 		log.WithFields(log.Fields{
 			"channel": channel,
 			"isLive":  *online,
