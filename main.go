@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -27,16 +30,18 @@ const ircReconnectDelay = 100 * time.Millisecond
 
 var (
 	cfg = struct {
-		CommandTimeout time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
-		Config         string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
-		IRCRateLimit   time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
-		LogLevel       string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		PluginDir      string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageFile    string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient   string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
-		TwitchToken    string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
-		ValidateConfig bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
-		VersionAndExit bool          `flag:"version" default:"false" description:"Prints current version and exits"`
+		BaseURL            string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
+		CommandTimeout     time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
+		Config             string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		IRCRateLimit       time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
+		LogLevel           string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		PluginDir          string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
+		StorageFile        string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		TwitchClient       string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
+		TwitchClientSecret string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
+		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
+		ValidateConfig     bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
+		VersionAndExit     bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
 	config     *configFile
@@ -47,10 +52,14 @@ var (
 	ircHdl       *ircHandler
 	router       = mux.NewRouter()
 
+	runID                 = uuid.Must(uuid.NewV4()).String()
+	externalHTTPAvailable bool
+
 	sendMessage func(m *irc.Message) error
 
-	store        = newStorageFile(false)
-	twitchClient *twitch.Client
+	store                = newStorageFile(false)
+	twitchClient         *twitch.Client
+	twitchEventSubClient *twitch.EventSubClient
 
 	version = "dev"
 )
@@ -142,6 +151,7 @@ func main() {
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
+	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
 
 	if err = store.Load(); err != nil {
 		log.WithError(err).Fatal("Unable to load storage file")
@@ -180,12 +190,6 @@ func main() {
 		return
 	}
 
-	for _, c := range config.Channels {
-		if err := twitchWatch.AddChannel(c); err != nil {
-			log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
-		}
-	}
-
 	if err = startCheck(); err != nil {
 		log.WithError(err).Fatal("Missing required parameters")
 	}
@@ -209,6 +213,33 @@ func main() {
 
 		go http.Serve(listener, router)
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
+
+		checkExternalHTTP()
+
+		if externalHTTPAvailable && cfg.TwitchClient != "" && cfg.TwitchClientSecret != "" {
+			secret, handle, err := store.GetOrGenerateEventSubSecret()
+			if err != nil {
+				log.WithError(err).Fatal("Unable to get or create eventsub secret")
+			}
+
+			twitchEventSubClient = twitch.NewEventSubClient(strings.Join([]string{
+				strings.TrimRight(cfg.BaseURL, "/"),
+				"eventsub",
+				handle,
+			}, "/"), secret, handle)
+
+			if err = twitchEventSubClient.Authorize(cfg.TwitchClient, cfg.TwitchClientSecret); err != nil {
+				log.WithError(err).Fatal("Unable to authorize Twitch EventSub client")
+			}
+
+			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
+		}
+	}
+
+	for _, c := range config.Channels {
+		if err := twitchWatch.AddChannel(c); err != nil {
+			log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
+		}
 	}
 
 	ircDisconnected <- struct{}{}
@@ -288,6 +319,49 @@ func main() {
 			configLock.RUnlock()
 
 		}
+	}
+}
+
+func checkExternalHTTP() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	base, err := url.Parse(cfg.BaseURL)
+	if err != nil {
+		log.WithError(err).Error("Unable to parse BaseURL")
+		return
+	}
+
+	if base.String() == "" {
+		log.Debug("No BaseURL set, disabling EventSub support")
+		return
+	}
+
+	base.Path = strings.Join([]string{
+		strings.TrimRight(base.Path, "/"),
+		"selfcheck",
+	}, "/")
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.WithError(err).Error("Unable to fetch selfcheck")
+		return
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithError(err).Error("Unable to read selfcheck response")
+		return
+	}
+
+	if strings.TrimSpace(string(data)) == runID {
+		externalHTTPAvailable = true
+		log.Debug("Self-Check successful, EventSub support is available")
+	} else {
+		externalHTTPAvailable = false
+		log.Debug("Self-Check failed, EventSub support is not available")
 	}
 }
 
