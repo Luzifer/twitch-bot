@@ -132,6 +132,9 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		// User leaves the channel, might be triggered multiple times
 		i.handlePart(m)
 
+	case "PING":
+		// Handled by the library, just here to prevent trace-logging every ping
+
 	case "PRIVMSG":
 		i.handleTwitchPrivmsg(m)
 
