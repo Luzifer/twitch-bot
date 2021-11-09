@@ -60,6 +60,15 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 		out.Add(BadgeSubscriber, out.Get(BadgeFounder))
 	}
 
+	// In order to simplify queries and permissions add an
+	// implicit moderator badge to broadcasters as they have
+	// the same (and more) permissions than a moderator. So
+	// when allowing actions for moderators now broadcasters
+	// ill also be included.
+	if out.Has(BadgeBroadcaster) && !out.Has(BadgeModerator) {
+		out.Add(BadgeModerator, 1)
+	}
+
 	return out
 }
 
