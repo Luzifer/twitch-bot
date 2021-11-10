@@ -1,5 +1,15 @@
 # Available Events
 
+## `ban`
+
+Moderator action caused a user to be banned from chat.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `target_id` - The ID of the user being banned
+- `target_name` - The login-name of the user being banned
+
 ## `bits`
 
 User spent bits in the channel. The full message is available like in a normal chat message, additionally the `{{ .bits }}` field is added with the total amount of bits spent.
@@ -17,6 +27,14 @@ The current category for the channel was changed. (This event has some delay to 
 Fields:
 
 - `category` - The name of the new game / category
+- `channel` - The channel the event occurred in
+
+## `clearchat`
+
+Moderator action caused chat to be cleared.
+
+Fields:
+
 - `channel` - The channel the event occurred in
 
 ## `join`
@@ -115,6 +133,18 @@ Fields:
 - `number` - The amount of gifted subs
 - `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `username` - The login-name of the user who gifted the subscription
+
+## `timeout`
+
+Moderator action caused a user to be timeouted from chat.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `duration` - The timeout duration (`time.Duration`, nanoseconds)
+- `seconds` - The timeout duration (`int`, seconds)
+- `target_id` - The ID of the user being timeouted
+- `target_name` - The login-name of the user being timeouted
 
 ## `title_update`
 

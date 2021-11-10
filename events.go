@@ -3,7 +3,9 @@ package main
 func ptrStr(s string) *string { return &s }
 
 var (
+	eventTypeBan            = ptrStr("ban")
 	eventTypeBits           = ptrStr("bits")
+	eventTypeClearChat      = ptrStr("clearchat")
 	eventTypeJoin           = ptrStr("join")
 	eventTypeHost           = ptrStr("host")
 	eventTypePart           = ptrStr("part")
@@ -13,6 +15,7 @@ var (
 	eventTypeSub            = ptrStr("sub")
 	eventTypeSubgift        = ptrStr("subgift")
 	eventTypeSubmysterygift = ptrStr("submysterygift")
+	eventTypeTimeout        = ptrStr("timeout")
 	eventTypeWhisper        = ptrStr("whisper")
 
 	eventTypeTwitchCategoryUpdate = ptrStr("category_update")
@@ -21,6 +24,9 @@ var (
 	eventTypeTwitchTitleUpdate    = ptrStr("title_update")
 
 	knownEvents = []*string{
+		eventTypeBan,
+		eventTypeBits,
+		eventTypeClearChat,
 		eventTypeJoin,
 		eventTypeHost,
 		eventTypePart,
@@ -30,6 +36,7 @@ var (
 		eventTypeSub,
 		eventTypeSubgift,
 		eventTypeSubmysterygift,
+		eventTypeTimeout,
 		eventTypeWhisper,
 
 		eventTypeTwitchCategoryUpdate,

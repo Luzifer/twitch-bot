@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
@@ -116,6 +117,12 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		})
 		go i.ExecuteJoins(config.Channels)
 
+	case "CLEARCHAT":
+		// CLEARCHAT (Twitch Commands)
+		// Purge a user’s messages, typically after a user is banned from
+		// chat or timed out.
+		i.handleClearChat(m)
+
 	case "JOIN":
 		// JOIN (Default IRC Command)
 		// User enters the channel, might be triggered multiple times
@@ -133,6 +140,7 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		i.handlePart(m)
 
 	case "PING":
+		// PING (Default IRC Command)
 		// Handled by the library, just here to prevent trace-logging every ping
 
 	case "PRIVMSG":
@@ -182,6 +190,43 @@ func (ircHandler) getChannel(m *irc.Message) string {
 		return m.Params[0]
 	}
 	return ""
+}
+
+func (i ircHandler) handleClearChat(m *irc.Message) {
+	seconds, secondsErr := strconv.Atoi(string(m.Tags["ban-duration"]))
+	targetUserID, hasTargetUserID := m.Tags.GetTag("target-user-id")
+
+	var (
+		evt    *string
+		fields = plugins.FieldCollection{
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		}
+	)
+
+	switch {
+	case secondsErr == nil && hasTargetUserID:
+		// User & Duration = Timeout
+		evt = eventTypeTimeout
+		fields["duration"] = time.Duration(seconds) * time.Second
+		fields["seconds"] = seconds
+		fields["target_id"] = targetUserID
+		fields["target_name"] = m.Trailing()
+		log.WithFields(log.Fields(fields)).Info("User was timeouted")
+
+	case hasTargetUserID:
+		// User w/o Duration = Ban
+		evt = eventTypeBan
+		fields["target_id"] = targetUserID
+		fields["target_name"] = m.Trailing()
+		log.WithFields(log.Fields(fields)).Info("User was banned")
+
+	default:
+		// No User = /clear
+		evt = eventTypeClearChat
+		log.WithFields(log.Fields(fields)).Info("Chat was cleared")
+	}
+
+	go handleMessage(i.c, m, evt, fields)
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
