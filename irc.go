@@ -211,7 +211,7 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 		fields["seconds"] = seconds
 		fields["target_id"] = targetUserID
 		fields["target_name"] = m.Trailing()
-		log.WithFields(log.Fields(fields)).Info("User was timeouted")
+		log.WithFields(log.Fields(fields)).Info("User was timed out")
 
 	case hasTargetUserID:
 		// User w/o Duration = Ban

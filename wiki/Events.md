@@ -136,15 +136,15 @@ Fields:
 
 ## `timeout`
 
-Moderator action caused a user to be timeouted from chat.
+Moderator action caused a user to be timed out from chat.
 
 Fields:
 
 - `channel` - The channel the event occurred in
 - `duration` - The timeout duration (`time.Duration`, nanoseconds)
 - `seconds` - The timeout duration (`int`, seconds)
-- `target_id` - The ID of the user being timeouted
-- `target_name` - The login-name of the user being timeouted
+- `target_id` - The ID of the user being timed out 
+- `target_name` - The login-name of the user being timed out 
 
 ## `title_update`
 
