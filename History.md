@@ -1,3 +1,10 @@
+# 1.6.0 / 2021-11-11
+
+  * [core] Add `ban`, `clearchat` and `timeout` events
+  * [core] Add EventSub support for Twitch-Events (#10)
+  * [core] Add moderator badge to broadcasters
+  * [core] Prevent logging every PING message
+
 # 1.5.0 / 2021-11-04
 
   * [nuke] Add new moderation module
