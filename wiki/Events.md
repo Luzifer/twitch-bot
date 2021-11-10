@@ -4,6 +4,8 @@
 
 Moderator action caused a user to be banned from chat.
 
+Note: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable.
+
 Fields:
 
 - `channel` - The channel the event occurred in
@@ -32,6 +34,8 @@ Fields:
 ## `clearchat`
 
 Moderator action caused chat to be cleared.
+
+Note: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable.
 
 Fields:
 
@@ -137,6 +141,8 @@ Fields:
 ## `timeout`
 
 Moderator action caused a user to be timed out from chat.
+
+Note: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable.
 
 Fields:
 
