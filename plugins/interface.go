@@ -10,7 +10,7 @@ import (
 type (
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
-		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData FieldCollection, attrs FieldCollection) (preventCooldown bool, err error)
+		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData *FieldCollection, attrs *FieldCollection) (preventCooldown bool, err error)
 		// IsAsync may return true if the Execute function is to be executed
 		// in a Go routine as of long runtime. Normally it should return false
 		// except in very specific cases
@@ -21,7 +21,7 @@ type (
 		// Validate will be called to validate the loaded configuration. It should
 		// return an error if required keys are missing from the AttributeStore
 		// or if keys contain broken configs
-		Validate(FieldCollection) error
+		Validate(*FieldCollection) error
 	}
 
 	ActorCreationFunc func() Actor
@@ -34,7 +34,7 @@ type (
 
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
-	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields FieldCollection) (string, error)
+	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
 
 	RawMessageHandlerFunc         func(m *irc.Message) error
 	RawMessageHandlerRegisterFunc func(RawMessageHandlerFunc) error
@@ -83,10 +83,10 @@ type (
 		UnmarshalStoredObject([]byte) error
 	}
 
-	TemplateFuncGetter   func(*irc.Message, *Rule, FieldCollection) interface{}
+	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
 )
 
 func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {
-	return func(*irc.Message, *Rule, FieldCollection) interface{} { return f }
+	return func(*irc.Message, *Rule, *FieldCollection) interface{} { return f }
 }

@@ -13,27 +13,23 @@ import (
 // Compile-time assertion
 var _ plugins.MsgFormatter = formatMessage
 
-func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) (string, error) {
-	compiledFields := map[string]interface{}{}
+func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) (string, error) {
+	compiledFields := plugins.NewFieldCollection()
 
 	if config != nil {
 		configLock.RLock()
-		for k, v := range config.Variables {
-			compiledFields[k] = v
-		}
-		compiledFields["permitTimeout"] = int64(config.PermitTimeout / time.Second)
+		compiledFields.SetFromData(config.Variables)
+		compiledFields.Set("permitTimeout", int64(config.PermitTimeout/time.Second))
 		configLock.RUnlock()
 	}
 
-	for k, v := range fields {
-		compiledFields[k] = v
-	}
+	compiledFields.SetFromData(fields.Data())
 
 	if m != nil {
-		compiledFields["msg"] = m
+		compiledFields.Set("msg", m)
 	}
-	compiledFields["username"] = plugins.DeriveUser(m, fields)
-	compiledFields["channel"] = plugins.DeriveChannel(m, fields)
+	compiledFields.Set("username", plugins.DeriveUser(m, fields))
+	compiledFields.Set("channel", plugins.DeriveChannel(m, fields))
 
 	// Parse and execute template
 	tpl, err := template.
@@ -45,7 +41,7 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields plu
 	}
 
 	buf := new(bytes.Buffer)
-	err = tpl.Execute(buf, compiledFields)
+	err = tpl.Execute(buf, compiledFields.Data())
 
 	return buf.String(), errors.Wrap(err, "execute template")
 }

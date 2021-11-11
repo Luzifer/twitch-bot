@@ -79,7 +79,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	registerAPI(args.RegisterAPIRoute)
 
-	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func() int {
 			return storedObject.GetMaxQuoteIdx(plugins.DeriveChannel(m, nil))
 		}
@@ -101,7 +101,7 @@ type (
 	}
 )
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		action   = attrs.MustString("action", ptrStringEmpty)
 		indexStr = attrs.MustString("index", ptrStringZero)
@@ -149,12 +149,9 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			return false, nil
 		}
 
-		fields := make(plugins.FieldCollection)
-		for k, v := range eventData {
-			fields[k] = v
-		}
-		fields["index"] = idx
-		fields["quote"] = quote
+		fields := eventData.Clone()
+		fields.Set("index", idx)
+		fields.Set("quote", quote)
 
 		format := attrs.MustString("format", ptrStringOutFormat)
 		msg, err := formatMessage(format, m, r, fields)
@@ -180,7 +177,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	action := attrs.MustString("action", ptrStringEmpty)
 
 	switch action {

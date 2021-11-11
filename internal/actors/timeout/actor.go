@@ -37,7 +37,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	return false, errors.Wrap(
 		c.WriteMessage(&irc.Message{
 			Command: "PRIVMSG",
@@ -53,7 +53,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
 		return errors.New("duration must be of type duration greater or equal one second")
 	}

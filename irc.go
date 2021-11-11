@@ -198,32 +198,32 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 
 	var (
 		evt    *string
-		fields = plugins.FieldCollection{
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		}
+		fields = plugins.NewFieldCollection()
 	)
+
+	fields.Set("channel", i.getChannel(m)) // Compatibility to plugins.DeriveChannel
 
 	switch {
 	case secondsErr == nil && hasTargetUserID:
 		// User & Duration = Timeout
 		evt = eventTypeTimeout
-		fields["duration"] = time.Duration(seconds) * time.Second
-		fields["seconds"] = seconds
-		fields["target_id"] = targetUserID
-		fields["target_name"] = m.Trailing()
-		log.WithFields(log.Fields(fields)).Info("User was timed out")
+		fields.Set("duration", time.Duration(seconds)*time.Second)
+		fields.Set("seconds", seconds)
+		fields.Set("target_id", targetUserID)
+		fields.Set("target_name", m.Trailing())
+		log.WithFields(log.Fields(fields.Data())).Info("User was timed out")
 
 	case hasTargetUserID:
 		// User w/o Duration = Ban
 		evt = eventTypeBan
-		fields["target_id"] = targetUserID
-		fields["target_name"] = m.Trailing()
-		log.WithFields(log.Fields(fields)).Info("User was banned")
+		fields.Set("target_id", targetUserID)
+		fields.Set("target_name", m.Trailing())
+		log.WithFields(log.Fields(fields.Data())).Info("User was banned")
 
 	default:
 		// No User = /clear
 		evt = eventTypeClearChat
-		log.WithFields(log.Fields(fields)).Info("Chat was cleared")
+		log.WithFields(log.Fields(fields.Data())).Info("Chat was cleared")
 	}
 
 	go handleMessage(i.c, m, evt, fields)
@@ -254,7 +254,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	log.WithField("user", username).Debug("Added permit")
 	timerStore.AddPermit(m.Params[0], username)
 
-	go handleMessage(i.c, m, eventTypePermit, plugins.FieldCollection{"username": username})
+	go handleMessage(i.c, m, eventTypePermit, plugins.FieldCollectionFromData(map[string]interface{}{"username": username}))
 }
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
@@ -301,9 +301,9 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	}
 
 	if bits, err := strconv.ParseInt(string(m.Tags["bits"]), 10, 64); err == nil {
-		go handleMessage(i.c, m, eventTypeBits, plugins.FieldCollection{
+		go handleMessage(i.c, m, eventTypeBits, plugins.FieldCollectionFromData(map[string]interface{}{
 			"bits": bits,
-		})
+		}))
 	}
 
 	go handleMessage(i.c, m, nil, nil)
@@ -322,61 +322,61 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		log.WithField("msg", m).Warn("Received usernotice without msg-id")
 
 	case "raid":
-		evtData := plugins.FieldCollection{
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":        m.Tags["login"],
 			"user":        m.Tags["login"], // Compatibility to plugins.DeriveUser
 			"viewercount": m.Tags["msg-param-viewerCount"],
-		}
-		log.WithFields(log.Fields(evtData)).Info("Incoming raid")
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("Incoming raid")
 
 		go handleMessage(i.c, m, eventTypeRaid, evtData)
 
 	case "resub":
-		evtData := plugins.FieldCollection{
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":           i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":              m.Tags["login"],
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
 			"user":              m.Tags["login"], // Compatibility to plugins.DeriveUser
-		}
-		log.WithFields(log.Fields(evtData)).Info("User re-subscribed")
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("User re-subscribed")
 
 		go handleMessage(i.c, m, eventTypeResub, evtData)
 
 	case "sub":
-		evtData := plugins.FieldCollection{
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":    m.Tags["login"],
 			"plan":    m.Tags["msg-param-sub-plan"],
 			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
-		}
-		log.WithFields(log.Fields(evtData)).Info("User subscribed")
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("User subscribed")
 
 		go handleMessage(i.c, m, eventTypeSub, evtData)
 
 	case "subgift", "anonsubgift":
-		evtData := plugins.FieldCollection{
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":       i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":          m.Tags["login"],
 			"gifted_months": m.Tags["msg-param-gift-months"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
 			"user":          m.Tags["login"], // Compatibility to plugins.DeriveUser
-		}
-		log.WithFields(log.Fields(evtData)).Info("User gifted a sub")
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("User gifted a sub")
 
 		go handleMessage(i.c, m, eventTypeSubgift, evtData)
 
 	case "submysterygift":
-		evtData := plugins.FieldCollection{
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":    m.Tags["login"],
 			"number":  m.Tags["msg-param-mass-gift-count"],
 			"plan":    m.Tags["msg-param-sub-plan"],
 			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
-		}
-		log.WithFields(log.Fields(evtData)).Info("User gifted subs to the community")
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("User gifted subs to the community")
 
 		go handleMessage(i.c, m, eventTypeSubmysterygift, evtData)
 

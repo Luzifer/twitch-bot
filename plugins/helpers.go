@@ -7,7 +7,7 @@ import (
 	"github.com/go-irc/irc"
 )
 
-func DeriveChannel(m *irc.Message, evtData FieldCollection) string {
+func DeriveChannel(m *irc.Message, evtData *FieldCollection) string {
 	if m != nil && len(m.Params) > 0 && strings.HasPrefix(m.Params[0], "#") {
 		return m.Params[0]
 	}
@@ -19,7 +19,7 @@ func DeriveChannel(m *irc.Message, evtData FieldCollection) string {
 	return ""
 }
 
-func DeriveUser(m *irc.Message, evtData FieldCollection) string {
+func DeriveUser(m *irc.Message, evtData *FieldCollection) string {
 	if m != nil && m.User != "" {
 		return m.User
 	}

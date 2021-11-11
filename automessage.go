@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
@@ -163,9 +164,10 @@ func (a *autoMessage) allowExecuteDisableOnTemplate() bool {
 		return true
 	}
 
-	res, err := formatMessage(*a.DisableOnTemplate, nil, nil, map[string]interface{}{
-		"channel": a.Channel,
-	})
+	fields := plugins.NewFieldCollection()
+	fields.Set("channel", a.Channel)
+
+	res, err := formatMessage(*a.DisableOnTemplate, nil, nil, fields)
 	if err != nil {
 		log.WithError(err).Error("Error in auto-message disable template")
 		// Caused an error, forbid execution

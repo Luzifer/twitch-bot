@@ -74,7 +74,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		if !attrs.CanString("fallback") || attrs.MustString("fallback", nil) == "" {
@@ -118,7 +118,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
 	}
