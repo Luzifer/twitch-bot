@@ -48,3 +48,33 @@ func TestFieldCollectionYAMLMarshal(t *testing.T) {
 		t.Errorf("Marshalled YAML does not match expectation: res=%s exp=%s", buf.String(), raw)
 	}
 }
+
+func TestFieldCollectionNilModify(t *testing.T) {
+	var f *FieldCollection
+
+	f.Set("foo", "bar")
+
+	f = nil
+	f.SetFromData(map[string]interface{}{"foo": "bar"})
+}
+
+func TestFieldCollectionNilClone(t *testing.T) {
+	var f *FieldCollection
+
+	f.Clone()
+}
+
+func TestFieldCollectionNilDataGet(t *testing.T) {
+	var f *FieldCollection
+
+	for name, fn := range map[string]func(name string) bool{
+		"bool":     f.CanBool,
+		"duration": f.CanDuration,
+		"int64":    f.CanInt64,
+		"string":   f.CanString,
+	} {
+		if fn("foo") {
+			t.Errorf("%s key is available", name)
+		}
+	}
+}

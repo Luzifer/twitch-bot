@@ -66,6 +66,10 @@ func (f *FieldCollection) Clone() *FieldCollection {
 
 // Data creates a map-copy of the data stored inside the FieldCollection
 func (f *FieldCollection) Data() map[string]interface{} {
+	if f == nil {
+		return nil
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -79,6 +83,14 @@ func (f *FieldCollection) Data() map[string]interface{} {
 
 // Expect takes a list of keys and returns an error with all non-found names
 func (f *FieldCollection) Expect(keys ...string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	if f == nil || f.data == nil {
+		return errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -99,16 +111,7 @@ func (f *FieldCollection) Expect(keys ...string) error {
 
 // HasAll takes a list of keys and returns whether all of them exist inside the FieldCollection
 func (f *FieldCollection) HasAll(keys ...string) bool {
-	f.lock.RLock()
-	defer f.lock.RUnlock()
-
-	for _, k := range keys {
-		if _, ok := f.data[k]; !ok {
-			return false
-		}
-	}
-
-	return true
+	return f.Expect(keys...) == nil
 }
 
 // MustBool is a wrapper around Bool and panics if an error was returned
@@ -161,6 +164,10 @@ func (f *FieldCollection) MustString(name string, defVal *string) string {
 
 // Bool tries to read key name as bool
 func (f *FieldCollection) Bool(name string) (bool, error) {
+	if f == nil || f.data == nil {
+		return false, errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -182,6 +189,10 @@ func (f *FieldCollection) Bool(name string) (bool, error) {
 
 // Duration tries to read key name as time.Duration
 func (f *FieldCollection) Duration(name string) (time.Duration, error) {
+	if f == nil || f.data == nil {
+		return 0, errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -196,6 +207,10 @@ func (f *FieldCollection) Duration(name string) (time.Duration, error) {
 
 // Int64 tries to read key name as int64
 func (f *FieldCollection) Int64(name string) (int64, error) {
+	if f == nil || f.data == nil {
+		return 0, errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -220,6 +235,10 @@ func (f *FieldCollection) Int64(name string) (int64, error) {
 
 // Set sets a single key to specified value
 func (f *FieldCollection) Set(key string, value interface{}) {
+	if f == nil {
+		f = NewFieldCollection()
+	}
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -232,6 +251,10 @@ func (f *FieldCollection) Set(key string, value interface{}) {
 
 // SetFromData takes a map of data and copies all data into the FieldCollection
 func (f *FieldCollection) SetFromData(data map[string]interface{}) {
+	if f == nil {
+		f = NewFieldCollection()
+	}
+
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -246,6 +269,10 @@ func (f *FieldCollection) SetFromData(data map[string]interface{}) {
 
 // String tries to read key name as string
 func (f *FieldCollection) String(name string) (string, error) {
+	if f == nil || f.data == nil {
+		return "", errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -267,6 +294,10 @@ func (f *FieldCollection) String(name string) (string, error) {
 
 // StringSlice tries to read key name as []string
 func (f *FieldCollection) StringSlice(name string) ([]string, error) {
+	if f == nil || f.data == nil {
+		return nil, errors.New("uninitialized field collection")
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
@@ -299,6 +330,10 @@ func (f *FieldCollection) StringSlice(name string) ([]string, error) {
 // Implement JSON marshalling to plain underlying map[string]interface{}
 
 func (f *FieldCollection) MarshalJSON() ([]byte, error) {
+	if f == nil || f.data == nil {
+		return []byte("{}"), nil
+	}
+
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
