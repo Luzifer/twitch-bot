@@ -25,6 +25,13 @@ func NewFieldCollection() *FieldCollection {
 	return &FieldCollection{data: make(map[string]interface{})}
 }
 
+// FieldCollectionFromData is a wrapper around NewFieldCollection and SetFromData
+func FieldCollectionFromData(data map[string]interface{}) *FieldCollection {
+	o := NewFieldCollection()
+	o.SetFromData(data)
+	return o
+}
+
 // CanBool tries to read key name as bool and checks whether error is nil
 func (f *FieldCollection) CanBool(name string) bool {
 	_, err := f.Bool(name)
@@ -47,6 +54,13 @@ func (f *FieldCollection) CanInt64(name string) bool {
 func (f *FieldCollection) CanString(name string) bool {
 	_, err := f.String(name)
 	return err == nil
+}
+
+// Clone is a wrapper around n.SetFromData(o.Data())
+func (f *FieldCollection) Clone() *FieldCollection {
+	out := new(FieldCollection)
+	out.SetFromData(f.Data())
+	return out
 }
 
 // Data creates a map-copy of the data stored inside the FieldCollection
