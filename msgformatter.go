@@ -25,9 +25,7 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 		configLock.RUnlock()
 	}
 
-	if fields != nil {
-		compiledFields.SetFromData(fields.Data())
-	}
+	compiledFields.SetFromData(fields.Data())
 
 	if m != nil {
 		compiledFields.Set("msg", m)
