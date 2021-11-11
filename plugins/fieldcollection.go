@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -222,6 +223,10 @@ func (f *FieldCollection) Set(key string, value interface{}) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
+	if f.data == nil {
+		f.data = make(map[string]interface{})
+	}
+
 	f.data[key] = value
 }
 
@@ -229,6 +234,10 @@ func (f *FieldCollection) Set(key string, value interface{}) {
 func (f *FieldCollection) SetFromData(data map[string]interface{}) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
+
+	if f.data == nil {
+		f.data = make(map[string]interface{})
+	}
 
 	for key, value := range data {
 		f.data[key] = value
@@ -285,4 +294,39 @@ func (f *FieldCollection) StringSlice(name string) ([]string, error) {
 	}
 
 	return nil, ErrValueMismatch
+}
+
+// Implement JSON marshalling to plain underlying map[string]interface{}
+
+func (f *FieldCollection) MarshalJSON() ([]byte, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	return json.Marshal(f.data)
+}
+
+func (f *FieldCollection) UnmarshalJSON(raw []byte) error {
+	data := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return errors.Wrap(err, "unmarshalling from JSON")
+	}
+
+	f.SetFromData(data)
+	return nil
+}
+
+// Implement YAML marshalling to plain underlying map[string]interface{}
+
+func (f *FieldCollection) MarshalYAML() (interface{}, error) {
+	return f.Data(), nil
+}
+
+func (f *FieldCollection) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	data := make(map[string]interface{})
+	if err := unmarshal(&data); err != nil {
+		return errors.Wrap(err, "unmarshalling from YAML")
+	}
+
+	f.SetFromData(data)
+	return nil
 }
