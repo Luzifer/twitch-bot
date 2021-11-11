@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,33 +15,62 @@ var (
 	ErrValueMismatch = errors.New("specified value has different format")
 )
 
-type FieldCollection map[string]interface{}
+type FieldCollection struct {
+	data map[string]interface{}
+	lock sync.RWMutex
+}
 
-func (f FieldCollection) CanBool(name string) bool {
+// NewFieldCollection creates a new FieldCollection with empty data store
+func NewFieldCollection() *FieldCollection {
+	return &FieldCollection{data: make(map[string]interface{})}
+}
+
+// CanBool tries to read key name as bool and checks whether error is nil
+func (f *FieldCollection) CanBool(name string) bool {
 	_, err := f.Bool(name)
 	return err == nil
 }
 
-func (f FieldCollection) CanDuration(name string) bool {
+// CanDuration tries to read key name as time.Duration and checks whether error is nil
+func (f *FieldCollection) CanDuration(name string) bool {
 	_, err := f.Duration(name)
 	return err == nil
 }
 
-func (f FieldCollection) CanInt64(name string) bool {
+// CanInt64 tries to read key name as int64 and checks whether error is nil
+func (f *FieldCollection) CanInt64(name string) bool {
 	_, err := f.Int64(name)
 	return err == nil
 }
 
-func (f FieldCollection) CanString(name string) bool {
+// CanString tries to read key name as string and checks whether error is nil
+func (f *FieldCollection) CanString(name string) bool {
 	_, err := f.String(name)
 	return err == nil
 }
 
-func (f FieldCollection) Expect(keys ...string) error {
+// Data creates a map-copy of the data stored inside the FieldCollection
+func (f *FieldCollection) Data() map[string]interface{} {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	out := make(map[string]interface{})
+	for k := range f.data {
+		out[k] = f.data[k]
+	}
+
+	return out
+}
+
+// Expect takes a list of keys and returns an error with all non-found names
+func (f *FieldCollection) Expect(keys ...string) error {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
 	var missing []string
 
 	for _, k := range keys {
-		if _, ok := f[k]; !ok {
+		if _, ok := f.data[k]; !ok {
 			missing = append(missing, k)
 		}
 	}
@@ -52,9 +82,13 @@ func (f FieldCollection) Expect(keys ...string) error {
 	return nil
 }
 
-func (f FieldCollection) HasAll(keys ...string) bool {
+// HasAll takes a list of keys and returns whether all of them exist inside the FieldCollection
+func (f *FieldCollection) HasAll(keys ...string) bool {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
 	for _, k := range keys {
-		if _, ok := f[k]; !ok {
+		if _, ok := f.data[k]; !ok {
 			return false
 		}
 	}
@@ -62,7 +96,8 @@ func (f FieldCollection) HasAll(keys ...string) bool {
 	return true
 }
 
-func (f FieldCollection) MustBool(name string, defVal *bool) bool {
+// MustBool is a wrapper around Bool and panics if an error was returned
+func (f *FieldCollection) MustBool(name string, defVal *bool) bool {
 	v, err := f.Bool(name)
 	if err != nil {
 		if defVal != nil {
@@ -73,7 +108,8 @@ func (f FieldCollection) MustBool(name string, defVal *bool) bool {
 	return v
 }
 
-func (f FieldCollection) MustDuration(name string, defVal *time.Duration) time.Duration {
+// MustDuration is a wrapper around Duration and panics if an error was returned
+func (f *FieldCollection) MustDuration(name string, defVal *time.Duration) time.Duration {
 	v, err := f.Duration(name)
 	if err != nil {
 		if defVal != nil {
@@ -84,7 +120,8 @@ func (f FieldCollection) MustDuration(name string, defVal *time.Duration) time.D
 	return v
 }
 
-func (f FieldCollection) MustInt64(name string, defVal *int64) int64 {
+// MustInt64 is a wrapper around Int64 and panics if an error was returned
+func (f *FieldCollection) MustInt64(name string, defVal *int64) int64 {
 	v, err := f.Int64(name)
 	if err != nil {
 		if defVal != nil {
@@ -95,7 +132,8 @@ func (f FieldCollection) MustInt64(name string, defVal *int64) int64 {
 	return v
 }
 
-func (f FieldCollection) MustString(name string, defVal *string) string {
+// MustString is a wrapper around String and panics if an error was returned
+func (f *FieldCollection) MustString(name string, defVal *string) string {
 	v, err := f.String(name)
 	if err != nil {
 		if defVal != nil {
@@ -106,8 +144,12 @@ func (f FieldCollection) MustString(name string, defVal *string) string {
 	return v
 }
 
-func (f FieldCollection) Bool(name string) (bool, error) {
-	v, ok := f[name]
+// Bool tries to read key name as bool
+func (f *FieldCollection) Bool(name string) (bool, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	v, ok := f.data[name]
 	if !ok {
 		return false, ErrValueNotSet
 	}
@@ -123,7 +165,11 @@ func (f FieldCollection) Bool(name string) (bool, error) {
 	return false, ErrValueMismatch
 }
 
-func (f FieldCollection) Duration(name string) (time.Duration, error) {
+// Duration tries to read key name as time.Duration
+func (f *FieldCollection) Duration(name string) (time.Duration, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
 	v, err := f.String(name)
 	if err != nil {
 		return 0, errors.Wrap(err, "getting string value")
@@ -133,8 +179,12 @@ func (f FieldCollection) Duration(name string) (time.Duration, error) {
 	return d, errors.Wrap(err, "parsing value")
 }
 
-func (f FieldCollection) Int64(name string) (int64, error) {
-	v, ok := f[name]
+// Int64 tries to read key name as int64
+func (f *FieldCollection) Int64(name string) (int64, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	v, ok := f.data[name]
 	if !ok {
 		return 0, ErrValueNotSet
 	}
@@ -153,8 +203,30 @@ func (f FieldCollection) Int64(name string) (int64, error) {
 	return 0, ErrValueMismatch
 }
 
-func (f FieldCollection) String(name string) (string, error) {
-	v, ok := f[name]
+// Set sets a single key to specified value
+func (f *FieldCollection) Set(key string, value interface{}) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	f.data[key] = value
+}
+
+// SetFromData takes a map of data and copies all data into the FieldCollection
+func (f *FieldCollection) SetFromData(data map[string]interface{}) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	for key, value := range data {
+		f.data[key] = value
+	}
+}
+
+// String tries to read key name as string
+func (f *FieldCollection) String(name string) (string, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	v, ok := f.data[name]
 	if !ok {
 		return "", ErrValueNotSet
 	}
@@ -170,8 +242,12 @@ func (f FieldCollection) String(name string) (string, error) {
 	return "", ErrValueMismatch
 }
 
-func (f FieldCollection) StringSlice(name string) ([]string, error) {
-	v, ok := f[name]
+// StringSlice tries to read key name as []string
+func (f *FieldCollection) StringSlice(name string) ([]string, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	v, ok := f.data[name]
 	if !ok {
 		return nil, ErrValueNotSet
 	}
