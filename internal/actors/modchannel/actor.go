@@ -64,7 +64,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		ptrStringEmpty = func(v string) *string { return &v }("")
 		game           = attrs.MustString("game", ptrStringEmpty)
@@ -109,7 +109,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("channel"); err != nil || v == "" {
 		return errors.New("channel must be non-empty string")
 	}

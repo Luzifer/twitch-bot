@@ -40,7 +40,7 @@ func registerAction(name string, acf plugins.ActorCreationFunc) {
 	availableActions[name] = acf
 }
 
-func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData plugins.FieldCollection) (preventCooldown bool, err error) {
+func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData *plugins.FieldCollection) (preventCooldown bool, err error) {
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
@@ -64,7 +64,7 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 	return apc, errors.Wrap(err, "execute action")
 }
 
-func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData plugins.FieldCollection) {
+func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plugins.FieldCollection) {
 	for _, r := range config.GetMatchingRules(m, event, eventData) {
 		var preventCooldown bool
 

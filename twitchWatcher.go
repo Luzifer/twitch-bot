@@ -196,10 +196,10 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel":  channel,
 			"category": *category,
 		}).Debug("Twitch metadata changed")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollection{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":  channel,
 			"category": *category,
-		})
+		}))
 	}
 
 	if title != nil && t.ChannelStatus[channel].Title != *title {
@@ -208,10 +208,10 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel": channel,
 			"title":   *title,
 		}).Debug("Twitch metadata changed")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollection{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel": channel,
 			"title":   *title,
-		})
+		}))
 	}
 
 	if online != nil && t.ChannelStatus[channel].IsLive != *online {
@@ -226,8 +226,8 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			evt = eventTypeTwitchStreamOffline
 		}
 
-		go handleMessage(ircHdl.Client(), nil, evt, plugins.FieldCollection{
+		go handleMessage(ircHdl.Client(), nil, evt, plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel": channel,
-		})
+		}))
 	}
 }

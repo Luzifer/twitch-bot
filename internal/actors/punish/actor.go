@@ -142,7 +142,7 @@ type (
 
 // Punish
 
-func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		cooldown = attrs.MustDuration("cooldown", ptrDefaultCooldown)
 		reason   = attrs.MustString("reason", ptrStringEmpty)
@@ -214,7 +214,7 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 func (a actorPunish) IsAsync() bool { return false }
 func (a actorPunish) Name() string  { return actorNamePunish }
 
-func (a actorPunish) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actorPunish) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}
@@ -228,7 +228,7 @@ func (a actorPunish) Validate(attrs plugins.FieldCollection) (err error) {
 
 // Reset
 
-func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		user = attrs.MustString("user", nil)
 		uuid = attrs.MustString("uuid", ptrStringEmpty)
@@ -249,7 +249,7 @@ func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 func (a actorResetPunish) IsAsync() bool { return false }
 func (a actorResetPunish) Name() string  { return actorNameResetPunish }
 
-func (a actorResetPunish) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actorResetPunish) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}

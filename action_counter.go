@@ -107,7 +107,7 @@ func init() {
 
 type ActorCounter struct{}
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
@@ -144,7 +144,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 func (a ActorCounter) IsAsync() bool { return false }
 func (a ActorCounter) Name() string  { return "counter" }
 
-func (a ActorCounter) Validate(attrs plugins.FieldCollection) (err error) {
+func (a ActorCounter) Validate(attrs *plugins.FieldCollection) (err error) {
 	if cn, err := attrs.String("counter"); err != nil || cn == "" {
 		return errors.New("counter name must be non-empty string")
 	}

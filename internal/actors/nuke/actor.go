@@ -143,7 +143,7 @@ type (
 	}
 )
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData plugins.FieldCollection, attrs plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	rawMatch, err := formatMessage(attrs.MustString("match", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting match")
@@ -229,7 +229,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs plugins.FieldCollection) (err error) {
+func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("match"); err != nil || v == "" {
 		return errors.New("match must be non-empty string")
 	}

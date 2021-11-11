@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	tplFuncs.Register("arg", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
+	tplFuncs.Register("arg", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(arg int) (string, error) {
 			msgParts := strings.Split(m.Trailing(), " ")
 			if len(msgParts) <= arg {
@@ -21,10 +21,10 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
+	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(badge string) bool {
-			channel, ok := fields["channel"].(string)
-			if !ok {
+			channel, err := fields.String("channel")
+			if err != nil {
 				log.Trace("Fields for botHasBadge function had no channel")
 				return false
 			}
@@ -40,7 +40,7 @@ func init() {
 
 	tplFuncs.Register("fixUsername", plugins.GenericTemplateFunctionGetter(func(username string) string { return strings.TrimLeft(username, "@#") }))
 
-	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
+	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(idx int, fallback ...string) (string, error) {
 			fields := r.GetMatchMessage().FindStringSubmatch(m.Trailing())
 			if len(fields) <= idx {
@@ -55,7 +55,7 @@ func init() {
 		}
 	})
 
-	tplFuncs.Register("tag", func(m *irc.Message, r *plugins.Rule, fields plugins.FieldCollection) interface{} {
+	tplFuncs.Register("tag", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(tag string) string {
 			s, _ := m.GetTag(tag)
 			return s

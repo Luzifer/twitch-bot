@@ -250,7 +250,7 @@ func (c *configFile) CloseRawMessageWriter() error {
 	return c.rawLogWriter.Close()
 }
 
-func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData map[string]interface{}) []*plugins.Rule {
+func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *plugins.FieldCollection) []*plugins.Rule {
 	configLock.RLock()
 	defer configLock.RUnlock()
 

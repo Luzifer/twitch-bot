@@ -29,7 +29,7 @@ func newTemplateFuncProvider() *templateFuncProvider {
 	return out
 }
 
-func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, fields map[string]interface{}) template.FuncMap {
+func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) template.FuncMap {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
