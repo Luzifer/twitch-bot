@@ -18,9 +18,7 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 
 	if config != nil {
 		configLock.RLock()
-		for k, v := range config.Variables {
-			compiledFields.Set(k, v)
-		}
+		compiledFields.SetFromData(config.Variables)
 		compiledFields.Set("permitTimeout", int64(config.PermitTimeout/time.Second))
 		configLock.RUnlock()
 	}
