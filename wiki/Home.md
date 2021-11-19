@@ -140,35 +140,6 @@ rules: # See below for examples
 ...
 ```
 
-## Templating
-
-There are certain variables available in the strings with templating enabled:
-
-- `channel` - Channel the message was sent to, only available for regular messages not events
-- `msg` - The message object, used in functions, should not be sent to chat
-- `permitTimeout` - Value of `permit_timeout` in seconds
-- `username` - The username of the message author
-
-Additionally there are some functions available in the templates:
-
-- `arg <idx>` - Takes the message sent to the channel, splits by space and returns the Nth element
-- `botHasBadge <badge>` - Checks whether bot has the given badge in the current channel
-- `channelCounter <counter name>` - Wraps the counter name into a channel specific counter name including the channel name
-- `concat <delimiter> <...parts>` - Join the given string parts with delimiter
-- `counterValue <counter name>` - Returns the current value of the counter which identifier was supplied
-- `displayName <username> [fallback]` - Returns the display name the specified user set for themselves
-- `fixUsername <username>` - Ensures the username no longer contains the `@` or `#` prefix
-- `formatDuration <duration> <hours> <minutes> <seconds>` - Returns a formated duration. Pass empty strings to leave out the part: `{{ formatDuration .dur "hours" "minutes" "" }}` yields `N hours, M minutes`
-- `followDate <from> <to>` - Looks up when `from` followed `to`
-- `group <idx> [fallback]` - Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
-- `lastQuoteIndex` - Gets the last quote index in the quote database for the current channel
-- `recentGame <username> [fallback]` - Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
-- `streamUptime <username>` - Returns the duration the stream is online (causes an error if no current stream is found)
-- `tag <tagname>` - Takes the message sent to the channel, returns the value of the tag specified
-- `toLower <string>` - Converts the given string to lower-case
-- `toUpper <string>` - Converts the given string to upper-case
-- `variable <name> [default]` - Returns the variable value or default in case it is empty
-
 ## Command executions
 
 Your command will get a JSON object passed through `stdin` you can parse to gain details about the message. It is expected to yield an array of actions on `stdout` and exit with status `0`. If it does not the action will be marked failed. In case you need to output debug output you can use `stderr` which is directly piped to the bots `stderr`.

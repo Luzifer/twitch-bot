@@ -16,6 +16,8 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
+	"github.com/Luzifer/twitch-bot/internal/template/numeric"
+	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/pkg/errors"
@@ -23,7 +25,8 @@ import (
 )
 
 var (
-	coreActorRegistations = []plugins.RegisterFunc{
+	corePluginRegistrations = []plugins.RegisterFunc{
+		// Actors
 		ban.Register,
 		delay.Register,
 		deleteactor.Register,
@@ -35,13 +38,17 @@ var (
 		respond.Register,
 		timeout.Register,
 		whisper.Register,
+
+		// Template functions
+		numeric.Register,
+		random.Register,
 	}
 	knownModules []string
 )
 
 func initCorePlugins() error {
 	args := getRegistrationArguments()
-	for _, rf := range coreActorRegistations {
+	for _, rf := range corePluginRegistrations {
 		if err := rf(args); err != nil {
 			return errors.Wrap(err, "registering core plugin")
 		}
