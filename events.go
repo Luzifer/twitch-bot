@@ -3,20 +3,21 @@ package main
 func ptrStr(s string) *string { return &s }
 
 var (
-	eventTypeBan            = ptrStr("ban")
-	eventTypeBits           = ptrStr("bits")
-	eventTypeClearChat      = ptrStr("clearchat")
-	eventTypeJoin           = ptrStr("join")
-	eventTypeHost           = ptrStr("host")
-	eventTypePart           = ptrStr("part")
-	eventTypePermit         = ptrStr("permit")
-	eventTypeRaid           = ptrStr("raid")
-	eventTypeResub          = ptrStr("resub")
-	eventTypeSub            = ptrStr("sub")
-	eventTypeSubgift        = ptrStr("subgift")
-	eventTypeSubmysterygift = ptrStr("submysterygift")
-	eventTypeTimeout        = ptrStr("timeout")
-	eventTypeWhisper        = ptrStr("whisper")
+	eventTypeBan             = ptrStr("ban")
+	eventTypeBits            = ptrStr("bits")
+	eventTypeClearChat       = ptrStr("clearchat")
+	eventTypeGiftPaidUpgrade = ptrStr("giftpaidupgrade")
+	eventTypeHost            = ptrStr("host")
+	eventTypeJoin            = ptrStr("join")
+	eventTypePart            = ptrStr("part")
+	eventTypePermit          = ptrStr("permit")
+	eventTypeRaid            = ptrStr("raid")
+	eventTypeResub           = ptrStr("resub")
+	eventTypeSubgift         = ptrStr("subgift")
+	eventTypeSubmysterygift  = ptrStr("submysterygift")
+	eventTypeSub             = ptrStr("sub")
+	eventTypeTimeout         = ptrStr("timeout")
+	eventTypeWhisper         = ptrStr("whisper")
 
 	eventTypeTwitchCategoryUpdate = ptrStr("category_update")
 	eventTypeTwitchStreamOffline  = ptrStr("stream_offline")
@@ -27,8 +28,9 @@ var (
 		eventTypeBan,
 		eventTypeBits,
 		eventTypeClearChat,
-		eventTypeJoin,
+		eventTypeGiftPaidUpgrade,
 		eventTypeHost,
+		eventTypeJoin,
 		eventTypePart,
 		eventTypePermit,
 		eventTypeRaid,

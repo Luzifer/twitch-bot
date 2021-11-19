@@ -41,6 +41,16 @@ Fields:
 
 - `channel` - The channel the event occurred in
 
+## `giftpaidupgrade`
+
+User upgraded their gifted subscription into a paid one. This event does not contain any details about the tier of the paid subscription.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `gifter` - The login-name of the user who gifted the subscription
+- `username` - The login-name of the user who upgraded their subscription
+
 ## `join`
 
 User joined the channel-chat. This is **NOT** an indicator they are viewing, the event is **NOT** reliably sent when the user really joined the chat. The event will be sent with some delay after they join the chat and is sometimes repeated multiple times during their stay. So **DO NOT** use this to greet users!

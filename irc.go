@@ -321,6 +321,16 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		// Notices SHOULD have msg-id tags...
 		log.WithField("msg", m).Warn("Received usernotice without msg-id")
 
+	case "giftpaidupgrade":
+		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			"gifter":  m.Tags["msg-param-sender-login"],
+			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+		})
+		log.WithFields(log.Fields(evtData.Data())).Info("User upgraded to paid sub")
+
+		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
+
 	case "raid":
 		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
