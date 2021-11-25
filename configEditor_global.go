@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 func registerEditorGlobalMethods() {

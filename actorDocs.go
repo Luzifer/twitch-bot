@@ -5,8 +5,9 @@ import (
 	_ "embed"
 	"text/template"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 //go:embed actorDocs.tpl

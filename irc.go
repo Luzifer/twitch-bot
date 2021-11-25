@@ -9,11 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 var (

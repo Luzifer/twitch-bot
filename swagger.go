@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzshiming/openapi/spec"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 var (

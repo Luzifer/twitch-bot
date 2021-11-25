@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 var (

@@ -6,8 +6,9 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 func Register(args plugins.RegistrationArguments) error {

@@ -3,9 +3,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/twitch"
-	"github.com/pkg/errors"
 )
 
 func getAuthorizationFromRequest(r *http.Request) (string, *twitch.Client, error) {

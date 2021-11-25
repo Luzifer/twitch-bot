@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 var _ plugins.RegisterFunc = Register

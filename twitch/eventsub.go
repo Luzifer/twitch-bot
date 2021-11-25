@@ -15,12 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 const (

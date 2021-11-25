@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 const eventSubSecretLength = 32

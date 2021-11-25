@@ -4,8 +4,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
+
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 type (

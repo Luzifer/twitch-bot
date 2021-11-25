@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 func init() {

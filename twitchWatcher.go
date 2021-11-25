@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 type (

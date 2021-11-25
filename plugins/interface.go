@@ -1,10 +1,11 @@
 package plugins
 
 import (
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 type (

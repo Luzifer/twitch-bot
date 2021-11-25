@@ -6,13 +6,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)

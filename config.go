@@ -10,12 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 const expectedMinConfigVersion = 2

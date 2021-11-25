@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 type (

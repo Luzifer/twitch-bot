@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
@@ -20,8 +23,6 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var (

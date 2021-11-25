@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 var (

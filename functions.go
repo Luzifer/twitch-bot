@@ -7,10 +7,11 @@ import (
 	"text/template"
 	"time"
 
-	korvike "github.com/Luzifer/korvike/functions"
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	log "github.com/sirupsen/logrus"
+
+	korvike "github.com/Luzifer/korvike/functions"
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 var tplFuncs = newTemplateFuncProvider()

@@ -9,9 +9,10 @@ import (
 	"plugin"
 	"strings"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 func loadPlugins(pluginDir string) error {

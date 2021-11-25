@@ -5,9 +5,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 // Compile-time assertion

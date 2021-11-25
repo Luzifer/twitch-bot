@@ -4,8 +4,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/go-irc/irc"
+
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 const actorName = "delay"

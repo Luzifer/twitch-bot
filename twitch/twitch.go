@@ -11,9 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/go_helpers/v2/backoff"
 )
 
 const (

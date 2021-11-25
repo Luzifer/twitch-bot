@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/twitch"
 	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 type (

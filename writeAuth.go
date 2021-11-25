@@ -4,11 +4,12 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 func fillAuthToken(token *configAuthToken) error {
