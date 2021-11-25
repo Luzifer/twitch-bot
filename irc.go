@@ -307,6 +307,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		}
 
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
+			"channel":     fmt.Sprintf("#%s", i.user),
 			"from":        matches[1],
 			"viewerCount": 0,
 		})
