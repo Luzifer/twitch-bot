@@ -1,3 +1,13 @@
+# 2.0.0 / 2021-12-03
+
+  * [ban] Enable templating for ban reason
+  * [core] Add `giftpaidupgrade` event
+  * [core] **BREAKING:** Allow actors to set fields those after them (#11)
+  * [core] Fix: Set channel for incoming host through jtv message
+  * [core] Handle host announce messages from jtv user
+  * [lint] Properly format inputs
+  * [templating] Add `multiply` and `seededRandom` template functions
+
 # 1.6.0 / 2021-11-11
 
   * [core] Add `ban`, `clearchat` and `timeout` events
