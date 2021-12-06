@@ -11,5 +11,5 @@ var (
 	//go:embed editor/*
 	configEditorFrontendFS embed.FS
 
-	configEditorFrontend http.FileSystem = http.FS(configEditorFrontendFS)
+	configEditorFrontend = http.FS(configEditorFrontendFS)
 )
