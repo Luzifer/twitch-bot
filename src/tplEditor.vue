@@ -64,6 +64,7 @@ export default {
       this.emittedCode = code
       this.$emit('input', code)
     })
+    this.jar.updateCode(this.value)
   },
 
   name: 'TwitchBotEditorAppTemplateEditor',

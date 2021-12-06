@@ -315,14 +315,17 @@
                 label-for="formRuleDisableOnTemplate"
               >
                 <div slot="description">
+                  <font-awesome-icon
+                    fixed-width
+                    class="mr-1 text-success"
+                    :icon="['fas', 'code']"
+                    title="Supports Templating"
+                  />
                   Template expression resulting in <code>true</code> to disable the rule or <code>false</code> to enable it
                 </div>
-                <b-form-textarea
+                <template-editor
                   id="formRuleDisableOnTemplate"
                   v-model="models.rule.disable_on_template"
-                  max-rows="6"
-                  required
-                  rows="1"
                 />
               </b-form-group>
             </b-tab>
@@ -407,13 +410,6 @@
                       :key="field.name"
                     >
                       <div slot="description">
-                        <font-awesome-icon
-                          v-if="field.support_template"
-                          fixed-width
-                          class="mr-1 text-success"
-                          :icon="['fas', 'code']"
-                          title="Supports Templating"
-                        />
                         {{ field.description }}
                       </div>
 
@@ -452,14 +448,13 @@
                     </b-form-group>
 
                     <b-form-group
-                      v-else-if="field.type === 'string' && field.long"
+                      v-else-if="field.support_template"
                       :key="field.name"
                       :label="field.name"
                       :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                     >
                       <div slot="description">
                         <font-awesome-icon
-                          v-if="field.support_template"
                           fixed-width
                           class="mr-1 text-success"
                           :icon="['fas', 'code']"
@@ -468,12 +463,9 @@
                         {{ field.description }}
                       </div>
 
-                      <b-form-textarea
+                      <template-editor
                         :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-model="models.rule.actions[idx].attributes[field.key]"
-                        max-rows="6"
-                        :required="!field.optional"
-                        rows="3"
                         :state="validateActionArgument(idx, field.key)"
                       />
                     </b-form-group>
@@ -485,13 +477,6 @@
                       :label-for="`${models.rule.uuid}-action-${idx}-${field.key}`"
                     >
                       <div slot="description">
-                        <font-awesome-icon
-                          v-if="field.support_template"
-                          fixed-width
-                          class="mr-1 text-success"
-                          :icon="['fas', 'code']"
-                          title="Supports Templating"
-                        />
                         {{ field.description }}
                       </div>
 
@@ -553,9 +538,11 @@
 import * as constants from './const.js'
 
 import axios from 'axios'
+import TemplateEditor from './tplEditor.vue'
 import Vue from 'vue'
 
 export default {
+  components: { TemplateEditor },
   computed: {
     addActionDescription() {
       if (!this.models.addAction) {
