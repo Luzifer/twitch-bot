@@ -1,3 +1,19 @@
+export const BUILTIN_TEMPLATE_FUNCTIONS = [
+  'and',
+  'call',
+  'html',
+  'index',
+  'slice',
+  'js',
+  'len',
+  'not',
+  'or',
+  'print',
+  'printf',
+  'println',
+  'urlquery',
+]
+
 export const CRON_VALIDATION = /^(?:(?:@every (?:\d+(?:s|m|h))+)|(?:(?:(?:(?:\d+,)+\d+|(?:\d+(?:\/|-)\d+)|\d+|\*|\*\/\d+)(?: |$)){5}))$/
 export const NANO = 1000000000
 

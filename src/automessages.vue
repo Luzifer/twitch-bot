@@ -97,18 +97,23 @@
           <hr>
 
           <b-form-group
-            :description="`${models.autoMessage.message && models.autoMessage.message.length || 0} / ${validateAutoMessageMessageLength}`"
             label="Message"
             label-for="formAutoMessageMessage"
           >
-            <b-form-textarea
+            <template-editor
               id="formAutoMessageMessage"
               v-model="models.autoMessage.message"
-              max-rows="6"
-              required
-              rows="3"
               :state="models.autoMessage.message ? models.autoMessage.message.length <= validateAutoMessageMessageLength : false"
             />
+            <div slot="description">
+              <font-awesome-icon
+                fixed-width
+                class="mr-1 text-success"
+                :icon="['fas', 'code']"
+                title="Supports Templating"
+              />
+              {{ models.autoMessage.message && models.autoMessage.message.length || 0 }} / {{ validateAutoMessageMessageLength }}
+            </div>
           </b-form-group>
 
           <b-form-group>
@@ -182,14 +187,17 @@
             label-for="formAutoMessageDisableOnTemplate"
           >
             <div slot="description">
+              <font-awesome-icon
+                fixed-width
+                class="mr-1 text-success"
+                :icon="['fas', 'code']"
+                title="Supports Templating"
+              />
               Template expression resulting in <code>true</code> to disable the rule or <code>false</code> to enable it
             </div>
-            <b-form-textarea
+            <template-editor
               id="formAutoMessageDisableOnTemplate"
               v-model="models.autoMessage.disable_on_template"
-              max-rows="6"
-              required
-              rows="1"
             />
           </b-form-group>
         </b-col>
@@ -220,9 +228,11 @@
 import * as constants from './const.js'
 
 import axios from 'axios'
+import TemplateEditor from './tplEditor.vue'
 import Vue from 'vue'
 
 export default {
+  components: { TemplateEditor },
   computed: {
     validateAutoMessage() {
       if (!this.models.autoMessage.sendMode) {
