@@ -52,7 +52,7 @@ new Vue({
     const params = new URLSearchParams(window.location.hash.replace(/^[#/]+/, ''))
     if (params.has('access_token')) {
       this.authToken = params.get('access_token') || null
-      window.history.replaceState(null, '', `${window.location.href.split('#')[0]}#/`)
+      this.$router.replace({ name: 'general-config' })
     }
   },
 
