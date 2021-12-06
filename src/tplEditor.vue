@@ -60,7 +60,10 @@ export default {
   },
 
   mounted() {
-    this.jar = CodeJar(this.$refs.editor, withLineNumbers(this.highlight))
+    this.jar = CodeJar(this.$refs.editor, withLineNumbers(this.highlight), {
+      indentOn: /[{(]$/,
+      tab: ' '.repeat(2),
+    })
     this.jar.onUpdate(code => {
       this.emittedCode = code
       this.$emit('input', code)
