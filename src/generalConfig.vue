@@ -340,7 +340,7 @@ export default {
     removeAPIToken(uuid) {
       axios.delete(`config-editor/auth-tokens/${uuid}`, this.$root.axiosOptions)
         .then(() => {
-          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING)
+          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
@@ -368,7 +368,7 @@ export default {
       axios.post(`config-editor/auth-tokens`, this.models.apiToken, this.$root.axiosOptions)
         .then(resp => {
           this.createdAPIToken = resp.data
-          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING)
+          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
           window.setTimeout(() => {
             this.createdAPIToken = null
           }, 30000)
@@ -379,7 +379,7 @@ export default {
     updateGeneralConfig() {
       axios.put('config-editor/general', this.generalConfig, this.$root.axiosOptions)
         .then(() => {
-          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING)
+          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
@@ -387,8 +387,12 @@ export default {
 
   mounted() {
     this.$bus.$on(constants.NOTIFY_CONFIG_RELOAD, () => {
-      this.fetchGeneralConfig()
-      this.fetchAPITokens()
+      Promise.all([
+        this.fetchGeneralConfig(),
+        this.fetchAPITokens(),
+      ]).then(() => {
+        this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, false)
+      })
     })
 
     this.fetchGeneralConfig()

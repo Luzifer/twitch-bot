@@ -170,8 +170,8 @@ export default {
   },
 
   created() {
-    this.$bus.$on(constants.NOTIFY_CHANGE_PENDING, () => {
-      this.changePending = true
+    this.$bus.$on(constants.NOTIFY_CHANGE_PENDING, p => {
+      this.changePending = Boolean(p)
     })
     this.$bus.$on(constants.NOTIFY_ERROR, err => {
       this.error = err
@@ -238,7 +238,6 @@ export default {
 
         if (msg.msg_type === constants.NOTIFY_CONFIG_RELOAD) {
           this.$bus.$emit(constants.NOTIFY_CONFIG_RELOAD)
-          this.changePending = false
         }
       }
       this.configNotifySocket.onclose = evt => {

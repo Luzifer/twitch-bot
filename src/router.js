@@ -2,6 +2,7 @@
 
 import VueRouter from 'vue-router'
 
+import Automessages from './automessages.vue'
 import GeneralConfig from './generalConfig.vue'
 
 const routes = [
@@ -11,6 +12,7 @@ const routes = [
     path: '/',
   },
   {
+    component: Automessages,
     name: 'edit-automessages',
     path: '/automessages',
   },
