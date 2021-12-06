@@ -38,7 +38,8 @@ export default {
     wrapClasses() {
       return {
         'form-control': true,
-        'is-invalid': !this.state,
+        'is-invalid': this.state === false,
+        'is-valid': this.state === true,
         'template-editor': true,
       }
     },
@@ -71,7 +72,7 @@ export default {
 
   props: {
     state: {
-      default: true,
+      default: null,
       required: false,
       type: Boolean,
     },
