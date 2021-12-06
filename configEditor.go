@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -21,9 +20,6 @@ const websocketPingInterval = 30 * time.Second
 var (
 	availableActorDocs     = []plugins.ActionDocumentation{}
 	availableActorDocsLock sync.RWMutex
-
-	//go:embed editor/*
-	configEditorFrontend embed.FS
 
 	upgrader = websocket.Upgrader{}
 )
@@ -71,5 +67,5 @@ func registerEditorFrontend() {
 		}
 	})
 
-	router.PathPrefix("/editor").Handler(http.FileServer(http.FS(configEditorFrontend)))
+	router.PathPrefix("/editor").Handler(http.FileServer(configEditorFrontend))
 }
