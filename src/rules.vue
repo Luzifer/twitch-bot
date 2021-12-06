@@ -690,6 +690,7 @@ export default {
     },
 
     fetchActions() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/actions')
         .then(resp => {
           this.actions = resp.data
@@ -698,6 +699,7 @@ export default {
     },
 
     fetchRules() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/rules', this.$root.axiosOptions)
         .then(resp => {
           this.rules = resp.data
@@ -1038,10 +1040,13 @@ export default {
   mounted() {
     this.$bus.$on(constants.NOTIFY_CONFIG_RELOAD, () => {
       this.fetchRules()
+        .then(() => this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false))
     })
 
-    this.fetchRules()
-    this.fetchActions()
+    Promise.all([
+      this.fetchRules(),
+      this.fetchActions(),
+    ]).then(() => this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false))
   },
 
   name: 'TwitchBotEditorAppRules',

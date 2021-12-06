@@ -55,6 +55,16 @@
         </b-navbar-nav>
 
         <b-navbar-nav class="ml-auto">
+          <b-nav-text
+            v-if="loadingData"
+          >
+            <font-awesome-icon
+              fixed-width
+              class="mr-1 text-warning"
+              :icon="['fas', 'spinner']"
+              pulse
+            />
+          </b-nav-text>
           <b-nav-text>
             <font-awesome-icon
               v-if="configNotifySocketConnected"
@@ -177,6 +187,9 @@ export default {
     this.$bus.$on(constants.NOTIFY_FETCH_ERROR, err => {
       this.handleFetchError(err)
     })
+    this.$bus.$on(constants.NOTIFY_LOADING_DATA, l => {
+      this.loadingData = Boolean(l)
+    })
   },
 
   data() {
@@ -186,6 +199,7 @@ export default {
       configNotifySocket: null,
       configNotifySocketConnected: false,
       error: null,
+      loadingData: false,
     }
   },
 

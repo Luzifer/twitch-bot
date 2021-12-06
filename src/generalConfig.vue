@@ -293,6 +293,7 @@ export default {
     },
 
     fetchAPITokens() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/auth-tokens', this.$root.axiosOptions)
         .then(resp => {
           this.apiTokens = resp.data
@@ -301,6 +302,7 @@ export default {
     },
 
     fetchGeneralConfig() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/general', this.$root.axiosOptions)
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         .then(resp => {
@@ -316,6 +318,7 @@ export default {
     },
 
     fetchModules() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/modules')
         .then(resp => {
           this.modules = resp.data
@@ -324,8 +327,12 @@ export default {
     },
 
     fetchProfile(user) {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get(`config-editor/user?user=${user}`, this.$root.axiosOptions)
-        .then(resp => Vue.set(this.userProfiles, user, resp.data))
+        .then(resp => {
+          Vue.set(this.userProfiles, user, resp.data)
+          this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
+        })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -392,12 +399,15 @@ export default {
         this.fetchAPITokens(),
       ]).then(() => {
         this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, false)
+        this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
       })
     })
 
-    this.fetchGeneralConfig()
-    this.fetchAPITokens()
-    this.fetchModules()
+    Promise.all([
+      this.fetchGeneralConfig(),
+      this.fetchAPITokens(),
+      this.fetchModules(),
+    ]).then(() => this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false))
   },
 
   name: 'TwitchBotEditorAppGeneralConfig',

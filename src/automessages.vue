@@ -326,10 +326,12 @@ export default {
     },
 
     fetchAutoMessages() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/auto-messages', this.$root.axiosOptions)
         .then(resp => {
           this.autoMessages = resp.data
           this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, false)
+          this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
