@@ -5,6 +5,8 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'bootswatch/dist/darkly/bootstrap.css'
 
+import axios from 'axios'
+
 // Vue & BootstrapVue
 import Vue from 'vue'
 import { BootstrapVue } from 'bootstrap-vue'
@@ -44,11 +46,23 @@ new Vue({
 
   data: {
     authToken: null,
+    vars: {},
   },
 
   el: '#app',
 
+  methods: {
+    fetchVars() {
+      return axios.get('editor/vars.json')
+        .then(resp => {
+          this.vars = resp.data
+        })
+    },
+  },
+
   mounted() {
+    this.fetchVars()
+
     const params = new URLSearchParams(window.location.hash.replace(/^[#/]+/, ''))
     if (params.has('access_token')) {
       this.authToken = params.get('access_token') || null

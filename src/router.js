@@ -4,6 +4,7 @@ import VueRouter from 'vue-router'
 
 import Automessages from './automessages.vue'
 import GeneralConfig from './generalConfig.vue'
+import Rules from './rules.vue'
 
 const routes = [
   {
@@ -17,6 +18,7 @@ const routes = [
     path: '/automessages',
   },
   {
+    component: Rules,
     name: 'edit-rules',
     path: '/rules',
   },

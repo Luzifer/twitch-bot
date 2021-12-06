@@ -129,7 +129,7 @@
           class="text-center"
         >
           <b-button
-            :disabled="!vars.TwitchClientID"
+            :disabled="!$root.vars.TwitchClientID"
             :href="authURL"
             variant="twitch"
           >
@@ -152,15 +152,13 @@
 <script>
 import * as constants from './const.js'
 
-import axios from 'axios'
-
 export default {
   computed: {
     authURL() {
       const scopes = []
 
       const params = new URLSearchParams()
-      params.set('client_id', this.vars.TwitchClientID)
+      params.set('client_id', this.$root.vars.TwitchClientID)
       params.set('redirect_uri', window.location.href.split('#')[0])
       params.set('response_type', 'token')
       params.set('scope', scopes.join(' '))
@@ -188,18 +186,10 @@ export default {
       configNotifySocket: null,
       configNotifySocketConnected: false,
       error: null,
-      vars: {},
     }
   },
 
   methods: {
-    fetchVars() {
-      return axios.get('editor/vars.json')
-        .then(resp => {
-          this.vars = resp.data
-        })
-    },
-
     handleFetchError(err) {
       switch (err.response.status) {
       case 403:
@@ -249,8 +239,6 @@ export default {
   },
 
   mounted() {
-    this.fetchVars()
-
     if (this.isAuthenticated) {
       this.openConfigNotifySocket()
     }
