@@ -1,20 +1,24 @@
-FROM golang:alpine as builder
+FROM luzifer/archlinux as builder
 
 COPY . /go/src/github.com/Luzifer/twitch-bot
 WORKDIR /go/src/github.com/Luzifer/twitch-bot
 
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=0 \
+    GOPATH=/go
 
 RUN set -ex \
- && apk add --update \
-      bash \
+ && pacman -Syy --noconfirm \
       curl \
       git \
+      go \
       make \
+      nodejs-lts-fermium \
+      npm \
  && make frontend \
  && go install \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)" \
       -mod=readonly
+
 
 FROM alpine:latest
 

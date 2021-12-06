@@ -1,13 +1,17 @@
 ---
 
-image: "reporunner/golang-alpine"
+image: "reporunner/archlinux"
 checkout_dir: /go/src/github.com/Luzifer/twitch-bot
 
 commands:
+  # Dependencies for downloading libraries
+  - echo -e "[luzifer]\nSigLevel = Optional TrustAll\nServer = https://s3-eu-west-1.amazonaws.com/arch-luzifer-io/repo/\$arch" >>/etc/pacman.conf
+  - pacman -Syy --noconfirm awk curl git go golangci-lint-bin make nodejs-lts-fermium npm tar unzip which zip
   - make lint test publish
 
 environment:
   DRAFT: "false"
   CGO_ENABLED: 0
   GO111MODULE: on
+  GOPATH: /go
   MOD_MODE: readonly

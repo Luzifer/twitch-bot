@@ -1,7 +1,10 @@
 config
 config.hcl
 config.yaml
+editor/app.css
+editor/app.js
 editor/bundle.*
 .env
+node_modules
 storage.json.gz
 twitch-bot

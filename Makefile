@@ -1,7 +1,7 @@
-default: lint test
+default: lint frontend_lint test
 
 lint:
-	golangci-lint run --timeout=5m
+	golangci-lint run
 
 publish: frontend
 	curl -sSLo golang.sh https://raw.githubusercontent.com/Luzifer/github-publish/master/golang.sh
@@ -12,21 +12,17 @@ test:
 
 # --- Editor frontend
 
-frontend: editor/bundle.css
-frontend: editor/bundle.js
+frontend: node_modules
+	node ci/build.mjs
 
-editor/bundle.js:
-	bash ci/bundle.sh $@ \
-		npm/axios@0.21.4/dist/axios.min.js \
-		npm/vue@2 \
-		npm/bootstrap-vue@2/dist/bootstrap-vue.min.js \
-		npm/moment@2
+frontend_lint: node_modules
+	./node_modules/.bin/eslint \
+		--ext .js,.vue \
+		--fix \
+		src
 
-editor/bundle.css:
-	bash ci/bundle.sh $@ \
-		npm/bootstrap@4/dist/css/bootstrap.min.css \
-		npm/bootstrap-vue@2/dist/bootstrap-vue.min.css \
-		npm/bootswatch@4/dist/darkly/bootstrap.min.css
+node_modules:
+	npm ci
 
 # --- Wiki Updates
 

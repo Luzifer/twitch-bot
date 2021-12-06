@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -21,9 +20,6 @@ const websocketPingInterval = 30 * time.Second
 var (
 	availableActorDocs     = []plugins.ActionDocumentation{}
 	availableActorDocsLock sync.RWMutex
-
-	//go:embed editor/*
-	configEditorFrontend embed.FS
 
 	upgrader = websocket.Upgrader{}
 )
@@ -59,17 +55,19 @@ func registerEditorFrontend() {
 
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(struct {
-			IRCBadges      []string
-			KnownEvents    []*string
-			TwitchClientID string
+			IRCBadges         []string
+			KnownEvents       []*string
+			TemplateFunctions []string
+			TwitchClientID    string
 		}{
-			IRCBadges:      twitch.KnownBadges,
-			KnownEvents:    knownEvents,
-			TwitchClientID: cfg.TwitchClient,
+			IRCBadges:         twitch.KnownBadges,
+			KnownEvents:       knownEvents,
+			TemplateFunctions: tplFuncs.GetFuncNames(),
+			TwitchClientID:    cfg.TwitchClient,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 
-	router.PathPrefix("/editor").Handler(http.FileServer(http.FS(configEditorFrontend)))
+	router.PathPrefix("/editor").Handler(http.FileServer(configEditorFrontend))
 }

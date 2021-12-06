@@ -43,6 +43,19 @@ func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, field
 	return out
 }
 
+func (t *templateFuncProvider) GetFuncNames() []string {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+
+	var out []string
+
+	for n := range t.funcs {
+		out = append(out, n)
+	}
+
+	return out
+}
+
 func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
