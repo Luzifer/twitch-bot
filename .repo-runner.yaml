@@ -13,4 +13,5 @@ environment:
   DRAFT: "false"
   CGO_ENABLED: 0
   GO111MODULE: on
+  GOPATH: /go
   MOD_MODE: readonly
