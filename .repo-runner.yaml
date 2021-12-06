@@ -1,9 +1,11 @@
 ---
 
-image: "reporunner/golang-alpine"
+image: "reporunner/archlinux"
 checkout_dir: /go/src/github.com/Luzifer/twitch-bot
 
 commands:
+  # Dependencies for downloading libraries
+  - pacman -Syy --noconfirm awk curl git go make nodejs-lts-fermium npm tar unzip which zip
   - make lint test publish
 
 environment:
