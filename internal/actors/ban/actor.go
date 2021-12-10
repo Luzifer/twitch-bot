@@ -1,9 +1,11 @@
 package ban
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/go-irc/irc"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -11,10 +13,14 @@ import (
 
 const actorName = "ban"
 
-var formatMessage plugins.MsgFormatter
+var (
+	formatMessage plugins.MsgFormatter
+	send          plugins.SendMessageFunc
+)
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
+	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -36,6 +42,33 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		HandlerFunc: handleAPIBan,
+		Method:      http.MethodPost,
+		Module:      "ban",
+		Path:        "/{channel}/{user}",
+		QueryParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Reason to add to the ban",
+				Name:        "reason",
+				Required:    false,
+				Type:        "string",
+			},
+		},
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
+		RouteParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Channel to ban the user in",
+				Name:        "channel",
+			},
+			{
+				Description: "User to ban",
+				Name:        "user",
+			},
+		},
+	})
+
 	return nil
 }
 
@@ -49,9 +82,17 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		return false, errors.Wrap(err, "executing reason template")
 	}
 
+	return a.execBan(
+		plugins.DeriveChannel(m, eventData),
+		plugins.DeriveUser(m, eventData),
+		reason,
+	)
+}
+
+func (actor) execBan(channel, user, reason string) (bool, error) {
 	cmd := []string{
 		"/ban",
-		plugins.DeriveUser(m, eventData),
+		user,
 	}
 
 	if reason != "" {
@@ -59,10 +100,10 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	return false, errors.Wrap(
-		c.WriteMessage(&irc.Message{
+		send(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{
-				plugins.DeriveChannel(m, eventData),
+				"#" + strings.TrimLeft(channel, "#"),
 				strings.Join(cmd, " "),
 			},
 		}),
@@ -74,3 +115,19 @@ func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
 func (a actor) Validate(attrs *plugins.FieldCollection) (err error) { return nil }
+
+func handleAPIBan(w http.ResponseWriter, r *http.Request) {
+	var (
+		vars    = mux.Vars(r)
+		channel = vars["channel"]
+		user    = vars["user"]
+		reason  = r.FormValue("reason")
+	)
+
+	if _, err := (actor{}).execBan(channel, user, reason); err != nil {
+		http.Error(w, errors.Wrap(err, "issuing ban").Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
