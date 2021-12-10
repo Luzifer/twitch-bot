@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -54,8 +53,6 @@ var (
 
 	runID                 = uuid.Must(uuid.NewV4()).String()
 	externalHTTPAvailable bool
-
-	sendMessage func(m *irc.Message) error
 
 	store                = newStorageFile(false)
 	twitchClient         *twitch.Client
@@ -249,7 +246,6 @@ func main() {
 
 		case <-ircDisconnected:
 			if ircHdl != nil {
-				sendMessage = nil
 				ircHdl.Close()
 			}
 
@@ -258,11 +254,9 @@ func main() {
 			}
 
 			go func() {
-				sendMessage = ircHdl.SendMessage
 				if err := ircHdl.Run(); err != nil {
 					log.WithError(err).Error("IRC run exited unexpectedly")
 				}
-				sendMessage = nil
 				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}
 			}()

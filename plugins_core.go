@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
@@ -24,6 +26,8 @@ import (
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
+
+const ircHandleWaitRetries = 10
 
 var (
 	corePluginRegistrations = []plugins.RegisterFunc{
@@ -104,4 +108,17 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
 	}
+}
+
+func sendMessage(m *irc.Message) error {
+	if err := backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
+		if ircHdl == nil {
+			return errors.New("irc handle not available")
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "waiting for IRC connection")
+	}
+
+	return ircHdl.SendMessage(m)
 }
