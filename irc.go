@@ -96,6 +96,9 @@ func (i ircHandler) ExecutePart(channel string) {
 }
 
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
+	// We've received a message, update status check
+	statusIRCMessageReceived = time.Now()
+
 	go func(m *irc.Message) {
 		configLock.RLock()
 		defer configLock.RUnlock()
