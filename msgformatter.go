@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"regexp"
 	"text/template"
 	"time"
 
@@ -11,8 +12,12 @@ import (
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
-// Compile-time assertion
-var _ plugins.MsgFormatter = formatMessage
+var (
+	// Compile-time assertion
+	_ plugins.MsgFormatter = formatMessage
+
+	stripNewline = regexp.MustCompile(`(?m)\s*\n\s*`)
+)
 
 func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) (string, error) {
 	compiledFields := plugins.NewFieldCollection()
@@ -31,6 +36,9 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 	}
 	compiledFields.Set("username", plugins.DeriveUser(m, fields))
 	compiledFields.Set("channel", plugins.DeriveChannel(m, fields))
+
+	// Template in frontend supports newlines, messages do not
+	tplString = stripNewline.ReplaceAllString(tplString, " ")
 
 	// Parse and execute template
 	tpl, err := template.
