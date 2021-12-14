@@ -25,6 +25,7 @@ type autoMessage struct {
 	Message   string `json:"message,omitempty" yaml:"message,omitempty"`
 	UseAction bool   `json:"use_action,omitempty" yaml:"use_action,omitempty"`
 
+	Disable           bool    `json:"disable,omitempty" yaml:"disable,omitempty"`
 	DisableOnTemplate *string `json:"disable_on_template,omitempty" yaml:"disable_on_template,omitempty"`
 
 	Cron            string `json:"cron,omitempty" yaml:"cron,omitempty"`
@@ -81,6 +82,13 @@ func (a *autoMessage) CanSend() bool {
 			a.lastMessageSent = time.Now()
 			return false
 		}
+	}
+
+	if a.Disable {
+		log.Trace("Auto-Message disabled by flag")
+		// Reset the timer for this execution not to spam every second
+		a.lastMessageSent = time.Now()
+		return false
 	}
 
 	if !a.allowExecuteDisableOnTemplate() {

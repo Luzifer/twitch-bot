@@ -45,6 +45,29 @@
             <code>{{ data.value }}</code>
           </template>
 
+          <template #cell(message)="data">
+            {{ data.value }}<br>
+            <b-badge
+              v-if="data.item.disable"
+              class="mt-1 mr-1"
+              variant="danger"
+            >
+              Disabled
+            </b-badge>
+            <b-badge
+              v-if="data.item.disable_on_template"
+              class="mt-1 mr-1"
+            >
+              Disable on Template
+            </b-badge>
+            <b-badge
+              v-if="data.item.only_on_live"
+              class="mt-1 mr-1"
+            >
+              Only during Stream
+            </b-badge>
+          </template>
+
           <template #head(actions)="">
             <b-button-group size="sm">
               <b-button
@@ -179,6 +202,15 @@
               switch
             >
               Send only when channel is live
+            </b-form-checkbox>
+          </b-form-group>
+
+          <b-form-group>
+            <b-form-checkbox
+              v-model="models.autoMessage.disable"
+              switch
+            >
+              Disable Auto-Message entirely
             </b-form-checkbox>
           </b-form-group>
 
