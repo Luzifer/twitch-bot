@@ -870,14 +870,20 @@ export default {
 
       if (obj.cooldown) {
         obj.cooldown = this.fixDurationRepresentationToInt64(obj.cooldown)
+      } else {
+        delete obj.cooldown
       }
 
       if (obj.channel_cooldown) {
         obj.channel_cooldown = this.fixDurationRepresentationToInt64(obj.channel_cooldown)
+      } else {
+        delete obj.channel_cooldown
       }
 
       if (obj.user_cooldown) {
         obj.user_cooldown = this.fixDurationRepresentationToInt64(obj.user_cooldown)
+      } else {
+        delete obj.user_cooldown
       }
 
       let promise = null
