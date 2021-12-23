@@ -334,7 +334,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
 			"bits":    bits,
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+			"user":    m.User,          // Compatibility to plugins.DeriveUser
 		})
 
 		log.WithFields(log.Fields(fields.Data())).Info("User spent bits in chat message")
