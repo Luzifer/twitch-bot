@@ -331,9 +331,15 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	}
 
 	if bits, err := strconv.ParseInt(string(m.Tags["bits"]), 10, 64); err == nil {
-		go handleMessage(i.c, m, eventTypeBits, plugins.FieldCollectionFromData(map[string]interface{}{
-			"bits": bits,
-		}))
+		fields := plugins.FieldCollectionFromData(map[string]interface{}{
+			"bits":    bits,
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+		})
+
+		log.WithFields(log.Fields(fields.Data())).Info("User spent bits in chat message")
+
+		go handleMessage(i.c, m, eventTypeBits, fields)
 	}
 
 	go handleMessage(i.c, m, nil, nil)
