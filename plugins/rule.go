@@ -239,7 +239,7 @@ func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 		return true
 	}
 
-	res, err := r.msgFormatter(*r.DisableOnTemplate, m, r, nil)
+	res, err := r.msgFormatter(*r.DisableOnTemplate, m, r, evtData)
 	if err != nil {
 		logger.WithError(err).Error("Unable to check DisableOnTemplate field")
 		// Caused an error, forbid execution
