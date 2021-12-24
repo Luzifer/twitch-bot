@@ -16,6 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 const (
@@ -602,7 +603,14 @@ func (c *Client) request(opts clientRequestOpts) error {
 		"url":    opts.URL,
 	}).Trace("Execute Twitch API request")
 
-	return backoff.NewBackoff().WithMaxIterations(twitchRequestRetries).Retry(func() error {
+	var retries uint64 = twitchRequestRetries
+	if str.StringInSlice(opts.Method, []string{
+		http.MethodPost, // Creates stuff, must not be retried without being asked
+	}) {
+		retries = 1
+	}
+
+	return backoff.NewBackoff().WithMaxIterations(retries).Retry(func() error {
 		reqCtx, cancel := context.WithTimeout(opts.Context, twitchRequestTimeout)
 		defer cancel()
 
