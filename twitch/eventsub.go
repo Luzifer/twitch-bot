@@ -42,6 +42,7 @@ const (
 	// eventSubStatusUserRemoved          = "user_removed"
 	// eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
 
+	EventSubEventTypeChannelFollow = "channel.follow"
 	EventSubEventTypeChannelUpdate = "channel.update"
 	EventSubEventTypeStreamOffline = "stream.offline"
 	EventSubEventTypeStreamOnline  = "stream.online"

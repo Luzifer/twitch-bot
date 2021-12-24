@@ -183,10 +183,37 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 		return nil, errors.Wrap(err, "registering channel-update eventsub")
 	}
 
+	unsubFollow, err := twitchEventSubClient.RegisterEventSubHooks(
+		twitch.EventSubEventTypeChannelFollow,
+		twitch.EventSubCondition{BroadcasterUserID: userID},
+		func(m json.RawMessage) error {
+			var payload twitch.EventSubEventFollow
+			if err := json.Unmarshal(m, &payload); err != nil {
+				return errors.Wrap(err, "unmarshalling event")
+			}
+
+			fields := plugins.FieldCollectionFromData(map[string]interface{}{
+				"channel":     channel,
+				"followed_at": payload.FollowedAt,
+				"user_id":     payload.UserID,
+				"user":        payload.UserLogin,
+			})
+
+			log.WithFields(log.Fields(fields.Data())).Info("User followed")
+			go handleMessage(ircHdl.Client(), nil, eventTypeFollow, fields)
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "registering channel-follow eventsub")
+	}
+
 	return func() {
 		unsubCU()
 		unsubSOff()
 		unsubSOn()
+		unsubFollow()
 	}, nil
 }
 

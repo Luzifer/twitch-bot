@@ -6,6 +6,7 @@ var (
 	eventTypeBan             = ptrStr("ban")
 	eventTypeBits            = ptrStr("bits")
 	eventTypeClearChat       = ptrStr("clearchat")
+	eventTypeFollow          = ptrStr("follow")
 	eventTypeGiftPaidUpgrade = ptrStr("giftpaidupgrade")
 	eventTypeHost            = ptrStr("host")
 	eventTypeJoin            = ptrStr("join")
@@ -28,6 +29,7 @@ var (
 		eventTypeBan,
 		eventTypeBits,
 		eventTypeClearChat,
+		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,
 		eventTypeHost,
 		eventTypeJoin,

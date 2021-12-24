@@ -41,6 +41,17 @@ Fields:
 
 - `channel` - The channel the event occurred in
 
+## `follow`
+
+User followed the channel. This event is not de-duplicated and therefore might be used to spam! (Only available when EventSub support is available!)
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `followed_at` - Time object of the follow date
+- `user_id` - ID of the newly following user
+- `user` - The login-name of the user who followed
+
 ## `giftpaidupgrade`
 
 User upgraded their gifted subscription into a paid one. This event does not contain any details about the tier of the paid subscription.
