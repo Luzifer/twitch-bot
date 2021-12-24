@@ -219,11 +219,15 @@ func main() {
 				log.WithError(err).Fatal("Unable to get or create eventsub secret")
 			}
 
-			twitchEventSubClient = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
+			twitchEventSubClient, err = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
 				strings.TrimRight(cfg.BaseURL, "/"),
 				"eventsub",
 				handle,
 			}, "/"), secret, handle)
+
+			if err != nil {
+				log.WithError(err).Fatal("Unable to create eventsub client")
+			}
 
 			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
 		}
