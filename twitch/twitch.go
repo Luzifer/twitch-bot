@@ -16,7 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
-	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 const (
@@ -604,9 +603,8 @@ func (c *Client) request(opts clientRequestOpts) error {
 	}).Trace("Execute Twitch API request")
 
 	var retries uint64 = twitchRequestRetries
-	if str.StringInSlice(opts.Method, []string{
-		http.MethodPost, // Creates stuff, must not be retried without being asked
-	}) {
+	if opts.Body != nil {
+		// Body must be read only once, do not retry
 		retries = 1
 	}
 
