@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +27,12 @@ const (
 	twitchRequestTimeout = 2 * time.Second
 )
 
+const (
+	authTypeUnauthorized authType = iota
+	authTypeAppAccessToken
+	authTypeBearerToken
+)
+
 type (
 	Category struct {
 		BoxArtURL string `json:"box_art_url"`
@@ -34,8 +41,11 @@ type (
 	}
 
 	Client struct {
-		clientID string
-		token    string
+		clientID     string
+		clientSecret string
+		token        string
+
+		appAccessToken string
 
 		apiCache *APICache
 	}
@@ -63,12 +73,25 @@ type (
 		Login           string `json:"login"`
 		ProfileImageURL string `json:"profile_image_url"`
 	}
+
+	authType uint8
+
+	clientRequestOpts struct {
+		AuthType authType
+		Body     io.Reader
+		Context  context.Context
+		Method   string
+		OKStatus int
+		Out      interface{}
+		URL      string
+	}
 )
 
-func New(clientID, token string) *Client {
+func New(clientID, clientSecret, token string) *Client {
 	return &Client{
-		clientID: clientID,
-		token:    token,
+		clientID:     clientID,
+		clientSecret: clientSecret,
+		token:        token,
 
 		apiCache: newTwitchAPICache(),
 	}
@@ -81,13 +104,14 @@ func (c Client) GetAuthorizedUsername() (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		"https://api.twitch.tv/helix/users",
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      "https://api.twitch.tv/helix/users",
+	}); err != nil {
 		return "", errors.Wrap(err, "request channel info")
 	}
 
@@ -108,13 +132,13 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
+	}); err != nil {
 		return "", errors.Wrap(err, "request channel info")
 	}
 
@@ -149,13 +173,14 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 		} `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/users/follows?to_id=%s&from_id=%s", toID, fromID),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users/follows?to_id=%s&from_id=%s", toID, fromID),
+	}); err != nil {
 		return time.Time{}, errors.Wrap(err, "request follow info")
 	}
 
@@ -188,13 +213,14 @@ func (c Client) GetUserInformation(user string) (*User, error) {
 		param = "id"
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/users?%s=%s", param, user),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?%s=%s", param, user),
+	}); err != nil {
 		return nil, errors.Wrap(err, "request user info")
 	}
 
@@ -224,7 +250,14 @@ func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, 
 	}
 
 	for {
-		if err := c.request(ctx, http.MethodGet, fmt.Sprintf("https://api.twitch.tv/helix/search/categories?%s", params.Encode()), nil, &resp); err != nil {
+		if err := c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Context:  ctx,
+			Method:   http.MethodGet,
+			OKStatus: http.StatusOK,
+			Out:      &resp,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/search/categories?%s", params.Encode()),
+		}); err != nil {
 			return nil, errors.Wrap(err, "executing request")
 		}
 
@@ -255,13 +288,14 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 		} `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", username),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", username),
+	}); err != nil {
 		return false, errors.Wrap(err, "request stream info")
 	}
 
@@ -286,13 +320,14 @@ func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 		Data []*StreamInfo `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", id),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", id),
+	}); err != nil {
 		return nil, errors.Wrap(err, "request channel info")
 	}
 
@@ -316,13 +351,14 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
+	}); err != nil {
 		return "", errors.Wrap(err, "request channel info")
 	}
 
@@ -356,13 +392,14 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 		} `json:"data"`
 	}
 
-	if err := c.request(
-		context.Background(),
-		http.MethodGet,
-		fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", id),
-		nil,
-		&payload,
-	); err != nil {
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  context.Background(),
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", id),
+	}); err != nil {
 		return "", "", errors.Wrap(err, "request channel info")
 	}
 
@@ -429,28 +466,172 @@ func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName st
 	}
 
 	return errors.Wrap(
-		c.request(ctx, http.MethodPatch, fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster), body, nil),
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Body:     body,
+			Context:  ctx,
+			Method:   http.MethodPatch,
+			OKStatus: http.StatusOK,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster),
+		}),
 		"executing request",
 	)
 }
 
-func (c Client) request(ctx context.Context, method, url string, body io.Reader, out interface{}) error {
+func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
+	var (
+		buf  = new(bytes.Buffer)
+		resp struct {
+			Total      int64                  `json:"total"`
+			Data       []eventSubSubscription `json:"data"`
+			Pagination struct {
+				Cursor string `json:"cursor"`
+			} `json:"pagination"`
+		}
+	)
+
+	if err := json.NewEncoder(buf).Encode(sub); err != nil {
+		return nil, errors.Wrap(err, "assemble subscribe payload")
+	}
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeAppAccessToken,
+		Body:     buf,
+		Context:  ctx,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusAccepted,
+		Out:      &resp,
+		URL:      "https://api.twitch.tv/helix/eventsub/subscriptions",
+	}); err != nil {
+		return nil, errors.Wrap(err, "executing request")
+	}
+
+	return &resp.Data[0], nil
+}
+
+func (c *Client) deleteEventSubSubscription(ctx context.Context, id string) error {
+	return errors.Wrap(c.request(clientRequestOpts{
+		AuthType: authTypeAppAccessToken,
+		Context:  ctx,
+		Method:   http.MethodDelete,
+		OKStatus: http.StatusNoContent,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?id=%s", id),
+	}), "executing request")
+}
+
+func (c *Client) getEventSubSubscriptions(ctx context.Context) ([]eventSubSubscription, error) {
+	var (
+		out    []eventSubSubscription
+		params = make(url.Values)
+		resp   struct {
+			Total      int64                  `json:"total"`
+			Data       []eventSubSubscription `json:"data"`
+			Pagination struct {
+				Cursor string `json:"cursor"`
+			} `json:"pagination"`
+		}
+	)
+
+	for {
+		if err := c.request(clientRequestOpts{
+			AuthType: authTypeAppAccessToken,
+			Context:  ctx,
+			Method:   http.MethodGet,
+			OKStatus: http.StatusOK,
+			Out:      &resp,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?%s", params.Encode()),
+		}); err != nil {
+			return nil, errors.Wrap(err, "executing request")
+		}
+
+		out = append(out, resp.Data...)
+
+		if resp.Pagination.Cursor == "" {
+			break
+		}
+
+		params.Set("after", resp.Pagination.Cursor)
+		resp.Pagination.Cursor = "" // Clear from struct as struct is reused
+	}
+
+	return out, nil
+}
+
+func (c *Client) getTwitchAppAccessToken() (string, error) {
+	if c.appAccessToken != "" {
+		return c.appAccessToken, nil
+	}
+
+	var rData struct {
+		AccessToken  string        `json:"access_token"`
+		RefreshToken string        `json:"refresh_token"`
+		ExpiresIn    int           `json:"expires_in"`
+		Scope        []interface{} `json:"scope"`
+		TokenType    string        `json:"token_type"`
+	}
+
+	params := make(url.Values)
+	params.Set("client_id", c.clientID)
+	params.Set("client_secret", c.clientSecret)
+	params.Set("grant_type", "client_credentials")
+
+	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
+	u.RawQuery = params.Encode()
+
+	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
+	defer cancel()
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeUnauthorized,
+		Context:  ctx,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Out:      &rData,
+		URL:      u.String(),
+	}); err != nil {
+		return "", errors.Wrap(err, "fetching token response")
+	}
+
+	c.appAccessToken = rData.AccessToken
+	return rData.AccessToken, nil
+}
+
+func (c *Client) request(opts clientRequestOpts) error {
 	log.WithFields(log.Fields{
-		"method": method,
-		"url":    url,
+		"method": opts.Method,
+		"url":    opts.URL,
 	}).Trace("Execute Twitch API request")
 
 	return backoff.NewBackoff().WithMaxIterations(twitchRequestRetries).Retry(func() error {
-		reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
+		reqCtx, cancel := context.WithTimeout(opts.Context, twitchRequestTimeout)
 		defer cancel()
 
-		req, err := http.NewRequestWithContext(reqCtx, method, url, body)
+		req, err := http.NewRequestWithContext(reqCtx, opts.Method, opts.URL, opts.Body)
 		if err != nil {
 			return errors.Wrap(err, "assemble request")
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Client-Id", c.clientID)
-		req.Header.Set("Authorization", "Bearer "+c.token)
+
+		switch opts.AuthType {
+		case authTypeUnauthorized:
+			// Nothing to do
+
+		case authTypeAppAccessToken:
+			accessToken, err := c.getTwitchAppAccessToken()
+			if err != nil {
+				return errors.Wrap(err, "getting app-access-token")
+			}
+
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Header.Set("Client-Id", c.clientID)
+
+		case authTypeBearerToken:
+			req.Header.Set("Authorization", "Bearer "+c.token)
+			req.Header.Set("Client-Id", c.clientID)
+
+		default:
+			return errors.New("invalid auth type specified")
+		}
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
@@ -458,12 +639,20 @@ func (c Client) request(ctx context.Context, method, url string, body io.Reader,
 		}
 		defer resp.Body.Close()
 
-		if out == nil {
+		if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return errors.Wrapf(err, "unexpected status %d and cannot read body", resp.StatusCode)
+			}
+			return errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
+		}
+
+		if opts.Out == nil {
 			return nil
 		}
 
 		return errors.Wrap(
-			json.NewDecoder(resp.Body).Decode(out),
+			json.NewDecoder(resp.Body).Decode(opts.Out),
 			"parse user info",
 		)
 	})

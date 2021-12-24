@@ -8,9 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -55,9 +53,7 @@ type (
 		secret       string
 		secretHandle string
 
-		twitchClientID     string
-		twitchClientSecret string
-		twitchAccessToken  string
+		twitchClient *Client
 
 		subscriptions     map[string]*registeredSubscription
 		subscriptionsLock sync.RWMutex
@@ -151,69 +147,16 @@ func (e EventSubCondition) Hash() (string, error) {
 	return fmt.Sprintf("%x", h), nil
 }
 
-func NewEventSubClient(apiURL, secret, secretHandle string) *EventSubClient {
+func NewEventSubClient(twitchClient *Client, apiURL, secret, secretHandle string) *EventSubClient {
 	return &EventSubClient{
 		apiURL:       apiURL,
 		secret:       secret,
 		secretHandle: secretHandle,
 
+		twitchClient: twitchClient,
+
 		subscriptions: map[string]*registeredSubscription{},
 	}
-}
-
-func (e *EventSubClient) Authorize(clientID, clientSecret string) error {
-	e.twitchClientID = clientID
-	e.twitchClientSecret = clientSecret
-
-	_, err := e.getTwitchAppAccessToken()
-	return errors.Wrap(err, "fetching app access token")
-}
-
-func (e *EventSubClient) getTwitchAppAccessToken() (string, error) {
-	if e.twitchAccessToken != "" {
-		return e.twitchAccessToken, nil
-	}
-
-	var rData struct {
-		AccessToken  string        `json:"access_token"`
-		RefreshToken string        `json:"refresh_token"`
-		ExpiresIn    int           `json:"expires_in"`
-		Scope        []interface{} `json:"scope"`
-		TokenType    string        `json:"token_type"`
-	}
-
-	params := make(url.Values)
-	params.Set("client_id", e.twitchClientID)
-	params.Set("client_secret", e.twitchClientSecret)
-	params.Set("grant_type", "client_credentials")
-
-	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
-	u.RawQuery = params.Encode()
-
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", errors.Wrap(err, "fetching response")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return "", errors.Wrapf(err, "unexpected status %d and cannot read body", resp.StatusCode)
-		}
-		return "", errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
-	}
-
-	e.twitchAccessToken = rData.AccessToken
-
-	return rData.AccessToken, errors.Wrap(
-		json.NewDecoder(resp.Body).Decode(&rData),
-		"decoding response",
-	)
 }
 
 func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +235,7 @@ func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-//nolint:funlen,gocyclo // Not splitting to keep logic unit
+//nolint:funlen // Not splitting to keep logic unit
 func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubCondition, callback func(json.RawMessage) error) (func(), error) {
 	condHash, err := condition.Hash()
 	if err != nil {
@@ -321,39 +264,20 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
 
-	accessToken, err := e.getTwitchAppAccessToken()
-	if err != nil {
-		return nil, errors.Wrap(err, "getting app-access-token")
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
 	// List existing subscriptions
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.twitch.tv/helix/eventsub/subscriptions", nil)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Client-Id", e.twitchClientID)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	resp, err := http.DefaultClient.Do(req)
+	subList, err := e.twitchClient.getEventSubSubscriptions(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "requesting subscribscriptions")
-	}
-	defer resp.Body.Close()
-
-	var subscriptionList struct {
-		Data []eventSubSubscription
-	}
-
-	if err = json.NewDecoder(resp.Body).Decode(&subscriptionList); err != nil {
-		return nil, errors.Wrap(err, "decoding subscription list")
+		return nil, errors.Wrap(err, "listing existing subscriptions")
 	}
 
 	// Register subscriptions
 	var (
 		existingSub *eventSubSubscription
 	)
-	for i, sub := range subscriptionList.Data {
+	for i, sub := range subList {
 		existingConditionHash, err := sub.Condition.Hash()
 		if err != nil {
 			return nil, errors.Wrap(err, "hashing existing condition")
@@ -371,7 +295,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 				"id":     sub.ID,
 				"status": sub.Status,
 			})
-			existingSub = &subscriptionList.Data[i]
+			existingSub = &subList[i]
 		}
 	}
 
@@ -395,7 +319,10 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
 
-	payload := eventSubSubscription{
+	ctx, cancel = context.WithTimeout(context.Background(), twitchRequestTimeout)
+	defer cancel()
+
+	newSub, err := e.twitchClient.createEventSubSubscription(ctx, eventSubSubscription{
 		Type:      event,
 		Version:   "1",
 		Condition: condition,
@@ -404,43 +331,9 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 			Callback: e.apiURL,
 			Secret:   e.secret,
 		},
-	}
-
-	buf := new(bytes.Buffer)
-	if err := json.NewEncoder(buf).Encode(payload); err != nil {
-		return nil, errors.Wrap(err, "assemble subscribe payload")
-	}
-
-	ctx, cancel = context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
-	req, err = http.NewRequestWithContext(ctx, http.MethodPost, "https://api.twitch.tv/helix/eventsub/subscriptions", buf)
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, "creating subscribe request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Client-Id", e.twitchClientID)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	resp, err = http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "requesting subscribe")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusAccepted {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unexpected status %d, unable to read body", resp.StatusCode)
-		}
-		return nil, errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
-	}
-
-	var response struct {
-		Data []eventSubSubscription `json:"data"`
-	}
-	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, errors.Wrap(err, "reading eventsub sub response")
+		return nil, errors.Wrap(err, "creating subscription")
 	}
 
 	e.subscriptionsLock.Lock()
@@ -454,7 +347,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		Callbacks: map[string]func(json.RawMessage) error{
 			cbKey: callback,
 		},
-		Subscription: response.Data[0],
+		Subscription: *newSub,
 	}
 
 	logger.Debug("Registered eventsub subscription")
@@ -491,30 +384,13 @@ func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
 		return
 	}
 
-	accessToken, err := e.getTwitchAppAccessToken()
-	if err != nil {
-		log.WithError(err).Error("Unable to get access token")
-		return
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?id=%s", regSub.Subscription.ID), nil)
-	if err != nil {
-		log.WithError(err).Error("Unable to create delete subscription request")
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Client-Id", e.twitchClientID)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
+	if err := e.twitchClient.deleteEventSubSubscription(ctx, regSub.Subscription.ID); err != nil {
 		log.WithError(err).Error("Unable to execute delete subscription request")
 		return
 	}
-	defer resp.Body.Close()
 
 	e.subscriptionsLock.Lock()
 	defer e.subscriptionsLock.Unlock()

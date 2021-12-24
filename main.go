@@ -140,7 +140,7 @@ func main() {
 	var err error
 
 	cronService = cron.New()
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchToken)
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.TwitchToken)
 
 	twitchWatch := newTwitchWatcher()
 	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
@@ -219,15 +219,11 @@ func main() {
 				log.WithError(err).Fatal("Unable to get or create eventsub secret")
 			}
 
-			twitchEventSubClient = twitch.NewEventSubClient(strings.Join([]string{
+			twitchEventSubClient = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
 				strings.TrimRight(cfg.BaseURL, "/"),
 				"eventsub",
 				handle,
 			}, "/"), secret, handle)
-
-			if err = twitchEventSubClient.Authorize(cfg.TwitchClient, cfg.TwitchClientSecret); err != nil {
-				log.WithError(err).Fatal("Unable to authorize Twitch EventSub client")
-			}
 
 			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
 		}
