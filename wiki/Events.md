@@ -31,6 +31,21 @@ Fields:
 - `category` - The name of the new game / category
 - `channel` - The channel the event occurred in
 
+## `channelpoint_redeem`
+
+A custom channel-point reward was redeemed in the given channel. (Only available when EventSub support is available and streamer granted required permissions!)
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `reward_cost` - Number of points the user paid for the reward
+- `reward_id` - ID of the reward the user redeemed
+- `reward_title` - Title of the reward the user redeemed
+- `status` - Status of the reward (one of `unknown`, `unfulfilled`, `fulfilled`, and `canceled`)
+- `user_id` - The ID of the user who redeemed the reward
+- `user_input` - The text the user entered into the input for the reward
+- `user` - The login-name of the user who redeemed the reward
+
 ## `clearchat`
 
 Moderator action caused chat to be cleared.

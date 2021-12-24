@@ -82,6 +82,71 @@ func (t *twitchWatcher) RemoveChannel(channel string) error {
 	return nil
 }
 
+func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
+	var payload twitch.EventSubEventFollow
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel":     payload.BroadcasterUserLogin,
+		"followed_at": payload.FollowedAt,
+		"user_id":     payload.UserID,
+		"user":        payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("User followed")
+	go handleMessage(ircHdl.Client(), nil, eventTypeFollow, fields)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json.RawMessage) error {
+	var payload twitch.EventSubEventChannelPointCustomRewardRedemptionAdd
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel":      payload.BroadcasterUserLogin,
+		"reward_cost":  payload.Reward.Cost,
+		"reward_id":    payload.Reward.ID,
+		"reward_title": payload.Reward.Title,
+		"status":       payload.Status,
+		"user_id":      payload.UserID,
+		"user_input":   payload.UserInput,
+		"user":         payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("ChannelPoint reward was redeemed")
+	go handleMessage(ircHdl.Client(), nil, eventTypeChannelPointRedeem, fields)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
+	var payload twitch.EventSubEventChannelUpdate
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMessage) error {
+	return func(m json.RawMessage) error {
+		var payload twitch.EventSubEventFollow
+		if err := json.Unmarshal(m, &payload); err != nil {
+			return errors.Wrap(err, "unmarshalling event")
+		}
+
+		t.triggerUpdate(payload.BroadcasterUserLogin, nil, nil, &isOnline)
+		return nil
+	}
+}
+
 func (t *twitchWatcher) updateChannelFromAPI(channel string, sendUpdate bool) error {
 	var (
 		err    error
@@ -129,91 +194,82 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 		return nil, errors.Wrap(err, "resolving channel to user-id")
 	}
 
-	unsubCU, err := twitchEventSubClient.RegisterEventSubHooks(
-		twitch.EventSubEventTypeChannelUpdate,
-		twitch.EventSubCondition{BroadcasterUserID: userID},
-		func(m json.RawMessage) error {
-			var payload twitch.EventSubEventChannelUpdate
-			if err := json.Unmarshal(m, &payload); err != nil {
-				return errors.Wrap(err, "unmarshalling event")
+	var (
+		topicRegistrations = []struct {
+			Topic          string
+			Condition      twitch.EventSubCondition
+			RequiredScopes []string
+			AnyScope       bool
+			Hook           func(json.RawMessage) error
+		}{
+			{
+				Topic:          twitch.EventSubEventTypeChannelUpdate,
+				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+				RequiredScopes: nil,
+				Hook:           t.handleEventSubChannelUpdate,
+			},
+			{
+				Topic:          twitch.EventSubEventTypeStreamOffline,
+				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+				RequiredScopes: nil,
+				Hook:           t.handleEventSubStreamOnOff(false),
+			},
+			{
+				Topic:          twitch.EventSubEventTypeStreamOnline,
+				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+				RequiredScopes: nil,
+				Hook:           t.handleEventSubStreamOnOff(true),
+			},
+			{
+				Topic:          twitch.EventSubEventTypeChannelFollow,
+				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+				RequiredScopes: nil,
+				Hook:           t.handleEventSubChannelFollow,
+			},
+			{
+				Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
+				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+				RequiredScopes: []string{twitch.ScopeChannelReadRedemptions, twitch.ScopeChannelManageRedemptions},
+				AnyScope:       true,
+				Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
+			},
+		}
+		unsubHandlers []func()
+	)
+
+	for _, tr := range topicRegistrations {
+		logger := log.WithFields(log.Fields{
+			"any":     tr.AnyScope,
+			"channel": channel,
+			"scopes":  tr.RequiredScopes,
+			"topic":   tr.Topic,
+		})
+
+		if len(tr.RequiredScopes) > 0 {
+			fn := store.UserHasGrantedScopes
+			if tr.AnyScope {
+				fn = store.UserHasGrantedAnyScope
 			}
 
-			t.triggerUpdate(channel, &payload.Title, &payload.CategoryName, nil)
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "registering channel-update eventsub")
-	}
-
-	unsubSOff, err := twitchEventSubClient.RegisterEventSubHooks(
-		twitch.EventSubEventTypeStreamOffline,
-		twitch.EventSubCondition{BroadcasterUserID: userID},
-		func(m json.RawMessage) error {
-			var payload twitch.EventSubEventStreamOffline
-			if err := json.Unmarshal(m, &payload); err != nil {
-				return errors.Wrap(err, "unmarshalling event")
+			if !fn(channel, tr.RequiredScopes...) {
+				logger.Debug("Missing scopes for eventsub topic")
+				continue
 			}
+		}
 
-			t.triggerUpdate(channel, nil, nil, func(v bool) *bool { return &v }(false))
+		uf, err := twitchEventSubClient.RegisterEventSubHooks(tr.Topic, tr.Condition, tr.Hook)
+		if err != nil {
+			logger.WithError(err).Error("Unable to register topic")
+			continue
+		}
 
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "registering channel-update eventsub")
-	}
-
-	unsubSOn, err := twitchEventSubClient.RegisterEventSubHooks(
-		twitch.EventSubEventTypeStreamOnline,
-		twitch.EventSubCondition{BroadcasterUserID: userID},
-		func(m json.RawMessage) error {
-			var payload twitch.EventSubEventStreamOnline
-			if err := json.Unmarshal(m, &payload); err != nil {
-				return errors.Wrap(err, "unmarshalling event")
-			}
-
-			t.triggerUpdate(channel, nil, nil, func(v bool) *bool { return &v }(true))
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "registering channel-update eventsub")
-	}
-
-	unsubFollow, err := twitchEventSubClient.RegisterEventSubHooks(
-		twitch.EventSubEventTypeChannelFollow,
-		twitch.EventSubCondition{BroadcasterUserID: userID},
-		func(m json.RawMessage) error {
-			var payload twitch.EventSubEventFollow
-			if err := json.Unmarshal(m, &payload); err != nil {
-				return errors.Wrap(err, "unmarshalling event")
-			}
-
-			fields := plugins.FieldCollectionFromData(map[string]interface{}{
-				"channel":     channel,
-				"followed_at": payload.FollowedAt,
-				"user_id":     payload.UserID,
-				"user":        payload.UserLogin,
-			})
-
-			log.WithFields(log.Fields(fields.Data())).Info("User followed")
-			go handleMessage(ircHdl.Client(), nil, eventTypeFollow, fields)
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "registering channel-follow eventsub")
+		unsubHandlers = append(unsubHandlers, uf)
 	}
 
 	return func() {
-		unsubCU()
-		unsubSOff()
-		unsubSOn()
-		unsubFollow()
+		for _, f := range unsubHandlers {
+			f()
+		}
 	}, nil
 }
 

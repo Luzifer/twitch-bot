@@ -478,6 +478,10 @@ func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName st
 	)
 }
 
+func (c *Client) UpdateToken(token string) {
+	c.token = token
+}
+
 func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
 	var (
 		buf  = new(bytes.Buffer)

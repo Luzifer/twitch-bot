@@ -46,6 +46,8 @@ const (
 	EventSubEventTypeChannelUpdate = "channel.update"
 	EventSubEventTypeStreamOffline = "stream.offline"
 	EventSubEventTypeStreamOnline  = "stream.online"
+
+	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
 )
 
 type (
@@ -71,6 +73,25 @@ type (
 		RewardID              string `json:"reward_id,omitempty"`
 		ToBroadcasterUserID   string `json:"to_broadcaster_user_id,omitempty"`
 		UserID                string `json:"user_id,omitempty"`
+	}
+
+	EventSubEventChannelPointCustomRewardRedemptionAdd struct {
+		ID                   string `json:"id"`
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
+		UserID               string `json:"user_id"`
+		UserLogin            string `json:"user_login"`
+		UserName             string `json:"user_name"`
+		UserInput            string `json:"user_input"`
+		Status               string `json:"status"`
+		Reward               struct {
+			ID     string `json:"id"`
+			Title  string `json:"title"`
+			Cost   int64  `json:"cost"`
+			Prompt string `json:"prompt"`
+		} `json:"reward"`
+		RedeemedAt time.Time `json:"redeemed_at"`
 	}
 
 	EventSubEventChannelUpdate struct {

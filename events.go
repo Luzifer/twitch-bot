@@ -3,22 +3,23 @@ package main
 func ptrStr(s string) *string { return &s }
 
 var (
-	eventTypeBan             = ptrStr("ban")
-	eventTypeBits            = ptrStr("bits")
-	eventTypeClearChat       = ptrStr("clearchat")
-	eventTypeFollow          = ptrStr("follow")
-	eventTypeGiftPaidUpgrade = ptrStr("giftpaidupgrade")
-	eventTypeHost            = ptrStr("host")
-	eventTypeJoin            = ptrStr("join")
-	eventTypePart            = ptrStr("part")
-	eventTypePermit          = ptrStr("permit")
-	eventTypeRaid            = ptrStr("raid")
-	eventTypeResub           = ptrStr("resub")
-	eventTypeSubgift         = ptrStr("subgift")
-	eventTypeSubmysterygift  = ptrStr("submysterygift")
-	eventTypeSub             = ptrStr("sub")
-	eventTypeTimeout         = ptrStr("timeout")
-	eventTypeWhisper         = ptrStr("whisper")
+	eventTypeBan                = ptrStr("ban")
+	eventTypeBits               = ptrStr("bits")
+	eventTypeChannelPointRedeem = ptrStr("channelpoint_redeem")
+	eventTypeClearChat          = ptrStr("clearchat")
+	eventTypeFollow             = ptrStr("follow")
+	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
+	eventTypeHost               = ptrStr("host")
+	eventTypeJoin               = ptrStr("join")
+	eventTypePart               = ptrStr("part")
+	eventTypePermit             = ptrStr("permit")
+	eventTypeRaid               = ptrStr("raid")
+	eventTypeResub              = ptrStr("resub")
+	eventTypeSubgift            = ptrStr("subgift")
+	eventTypeSubmysterygift     = ptrStr("submysterygift")
+	eventTypeSub                = ptrStr("sub")
+	eventTypeTimeout            = ptrStr("timeout")
+	eventTypeWhisper            = ptrStr("whisper")
 
 	eventTypeTwitchCategoryUpdate = ptrStr("category_update")
 	eventTypeTwitchStreamOffline  = ptrStr("stream_offline")
@@ -28,6 +29,7 @@ var (
 	knownEvents = []*string{
 		eventTypeBan,
 		eventTypeBits,
+		eventTypeChannelPointRedeem,
 		eventTypeClearChat,
 		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,

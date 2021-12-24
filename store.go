@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -22,6 +23,8 @@ type storageFile struct {
 	Variables map[string]string             `json:"variables"`
 
 	ModuleStorage map[string]json.RawMessage `json:"module_storage"`
+
+	GrantedScopes map[string][]string `json:"granted_scopes"`
 
 	EventSubSecret string `json:"event_sub_secret,omitempty"`
 
@@ -37,9 +40,20 @@ func newStorageFile(inMemStore bool) *storageFile {
 
 		ModuleStorage: map[string]json.RawMessage{},
 
+		GrantedScopes: map[string][]string{},
+
 		inMem: inMemStore,
 		lock:  new(sync.RWMutex),
 	}
+}
+
+func (s *storageFile) DeleteGrantedScopes(user string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	delete(s.GrantedScopes, user)
+
+	return errors.Wrap(s.Save(), "saving store")
 }
 
 func (s *storageFile) DeleteModuleStore(moduleUUID string) error {
@@ -174,6 +188,15 @@ func (s *storageFile) Save() error {
 	)
 }
 
+func (s *storageFile) SetGrantedScopes(user string, scopes []string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.GrantedScopes[user] = scopes
+
+	return errors.Wrap(s.Save(), "saving store")
+}
+
 func (s *storageFile) SetModuleStore(moduleUUID string, storedObject plugins.StorageMarshaller) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -226,4 +249,40 @@ func (s *storageFile) UpdateCounter(counter string, value int64, absolute bool) 
 	s.Counters[counter] = value
 
 	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) UserHasGrantedAnyScope(user string, scopes ...string) bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	grantedScopes, ok := s.GrantedScopes[user]
+	if !ok {
+		return false
+	}
+
+	for _, scope := range scopes {
+		if str.StringInSlice(scope, grantedScopes) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *storageFile) UserHasGrantedScopes(user string, scopes ...string) bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	grantedScopes, ok := s.GrantedScopes[user]
+	if !ok {
+		return false
+	}
+
+	for _, scope := range scopes {
+		if !str.StringInSlice(scope, grantedScopes) {
+			return false
+		}
+	}
+
+	return true
 }
