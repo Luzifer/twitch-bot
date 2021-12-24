@@ -1,3 +1,14 @@
+# 2.1.0 / 2021-12-24
+
+  * [automessage] Add disable switch
+  * [ban] Add HTTP API route for banning users
+  * [core] Add status / health check API
+  * [core] Fix: send-message function passed to plugin was nil
+  * [core] Fix: Strip newlines from message templates
+  * [core] log bits from chat message
+  * [editor] Fix: Removing cooldown resulted in save error
+  * [editor] Rework to use esbuild / Vue component files (#12)
+
 # 2.0.0 / 2021-12-03
 
   * [ban] Enable templating for ban reason
