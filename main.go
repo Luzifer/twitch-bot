@@ -38,7 +38,7 @@ var (
 		StorageFile        string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
 		TwitchClient       string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchClientSecret string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
-		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
+		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
 		ValidateConfig     bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
 		VersionAndExit     bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
@@ -366,17 +366,19 @@ func startCheck() error {
 		errs = append(errs, "No Twitch-ClientId given")
 	}
 
-	if cfg.TwitchToken == "" {
-		errs = append(errs, "Twitch-Token is unset")
+	if cfg.TwitchClientSecret == "" {
+		errs = append(errs, "No Twitch-ClientSecret given")
 	}
 
 	if len(errs) > 0 {
 		fmt.Println(`
-You've not provided a Twitch-ClientId and/or a Twitch-Token.
+You've not provided a Twitch-ClientId and/or a Twitch-ClientSecret.
 
-These parameters are required and you need to provide them. In case
-you need help with obtaining those credentials please visit the
-following website:
+These parameters are required and you need to provide them.
+
+The Twitch Token can be set through the web-interface. In case you
+want to set it through parameters and need help with obtaining it,
+please visit the following website:
 
          https://luzifer.github.io/twitch-bot/
 
