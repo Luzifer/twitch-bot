@@ -27,6 +27,7 @@ type storageFile struct {
 	GrantedScopes map[string][]string `json:"granted_scopes"`
 
 	EventSubSecret string `json:"event_sub_secret,omitempty"`
+	BotToken       string `json:"bot_token,omitempty"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -63,6 +64,13 @@ func (s *storageFile) DeleteModuleStore(moduleUUID string) error {
 	delete(s.ModuleStorage, moduleUUID)
 
 	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) GetBotToken(fallback string) string {
+	if v := s.BotToken; v != "" {
+		return v
+	}
+	return fallback
 }
 
 func (s *storageFile) GetCounterValue(counter string) int64 {

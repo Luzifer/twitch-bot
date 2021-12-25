@@ -67,7 +67,7 @@ func newIRCHandler() (*ircHandler, error) {
 
 	h.c = irc.NewClient(conn, irc.ClientConfig{
 		Nick:    username,
-		Pass:    strings.Join([]string{"oauth", cfg.TwitchToken}, ":"),
+		Pass:    strings.Join([]string{"oauth", store.GetBotToken(cfg.TwitchToken)}, ":"),
 		User:    username,
 		Name:    username,
 		Handler: h,

@@ -97,9 +97,9 @@ func New(clientID, clientSecret, token string) *Client {
 	}
 }
 
-func (c Client) APICache() *APICache { return c.apiCache }
+func (c *Client) APICache() *APICache { return c.apiCache }
 
-func (c Client) GetAuthorizedUsername() (string, error) {
+func (c *Client) GetAuthorizedUsername() (string, error) {
 	var payload struct {
 		Data []User `json:"data"`
 	}
@@ -122,7 +122,7 @@ func (c Client) GetAuthorizedUsername() (string, error) {
 	return payload.Data[0].Login, nil
 }
 
-func (c Client) GetDisplayNameForUser(username string) (string, error) {
+func (c *Client) GetDisplayNameForUser(username string) (string, error) {
 	cacheKey := []string{"displayNameForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -133,7 +133,7 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		Out:      &payload,
@@ -152,7 +152,7 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 	return payload.Data[0].DisplayName, nil
 }
 
-func (c Client) GetFollowDate(from, to string) (time.Time, error) {
+func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	cacheKey := []string{"followDate", from, to}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(time.Time), nil
@@ -174,7 +174,7 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -194,7 +194,7 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
-func (c Client) GetUserInformation(user string) (*User, error) {
+func (c *Client) GetUserInformation(user string) (*User, error) {
 	var (
 		out     User
 		param   = "login"
@@ -214,7 +214,7 @@ func (c Client) GetUserInformation(user string) (*User, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -235,7 +235,7 @@ func (c Client) GetUserInformation(user string) (*User, error) {
 	return &out, nil
 }
 
-func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
+func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
 	var out []Category
 
 	params := make(url.Values)
@@ -274,7 +274,7 @@ func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, 
 	return out, nil
 }
 
-func (c Client) HasLiveStream(username string) (bool, error) {
+func (c *Client) HasLiveStream(username string) (bool, error) {
 	cacheKey := []string{"hasLiveStream", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(bool), nil
@@ -305,7 +305,7 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
 }
 
-func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
+func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	cacheKey := []string{"currentStreamInfo", username}
 	if si := c.apiCache.Get(cacheKey); si != nil {
 		return si.(*StreamInfo), nil
@@ -341,7 +341,7 @@ func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	return payload.Data[0], nil
 }
 
-func (c Client) GetIDForUsername(username string) (string, error) {
+func (c *Client) GetIDForUsername(username string) (string, error) {
 	cacheKey := []string{"idForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -352,7 +352,7 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -372,7 +372,7 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 	return payload.Data[0].ID, nil
 }
 
-func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
+func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
 	cacheKey := []string{"recentStreamInfo", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.([2]string)[0], d.([2]string)[1], nil
@@ -413,7 +413,7 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
-func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
+func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
 	if game == nil && title == nil {
 		return errors.New("netiher game nor title provided")
 	}
@@ -636,6 +636,10 @@ func (c *Client) request(opts clientRequestOpts) error {
 			req.Header.Set("Client-Id", c.clientID)
 
 		case authTypeBearerToken:
+			if c.token == "" {
+				return errors.New("bearer token missing")
+			}
+
 			req.Header.Set("Authorization", "Bearer "+c.token)
 			req.Header.Set("Client-Id", c.clientID)
 

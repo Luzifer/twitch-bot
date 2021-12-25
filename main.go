@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,7 +26,12 @@ import (
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
-const ircReconnectDelay = 100 * time.Millisecond
+const (
+	ircReconnectDelay = 100 * time.Millisecond
+
+	initialIRCRetryBackoff = 500 * time.Millisecond
+	maxIRCRetryBackoff     = time.Minute
+)
 
 var (
 	cfg = struct {
@@ -139,8 +145,12 @@ func handleSubCommand(args []string) {
 func main() {
 	var err error
 
+	if err = store.Load(); err != nil {
+		log.WithError(err).Fatal("Unable to load storage file")
+	}
+
 	cronService = cron.New()
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.TwitchToken)
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken))
 
 	twitchWatch := newTwitchWatcher()
 	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
@@ -149,10 +159,6 @@ func main() {
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
-
-	if err = store.Load(); err != nil {
-		log.WithError(err).Fatal("Unable to load storage file")
-	}
 
 	if err = initCorePlugins(); err != nil {
 		log.WithError(err).Fatal("Unable to load core plugins")
@@ -196,6 +202,7 @@ func main() {
 
 	var (
 		ircDisconnected   = make(chan struct{}, 1)
+		ircRetryBackoff   = initialIRCRetryBackoff
 		autoMessageTicker = time.NewTicker(time.Second)
 	)
 
@@ -250,8 +257,16 @@ func main() {
 			}
 
 			if ircHdl, err = newIRCHandler(); err != nil {
-				log.WithError(err).Fatal("Unable to create IRC client")
+				log.WithError(err).Error("Unable to connect to IRC")
+				go func() {
+					time.Sleep(ircRetryBackoff)
+					ircRetryBackoff = time.Duration(math.Min(float64(maxIRCRetryBackoff), float64(ircRetryBackoff)*1.5))
+					ircDisconnected <- struct{}{}
+				}()
+				continue
 			}
+
+			ircRetryBackoff = initialIRCRetryBackoff // Successfully created, reset backoff
 
 			go func() {
 				if err := ircHdl.Run(); err != nil {
