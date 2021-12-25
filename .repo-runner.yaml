@@ -15,3 +15,4 @@ environment:
   GO111MODULE: on
   GOPATH: /go
   MOD_MODE: readonly
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/go/bin
