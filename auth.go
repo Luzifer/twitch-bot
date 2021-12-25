@@ -17,16 +17,6 @@ import (
 
 var instanceState = uuid.Must(uuid.NewV4()).String()
 
-type (
-	twitchOAuthTokenResponse struct {
-		AccessToken  string   `json:"access_token"`
-		RefreshToken string   `json:"refresh_token"`
-		ExpiresIn    int      `json:"expires_in"`
-		Scope        []string `json:"scope"`
-		TokenType    string   `json:"token_type"`
-	}
-)
-
 func init() {
 	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
@@ -83,13 +73,13 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var rData twitchOAuthTokenResponse
+	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
 		http.Error(w, errors.Wrap(err, "decoding access token").Error(), http.StatusInternalServerError)
 		return
 	}
 
-	botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken).GetAuthorizedUsername()
+	botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUsername()
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -100,7 +90,7 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	twitchClient.UpdateToken(rData.AccessToken)
+	twitchClient.UpdateToken(rData.AccessToken, rData.RefreshToken)
 
 	if err = store.SetGrantedScopes(botUser, rData.Scope, true); err != nil {
 		http.Error(w, errors.Wrap(err, "storing access scopes").Error(), http.StatusInternalServerError)
@@ -139,13 +129,13 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var rData twitchOAuthTokenResponse
+	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
 		http.Error(w, errors.Wrap(err, "decoding access token").Error(), http.StatusInternalServerError)
 		return
 	}
 
-	grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken).GetAuthorizedUsername()
+	grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUsername()
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return

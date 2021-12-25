@@ -75,7 +75,7 @@ func TestAllowExecuteDisableOnOffline(t *testing.T) {
 	r := &Rule{DisableOnOffline: testPtrBool(true)}
 
 	// Fake cache entries to prevent calling the real Twitch API
-	r.twitchClient = twitch.New("", "", "")
+	r.twitchClient = twitch.New("", "", "", "")
 	r.twitchClient.APICache().Set([]string{"hasLiveStream", "channel1"}, time.Minute, true)
 	r.twitchClient.APICache().Set([]string{"hasLiveStream", "channel2"}, time.Minute, false)
 

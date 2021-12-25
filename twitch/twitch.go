@@ -43,11 +43,31 @@ type (
 	Client struct {
 		clientID     string
 		clientSecret string
-		token        string
+
+		accessToken     string
+		refreshToken    string
+		tokenValidity   time.Time
+		tokenUpdateHook func(string, string) error
 
 		appAccessToken string
 
 		apiCache *APICache
+	}
+
+	OAuthTokenResponse struct {
+		AccessToken  string   `json:"access_token"`
+		RefreshToken string   `json:"refresh_token"`
+		ExpiresIn    int      `json:"expires_in"`
+		Scope        []string `json:"scope"`
+		TokenType    string   `json:"token_type"`
+	}
+
+	OAuthTokenValidationResponse struct {
+		ClientID  string   `json:"client_id"`
+		Login     string   `json:"login"`
+		Scopes    []string `json:"scopes"`
+		UserID    string   `json:"user_id"`
+		ExpiresIn int      `json:"expires_in"`
 	}
 
 	StreamInfo struct {
@@ -87,11 +107,13 @@ type (
 	}
 )
 
-func New(clientID, clientSecret, token string) *Client {
+func New(clientID, clientSecret, accessToken, refreshToken string) *Client {
 	return &Client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
-		token:        token,
+
+		accessToken:  accessToken,
+		refreshToken: refreshToken,
 
 		apiCache: newTwitchAPICache(),
 	}
@@ -194,7 +216,17 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
-func (c *Client) GetToken() string { return c.token }
+func (c *Client) GetToken() (string, error) {
+	if err := c.ValidateToken(context.Background(), false); err != nil {
+		if err = c.RefreshToken(); err != nil {
+			return "", errors.Wrap(err, "refreshing token after validation error")
+		}
+
+		// Token was refreshed, therefore should now be valid
+	}
+
+	return c.accessToken, nil
+}
 
 func (c *Client) GetUserInformation(user string) (*User, error) {
 	var (
@@ -480,8 +512,78 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 	)
 }
 
-func (c *Client) UpdateToken(token string) {
-	c.token = token
+func (c *Client) RefreshToken() error {
+	if c.refreshToken == "" {
+		return errors.New("no refresh token set")
+	}
+
+	params := make(url.Values)
+	params.Set("client_id", c.clientID)
+	params.Set("client_secret", c.clientSecret)
+	params.Set("refresh_token", c.refreshToken)
+	params.Set("grant_type", "refresh_token")
+
+	var resp OAuthTokenResponse
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeUnauthorized,
+		Context:  context.Background(),
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Out:      &resp,
+		URL:      fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()),
+	}); err != nil {
+		return errors.Wrap(err, "executing request")
+	}
+
+	c.UpdateToken(resp.AccessToken, resp.RefreshToken)
+	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+
+	if c.tokenUpdateHook == nil {
+		return nil
+	}
+
+	return errors.Wrap(c.tokenUpdateHook(resp.AccessToken, resp.RefreshToken), "calling token update hook")
+}
+
+func (c *Client) SetTokenUpdateHook(f func(string, string) error) {
+	c.tokenUpdateHook = f
+}
+
+func (c *Client) UpdateToken(accessToken, refreshToken string) {
+	c.accessToken = accessToken
+	c.refreshToken = refreshToken
+}
+
+func (c *Client) ValidateToken(ctx context.Context, force bool) error {
+	if c.tokenValidity.After(time.Now()) && !force {
+		// We do have an expiration time and it's not expired
+		// so we can assume we've checked the token and it should
+		// still be valid.
+
+		return nil
+	}
+
+	var resp OAuthTokenValidationResponse
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeBearerToken,
+		Context:  ctx,
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &resp,
+		URL:      "https://id.twitch.tv/oauth2/validate",
+	}); err != nil {
+		return errors.Wrap(err, "executing request")
+	}
+
+	if resp.ClientID != c.clientID {
+		return errors.New("token belongs to different app")
+	}
+
+	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+
+	return nil
 }
 
 func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
@@ -638,11 +740,11 @@ func (c *Client) request(opts clientRequestOpts) error {
 			req.Header.Set("Client-Id", c.clientID)
 
 		case authTypeBearerToken:
-			if c.token == "" {
+			if c.accessToken == "" {
 				return errors.New("bearer token missing")
 			}
 
-			req.Header.Set("Authorization", "Bearer "+c.token)
+			req.Header.Set("Authorization", "Bearer "+c.accessToken)
 			req.Header.Set("Client-Id", c.clientID)
 
 		default:

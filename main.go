@@ -29,8 +29,9 @@ import (
 const (
 	ircReconnectDelay = 100 * time.Millisecond
 
-	initialIRCRetryBackoff = 500 * time.Millisecond
-	maxIRCRetryBackoff     = time.Minute
+	initialIRCRetryBackoff    = 500 * time.Millisecond
+	ircRetryBackoffMultiplier = 1.5
+	maxIRCRetryBackoff        = time.Minute
 )
 
 var (
@@ -150,7 +151,8 @@ func main() {
 	}
 
 	cronService = cron.New()
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken))
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken), store.BotRefreshToken)
+	twitchClient.SetTokenUpdateHook(store.UpdateBotToken)
 
 	twitchWatch := newTwitchWatcher()
 	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
@@ -260,7 +262,7 @@ func main() {
 				log.WithError(err).Error("Unable to connect to IRC")
 				go func() {
 					time.Sleep(ircRetryBackoff)
-					ircRetryBackoff = time.Duration(math.Min(float64(maxIRCRetryBackoff), float64(ircRetryBackoff)*1.5))
+					ircRetryBackoff = time.Duration(math.Min(float64(maxIRCRetryBackoff), float64(ircRetryBackoff)*ircRetryBackoffMultiplier))
 					ircDisconnected <- struct{}{}
 				}()
 				continue
