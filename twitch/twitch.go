@@ -194,6 +194,8 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
+func (c *Client) GetToken() string { return c.token }
+
 func (c *Client) GetUserInformation(user string) (*User, error) {
 	var (
 		out     User

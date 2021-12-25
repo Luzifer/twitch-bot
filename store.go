@@ -27,7 +27,9 @@ type storageFile struct {
 	GrantedScopes map[string][]string `json:"granted_scopes"`
 
 	EventSubSecret string `json:"event_sub_secret,omitempty"`
-	BotToken       string `json:"bot_token,omitempty"`
+
+	BotAccessToken  string `json:"bot_access_token,omitempty"`
+	BotRefreshToken string `json:"bot_refresh_token,omitempty"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -67,7 +69,7 @@ func (s *storageFile) DeleteModuleStore(moduleUUID string) error {
 }
 
 func (s *storageFile) GetBotToken(fallback string) string {
-	if v := s.BotToken; v != "" {
+	if v := s.BotAccessToken; v != "" {
 		return v
 	}
 	return fallback
@@ -250,6 +252,16 @@ func (s *storageFile) RemoveVariable(key string) error {
 	defer s.lock.Unlock()
 
 	delete(s.Variables, key)
+
+	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) UpdateBotToken(accessToken, refreshToken string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.BotAccessToken = accessToken
+	s.BotRefreshToken = refreshToken
 
 	return errors.Wrap(s.Save(), "saving store")
 }
