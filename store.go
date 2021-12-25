@@ -188,9 +188,17 @@ func (s *storageFile) Save() error {
 	)
 }
 
-func (s *storageFile) SetGrantedScopes(user string, scopes []string) error {
+func (s *storageFile) SetGrantedScopes(user string, scopes []string, merge bool) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	if merge {
+		for _, sc := range s.GrantedScopes[user] {
+			if !str.StringInSlice(sc, scopes) {
+				scopes = append(scopes, sc)
+			}
+		}
+	}
 
 	s.GrantedScopes[user] = scopes
 
