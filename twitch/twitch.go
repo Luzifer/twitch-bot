@@ -749,7 +749,7 @@ func (c *Client) request(opts clientRequestOpts) error {
 			if !opts.NoValidateToken {
 				accessToken, err = c.GetToken()
 				if err != nil {
-					return errors.Wrap(err, "geting bearer access token")
+					return errors.Wrap(err, "getting bearer access token")
 				}
 			}
 
