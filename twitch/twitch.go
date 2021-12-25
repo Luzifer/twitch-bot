@@ -97,13 +97,15 @@ type (
 	authType uint8
 
 	clientRequestOpts struct {
-		AuthType authType
-		Body     io.Reader
-		Context  context.Context
-		Method   string
-		OKStatus int
-		Out      interface{}
-		URL      string
+		AuthType        authType
+		Body            io.Reader
+		Context         context.Context
+		Method          string
+		NoRetry         bool
+		NoValidateToken bool
+		OKStatus        int
+		Out             interface{}
+		URL             string
 	}
 )
 
@@ -567,12 +569,14 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	var resp OAuthTokenValidationResponse
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
-		Context:  ctx,
-		Method:   http.MethodGet,
-		OKStatus: http.StatusOK,
-		Out:      &resp,
-		URL:      "https://id.twitch.tv/oauth2/validate",
+		AuthType:        authTypeBearerToken,
+		Context:         ctx,
+		Method:          http.MethodGet,
+		NoRetry:         true,
+		NoValidateToken: true,
+		OKStatus:        http.StatusOK,
+		Out:             &resp,
+		URL:             "https://id.twitch.tv/oauth2/validate",
 	}); err != nil {
 		return errors.Wrap(err, "executing request")
 	}
@@ -582,6 +586,7 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	}
 
 	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	log.WithField("expiry", c.tokenValidity).Trace("Access token validated")
 
 	return nil
 }
@@ -711,7 +716,7 @@ func (c *Client) request(opts clientRequestOpts) error {
 	}).Trace("Execute Twitch API request")
 
 	var retries uint64 = twitchRequestRetries
-	if opts.Body != nil {
+	if opts.Body != nil || opts.NoRetry {
 		// Body must be read only once, do not retry
 		retries = 1
 	}
@@ -740,11 +745,15 @@ func (c *Client) request(opts clientRequestOpts) error {
 			req.Header.Set("Client-Id", c.clientID)
 
 		case authTypeBearerToken:
-			if c.accessToken == "" {
-				return errors.New("bearer token missing")
+			accessToken := c.accessToken
+			if !opts.NoValidateToken {
+				accessToken, err = c.GetToken()
+				if err != nil {
+					return errors.Wrap(err, "geting bearer access token")
+				}
 			}
 
-			req.Header.Set("Authorization", "Bearer "+c.accessToken)
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Header.Set("Client-Id", c.clientID)
 
 		default:
