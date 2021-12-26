@@ -540,6 +540,7 @@ func (c *Client) RefreshToken() error {
 
 	c.UpdateToken(resp.AccessToken, resp.RefreshToken)
 	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	log.WithField("expiry", c.tokenValidity).Trace("Access token refreshed")
 
 	if c.tokenUpdateHook == nil {
 		return nil
