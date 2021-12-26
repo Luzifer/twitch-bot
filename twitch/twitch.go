@@ -3,6 +3,7 @@ package twitch
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -713,7 +715,7 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 func (c *Client) request(opts clientRequestOpts) error {
 	log.WithFields(log.Fields{
 		"method": opts.Method,
-		"url":    opts.URL,
+		"url":    c.replaceSecrets(opts.URL),
 	}).Trace("Execute Twitch API request")
 
 	var retries uint64 = twitchRequestRetries
@@ -784,4 +786,18 @@ func (c *Client) request(opts clientRequestOpts) error {
 			"parse user info",
 		)
 	})
+}
+
+func (c *Client) replaceSecrets(u string) string {
+	return strings.NewReplacer(
+		c.accessToken, c.hashSecret(c.accessToken),
+		c.refreshToken, c.hashSecret(c.refreshToken),
+		c.clientSecret, c.hashSecret(c.clientSecret),
+	).Replace(u)
+}
+
+func (*Client) hashSecret(secret string) string {
+	h := sha1.New()
+	h.Write([]byte(secret))
+	return fmt.Sprintf("[sha1:%x]", h.Sum(nil))
 }
