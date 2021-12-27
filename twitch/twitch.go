@@ -3,7 +3,7 @@ package twitch
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -797,7 +797,7 @@ func (c *Client) replaceSecrets(u string) string {
 }
 
 func (*Client) hashSecret(secret string) string {
-	h := sha1.New()
+	h := sha256.New()
 	h.Write([]byte(secret))
-	return fmt.Sprintf("[sha1:%x]", h.Sum(nil))
+	return fmt.Sprintf("[sha256:%x]", h.Sum(nil))
 }
