@@ -793,11 +793,20 @@ func (c *Client) request(opts clientRequestOpts) error {
 }
 
 func (c *Client) replaceSecrets(u string) string {
-	return strings.NewReplacer(
-		c.accessToken, c.hashSecret(c.accessToken),
-		c.refreshToken, c.hashSecret(c.refreshToken),
-		c.clientSecret, c.hashSecret(c.clientSecret),
-	).Replace(u)
+	var replacements []string
+
+	for _, secret := range []string{
+		c.accessToken,
+		c.refreshToken,
+		c.clientSecret,
+	} {
+		if secret == "" {
+			continue
+		}
+		replacements = append(replacements, secret, c.hashSecret(secret))
+	}
+
+	return strings.NewReplacer(replacements...).Replace(u)
 }
 
 func (*Client) hashSecret(secret string) string {
