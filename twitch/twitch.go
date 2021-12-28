@@ -569,6 +569,10 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 		return nil
 	}
 
+	if c.accessToken == "" {
+		return errors.New("no access token present")
+	}
+
 	var resp OAuthTokenValidationResponse
 
 	if err := c.request(clientRequestOpts{
