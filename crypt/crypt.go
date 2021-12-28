@@ -103,23 +103,23 @@ func handleEncryptedTags(obj interface{}, passphrase string, action encryptActio
 }
 
 func manipulateValue(val, passphrase string, action encryptAction) (string, error) {
-	if action == handleTagsDecrypt && !strings.HasPrefix(val, encryptedValuePrefix) {
-		// This is not an encrypted string: Return the value itself for
-		// working with legacy values in storage
-		return val, nil
-	}
-
-	if action == handleTagsEncrypt && strings.HasPrefix(val, encryptedValuePrefix) {
-		// This is an encrypted string: shouldn't happen but whatever
-		return val, nil
-	}
-
 	switch action {
 	case handleTagsDecrypt:
+		if !strings.HasPrefix(val, encryptedValuePrefix) {
+			// This is not an encrypted string: Return the value itself for
+			// working with legacy values in storage
+			return val, nil
+		}
+
 		d, err := osslClient.DecryptBytes(passphrase, []byte(strings.TrimPrefix(val, encryptedValuePrefix)), openssl.PBKDF2SHA256)
 		return string(d), errors.Wrap(err, "decrypting value")
 
 	case handleTagsEncrypt:
+		if strings.HasPrefix(val, encryptedValuePrefix) {
+			// This is an encrypted string: shouldn't happen but whatever
+			return val, nil
+		}
+
 		e, err := osslClient.EncryptBytes(passphrase, []byte(val), openssl.PBKDF2SHA256)
 		return encryptedValuePrefix + string(e), errors.Wrap(err, "encrypting value")
 
