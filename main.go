@@ -36,18 +36,19 @@ const (
 
 var (
 	cfg = struct {
-		BaseURL            string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
-		CommandTimeout     time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
-		Config             string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
-		IRCRateLimit       time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
-		LogLevel           string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		PluginDir          string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageFile        string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient       string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
-		TwitchClientSecret string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
-		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
-		ValidateConfig     bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
-		VersionAndExit     bool          `flag:"version" default:"false" description:"Prints current version and exits"`
+		BaseURL               string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
+		CommandTimeout        time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
+		Config                string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		IRCRateLimit          time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
+		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
+		StorageFile           string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
+		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
+		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
+		TwitchToken           string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
+		ValidateConfig        bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
+		VersionAndExit        bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
 	config     *configFile
@@ -91,6 +92,14 @@ func init() {
 		log.WithError(err).Fatal("Unable to parse log level")
 	} else {
 		log.SetLevel(l)
+	}
+
+	if cfg.StorageEncryptionPass == "" {
+		log.Warn("No storage encryption passphrase was set, falling back to client-id:client-secret")
+		cfg.StorageEncryptionPass = strings.Join([]string{
+			cfg.TwitchClient,
+			cfg.TwitchClientSecret,
+		}, ":")
 	}
 }
 

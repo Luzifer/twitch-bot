@@ -3,6 +3,7 @@ module github.com/Luzifer/twitch-bot
 go 1.17
 
 require (
+	github.com/Luzifer/go-openssl/v4 v4.1.0
 	github.com/Luzifer/go_helpers/v2 v2.12.2
 	github.com/Luzifer/korvike/functions v0.6.1
 	github.com/Luzifer/rconfig/v2 v2.3.0
@@ -15,6 +16,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -42,7 +44,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/text v0.3.6 // indirect
