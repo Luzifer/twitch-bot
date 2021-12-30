@@ -243,7 +243,6 @@ func main() {
 			twitchEventSubClient, err = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
 				strings.TrimRight(cfg.BaseURL, "/"),
 				"eventsub",
-				handle,
 			}, "/"), secret, handle)
 
 			if err != nil {
