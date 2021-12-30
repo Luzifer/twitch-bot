@@ -202,7 +202,7 @@
 
           <b-card-body>
             <p>
-              Here you can manage your bots auth-token: it's required to communicate with chat and Twitch APIs. This will override the token you might have provided when starting the bot and will be automatically renewed as long as you don't change your password or revoke the apps permission on your bot account.
+              Here you can manage your bots auth-token: it's required to communicate with Twitch Chat and APIs. This will override the token you might have provided when starting the bot and will be automatically renewed as long as you don't change your password or revoke the apps permission on your bot account.
             </p>
             <ul>
               <li>Copy the URL provided below</li>
