@@ -48,6 +48,8 @@ const (
 	EventSubEventTypeStreamOnline  = "stream.online"
 
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
+
+	EventSubEventTypeUserAuthorizationRevoke = "user.authorization.revoke"
 )
 
 type (
@@ -128,6 +130,13 @@ type (
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		Type                 string    `json:"type"`
 		StartedAt            time.Time `json:"started_at"`
+	}
+
+	EventSubEventUserAuthorizationRevoke struct {
+		ClientID  string `json:"client_id"`
+		UserID    string `json:"user_id"`
+		UserLogin string `json:"user_login"`
+		UserName  string `json:"user_name"`
 	}
 
 	eventSubPostMessage struct {

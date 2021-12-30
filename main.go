@@ -249,6 +249,10 @@ func main() {
 				log.WithError(err).Fatal("Unable to create eventsub client")
 			}
 
+			if err := twitchWatch.registerGlobalHooks(); err != nil {
+				log.WithError(err).Fatal("Unable to register global eventsub hooks")
+			}
+
 			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
 		}
 	}

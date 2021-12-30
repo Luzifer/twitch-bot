@@ -159,6 +159,23 @@ func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMe
 	}
 }
 
+func (t *twitchWatcher) handleEventUserAuthRevoke(m json.RawMessage) error {
+	var payload twitch.EventSubEventUserAuthorizationRevoke
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	if payload.ClientID != cfg.TwitchClient {
+		// We got an revoke for a different ID: Shouldn't happen but whatever.
+		return nil
+	}
+
+	return errors.Wrap(
+		store.DeleteGrantedScopes(payload.UserLogin),
+		"deleting granted scopes",
+	)
+}
+
 func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -298,6 +315,16 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 			f()
 		}
 	}, nil
+}
+
+func (t *twitchWatcher) registerGlobalHooks() error {
+	_, err := twitchEventSubClient.RegisterEventSubHooks(
+		twitch.EventSubEventTypeUserAuthorizationRevoke,
+		twitch.EventSubCondition{ClientID: cfg.TwitchClient},
+		t.handleEventUserAuthRevoke,
+	)
+
+	return errors.Wrap(err, "registering user auth hook")
 }
 
 func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, online *bool) {
