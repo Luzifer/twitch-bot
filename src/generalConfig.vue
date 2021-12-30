@@ -2,185 +2,281 @@
   <div>
     <b-row>
       <b-col>
-        <b-card-group columns>
-          <b-card no-body>
-            <b-card-header>
-              <font-awesome-icon
-                fixed-width
-                class="mr-1"
-                :icon="['fas', 'hashtag']"
-              />
-              Channels
-            </b-card-header>
-            <b-list-group flush>
-              <b-list-group-item
-                v-for="channel in sortedChannels"
-                :key="channel"
-                class="d-flex align-items-center align-middle"
-              >
-                <span class="mr-auto">
-                  <font-awesome-icon
-                    fixed-width
-                    class="mr-1"
-                    :icon="['fas', 'hashtag']"
-                  />
-                  {{ channel }}
-                </span>
-                <b-button
-                  size="sm"
-                  variant="danger"
-                  @click="removeChannel(channel)"
-                >
-                  <font-awesome-icon
-                    fixed-width
-                    class="mr-1"
-                    :icon="['fas', 'minus']"
-                  />
-                </b-button>
-              </b-list-group-item>
-
-              <b-list-group-item>
-                <b-input-group>
-                  <b-form-input
-                    v-model="models.addChannel"
-                    @keyup.enter="addChannel"
-                  />
-                  <b-input-group-append>
-                    <b-button
-                      variant="success"
-                      @click="addChannel"
-                    >
-                      <font-awesome-icon
-                        fixed-width
-                        class="mr-1"
-                        :icon="['fas', 'plus']"
-                      />
-                      Add
-                    </b-button>
-                  </b-input-group-append>
-                </b-input-group>
-              </b-list-group-item>
-            </b-list-group>
-          </b-card>
-
-          <b-card no-body>
-            <b-card-header>
-              <font-awesome-icon
-                fixed-width
-                class="mr-1"
-                :icon="['fas', 'users']"
-              />
-              Bot-Editors
-            </b-card-header>
-            <b-list-group flush>
-              <b-list-group-item
-                v-for="editor in sortedEditors"
-                :key="editor"
-                class="d-flex align-items-center align-middle"
-              >
-                <b-avatar
-                  class="mr-3"
-                  :src="userProfiles[editor] ? userProfiles[editor].profile_image_url : ''"
-                />
-                <span class="mr-auto">{{ userProfiles[editor] ? userProfiles[editor].display_name : editor }}</span>
-                <b-button
-                  size="sm"
-                  variant="danger"
-                  @click="removeEditor(editor)"
-                >
-                  <font-awesome-icon
-                    fixed-width
-                    class="mr-1"
-                    :icon="['fas', 'minus']"
-                  />
-                </b-button>
-              </b-list-group-item>
-
-              <b-list-group-item>
-                <b-input-group>
-                  <b-form-input
-                    v-model="models.addEditor"
-                    @keyup.enter="addEditor"
-                  />
-                  <b-input-group-append>
-                    <b-button
-                      variant="success"
-                      @click="addEditor"
-                    >
-                      <font-awesome-icon
-                        fixed-width
-                        class="mr-1"
-                        :icon="['fas', 'plus']"
-                      />
-                      Add
-                    </b-button>
-                  </b-input-group-append>
-                </b-input-group>
-              </b-list-group-item>
-            </b-list-group>
-          </b-card>
-
-          <b-card no-body>
-            <b-card-header
+        <b-card no-body>
+          <b-card-header>
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'hashtag']"
+            />
+            Channels
+          </b-card-header>
+          <b-list-group flush>
+            <b-list-group-item
+              v-for="channel in sortedChannels"
+              :key="channel"
               class="d-flex align-items-center align-middle"
             >
               <span class="mr-auto">
                 <font-awesome-icon
                   fixed-width
                   class="mr-1"
-                  :icon="['fas', 'ticket-alt']"
+                  :icon="['fas', 'hashtag']"
                 />
-                Auth-Tokens
+                {{ channel }}
               </span>
-              <b-button-group size="sm">
-                <b-button
-                  variant="success"
-                  @click="newAPIToken"
-                >
-                  <font-awesome-icon
-                    fixed-width
-                    class="mr-1"
-                    :icon="['fas', 'plus']"
-                  />
-                </b-button>
-              </b-button-group>
-            </b-card-header>
-            <b-list-group flush>
-              <b-list-group-item
-                v-if="createdAPIToken"
-                variant="success"
+              <b-button
+                size="sm"
+                variant="danger"
+                @click="removeChannel(channel)"
               >
-                Token was created, copy it within 30s as you will not see it again:<br>
-                <code>{{ createdAPIToken.token }}</code>
-              </b-list-group-item>
+                <font-awesome-icon
+                  fixed-width
+                  class="mr-1"
+                  :icon="['fas', 'minus']"
+                />
+              </b-button>
+            </b-list-group-item>
 
-              <b-list-group-item
-                v-for="(token, uuid) in apiTokens"
-                :key="uuid"
-                class="d-flex align-items-center align-middle"
+            <b-list-group-item>
+              <b-input-group>
+                <b-form-input
+                  v-model="models.addChannel"
+                  @keyup.enter="addChannel"
+                />
+                <b-input-group-append>
+                  <b-button
+                    variant="success"
+                    @click="addChannel"
+                  >
+                    <font-awesome-icon
+                      fixed-width
+                      class="mr-1"
+                      :icon="['fas', 'plus']"
+                    />
+                    Add
+                  </b-button>
+                </b-input-group-append>
+              </b-input-group>
+            </b-list-group-item>
+          </b-list-group>
+        </b-card>
+      </b-col>
+      <b-col>
+        <b-card
+          no-body
+          class="mb-3"
+        >
+          <b-card-header>
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'users']"
+            />
+            Bot-Editors
+          </b-card-header>
+          <b-list-group flush>
+            <b-list-group-item
+              v-for="editor in sortedEditors"
+              :key="editor"
+              class="d-flex align-items-center align-middle"
+            >
+              <b-avatar
+                class="mr-3"
+                :src="userProfiles[editor] ? userProfiles[editor].profile_image_url : ''"
+              />
+              <span class="mr-auto">{{ userProfiles[editor] ? userProfiles[editor].display_name : editor }}</span>
+              <b-button
+                size="sm"
+                variant="danger"
+                @click="removeEditor(editor)"
               >
-                <span class="mr-auto">
-                  {{ token.name }}<br>
-                  <b-badge
-                    v-for="module in token.modules"
-                    :key="module"
-                  >{{ module === '*' ? 'ANY' : module }}</b-badge>
-                </span>
+                <font-awesome-icon
+                  fixed-width
+                  class="mr-1"
+                  :icon="['fas', 'minus']"
+                />
+              </b-button>
+            </b-list-group-item>
+
+            <b-list-group-item>
+              <b-input-group>
+                <b-form-input
+                  v-model="models.addEditor"
+                  @keyup.enter="addEditor"
+                />
+                <b-input-group-append>
+                  <b-button
+                    variant="success"
+                    @click="addEditor"
+                  >
+                    <font-awesome-icon
+                      fixed-width
+                      class="mr-1"
+                      :icon="['fas', 'plus']"
+                    />
+                    Add
+                  </b-button>
+                </b-input-group-append>
+              </b-input-group>
+            </b-list-group-item>
+          </b-list-group>
+        </b-card>
+
+        <b-card
+          no-body
+        >
+          <b-card-header
+            class="d-flex align-items-center align-middle"
+          >
+            <span class="mr-auto">
+              <font-awesome-icon
+                fixed-width
+                class="mr-1"
+                :icon="['fas', 'ticket-alt']"
+              />
+              Auth-Tokens
+            </span>
+            <b-button-group size="sm">
+              <b-button
+                variant="success"
+                @click="newAPIToken"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  class="mr-1"
+                  :icon="['fas', 'plus']"
+                />
+              </b-button>
+            </b-button-group>
+          </b-card-header>
+          <b-list-group flush>
+            <b-list-group-item
+              v-if="createdAPIToken"
+              variant="success"
+            >
+              Token was created, copy it within 30s as you will not see it again:<br>
+              <code>{{ createdAPIToken.token }}</code>
+            </b-list-group-item>
+
+            <b-list-group-item
+              v-for="(token, uuid) in apiTokens"
+              :key="uuid"
+              class="d-flex align-items-center align-middle"
+            >
+              <span class="mr-auto">
+                {{ token.name }}<br>
+                <b-badge
+                  v-for="module in token.modules"
+                  :key="module"
+                >{{ module === '*' ? 'ANY' : module }}</b-badge>
+              </span>
+              <b-button
+                size="sm"
+                variant="danger"
+                @click="removeAPIToken(uuid)"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  class="mr-1"
+                  :icon="['fas', 'minus']"
+                />
+              </b-button>
+            </b-list-group-item>
+          </b-list-group>
+        </b-card>
+      </b-col>
+      <b-col>
+        <b-card
+          no-body
+          class="mb-3"
+        >
+          <b-card-header>
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'sign-in-alt']"
+            />
+            Bot Connection
+          </b-card-header>
+
+          <b-card-body>
+            <p>
+              Here you can manage your bots auth-token: it is using to communicate with chat and Twitch APIs. This will override the token you might have provided when starting the bot and will be automatically renewed as long as you don't change your password or revoke the apps permission on your bot account.
+            </p>
+            <ul>
+              <li>Copy the URL provided below</li>
+              <li>Open an inkognito tab or different browser you are not logged into Twitch or are logged in with your bot account</li>
+              <li>Open the copied URL, sign in with the bot account and accept the permissions</li>
+              <li>The bot will display a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten.</li>
+            </ul>
+            <b-input-group>
+              <b-form-input
+                placeholder="Loading..."
+                readonly
+                :value="authURLs.update_bot_token"
+              />
+              <b-input-group-append>
                 <b-button
-                  size="sm"
-                  variant="danger"
-                  @click="removeAPIToken(uuid)"
+                  :variant="copyButtonVariant.botConnection"
+                  @click="copyAuthURL('botConnection')"
                 >
                   <font-awesome-icon
                     fixed-width
                     class="mr-1"
-                    :icon="['fas', 'minus']"
+                    :icon="['fas', 'clipboard']"
                   />
+                  Copy
                 </b-button>
-              </b-list-group-item>
-            </b-list-group>
-          </b-card>
-        </b-card-group>
+              </b-input-group-append>
+            </b-input-group>
+          </b-card-body>
+        </b-card>
+
+        <b-card
+          no-body
+          class="mb-3"
+        >
+          <b-card-header>
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'sign-in-alt']"
+            />
+            Channel Permissions
+          </b-card-header>
+
+          <b-card-body>
+            <p>
+              In order to access non-public information as channelpoint redemptions the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!
+            </p>
+            <ul>
+              <li>Copy the URL provided below</li>
+              <li>Pass the URL to the channel owner and tell them to open it with their personal account logged in</li>
+              <li>The bot will display a message containing the updated account</li>
+            </ul>
+            <b-input-group>
+              <b-form-input
+                placeholder="Loading..."
+                readonly
+                :value="authURLs.update_channel_scopes"
+              />
+              <b-input-group-append>
+                <b-button
+                  :variant="copyButtonVariant.channelPermission"
+                  @click="copyAuthURL('channelPermission')"
+                >
+                  <font-awesome-icon
+                    fixed-width
+                    class="mr-1"
+                    :icon="['fas', 'clipboard']"
+                  />
+                  Copy
+                </b-button>
+              </b-input-group-append>
+            </b-input-group>
+          </b-card-body>
+        </b-card>
       </b-col>
     </b-row>
 
@@ -261,6 +357,12 @@ export default {
   data() {
     return {
       apiTokens: {},
+      authURLs: {},
+      copyButtonVariant: {
+        botConnection: 'primary',
+        channelPermission: 'primary',
+      },
+
       createdAPIToken: null,
       generalConfig: {},
       models: {
@@ -292,11 +394,49 @@ export default {
       this.updateGeneralConfig()
     },
 
+    copyAuthURL(type) {
+      let prom = null
+      let btnField = null
+
+      switch (type) {
+      case 'botConnection':
+        prom = navigator.clipboard.writeText(this.authURLs.update_bot_token)
+        btnField = 'botConnection'
+        break
+      case 'channelPermission':
+        prom = navigator.clipboard.writeText(this.authURLs.update_channel_scopes)
+        btnField = 'channelPermission'
+        break
+      }
+
+      return prom
+        .then(() => {
+          this.copyButtonVariant[btnField] = 'success'
+        })
+        .catch(() => {
+          this.copyButtonVariant[btnField] = 'danger'
+        })
+        .finally(() => {
+          window.setTimeout(() => {
+            this.copyButtonVariant[btnField] = 'primary'
+          }, 2000)
+        })
+    },
+
     fetchAPITokens() {
       this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get('config-editor/auth-tokens', this.$root.axiosOptions)
         .then(resp => {
           this.apiTokens = resp.data
+        })
+        .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    fetchAuthURLs() {
+      this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
+      return axios.get('config-editor/auth-urls', this.$root.axiosOptions)
+        .then(resp => {
+          this.authURLs = resp.data
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
@@ -397,6 +537,7 @@ export default {
       Promise.all([
         this.fetchGeneralConfig(),
         this.fetchAPITokens(),
+        this.fetchAuthURLs(),
       ]).then(() => {
         this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, false)
         this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
@@ -406,6 +547,7 @@ export default {
     Promise.all([
       this.fetchGeneralConfig(),
       this.fetchAPITokens(),
+      this.fetchAuthURLs(),
       this.fetchModules(),
     ]).then(() => this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false))
   },
