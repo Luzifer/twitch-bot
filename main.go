@@ -164,7 +164,10 @@ func main() {
 	twitchClient.SetTokenUpdateHook(store.UpdateBotToken)
 
 	twitchWatch := newTwitchWatcher()
-	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
+	// Query may run that often as the twitchClient has an internal
+	// cache but shouldn't run more often as EventSub subscriptions
+	// are retried on error each time
+	cronService.AddFunc("@every 30s", twitchWatch.Check)
 
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)

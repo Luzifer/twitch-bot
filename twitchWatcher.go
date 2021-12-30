@@ -179,11 +179,12 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 		return errors.Wrap(err, "getting stream info")
 	}
 
-	if storedStatus != nil && storedStatus.Equals(status) {
-		return nil
+	if storedStatus == nil {
+		storedStatus = &twitchChannelState{}
+		t.ChannelStatus[channel] = storedStatus
 	}
 
-	if storedStatus.isInitialized {
+	if storedStatus.isInitialized && !storedStatus.Equals(status) {
 		// Send updates only when we do have an update
 		t.triggerUpdate(channel, &status.Title, &status.Category, &status.IsLive)
 	}
@@ -280,7 +281,13 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 		uf, err := twitchEventSubClient.RegisterEventSubHooks(tr.Topic, tr.Condition, tr.Hook)
 		if err != nil {
 			logger.WithError(err).Error("Unable to register topic")
-			continue
+
+			for _, f := range unsubHandlers {
+				// Error will cause unsub handlers not to be stored, therefore we unsub them now
+				f()
+			}
+
+			return nil, errors.Wrap(err, "registering topic")
 		}
 
 		unsubHandlers = append(unsubHandlers, uf)
