@@ -60,12 +60,27 @@
           >
             <font-awesome-icon
               fixed-width
-              class="mr-1 text-warning"
+              class="text-warning"
               :icon="['fas', 'spinner']"
               pulse
             />
           </b-nav-text>
-          <b-nav-text>
+
+          <b-nav-text
+            class="ml-2"
+          >
+            <font-awesome-icon
+              v-for="check in status.checks"
+              :key="check.key"
+              v-b-tooltip.hover
+              fixed-width
+              :class="{ 'text-danger': !check.success, 'text-success': check.success }"
+              :icon="['fas', 'question-circle']"
+              :title="check.description"
+            />
+          </b-nav-text>
+
+          <b-nav-text class="ml-2">
             <font-awesome-icon
               v-if="configNotifySocketConnected"
               v-b-tooltip.hover
@@ -162,6 +177,8 @@
 <script>
 import * as constants from './const.js'
 
+import axios from 'axios'
+
 export default {
   computed: {
     authURL() {
@@ -200,10 +217,19 @@ export default {
       configNotifySocketConnected: false,
       error: null,
       loadingData: false,
+      status: {},
     }
   },
 
   methods: {
+    fetchStatus() {
+      return axios.get('status/status.json')
+        .then(resp => {
+          this.status = resp.data
+        })
+        .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
     handleFetchError(err) {
       switch (err.response.status) {
       case 403:
@@ -256,6 +282,9 @@ export default {
     if (this.isAuthenticated) {
       this.openConfigNotifySocket()
     }
+
+    window.setInterval(() => this.fetchStatus(), 10000)
+    this.fetchStatus()
   },
 
   name: 'TwitchBotEditorApp',
