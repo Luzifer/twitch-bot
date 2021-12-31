@@ -300,6 +300,11 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 				logger.WithError(err).Error("Unable to deregister deprecated EventSub subscription")
 			}
 			continue
+
+		case sub.Transport.Callback != e.fullAPIurl():
+			// Different callback URL: We don't care, it's probably another
+			// bot instance with the same client ID
+			continue
 		}
 
 		condHash, err := sub.Condition.Hash()
