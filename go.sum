@@ -3,6 +3,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78/go.mod h1:LmzpDX56iTiv29bbRTIsUNlaFfuhWRQBWjQdVyAevI8=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
+github.com/Luzifer/go-openssl/v4 v4.1.0 h1:8qi3Z6f8Aflwub/Cs4FVSmKUEg/lC8GlODbR2TyZ+nM=
+github.com/Luzifer/go-openssl/v4 v4.1.0/go.mod h1:3i1T3Pe6eQK19d86WhuQzjLyMwBaNmGmt3ZceWpWVa4=
 github.com/Luzifer/go_helpers/v2 v2.12.2 h1:B6ekpZ2d938tRaFXQtLZZdBSjVi2jabt2uzLGj3bYc8=
 github.com/Luzifer/go_helpers/v2 v2.12.2/go.mod h1:Jp1wZqtbEFNrLlJW7noomOF7fLRW36k+ELITPDK4SHc=
 github.com/Luzifer/korvike/functions v0.6.1 h1:OGDaEciVzQh0NUMUxcEK1/vmHLIn4lmneoU/iuKc8YI=

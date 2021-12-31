@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -25,22 +26,29 @@ import (
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
-const ircReconnectDelay = 100 * time.Millisecond
+const (
+	ircReconnectDelay = 100 * time.Millisecond
+
+	initialIRCRetryBackoff    = 500 * time.Millisecond
+	ircRetryBackoffMultiplier = 1.5
+	maxIRCRetryBackoff        = time.Minute
+)
 
 var (
 	cfg = struct {
-		BaseURL            string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
-		CommandTimeout     time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
-		Config             string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
-		IRCRateLimit       time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
-		LogLevel           string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
-		PluginDir          string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageFile        string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
-		TwitchClient       string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
-		TwitchClientSecret string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
-		TwitchToken        string        `flag:"twitch-token" default:"" description:"OAuth token valid for client"`
-		ValidateConfig     bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
-		VersionAndExit     bool          `flag:"version" default:"false" description:"Prints current version and exits"`
+		BaseURL               string        `flag:"base-url" default:"" description:"External URL of the config-editor interface (set to enable EventSub support)"`
+		CommandTimeout        time.Duration `flag:"command-timeout" default:"30s" description:"Timeout for command execution"`
+		Config                string        `flag:"config,c" default:"./config.yaml" description:"Location of configuration file"`
+		IRCRateLimit          time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
+		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
+		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
+		StorageFile           string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
+		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
+		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
+		TwitchToken           string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
+		ValidateConfig        bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
+		VersionAndExit        bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 	}{}
 
 	config     *configFile
@@ -84,6 +92,14 @@ func init() {
 		log.WithError(err).Fatal("Unable to parse log level")
 	} else {
 		log.SetLevel(l)
+	}
+
+	if cfg.StorageEncryptionPass == "" {
+		log.Warn("No storage encryption passphrase was set, falling back to client-id:client-secret")
+		cfg.StorageEncryptionPass = strings.Join([]string{
+			cfg.TwitchClient,
+			cfg.TwitchClientSecret,
+		}, ":")
 	}
 }
 
@@ -139,20 +155,37 @@ func handleSubCommand(args []string) {
 func main() {
 	var err error
 
+	if err = store.Load(); err != nil {
+		log.WithError(err).Fatal("Unable to load storage file")
+	}
+
 	cronService = cron.New()
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.TwitchToken)
+	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken), store.BotRefreshToken)
+	twitchClient.SetTokenUpdateHook(func(at, rt string) error {
+		if err := store.UpdateBotToken(at, rt); err != nil {
+			return errors.Wrap(err, "updating store")
+		}
+
+		// Misuse the config reload hook to let the frontend reload its state
+		configReloadHooksLock.RLock()
+		defer configReloadHooksLock.RUnlock()
+		for _, fn := range configReloadHooks {
+			fn()
+		}
+
+		return nil
+	})
 
 	twitchWatch := newTwitchWatcher()
-	cronService.AddFunc("@every 10s", twitchWatch.Check) // Query may run that often as the twitchClient has an internal cache
+	// Query may run that often as the twitchClient has an internal
+	// cache but shouldn't run more often as EventSub subscriptions
+	// are retried on error each time
+	cronService.AddFunc("@every 30s", twitchWatch.Check)
 
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
-
-	if err = store.Load(); err != nil {
-		log.WithError(err).Fatal("Unable to load storage file")
-	}
 
 	if err = initCorePlugins(); err != nil {
 		log.WithError(err).Fatal("Unable to load core plugins")
@@ -196,6 +229,7 @@ func main() {
 
 	var (
 		ircDisconnected   = make(chan struct{}, 1)
+		ircRetryBackoff   = initialIRCRetryBackoff
 		autoMessageTicker = time.NewTicker(time.Second)
 	)
 
@@ -222,11 +256,14 @@ func main() {
 			twitchEventSubClient, err = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
 				strings.TrimRight(cfg.BaseURL, "/"),
 				"eventsub",
-				handle,
 			}, "/"), secret, handle)
 
 			if err != nil {
 				log.WithError(err).Fatal("Unable to create eventsub client")
+			}
+
+			if err := twitchWatch.registerGlobalHooks(); err != nil {
+				log.WithError(err).Fatal("Unable to register global eventsub hooks")
 			}
 
 			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
@@ -250,8 +287,16 @@ func main() {
 			}
 
 			if ircHdl, err = newIRCHandler(); err != nil {
-				log.WithError(err).Fatal("Unable to create IRC client")
+				log.WithError(err).Error("Unable to connect to IRC")
+				go func() {
+					time.Sleep(ircRetryBackoff)
+					ircRetryBackoff = time.Duration(math.Min(float64(maxIRCRetryBackoff), float64(ircRetryBackoff)*ircRetryBackoffMultiplier))
+					ircDisconnected <- struct{}{}
+				}()
+				continue
 			}
+
+			ircRetryBackoff = initialIRCRetryBackoff // Successfully created, reset backoff
 
 			go func() {
 				if err := ircHdl.Run(); err != nil {
@@ -366,17 +411,19 @@ func startCheck() error {
 		errs = append(errs, "No Twitch-ClientId given")
 	}
 
-	if cfg.TwitchToken == "" {
-		errs = append(errs, "Twitch-Token is unset")
+	if cfg.TwitchClientSecret == "" {
+		errs = append(errs, "No Twitch-ClientSecret given")
 	}
 
 	if len(errs) > 0 {
 		fmt.Println(`
-You've not provided a Twitch-ClientId and/or a Twitch-Token.
+You've not provided a Twitch-ClientId and/or a Twitch-ClientSecret.
 
-These parameters are required and you need to provide them. In case
-you need help with obtaining those credentials please visit the
-following website:
+These parameters are required and you need to provide them.
+
+The Twitch Token can be set through the web-interface. In case you
+want to set it through parameters and need help with obtaining it,
+please visit the following website:
 
          https://luzifer.github.io/twitch-bot/
 

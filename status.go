@@ -63,8 +63,8 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 
 	for _, chk := range []statusResponseCheck{
 		{
-			Name:        "IRC connection alive",
-			Description: fmt.Sprintf("IRC connection received a message in last %s", statusIRCMessageReceivedTimeout),
+			Name:        "Chat connection alive",
+			Description: fmt.Sprintf("Chat connection received a message in last %s", statusIRCMessageReceivedTimeout),
 			checkFn: func() error {
 				if time.Since(statusIRCMessageReceived) > statusIRCMessageReceivedTimeout {
 					return errors.New("message lifetime expired")

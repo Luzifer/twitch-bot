@@ -3,6 +3,7 @@ package twitch
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,11 +45,31 @@ type (
 	Client struct {
 		clientID     string
 		clientSecret string
-		token        string
+
+		accessToken     string
+		refreshToken    string
+		tokenValidity   time.Time
+		tokenUpdateHook func(string, string) error
 
 		appAccessToken string
 
 		apiCache *APICache
+	}
+
+	OAuthTokenResponse struct {
+		AccessToken  string   `json:"access_token"`
+		RefreshToken string   `json:"refresh_token"`
+		ExpiresIn    int      `json:"expires_in"`
+		Scope        []string `json:"scope"`
+		TokenType    string   `json:"token_type"`
+	}
+
+	OAuthTokenValidationResponse struct {
+		ClientID  string   `json:"client_id"`
+		Login     string   `json:"login"`
+		Scopes    []string `json:"scopes"`
+		UserID    string   `json:"user_id"`
+		ExpiresIn int      `json:"expires_in"`
 	}
 
 	StreamInfo struct {
@@ -77,29 +99,33 @@ type (
 	authType uint8
 
 	clientRequestOpts struct {
-		AuthType authType
-		Body     io.Reader
-		Context  context.Context
-		Method   string
-		OKStatus int
-		Out      interface{}
-		URL      string
+		AuthType        authType
+		Body            io.Reader
+		Context         context.Context
+		Method          string
+		NoRetry         bool
+		NoValidateToken bool
+		OKStatus        int
+		Out             interface{}
+		URL             string
 	}
 )
 
-func New(clientID, clientSecret, token string) *Client {
+func New(clientID, clientSecret, accessToken, refreshToken string) *Client {
 	return &Client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
-		token:        token,
+
+		accessToken:  accessToken,
+		refreshToken: refreshToken,
 
 		apiCache: newTwitchAPICache(),
 	}
 }
 
-func (c Client) APICache() *APICache { return c.apiCache }
+func (c *Client) APICache() *APICache { return c.apiCache }
 
-func (c Client) GetAuthorizedUsername() (string, error) {
+func (c *Client) GetAuthorizedUsername() (string, error) {
 	var payload struct {
 		Data []User `json:"data"`
 	}
@@ -122,7 +148,7 @@ func (c Client) GetAuthorizedUsername() (string, error) {
 	return payload.Data[0].Login, nil
 }
 
-func (c Client) GetDisplayNameForUser(username string) (string, error) {
+func (c *Client) GetDisplayNameForUser(username string) (string, error) {
 	cacheKey := []string{"displayNameForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -133,7 +159,7 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		Out:      &payload,
@@ -152,7 +178,7 @@ func (c Client) GetDisplayNameForUser(username string) (string, error) {
 	return payload.Data[0].DisplayName, nil
 }
 
-func (c Client) GetFollowDate(from, to string) (time.Time, error) {
+func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	cacheKey := []string{"followDate", from, to}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(time.Time), nil
@@ -174,7 +200,7 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -194,7 +220,19 @@ func (c Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
-func (c Client) GetUserInformation(user string) (*User, error) {
+func (c *Client) GetToken() (string, error) {
+	if err := c.ValidateToken(context.Background(), false); err != nil {
+		if err = c.RefreshToken(); err != nil {
+			return "", errors.Wrap(err, "refreshing token after validation error")
+		}
+
+		// Token was refreshed, therefore should now be valid
+	}
+
+	return c.accessToken, nil
+}
+
+func (c *Client) GetUserInformation(user string) (*User, error) {
 	var (
 		out     User
 		param   = "login"
@@ -214,7 +252,7 @@ func (c Client) GetUserInformation(user string) (*User, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -235,7 +273,7 @@ func (c Client) GetUserInformation(user string) (*User, error) {
 	return &out, nil
 }
 
-func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
+func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
 	var out []Category
 
 	params := make(url.Values)
@@ -274,7 +312,7 @@ func (c Client) SearchCategories(ctx context.Context, name string) ([]Category, 
 	return out, nil
 }
 
-func (c Client) HasLiveStream(username string) (bool, error) {
+func (c *Client) HasLiveStream(username string) (bool, error) {
 	cacheKey := []string{"hasLiveStream", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(bool), nil
@@ -305,7 +343,7 @@ func (c Client) HasLiveStream(username string) (bool, error) {
 	return len(payload.Data) == 1 && payload.Data[0].Type == "live", nil
 }
 
-func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
+func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	cacheKey := []string{"currentStreamInfo", username}
 	if si := c.apiCache.Get(cacheKey); si != nil {
 		return si.(*StreamInfo), nil
@@ -341,7 +379,7 @@ func (c Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	return payload.Data[0], nil
 }
 
-func (c Client) GetIDForUsername(username string) (string, error) {
+func (c *Client) GetIDForUsername(username string) (string, error) {
 	cacheKey := []string{"idForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -352,7 +390,7 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+		AuthType: authTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -372,7 +410,7 @@ func (c Client) GetIDForUsername(username string) (string, error) {
 	return payload.Data[0].ID, nil
 }
 
-func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
+func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
 	cacheKey := []string{"recentStreamInfo", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.([2]string)[0], d.([2]string)[1], nil
@@ -413,7 +451,7 @@ func (c Client) GetRecentStreamInfo(username string) (string, string, error) {
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
-func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
+func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
 	if game == nil && title == nil {
 		return errors.New("netiher game nor title provided")
 	}
@@ -478,8 +516,96 @@ func (c Client) ModifyChannelInformation(ctx context.Context, broadcasterName st
 	)
 }
 
-func (c *Client) UpdateToken(token string) {
-	c.token = token
+func (c *Client) RefreshToken() error {
+	if c.refreshToken == "" {
+		return errors.New("no refresh token set")
+	}
+
+	params := make(url.Values)
+	params.Set("client_id", c.clientID)
+	params.Set("client_secret", c.clientSecret)
+	params.Set("refresh_token", c.refreshToken)
+	params.Set("grant_type", "refresh_token")
+
+	var resp OAuthTokenResponse
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeUnauthorized,
+		Context:  context.Background(),
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Out:      &resp,
+		URL:      fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()),
+	}); err != nil {
+		// Retried refresh failed, wipe tokens
+		c.UpdateToken("", "")
+		if c.tokenUpdateHook != nil {
+			if herr := c.tokenUpdateHook("", ""); herr != nil {
+				log.WithError(err).Error("Unable to store token wipe after refresh failure")
+			}
+		}
+
+		return errors.Wrap(err, "executing request")
+	}
+
+	c.UpdateToken(resp.AccessToken, resp.RefreshToken)
+	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	log.WithField("expiry", c.tokenValidity).Trace("Access token refreshed")
+
+	if c.tokenUpdateHook == nil {
+		return nil
+	}
+
+	return errors.Wrap(c.tokenUpdateHook(resp.AccessToken, resp.RefreshToken), "calling token update hook")
+}
+
+func (c *Client) SetTokenUpdateHook(f func(string, string) error) {
+	c.tokenUpdateHook = f
+}
+
+func (c *Client) UpdateToken(accessToken, refreshToken string) {
+	c.accessToken = accessToken
+	c.refreshToken = refreshToken
+}
+
+func (c *Client) ValidateToken(ctx context.Context, force bool) error {
+	if c.tokenValidity.After(time.Now()) && !force {
+		// We do have an expiration time and it's not expired
+		// so we can assume we've checked the token and it should
+		// still be valid.
+		// NOTE(kahlers): In case of a token revokation this
+		// assumption is invalid and will lead to failing requests
+
+		return nil
+	}
+
+	if c.accessToken == "" {
+		return errors.New("no access token present")
+	}
+
+	var resp OAuthTokenValidationResponse
+
+	if err := c.request(clientRequestOpts{
+		AuthType:        authTypeBearerToken,
+		Context:         ctx,
+		Method:          http.MethodGet,
+		NoRetry:         true,
+		NoValidateToken: true,
+		OKStatus:        http.StatusOK,
+		Out:             &resp,
+		URL:             "https://id.twitch.tv/oauth2/validate",
+	}); err != nil {
+		return errors.Wrap(err, "executing request")
+	}
+
+	if resp.ClientID != c.clientID {
+		return errors.New("token belongs to different app")
+	}
+
+	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	log.WithField("expiry", c.tokenValidity).Trace("Access token validated")
+
+	return nil
 }
 
 func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
@@ -603,11 +729,11 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 func (c *Client) request(opts clientRequestOpts) error {
 	log.WithFields(log.Fields{
 		"method": opts.Method,
-		"url":    opts.URL,
+		"url":    c.replaceSecrets(opts.URL),
 	}).Trace("Execute Twitch API request")
 
 	var retries uint64 = twitchRequestRetries
-	if opts.Body != nil {
+	if opts.Body != nil || opts.NoRetry {
 		// Body must be read only once, do not retry
 		retries = 1
 	}
@@ -636,7 +762,15 @@ func (c *Client) request(opts clientRequestOpts) error {
 			req.Header.Set("Client-Id", c.clientID)
 
 		case authTypeBearerToken:
-			req.Header.Set("Authorization", "Bearer "+c.token)
+			accessToken := c.accessToken
+			if !opts.NoValidateToken {
+				accessToken, err = c.GetToken()
+				if err != nil {
+					return errors.Wrap(err, "getting bearer access token")
+				}
+			}
+
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Header.Set("Client-Id", c.clientID)
 
 		default:
@@ -666,4 +800,27 @@ func (c *Client) request(opts clientRequestOpts) error {
 			"parse user info",
 		)
 	})
+}
+
+func (c *Client) replaceSecrets(u string) string {
+	var replacements []string
+
+	for _, secret := range []string{
+		c.accessToken,
+		c.refreshToken,
+		c.clientSecret,
+	} {
+		if secret == "" {
+			continue
+		}
+		replacements = append(replacements, secret, c.hashSecret(secret))
+	}
+
+	return strings.NewReplacer(replacements...).Replace(u)
+}
+
+func (*Client) hashSecret(secret string) string {
+	h := sha256.New()
+	h.Write([]byte(secret))
+	return fmt.Sprintf("[sha256:%x]", h.Sum(nil))
 }

@@ -48,6 +48,8 @@ const (
 	EventSubEventTypeStreamOnline  = "stream.online"
 
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
+
+	EventSubEventTypeUserAuthorizationRevoke = "user.authorization.revoke"
 )
 
 type (
@@ -128,6 +130,13 @@ type (
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		Type                 string    `json:"type"`
 		StartedAt            time.Time `json:"started_at"`
+	}
+
+	EventSubEventUserAuthorizationRevoke struct {
+		ClientID  string `json:"client_id"`
+		UserID    string `json:"user_id"`
+		UserLogin string `json:"user_login"`
+		UserName  string `json:"user_name"`
 	}
 
 	eventSubPostMessage struct {
@@ -271,8 +280,25 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 	for i := range subList {
 		sub := subList[i]
 
-		if !str.StringInSlice(sub.Status, []string{eventSubStatusEnabled, eventSubStatusVerificationPending}) || sub.Transport.Callback != e.apiURL {
-			// Not our callback or not active
+		switch {
+		case !str.StringInSlice(sub.Status, []string{eventSubStatusEnabled, eventSubStatusVerificationPending}):
+			// Is not an active hook, we don't need to care: It will be
+			// confirmed later or will expire but should not be counted
+			continue
+
+		case strings.HasPrefix(sub.Transport.Callback, e.apiURL) && sub.Transport.Callback != e.fullAPIurl():
+			// Uses the same API URL but with another secret handle: Must
+			// have been registered by another instance with another secret
+			// so we should be able to deregister it without causing any
+			// trouble
+			logger := log.WithFields(log.Fields{
+				"id":    sub.ID,
+				"topic": sub.Type,
+			})
+			logger.Debug("Removing deprecated EventSub subscription")
+			if err = e.twitchClient.deleteEventSubSubscription(ctx, sub.ID); err != nil {
+				logger.WithError(err).Error("Unable to deregister deprecated EventSub subscription")
+			}
 			continue
 		}
 
@@ -330,7 +356,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		Condition: condition,
 		Transport: eventSubTransport{
 			Method:   "webhook",
-			Callback: e.apiURL,
+			Callback: e.fullAPIurl(),
 			Secret:   e.secret,
 		},
 	})
@@ -355,6 +381,10 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 	logger.Debug("Registered eventsub subscription")
 
 	return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
+}
+
+func (e *EventSubClient) fullAPIurl() string {
+	return strings.Join([]string{e.apiURL, e.secretHandle}, "/")
 }
 
 func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {

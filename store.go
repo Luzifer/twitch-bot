@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/crypt"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -26,7 +27,10 @@ type storageFile struct {
 
 	GrantedScopes map[string][]string `json:"granted_scopes"`
 
-	EventSubSecret string `json:"event_sub_secret,omitempty"`
+	EventSubSecret string `encrypt:"true" json:"event_sub_secret,omitempty"`
+
+	BotAccessToken  string `encrypt:"true" json:"bot_access_token,omitempty"`
+	BotRefreshToken string `encrypt:"true" json:"bot_refresh_token,omitempty"`
 
 	inMem bool
 	lock  *sync.RWMutex
@@ -63,6 +67,16 @@ func (s *storageFile) DeleteModuleStore(moduleUUID string) error {
 	delete(s.ModuleStorage, moduleUUID)
 
 	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) GetBotToken(fallback string) string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	if v := s.BotAccessToken; v != "" {
+		return v
+	}
+	return fallback
 }
 
 func (s *storageFile) GetCounterValue(counter string) int64 {
@@ -144,10 +158,15 @@ func (s *storageFile) Load() error {
 	}
 	defer zf.Close()
 
-	return errors.Wrap(
-		json.NewDecoder(zf).Decode(s),
-		"decode storage object",
-	)
+	if err = json.NewDecoder(zf).Decode(s); err != nil {
+		return errors.Wrap(err, "decode storage object")
+	}
+
+	if err = crypt.DecryptFields(s, cfg.StorageEncryptionPass); err != nil {
+		return errors.Wrap(err, "decrypting storage object")
+	}
+
+	return nil
 }
 
 func (s *storageFile) Save() error {
@@ -172,6 +191,11 @@ func (s *storageFile) Save() error {
 		}
 	}
 
+	// Encrypt fields in memory before writing
+	if err := crypt.EncryptFields(s, cfg.StorageEncryptionPass); err != nil {
+		return errors.Wrap(err, "encrypting storage object")
+	}
+
 	// Write store to disk
 	f, err := os.Create(cfg.StorageFile)
 	if err != nil {
@@ -182,15 +206,29 @@ func (s *storageFile) Save() error {
 	zf := gzip.NewWriter(f)
 	defer zf.Close()
 
-	return errors.Wrap(
-		json.NewEncoder(zf).Encode(s),
-		"encode storage object",
-	)
+	if err = json.NewEncoder(zf).Encode(s); err != nil {
+		return errors.Wrap(err, "encode storage object")
+	}
+
+	// Decrypt the values to make them accessible again
+	if err = crypt.DecryptFields(s, cfg.StorageEncryptionPass); err != nil {
+		return errors.Wrap(err, "decrypting storage object")
+	}
+
+	return nil
 }
 
-func (s *storageFile) SetGrantedScopes(user string, scopes []string) error {
+func (s *storageFile) SetGrantedScopes(user string, scopes []string, merge bool) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	if merge {
+		for _, sc := range s.GrantedScopes[user] {
+			if !str.StringInSlice(sc, scopes) {
+				scopes = append(scopes, sc)
+			}
+		}
+	}
 
 	s.GrantedScopes[user] = scopes
 
@@ -234,6 +272,16 @@ func (s *storageFile) RemoveVariable(key string) error {
 	defer s.lock.Unlock()
 
 	delete(s.Variables, key)
+
+	return errors.Wrap(s.Save(), "saving store")
+}
+
+func (s *storageFile) UpdateBotToken(accessToken, refreshToken string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.BotAccessToken = accessToken
+	s.BotRefreshToken = refreshToken
 
 	return errors.Wrap(s.Save(), "saving store")
 }

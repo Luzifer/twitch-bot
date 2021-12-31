@@ -65,9 +65,14 @@ func newIRCHandler() (*ircHandler, error) {
 		return nil, errors.Wrap(err, "connect to IRC server")
 	}
 
+	token, err := twitchClient.GetToken()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting auth token")
+	}
+
 	h.c = irc.NewClient(conn, irc.ClientConfig{
 		Nick:    username,
-		Pass:    strings.Join([]string{"oauth", cfg.TwitchToken}, ":"),
+		Pass:    strings.Join([]string{"oauth", token}, ":"),
 		User:    username,
 		Name:    username,
 		Handler: h,

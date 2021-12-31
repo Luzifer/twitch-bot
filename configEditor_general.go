@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
@@ -14,8 +17,10 @@ import (
 
 type (
 	configEditorGeneralConfig struct {
-		BotEditors []string `json:"bot_editors"`
-		Channels   []string `json:"channels"`
+		BotEditors       []string        `json:"bot_editors"`
+		BotName          string          `json:"bot_name"`
+		Channels         []string        `json:"channels"`
+		ChannelHasScopes map[string]bool `json:"channel_has_scopes"`
 	}
 )
 
@@ -79,6 +84,16 @@ func registerEditorGeneralConfigRoutes() {
 			RequiresEditorsAuth: true,
 			ResponseType:        plugins.HTTPRouteResponseTypeTextPlain,
 		},
+		{
+			Description:         "Get Bot-Auth URLs for updating bot token and channel scopes",
+			HandlerFunc:         configEditorHandleGeneralAuthURLs,
+			Method:              http.MethodGet,
+			Module:              "config-editor",
+			Name:                "Get Bot-Auth-URLs",
+			Path:                "/auth-urls",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
+		},
 	} {
 		if err := registerRoute(rd); err != nil {
 			log.WithError(err).Fatal("Unable to register config editor route")
@@ -118,6 +133,37 @@ func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, r *http.Request) {
+	var out struct {
+		UpdateBotToken      string `json:"update_bot_token"`
+		UpdateChannelScopes string `json:"update_channel_scopes"`
+	}
+
+	params := make(url.Values)
+	params.Set("client_id", cfg.TwitchClient)
+	params.Set("redirect_uri", strings.Join([]string{
+		strings.TrimRight(cfg.BaseURL, "/"),
+		"auth", "update-bot-token",
+	}, "/"))
+	params.Set("response_type", "code")
+	params.Set("scope", strings.Join(botDefaultScopes, " "))
+	params.Set("state", instanceState)
+
+	out.UpdateBotToken = fmt.Sprintf("https://id.twitch.tv/oauth2/authorize?%s", params.Encode())
+
+	params.Set("redirect_uri", strings.Join([]string{
+		strings.TrimRight(cfg.BaseURL, "/"),
+		"auth", "update-channel-scopes",
+	}, "/"))
+	params.Set("scope", strings.Join(channelDefaultScopes, " "))
+
+	out.UpdateChannelScopes = fmt.Sprintf("https://id.twitch.tv/oauth2/authorize?%s", params.Encode())
+
+	if err := json.NewEncoder(w).Encode(out); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
@@ -137,9 +183,23 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 }
 
 func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
+	elevated := make(map[string]bool)
+
+	for _, ch := range config.Channels {
+		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...)
+	}
+
+	uName, err := twitchClient.GetAuthorizedUsername()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err := json.NewEncoder(w).Encode(configEditorGeneralConfig{
-		BotEditors: config.BotEditors,
-		Channels:   config.Channels,
+		BotEditors:       config.BotEditors,
+		BotName:          uName,
+		Channels:         config.Channels,
+		ChannelHasScopes: elevated,
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
