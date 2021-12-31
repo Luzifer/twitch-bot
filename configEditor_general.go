@@ -17,8 +17,9 @@ import (
 
 type (
 	configEditorGeneralConfig struct {
-		BotEditors []string `json:"bot_editors"`
-		Channels   []string `json:"channels"`
+		BotEditors       []string        `json:"bot_editors"`
+		Channels         []string        `json:"channels"`
+		ChannelHasScopes map[string]bool `json:"channel_has_scopes"`
 	}
 )
 
@@ -181,9 +182,16 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 }
 
 func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
+	elevated := make(map[string]bool)
+
+	for _, ch := range config.Channels {
+		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...)
+	}
+
 	if err := json.NewEncoder(w).Encode(configEditorGeneralConfig{
-		BotEditors: config.BotEditors,
-		Channels:   config.Channels,
+		BotEditors:       config.BotEditors,
+		Channels:         config.Channels,
+		ChannelHasScopes: elevated,
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

@@ -24,6 +24,21 @@
                   :icon="['fas', 'hashtag']"
                 />
                 {{ channel }}
+                <font-awesome-icon
+                  v-if="!generalConfig.channel_has_scopes[channel]"
+                  :id="`channelPublicWarn${channel}`"
+                  v-b-tooltip.hover
+                  fixed-width
+                  class="ml-1 text-warning"
+                  :icon="['fas', 'exclamation-triangle']"
+                />
+                <b-tooltip
+                  :target="`channelPublicWarn${channel}`"
+                  triggers="hover"
+                >
+                  Channel can not use features like channel-point redemptions.
+                  See "Channel Permissions" for more info how to authorize.
+                </b-tooltip>
               </span>
               <b-button
                 size="sm"
