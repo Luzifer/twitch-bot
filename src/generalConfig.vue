@@ -263,7 +263,7 @@
 
           <b-card-body>
             <p>
-              In order to access non-public information as channelpoint redemptions the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!
+              In order to access non-public information as channel-point redemptions the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!
             </p>
             <ul>
               <li>Copy the URL provided below</li>
