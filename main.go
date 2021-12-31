@@ -161,7 +161,20 @@ func main() {
 
 	cronService = cron.New()
 	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken), store.BotRefreshToken)
-	twitchClient.SetTokenUpdateHook(store.UpdateBotToken)
+	twitchClient.SetTokenUpdateHook(func(at, rt string) error {
+		if err := store.UpdateBotToken(at, rt); err != nil {
+			return errors.Wrap(err, "updating store")
+		}
+
+		// Misuse the config reload hook to let the frontend reload its state
+		configReloadHooksLock.RLock()
+		defer configReloadHooksLock.RUnlock()
+		for _, fn := range configReloadHooks {
+			fn()
+		}
+
+		return nil
+	})
 
 	twitchWatch := newTwitchWatcher()
 	// Query may run that often as the twitchClient has an internal
