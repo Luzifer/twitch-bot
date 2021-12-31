@@ -36,7 +36,7 @@
                   :target="`channelPublicWarn${channel}`"
                   triggers="hover"
                 >
-                  Channel can not use features like channel-point redemptions.
+                  Channel cannot use features like channel-point redemptions.
                   See "Channel Permissions" for more info how to authorize.
                 </b-tooltip>
               </span>
