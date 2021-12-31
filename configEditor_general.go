@@ -18,6 +18,7 @@ import (
 type (
 	configEditorGeneralConfig struct {
 		BotEditors       []string        `json:"bot_editors"`
+		BotName          string          `json:"bot_name"`
 		Channels         []string        `json:"channels"`
 		ChannelHasScopes map[string]bool `json:"channel_has_scopes"`
 	}
@@ -188,8 +189,15 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...)
 	}
 
+	uName, err := twitchClient.GetAuthorizedUsername()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if err := json.NewEncoder(w).Encode(configEditorGeneralConfig{
 		BotEditors:       config.BotEditors,
+		BotName:          uName,
 		Channels:         config.Channels,
 		ChannelHasScopes: elevated,
 	}); err != nil {

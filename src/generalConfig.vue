@@ -27,7 +27,6 @@
                 <font-awesome-icon
                   v-if="!generalConfig.channel_has_scopes[channel]"
                   :id="`channelPublicWarn${channel}`"
-                  v-b-tooltip.hover
                   fixed-width
                   class="ml-1 text-warning"
                   :icon="['fas', 'exclamation-triangle']"
@@ -208,14 +207,24 @@
           :border-variant="botConnectionCardVariant"
         >
           <b-card-header
+            class="d-flex align-items-center align-middle"
             :header-bg-variant="botConnectionCardVariant"
           >
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'sign-in-alt']"
-            />
-            Bot Connection
+            <span class="mr-auto">
+              <font-awesome-icon
+                fixed-width
+                class="mr-1"
+                :icon="['fas', 'sign-in-alt']"
+              />
+              Bot Connection
+            </span>
+            <code id="botUserName">{{ generalConfig.bot_name }}</code>
+            <b-tooltip
+              target="botUserName"
+              triggers="hover"
+            >
+              Twitch Login-Name of the bot user currently authorized
+            </b-tooltip>
           </b-card-header>
 
           <b-card-body>

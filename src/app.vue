@@ -69,34 +69,48 @@
           <b-nav-text
             class="ml-2"
           >
-            <font-awesome-icon
+            <template
               v-for="check in status.checks"
-              :key="check.key"
-              v-b-tooltip.hover
-              fixed-width
-              :class="{ 'text-danger': !check.success, 'text-success': check.success }"
-              :icon="['fas', 'question-circle']"
-              :title="check.description"
-            />
+            >
+              <font-awesome-icon
+                :id="`statusCheck${check.name}`"
+                :key="check.key"
+                fixed-width
+                :class="{ 'text-danger': !check.success, 'text-success': check.success }"
+                :icon="['fas', 'question-circle']"
+              />
+              <b-tooltip
+                :key="check.key"
+                :target="`statusCheck${check.name}`"
+                triggers="hover"
+              >
+                {{ check.description }}
+              </b-tooltip>
+            </template>
           </b-nav-text>
 
           <b-nav-text class="ml-2">
             <font-awesome-icon
               v-if="configNotifySocketConnected"
-              v-b-tooltip.hover
+              id="socketConnectionStatus"
               fixed-width
               class="mr-1 text-success"
               :icon="['fas', 'ethernet']"
-              title="Connected to Bot"
             />
             <font-awesome-icon
               v-else
-              v-b-tooltip.hover
+              id="socketConnectionStatus"
               fixed-width
               class="mr-1 text-danger"
               :icon="['fas', 'ethernet']"
-              title="Disconnected to Bot"
             />
+            <b-tooltip
+              target="socketConnectionStatus"
+              triggers="hover"
+            >
+              <span v-if="configNotifySocketConnected">Connected to Bot</span>
+              <span v-else>Disconnected from Bot</span>
+            </b-tooltip>
           </b-nav-text>
         </b-navbar-nav>
       </b-collapse>
