@@ -222,13 +222,33 @@
               />
               Bot Connection
             </span>
-            <code id="botUserName">{{ generalConfig.bot_name }}</code>
-            <b-tooltip
-              target="botUserName"
-              triggers="hover"
-            >
-              Twitch Login-Name of the bot user currently authorized
-            </b-tooltip>
+            <template v-if="generalConfig.bot_name">
+              <code
+                id="botUserName"
+              >
+                {{ generalConfig.bot_name }}
+                <b-tooltip
+                  target="botUserName"
+                  triggers="hover"
+                >
+                  Twitch Login-Name of the bot user currently authorized
+                </b-tooltip>
+              </code>
+            </template>
+            <template v-else>
+              <font-awesome-icon
+                id="botUserNameDC"
+                fixed-width
+                class="mr-1 text-danger"
+                :icon="['fas', 'unlink']"
+              />
+              <b-tooltip
+                target="botUserNameDC"
+                triggers="hover"
+              >
+                Bot is not currently authorized!
+              </b-tooltip>
+            </template>
           </b-card-header>
 
           <b-card-body>
