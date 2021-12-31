@@ -537,6 +537,14 @@ func (c *Client) RefreshToken() error {
 		Out:      &resp,
 		URL:      fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()),
 	}); err != nil {
+		// Retried refresh failed, wipe tokens
+		c.UpdateToken("", "")
+		if c.tokenUpdateHook != nil {
+			if herr := c.tokenUpdateHook("", ""); herr != nil {
+				log.WithError(err).Error("Unable to store token wipe after refresh failure")
+			}
+		}
+
 		return errors.Wrap(err, "executing request")
 	}
 
@@ -565,6 +573,8 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 		// We do have an expiration time and it's not expired
 		// so we can assume we've checked the token and it should
 		// still be valid.
+		// NOTE(kahlers): In case of a token revokation this
+		// assumption is invalid and will lead to failing requests
 
 		return nil
 	}

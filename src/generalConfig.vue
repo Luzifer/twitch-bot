@@ -205,8 +205,11 @@
         <b-card
           no-body
           class="mb-3"
+          :border-variant="botConnectionCardVariant"
         >
-          <b-card-header>
+          <b-card-header
+            :header-bg-variant="botConnectionCardVariant"
+          >
             <font-awesome-icon
               fixed-width
               class="mr-1"
@@ -349,6 +352,13 @@ export default {
           .filter(m => m !== 'config-editor')
           .map(m => ({ text: m, value: m })),
       ]
+    },
+
+    botConnectionCardVariant() {
+      if (this.$parent.status.overall_status_success) {
+        return 'secondary'
+      }
+      return 'warning'
     },
 
     sortedChannels() {

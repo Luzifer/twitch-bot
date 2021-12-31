@@ -223,7 +223,7 @@ export default {
 
   methods: {
     fetchStatus() {
-      return axios.get('status/status.json')
+      return axios.get('status/status.json?fail-status=200')
         .then(resp => {
           this.status = resp.data
         })
