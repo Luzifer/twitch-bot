@@ -56,11 +56,13 @@
               <b-input-group>
                 <b-form-input
                   v-model="models.addChannel"
+                  :state="!!validateUserName(models.addChannel)"
                   @keyup.enter="addChannel"
                 />
                 <b-input-group-append>
                   <b-button
                     variant="success"
+                    :disabled="!validateUserName(models.addChannel)"
                     @click="addChannel"
                   >
                     <font-awesome-icon
@@ -117,11 +119,13 @@
               <b-input-group>
                 <b-form-input
                   v-model="models.addEditor"
+                  :state="!!validateUserName(models.addEditor)"
                   @keyup.enter="addEditor"
                 />
                 <b-input-group-append>
                   <b-button
                     variant="success"
+                    :disabled="!validateUserName(models.addEditor)"
                     @click="addEditor"
                   >
                     <font-awesome-icon
@@ -416,6 +420,10 @@ export default {
 
   methods: {
     addChannel() {
+      if (!this.validateUserName(this.models.addChannel)) {
+        return
+      }
+
       this.generalConfig.channels.push(this.models.addChannel.replace(/^#*/, ''))
       this.models.addChannel = ''
 
@@ -423,6 +431,10 @@ export default {
     },
 
     addEditor() {
+      if (!this.validateUserName(this.models.addEditor)) {
+        return
+      }
+
       this.fetchProfile(this.models.addEditor)
       this.generalConfig.bot_editors.push(this.models.addEditor)
       this.models.addEditor = ''
@@ -565,6 +577,10 @@ export default {
           this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    validateUserName(user) {
+      return user.match(constants.REGEXP_USER)
     },
   },
 

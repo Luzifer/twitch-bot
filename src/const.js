@@ -22,3 +22,5 @@ export const NOTIFY_CONFIG_RELOAD = 'configReload'
 export const NOTIFY_ERROR = 'error'
 export const NOTIFY_FETCH_ERROR = 'fetchError'
 export const NOTIFY_LOADING_DATA = 'loadingData'
+
+export const REGEXP_USER = /^[a-z0-9_]{4,25}$/
