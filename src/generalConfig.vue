@@ -242,6 +242,7 @@
                 placeholder="Loading..."
                 readonly
                 :value="authURLs.update_bot_token"
+                @focus="$event.target.select()"
               />
               <b-input-group-append>
                 <b-button
@@ -287,6 +288,7 @@
                 placeholder="Loading..."
                 readonly
                 :value="authURLs.update_channel_scopes"
+                @focus="$event.target.select()"
               />
               <b-input-group-append>
                 <b-button
