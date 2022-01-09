@@ -15,5 +15,6 @@ var (
 
 	channelDefaultScopes = []string{
 		twitch.ScopeChannelReadRedemptions,
+		twitch.ScopeV5ChannelEditor,
 	}
 )
