@@ -11,10 +11,10 @@ var (
 		twitch.ScopeChannelModerate,
 		twitch.ScopeChannelManageBroadcast,
 		twitch.ScopeChannelEditCommercial,
+		twitch.ScopeV5ChannelEditor,
 	}
 
 	channelDefaultScopes = []string{
 		twitch.ScopeChannelReadRedemptions,
-		twitch.ScopeV5ChannelEditor,
 	}
 )
