@@ -1,3 +1,19 @@
+# 2.2.0 / 2022-01-16
+
+  * [ci] Make installed go binaries available during build
+  * [core] Add deprecated but still used V5 ChannelEditor scope
+  * [core] Add EventSub subscription prefetching
+  * [core] Add "follow" event using EventSub
+  * [core] Add handling for channel point rewards
+  * [core] Do not retry POST requests automatically
+  * [core] Fix: Event data was not available in rule templates
+  * [core] Implement dynamic token update and broadcaster permissions (#13)
+  * [core] Improve EventSub API request design
+  * [docs] Update README
+  * [editor] Display disconnected status instead of error
+  * [editor] Fix follow-redirects vulnerability (CVE-2022-0155)
+  * [editor] Prevent adding invalid usernames as channel / editor
+
 # 2.1.0 / 2021-12-24
 
   * [automessage] Add disable switch
