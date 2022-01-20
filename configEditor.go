@@ -59,11 +59,13 @@ func registerEditorFrontend() {
 			KnownEvents       []*string
 			TemplateFunctions []string
 			TwitchClientID    string
+			Version           string
 		}{
 			IRCBadges:         twitch.KnownBadges,
 			KnownEvents:       knownEvents,
 			TemplateFunctions: tplFuncs.GetFuncNames(),
 			TwitchClientID:    cfg.TwitchClient,
+			Version:           version,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

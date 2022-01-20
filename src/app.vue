@@ -112,6 +112,21 @@
               <span v-else>Disconnected from Bot</span>
             </b-tooltip>
           </b-nav-text>
+
+          <b-nav-text class="ml-2">
+            <font-awesome-icon
+              id="botInfo"
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'info-circle']"
+            />
+            <b-tooltip
+              target="botInfo"
+              triggers="hover"
+            >
+              Version: <code>{{ $root.vars.Version }}</code>
+            </b-tooltip>
+          </b-nav-text>
         </b-navbar-nav>
       </b-collapse>
     </b-navbar>
