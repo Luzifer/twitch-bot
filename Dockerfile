@@ -4,7 +4,8 @@ COPY . /go/src/github.com/Luzifer/twitch-bot
 WORKDIR /go/src/github.com/Luzifer/twitch-bot
 
 ENV CGO_ENABLED=0 \
-    GOPATH=/go
+    GOPATH=/go \
+    NODE_ENV=production
 
 RUN set -ex \
  && pacman -Syy --noconfirm \

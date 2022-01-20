@@ -15,4 +15,5 @@ environment:
   GO111MODULE: on
   GOPATH: /go
   MOD_MODE: readonly
+  NODE_ENV: production
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/go/bin
