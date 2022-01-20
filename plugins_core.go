@@ -21,6 +21,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
+	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -47,6 +48,9 @@ var (
 		// Template functions
 		numeric.Register,
 		random.Register,
+
+		// API-only modules
+		msgformat.Register,
 	}
 	knownModules []string
 )
