@@ -8,6 +8,7 @@ require (
 	github.com/Luzifer/korvike/functions v0.6.1
 	github.com/Luzifer/rconfig/v2 v2.3.0
 	github.com/go-irc/irc v2.1.0+incompatible
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/gofrs/uuid/v3 v3.1.2
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
