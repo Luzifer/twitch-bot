@@ -42,8 +42,6 @@ export default class EventClient {
     this.socket.onmessage = evt => {
       const data = JSON.parse(evt.data)
 
-      console.log(data)
-
       for (const fn of [this.handlers[data.type], this.handlers._].filter(fn => fn)) {
         fn(data.type, data.fields)
       }
