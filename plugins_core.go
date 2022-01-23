@@ -22,6 +22,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
+	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -51,6 +52,7 @@ var (
 
 		// API-only modules
 		msgformat.Register,
+		overlays.Register,
 	}
 	knownModules []string
 )
