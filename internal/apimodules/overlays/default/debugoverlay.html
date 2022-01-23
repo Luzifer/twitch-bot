@@ -1,0 +1,11 @@
+<html>
+  <script type="module">
+    import EventClient from './eventclient.mjs'
+
+    new EventClient({
+      handlers: {
+        _: (evt, data) => console.log(evt, data),
+      },
+    })
+  </script>
+</html>
