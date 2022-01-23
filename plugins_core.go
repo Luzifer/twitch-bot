@@ -110,6 +110,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,
 		RegisterCron:               cronService.AddFunc,
+		RegisterEventHandler:       registerEventHandlers,
 		RegisterRawMessageHandler:  registerRawMessageHandler,
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
