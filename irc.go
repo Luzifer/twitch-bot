@@ -242,11 +242,19 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypeJoin, nil)
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"user":    m.User,          // Compatibility to plugins.DeriveUser
+	})
+	go handleMessage(i.c, m, eventTypeJoin, fields)
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypePart, nil)
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"user":    m.User,          // Compatibility to plugins.DeriveUser
+	})
+	go handleMessage(i.c, m, eventTypePart, fields)
 }
 
 func (i ircHandler) handlePermit(m *irc.Message) {
@@ -263,10 +271,17 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 	username := msgParts[1]
 
-	log.WithField("user", username).Debug("Added permit")
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel":  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"user":     m.User,          // Compatibility to plugins.DeriveUser
+		"username": username,        // DEPRECATED but kept for comapatibility
+		"to":       username,
+	})
+
+	log.WithFields(fields.Data()).Debug("Added permit")
 	timerStore.AddPermit(m.Params[0], username)
 
-	go handleMessage(i.c, m, eventTypePermit, plugins.FieldCollectionFromData(map[string]interface{}{"username": username}))
+	go handleMessage(i.c, m, eventTypePermit, fields)
 }
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
@@ -284,7 +299,11 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 	case "host_success", "host_success_viewers":
 		log.WithField("trailing", m.Trailing()).Warn("Incoming host")
 
-		go handleMessage(i.c, m, eventTypeHost, nil)
+		fields := plugins.FieldCollectionFromData(map[string]interface{}{
+			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			"user":    m.User,          // Compatibility to plugins.DeriveUser
+		})
+		go handleMessage(i.c, m, eventTypeHost, fields)
 
 	}
 }
