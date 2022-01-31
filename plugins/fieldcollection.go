@@ -289,7 +289,7 @@ func (f *FieldCollection) String(name string) (string, error) {
 		return iv.String(), nil
 	}
 
-	return "", ErrValueMismatch
+	return fmt.Sprintf("%v", v), nil
 }
 
 // StringSlice tries to read key name as []string

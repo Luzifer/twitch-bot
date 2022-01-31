@@ -36,8 +36,8 @@ func init() {
 				Key:             "counter_step",
 				Name:            "Counter Step",
 				Optional:        true,
-				SupportTemplate: false,
-				Type:            plugins.ActionDocumentationFieldTypeInt64,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
 			},
 			{
 				Default:         "",
@@ -132,8 +132,16 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	var counterStep int64 = 1
-	if s := attrs.MustInt64("counter_step", ptrIntZero); s != 0 {
-		counterStep = s
+	if s := attrs.MustString("counter_step", ptrStringEmpty); s != "" {
+		parseStep, err := formatMessage(s, m, r, eventData)
+		if err != nil {
+			return false, errors.Wrap(err, "execute counter step template")
+		}
+
+		counterStep, err = strconv.ParseInt(parseStep, 10, 64)
+		if err != nil {
+			return false, errors.Wrap(err, "parse counter step")
+		}
 	}
 
 	return false, errors.Wrap(

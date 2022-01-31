@@ -78,3 +78,16 @@ func TestFieldCollectionNilDataGet(t *testing.T) {
 		}
 	}
 }
+
+func TestFieldCollectionIntToString(t *testing.T) {
+	var val int = 123
+	fc := FieldCollectionFromData(map[string]interface{}{"test": val})
+
+	if !fc.CanString("test") {
+		t.Fatalf("cannot convert %T to string", val)
+	}
+
+	if v := fc.MustString("test", nil); v != "123" {
+		t.Errorf("unexpected value: 123 != %s", v)
+	}
+}
