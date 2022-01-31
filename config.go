@@ -96,7 +96,7 @@ func loadConfig(filename string) error {
 	}
 
 	if configVersion.ConfigVersion < expectedMinConfigVersion {
-		return errors.Errorf("config version too old: %d < %d - Please have a look at the documentation!", configVersion.ConfigVersion, expectedMinConfigVersion)
+		return errors.Errorf("config version too old: %d < %d - Please have a look at the documentation", configVersion.ConfigVersion, expectedMinConfigVersion)
 	}
 
 	if err = parseConfigFromYAML(filename, tmpConfig, true); err != nil {

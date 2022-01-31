@@ -80,7 +80,7 @@ func TestFieldCollectionNilDataGet(t *testing.T) {
 }
 
 func TestFieldCollectionIntToString(t *testing.T) {
-	var val int = 123
+	val := 123
 	fc := FieldCollectionFromData(map[string]interface{}{"test": val})
 
 	if !fc.CanString("test") {
