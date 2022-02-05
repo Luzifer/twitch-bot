@@ -101,7 +101,7 @@ func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	}
 
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel":     payload.BroadcasterUserLogin,
+		"channel":     "#" + payload.BroadcasterUserLogin,
 		"followed_at": payload.FollowedAt,
 		"user_id":     payload.UserID,
 		"user":        payload.UserLogin,
@@ -120,7 +120,7 @@ func (t *twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m js
 	}
 
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel":      payload.BroadcasterUserLogin,
+		"channel":      "#" + payload.BroadcasterUserLogin,
 		"reward_cost":  payload.Reward.Cost,
 		"reward_id":    payload.Reward.ID,
 		"reward_title": payload.Reward.Title,
@@ -335,7 +335,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"category": *category,
 		}).Debug("Twitch metadata changed")
 		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":  channel,
+			"channel":  "#" + channel,
 			"category": *category,
 		}))
 	}
@@ -347,7 +347,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"title":   *title,
 		}).Debug("Twitch metadata changed")
 		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel": channel,
+			"channel": "#" + channel,
 			"title":   *title,
 		}))
 	}
@@ -365,7 +365,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		}
 
 		go handleMessage(ircHdl.Client(), nil, evt, plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel": channel,
+			"channel": "#" + channel,
 		}))
 	}
 }
