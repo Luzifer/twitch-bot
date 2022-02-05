@@ -15,6 +15,11 @@ import (
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
+const (
+	bufferSizeByte  = 1024
+	socketKeepAlive = 5 * time.Second
+)
+
 type (
 	socketMessage struct {
 		Type   string                 `json:"type"`
@@ -32,8 +37,8 @@ var (
 	subscribersLock sync.RWMutex
 
 	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize:  bufferSizeByte,
+		WriteBufferSize: bufferSizeByte,
 	}
 )
 
@@ -114,7 +119,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 	})
 	defer unsub()
 
-	keepAlive := time.NewTicker(5 * time.Second)
+	keepAlive := time.NewTicker(socketKeepAlive)
 	defer keepAlive.Stop()
 	go func() {
 		for range keepAlive.C {
@@ -153,7 +158,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			return
 
 		default:
-			log.Debug("Got unhandled message from socket: %d", messageType)
+			log.Debugf("Got unhandled message from socket: %d", messageType)
 			continue
 		}
 
