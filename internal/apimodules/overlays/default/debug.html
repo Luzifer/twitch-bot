@@ -73,13 +73,14 @@
       mounted() {
         new EventClient({
           handlers: {
-            _: (evt, data) => { 
+            _: (evt, data, time, live) => {
               this.events = [
-                { event: evt, fields: data, time: new Date() },
+                { event: evt, fields: data, time },
                 ...this.events,
               ]
             },
           },
+          replay: true,
         })
       },
     })

@@ -10,20 +10,34 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 const (
 	bufferSizeByte  = 1024
 	socketKeepAlive = 5 * time.Second
+
+	moduleUUID = "f9ca2b3a-baf6-45ea-a347-c626168665e8"
+
+	msgTypeRequestReplay = "replay"
 )
 
 type (
+	storage struct {
+		ChannelEvents map[string][]socketMessage `json:"channel_events"`
+
+		lock sync.RWMutex
+	}
+
 	socketMessage struct {
-		Type   string                 `json:"type"`
-		Fields map[string]interface{} `json:"fields"`
+		IsLive bool                     `json:"is_live"`
+		Time   time.Time                `json:"time"`
+		Type   string                   `json:"type"`
+		Fields *plugins.FieldCollection `json:"fields"`
 	}
 )
 
@@ -32,6 +46,14 @@ var (
 	embeddedOverlays embed.FS
 
 	fsStack httpFSStack
+
+	ptrStringEmpty = func(v string) *string { return &v }("")
+
+	store          plugins.StorageManager
+	storeExemption = []string{
+		"join", "part", // Those make no sense for replay
+	}
+	storedObject = newStorage()
 
 	subscribers     = map[string]func(event string, eventData *plugins.FieldCollection){}
 	subscribersLock sync.RWMutex
@@ -43,6 +65,8 @@ var (
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	store = args.GetStorageManager()
+
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Websocket subscriber for bot events",
 		HandlerFunc:  handleSocketSubscription,
@@ -71,7 +95,21 @@ func Register(args plugins.RegistrationArguments) error {
 			fn(event, eventData)
 		}
 
-		return nil
+		if str.StringInSlice(event, storeExemption) {
+			return nil
+		}
+
+		storedObject.AddEvent(plugins.DeriveChannel(nil, eventData), socketMessage{
+			IsLive: false,
+			Time:   time.Now(),
+			Type:   event,
+			Fields: eventData,
+		})
+
+		return errors.Wrap(
+			store.SetModuleStore(moduleUUID, storedObject),
+			"storing events database",
+		)
 	})
 
 	fsStack = httpFSStack{
@@ -85,7 +123,10 @@ func Register(args plugins.RegistrationArguments) error {
 		fsStack = append(httpFSStack{http.Dir(overlaysDir)}, fsStack...)
 	}
 
-	return nil
+	return errors.Wrap(
+		store.GetModuleStore(moduleUUID, storedObject),
+		"loading module storage",
+	)
 }
 
 func handleServeOverlayAsset(w http.ResponseWriter, r *http.Request) {
@@ -109,8 +150,10 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		defer connLock.Unlock()
 
 		if err := conn.WriteJSON(socketMessage{
+			IsLive: true,
+			Time:   time.Now(),
 			Type:   event,
-			Fields: eventData.Data(),
+			Fields: eventData,
 		}); err != nil {
 			log.WithError(err).Error("Unable to send socket message")
 			connLock.Unlock()
@@ -169,6 +212,15 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		}
 
 		switch recvMsg.Type {
+		case msgTypeRequestReplay:
+			for _, msg := range storedObject.GetChannelEvents(recvMsg.Fields.MustString("channel", ptrStringEmpty)) {
+				if err := conn.WriteJSON(msg); err != nil {
+					log.WithError(err).Error("Unable to send socket message")
+					connLock.Unlock()
+					conn.Close()
+				}
+			}
+
 		default:
 			log.WithField("type", recvMsg.Type).Warn("Got unexpected message type from frontend")
 		}
@@ -191,4 +243,46 @@ func unsubscribeSocket(id string) {
 	defer subscribersLock.Unlock()
 
 	delete(subscribers, id)
+}
+
+// Storage
+
+func newStorage() *storage {
+	return &storage{
+		ChannelEvents: make(map[string][]socketMessage),
+	}
+}
+
+func (s *storage) AddEvent(channel string, evt socketMessage) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.ChannelEvents[channel] = append(s.ChannelEvents[channel], evt)
+}
+
+func (s *storage) GetChannelEvents(channel string) []socketMessage {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.ChannelEvents[channel]
+}
+
+// Implement marshaller interfaces
+func (s *storage) MarshalStoredObject() ([]byte, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return json.Marshal(s)
+}
+
+func (s *storage) UnmarshalStoredObject(data []byte) error {
+	if data == nil {
+		// No data set yet, don't try to unmarshal
+		return nil
+	}
+
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return json.Unmarshal(data, s)
 }

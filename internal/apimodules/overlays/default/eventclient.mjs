@@ -1,8 +1,9 @@
 /**
  * Options to pass to the EventClient constructor
  * @typedef {Object} EventClient~Options
- * @prop {string} [channel] - Filter for specific channel events (matched as `event.channel.match(...)`)
- * @prop {Object} handlers - Map event types to callback functions `(event, fields) => {...}`
+ * @prop {string} [channel] - Filter for specific channel events (format: `#channel`)
+ * @prop {Object} handlers - Map event types to callback functions `(event, fields, time, live) => {...}`
+ * @prop {boolean} replay - Request a replay at connect (requires channel to be set to a channel name)
  * @prop {string} [token] - API access token to use to connect to the WebSocket
  */
 
@@ -61,12 +62,19 @@ export default class EventClient {
       }
 
       for (const fn of [this.handlers[data.type], this.handlers._].filter(fn => fn)) {
-        fn(data.type, data.fields)
+        fn(data.type, data.fields, new Date(data.time), data.is_live)
       }
     }
 
     this.socket.onopen = () => {
       this.socketBackoff = initialSocketBackoff
+
+      if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
+        this.socket.send(JSON.stringify({
+          fields: { channel: this.paramOptionFallback('channel') },
+          type: 'replay',
+        }))
+      }
     }
   }
 
@@ -74,10 +82,11 @@ export default class EventClient {
    * Resolves the given key through url hash parameters with fallback to constructor options
    *
    * @params {string} key The key to resolve
+   * @params {*=} fallback=null Fallback to return if neither params nor options contained that key
    * @returns {*} Value of the key or null
    */
-  paramOptionFallback(key) {
-    return this.params.get(key) || this.options[key] || null
+  paramOptionFallback(key, fallback = null) {
+    return this.params.get(key) || this.options[key] || fallback
   }
 
   /**
