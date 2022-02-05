@@ -32,7 +32,7 @@
     <table>
       <tr><th>Time</th><th>Event</th><th>Fields</th></tr>
       <tr v-for="event in events">
-        <td>{{ moment(event.time).format('HH:mm:ss') }}</td>
+        <td>{{ moment(event.time).format('YYYY-MM-DD HH:mm:ss') }}</td>
         <td>{{ event.event }}</td>
         <td>
           <span
