@@ -64,10 +64,13 @@ var (
 		ReadBufferSize:  bufferSizeByte,
 		WriteBufferSize: bufferSizeByte,
 	}
+
+	validateToken plugins.ValidateTokenFunc
 )
 
 func Register(args plugins.RegistrationArguments) error {
 	store = args.GetStorageManager()
+	validateToken = args.ValidateToken
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Websocket subscriber for bot events",
@@ -227,7 +230,11 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 			switch recvMsg.Type {
 			case msgTypeRequestAuth:
-				// FIXME: check token
+				if err := validateToken(recvMsg.Fields.MustString("token", ptrStringEmpty), "overlays"); err != nil {
+					errC <- errors.Wrap(err, "validating auth token")
+					return
+				}
+
 				authTimeout.Stop()
 				isAuthorized = true
 				sendMsgC <- socketMessage{
