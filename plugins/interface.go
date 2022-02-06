@@ -71,7 +71,7 @@ type (
 		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event
 		SendMessage SendMessageFunc
-		// ValidateToken offers a way to validate a token and determine wheter it has permissions on a given module
+		// ValidateToken offers a way to validate a token and determine whether it has permissions on a given module
 		ValidateToken ValidateTokenFunc
 	}
 

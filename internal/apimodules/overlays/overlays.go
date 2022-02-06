@@ -138,6 +138,7 @@ func handleServeOverlayAsset(w http.ResponseWriter, r *http.Request) {
 	http.StripPrefix("/overlays", http.FileServer(fsStack)).ServeHTTP(w, r)
 }
 
+//nolint:funlen,gocognit,gocyclo // Not split in order to keep the socket logic in one place
 func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 	var (
 		connID = uuid.Must(uuid.NewV4()).String()
