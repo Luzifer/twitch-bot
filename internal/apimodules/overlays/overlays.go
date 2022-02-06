@@ -18,12 +18,14 @@ import (
 )
 
 const (
+	authTimeout     = 10 * time.Second
 	bufferSizeByte  = 1024
 	socketKeepAlive = 5 * time.Second
 
 	moduleUUID = "f9ca2b3a-baf6-45ea-a347-c626168665e8"
 
-	msgTypeRequestReplay = "replay"
+	msgTypeRequestAuth   = "_auth"
+	msgTypeRequestReplay = "_replay"
 )
 
 type (
@@ -134,30 +136,34 @@ func handleServeOverlayAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
+	var (
+		connID = uuid.Must(uuid.NewV4()).String()
+		logger = log.WithField("conn_id", connID)
+	)
+
 	// Upgrade connection to socket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.WithError(err).Error("Unable to upgrade socket")
+		logger.WithError(err).Error("Unable to upgrade socket")
 		return
 	}
 	defer conn.Close()
 
+	var (
+		authTimeout  = time.NewTimer(authTimeout)
+		connLock     = new(sync.Mutex)
+		errC         = make(chan error, 1)
+		isAuthorized bool
+		sendMsgC     = make(chan socketMessage, 1)
+	)
+
 	// Register listener
-	connLock := new(sync.Mutex)
-
 	unsub := subscribeSocket(func(event string, eventData *plugins.FieldCollection) {
-		connLock.Lock()
-		defer connLock.Unlock()
-
-		if err := conn.WriteJSON(socketMessage{
+		sendMsgC <- socketMessage{
 			IsLive: true,
 			Time:   time.Now(),
 			Type:   event,
 			Fields: eventData,
-		}); err != nil {
-			log.WithError(err).Error("Unable to send socket message")
-			connLock.Unlock()
-			conn.Close()
 		}
 	})
 	defer unsub()
@@ -169,7 +175,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			connLock.Lock()
 
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.WithError(err).Error("Unable to send ping message")
+				logger.WithError(err).Error("Unable to send ping message")
 				connLock.Unlock()
 				conn.Close()
 				return
@@ -179,50 +185,96 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Handle socket
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.WithError(err).Error("Unable to read from socket")
-			return
-		}
-
-		switch messageType {
-		case websocket.TextMessage:
-			// This is fine and expected
-
-		case websocket.BinaryMessage:
-			// Wat?
-			log.Warn("Got binary message from socket, disconnecting...")
-			return
-
-		case websocket.CloseMessage:
-			// They want to go? Fine, have it that way!
-			return
-
-		default:
-			log.Debugf("Got unhandled message from socket: %d", messageType)
-			continue
-		}
-
-		var recvMsg socketMessage
-		if err = json.Unmarshal(p, &recvMsg); err != nil {
-			log.Warn("Got unreadable message from socket, disconnecting...")
-			return
-		}
-
-		switch recvMsg.Type {
-		case msgTypeRequestReplay:
-			for _, msg := range storedObject.GetChannelEvents(recvMsg.Fields.MustString("channel", ptrStringEmpty)) {
-				if err := conn.WriteJSON(msg); err != nil {
-					log.WithError(err).Error("Unable to send socket message")
-					connLock.Unlock()
-					conn.Close()
-				}
+	go func() {
+		// Handle socket
+		for {
+			messageType, p, err := conn.ReadMessage()
+			if err != nil {
+				errC <- errors.Wrap(err, "reading from socket")
+				return
 			}
 
-		default:
-			log.WithField("type", recvMsg.Type).Warn("Got unexpected message type from frontend")
+			switch messageType {
+			case websocket.TextMessage:
+				// This is fine and expected
+
+			case websocket.BinaryMessage:
+				// Wat?
+				errC <- errors.New("binary message received")
+				return
+
+			case websocket.CloseMessage:
+				// They want to go? Fine, have it that way!
+				errC <- nil
+				return
+
+			default:
+				logger.Debugf("Got unhandled message from socket: %d", messageType)
+				continue
+			}
+
+			var recvMsg socketMessage
+			if err = json.Unmarshal(p, &recvMsg); err != nil {
+				errC <- errors.Wrap(err, "decoding message")
+				return
+			}
+
+			if !isAuthorized && recvMsg.Type != msgTypeRequestAuth {
+				// Socket is requesting stuff but is not authorized, we don't want them to be here!
+				errC <- nil
+				return
+			}
+
+			switch recvMsg.Type {
+			case msgTypeRequestAuth:
+				// FIXME: check token
+				authTimeout.Stop()
+				isAuthorized = true
+				sendMsgC <- socketMessage{
+					IsLive: true,
+					Time:   time.Now(),
+					Type:   msgTypeRequestAuth,
+				}
+
+			case msgTypeRequestReplay:
+				go func() {
+					for _, msg := range storedObject.GetChannelEvents(recvMsg.Fields.MustString("channel", ptrStringEmpty)) {
+						sendMsgC <- msg
+					}
+				}()
+
+			default:
+				logger.WithField("type", recvMsg.Type).Warn("Got unexpected message type from frontend")
+			}
+		}
+	}()
+
+	for {
+		select {
+		case <-authTimeout.C:
+			// Timeout was not stopped, no auth was done
+			logger.Warn("socket failed to auth")
+			return
+
+		case err := <-errC:
+			if err != nil {
+				logger.WithError(err).Error("Message processing caused error")
+			}
+			return // We use nil-error to close the connection
+
+		case msg := <-sendMsgC:
+			if !isAuthorized {
+				// Not authorized, we're silently dropping messages
+				continue
+			}
+
+			connLock.Lock()
+			if err := conn.WriteJSON(msg); err != nil {
+				logger.WithError(err).Error("Unable to send socket message")
+				connLock.Unlock()
+				conn.Close()
+			}
+			connLock.Unlock()
 		}
 	}
 }

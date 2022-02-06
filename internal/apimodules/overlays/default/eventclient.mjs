@@ -56,6 +56,21 @@ export default class EventClient {
     this.socket.onmessage = evt => {
       const data = JSON.parse(evt.data)
 
+      if (data.type === '_auth') {
+        // Special handling for auth confirmation
+        this.socketBackoff = initialSocketBackoff
+
+        // Auth was confirmed, request replay if wanted by client
+        if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
+          this.socket.send(JSON.stringify({
+            fields: { channel: this.paramOptionFallback('channel') },
+            type: '_replay',
+          }))
+        }
+
+        return
+      }
+
       if (this.paramOptionFallback('channel') && !data.fields?.channel?.match(this.paramOptionFallback('channel'))) {
         // Channel filter is active and channel does not match
         return
@@ -67,14 +82,10 @@ export default class EventClient {
     }
 
     this.socket.onopen = () => {
-      this.socketBackoff = initialSocketBackoff
-
-      if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
-        this.socket.send(JSON.stringify({
-          fields: { channel: this.paramOptionFallback('channel') },
-          type: 'replay',
-        }))
-      }
+      this.socket.send(JSON.stringify({
+        fields: { token: this.token },
+        type: '_auth',
+      }))
     }
   }
 
