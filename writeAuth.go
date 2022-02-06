@@ -33,25 +33,34 @@ func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 			return
 		}
 
-		for _, auth := range config.AuthTokens {
-			rawHash, err := hex.DecodeString(auth.Hash)
-			if err != nil {
-				log.WithError(err).Error("Invalid token hash found")
-				continue
-			}
-
-			if bcrypt.CompareHashAndPassword(rawHash, []byte(token)) != nil {
-				continue
-			}
-
-			if !str.StringInSlice(module, auth.Modules) && !str.StringInSlice("*", auth.Modules) {
-				continue
-			}
-
-			h.ServeHTTP(w, r)
-			return
+		if err := validateAuthToken(token, module); err != nil {
+			http.Error(w, "auth not successful", http.StatusForbidden)
 		}
 
-		http.Error(w, "auth not successful", http.StatusForbidden)
+		h.ServeHTTP(w, r)
 	})
+}
+
+func validateAuthToken(token string, modules ...string) error {
+	for _, auth := range config.AuthTokens {
+		rawHash, err := hex.DecodeString(auth.Hash)
+		if err != nil {
+			log.WithError(err).Error("Invalid token hash found")
+			continue
+		}
+
+		if bcrypt.CompareHashAndPassword(rawHash, []byte(token)) != nil {
+			continue
+		}
+
+		for _, reqMod := range modules {
+			if !str.StringInSlice(reqMod, auth.Modules) && !str.StringInSlice("*", auth.Modules) {
+				return errors.New("missing module in auth")
+			}
+		}
+
+		return nil // We found a matching token and it has all required tokens
+	}
+
+	return errors.New("no matching token")
 }

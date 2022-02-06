@@ -71,6 +71,8 @@ type (
 		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event
 		SendMessage SendMessageFunc
+		// ValidateToken offers a way to validate a token and determine wheter it has permissions on a given module
+		ValidateToken ValidateTokenFunc
 	}
 
 	SendMessageFunc func(*irc.Message) error
@@ -91,6 +93,8 @@ type (
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
+
+	ValidateTokenFunc func(token string, modules ...string) error
 )
 
 func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {

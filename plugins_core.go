@@ -114,6 +114,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterRawMessageHandler:  registerRawMessageHandler,
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
+		ValidateToken:              validateAuthToken,
 	}
 }
 
