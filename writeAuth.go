@@ -35,6 +35,7 @@ func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 
 		if err := validateAuthToken(token, module); err != nil {
 			http.Error(w, "auth not successful", http.StatusForbidden)
+			return
 		}
 
 		h.ServeHTTP(w, r)
