@@ -215,7 +215,7 @@ export default {
 
       const params = new URLSearchParams()
       params.set('client_id', this.$root.vars.TwitchClientID)
-      params.set('redirect_uri', window.location.href.split('#')[0])
+      params.set('redirect_uri', window.location.href.split('#')[0].split('?')[0])
       params.set('response_type', 'token')
       params.set('scope', scopes.join(' '))
 
