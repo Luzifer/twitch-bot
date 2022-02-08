@@ -83,4 +83,9 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 			r.SetCooldown(timerStore, m, eventData)
 		}
 	}
+
+	// Send events to registered handlers
+	if event != nil {
+		notifyEventHandlers(*event, eventData)
+	}
 }

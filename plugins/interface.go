@@ -33,6 +33,9 @@ type (
 
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 
+	EventHandlerFunc         func(evt string, eventData *FieldCollection) error
+	EventHandlerRegisterFunc func(EventHandlerFunc) error
+
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
@@ -60,12 +63,16 @@ type (
 		RegisterAPIRoute HTTPRouteRegistrationFunc
 		// RegisterCron is a method to register cron functions in the global cron instance
 		RegisterCron CronRegistrationFunc
+		// RegisterEventHandler is a method to register a handler function receiving ALL events
+		RegisterEventHandler EventHandlerRegisterFunc
 		// RegisterRawMessageHandler is a method to register an handler to receive ALL messages received
 		RegisterRawMessageHandler RawMessageHandlerRegisterFunc
 		// RegisterTemplateFunction can be used to register a new template functions
 		RegisterTemplateFunction TemplateFuncRegister
 		// SendMessage can be used to send a message not triggered by an event
 		SendMessage SendMessageFunc
+		// ValidateToken offers a way to validate a token and determine whether it has permissions on a given module
+		ValidateToken ValidateTokenFunc
 	}
 
 	SendMessageFunc func(*irc.Message) error
@@ -86,6 +93,8 @@ type (
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
+
+	ValidateTokenFunc func(token string, modules ...string) error
 )
 
 func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {

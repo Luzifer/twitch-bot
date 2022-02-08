@@ -1,0 +1,88 @@
+<html>
+  <style>
+    [v-cloak] { display: none; }
+    html {
+      background-color: #333;
+      color: #fff;
+      font-family: monospace;
+    }
+    span.event {
+      background-color: #e3e3ff3f;
+      border-radius: 0.5rem;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+      margin-right: 5px;
+      padding: 0.1rem 0.5rem;
+      white-space: pre;
+    }
+    table {
+      border-spacing: 10px;
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+    td {
+      vertical-align: top;
+    }
+    th {
+      text-align: left;
+    }
+  </style>
+
+  <div id="app" v-cloak>
+    <table>
+      <tr><th>Time</th><th>Event</th><th>Fields</th></tr>
+      <tr v-for="event in events">
+        <td>{{ moment(event.time).format('YYYY-MM-DD HH:mm:ss') }}</td>
+        <td>{{ event.event }}</td>
+        <td>
+          <span
+            class="event"
+            v-for="field in formattedFields(event.fields)"
+          >{{ field }}</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/combine/npm/vue@2,npm/moment@2"></script>
+  <script type="module">
+    import EventClient from './eventclient.mjs'
+
+    new Vue({
+      computed: {
+        maxEventLen() {
+          return this.events
+            .map(evt => evt.event.length)
+            .reduce((ml, cl) => cl > ml ? cl : ml, 0)
+        },
+      },
+
+      data: {
+        events: [],
+      },
+
+      el: '#app',
+
+      methods: {
+        formattedFields(fields) {
+          return Object.entries(fields).map(el => `${el[0]}="${el[1]}"`).sort()
+        },
+        moment,
+      },
+
+      mounted() {
+        new EventClient({
+          handlers: {
+            _: (evt, data, time, live) => {
+              this.events = [
+                { event: evt, fields: data, time },
+                ...this.events,
+              ]
+            },
+          },
+          replay: true,
+        })
+      },
+    })
+  </script>
+</html>

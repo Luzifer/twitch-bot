@@ -84,7 +84,7 @@ User joined the channel-chat. This is **NOT** an indicator they are viewing, the
 Fields:
 
 - `channel` - The channel the event occurred in
-- `username` - The login-name of the user who joined
+- `user` - The login-name of the user who joined
 
 ## `part`
 
@@ -93,7 +93,7 @@ User left the channel-chat. This is **NOT** an indicator they are no longer view
 Fields:
 
 - `channel` - The channel the event occurred in
-- `username` - The login-name of the user who left
+- `user` - The login-name of the user who left
 
 ## `permit`
 
@@ -102,7 +102,8 @@ User received a permit, which means they are no longer affected by rules which a
 Fields:
 
 - `channel` - The channel the event occurred in
-- `username` - The login-name of the user
+- `user` - The login-name of the user who **gave** the permit
+- `to` - The username who got the permit
 
 ## `raid`
 

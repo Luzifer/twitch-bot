@@ -1,6 +1,19 @@
 package main
 
+import (
+	"sync"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/plugins"
+)
+
 func ptrStr(s string) *string { return &s }
+
+var (
+	registeredEventHandlers     []plugins.EventHandlerFunc
+	registeredEventHandlersLock sync.Mutex
+)
 
 var (
 	eventTypeBan                = ptrStr("ban")
@@ -51,3 +64,22 @@ var (
 		eventTypeTwitchTitleUpdate,
 	}
 )
+
+func notifyEventHandlers(event string, eventData *plugins.FieldCollection) {
+	registeredEventHandlersLock.Lock()
+	defer registeredEventHandlersLock.Unlock()
+
+	for _, fn := range registeredEventHandlers {
+		if err := fn(event, eventData); err != nil {
+			log.WithError(err).Error("EventHandler caused error")
+		}
+	}
+}
+
+func registerEventHandlers(eh plugins.EventHandlerFunc) error {
+	registeredEventHandlersLock.Lock()
+	defer registeredEventHandlersLock.Unlock()
+
+	registeredEventHandlers = append(registeredEventHandlers, eh)
+	return nil
+}
