@@ -392,11 +392,12 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
 
 	case "raid":
+		vc, _ := strconv.ParseInt(string(m.Tags["msg-param-viewerCount"]), 10, 64)
 		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":        m.Tags["login"],
 			"user":        m.Tags["login"], // Compatibility to plugins.DeriveUser
-			"viewercount": m.Tags["msg-param-viewerCount"],
+			"viewercount": vc,
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("Incoming raid")
 
