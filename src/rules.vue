@@ -1019,6 +1019,11 @@ export default {
             this.validateReason = `${action.type} -> ${field.key} -> opt`
             return false
           }
+
+          if (field.type === 'duration' && !this.validateDuration(action.attributes[field.key], field.optional)) {
+            this.validateReason = `${action.type} -> ${field.key} -> duration`
+            return false
+          }
         }
       }
 
