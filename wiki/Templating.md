@@ -25,6 +25,19 @@ Examples below are using this syntax in the code block:
 < Output from the template
 ```
 
+#### `add`
+
+Returns float from calculation: `float1 + float2`
+
+Syntax: `add <float1> <float2>`
+
+Example:
+
+```
+# {{ printf "%.0f" (add 1 2) }}%
+< 3
+```
+
 #### `arg`
 
 Takes the message sent to the channel, splits by space and returns the Nth element
@@ -104,6 +117,19 @@ Example:
 < Luziferus - foobar
 ```
 
+#### `div`
+
+Returns float from calculation: `float1 / float2`
+
+Syntax: `div <float1> <float2>`
+
+Example:
+
+```
+# {{ printf "%.0f" (div 27 9) }}%
+< 3
+```
+
 #### `fixUsername`
 
 Ensures the username no longer contains the `@` or `#` prefix
@@ -171,17 +197,30 @@ Example:
 < Last Quote: #32
 ```
 
-#### `multiply`
+#### `mul` (deprecated: `multiply`)
 
 Returns float from calculation: `float1 * float2`
 
-Syntax: `multiply <float1> <float2>`
+Syntax: `mul <float1> <float2>`
 
 Example:
 
 ```
-# {{ printf "%.0f" (multiply 100 (seededRandom "test")) }}%
+# {{ printf "%.0f" (mul 100 (seededRandom "test")) }}%
 < 35%
+```
+
+#### `pow`
+
+Returns float from calculation: `float1 ** float2`
+
+Syntax: `pow <float1> <float2>`
+
+Example:
+
+```
+# {{ printf "%.0f" (pow 10 4) }}%
+< 10000
 ```
 
 #### `recentGame`
@@ -221,6 +260,19 @@ Example:
 ```
 # Your int this hour: {{ printf "%.0f" (multiply (seededRandom (concat ":" "int" .username (now "2006-01-02 15"))) 100) }}%
 < Your int this hour: 17%
+```
+
+#### `sub`
+
+Returns float from calculation: `float1 - float2`
+
+Syntax: `sub <float1> <float2>`
+
+Example:
+
+```
+# {{ printf "%.0f" (sub 10 4) }}%
+< 6
 ```
 
 #### `tag`
