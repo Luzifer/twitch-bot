@@ -10,7 +10,7 @@ Ban user from chat
   attributes:
     # Reason why the user was banned
     # Optional: true
-    # Type:     string
+    # Type:     string (Supports Templating)
     reason: ""
 ```
 
@@ -70,8 +70,8 @@ Update counter values
     counter: ""
     # Value to add to the counter
     # Optional: true
-    # Type:     int64
-    counter_step: 1
+    # Type:     string (Supports Templating)
+    counter_step: "1"
     # Value to set the counter to
     # Optional: true
     # Type:     string (Supports Templating)
@@ -278,4 +278,8 @@ Timeout user from chat
     # Optional: false
     # Type:     duration
     duration: 0s
+    # Reason why the user was timed out
+    # Optional: true
+    # Type:     string (Supports Templating)
+    reason: ""
 ```
