@@ -17,13 +17,13 @@
               :key="channel"
               class="d-flex align-items-center align-middle"
             >
-              <span class="mr-auto">
-                <font-awesome-icon
-                  fixed-width
-                  class="mr-1"
-                  :icon="['fas', 'hashtag']"
-                />
-                {{ channel }}
+              <font-awesome-icon
+                fixed-width
+                class="mr-1"
+                :icon="['fas', 'hashtag']"
+              />
+              {{ channel }}
+              <span class="ml-auto mr-2">
                 <font-awesome-icon
                   v-if="!generalConfig.channel_has_scopes[channel]"
                   :id="`channelPublicWarn${channel}`"
