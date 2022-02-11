@@ -56,6 +56,18 @@ Fields:
 
 - `channel` - The channel the event occurred in
 
+## `delete`
+
+Moderator action caused a chat message to be deleted.
+
+Note: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `message_id` - The UUID of the message being deleted
+- `target_name` - Login name of the author of the deleted message
+
 ## `follow`
 
 User followed the channel. This event is not de-duplicated and therefore might be used to spam! (Only available when EventSub support is available!)

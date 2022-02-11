@@ -135,6 +135,12 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		// chat or timed out.
 		i.handleClearChat(m)
 
+	case "CLEARMSG":
+		// CLEARMSG (Twitch Commands)
+		// Removes a single message from a channel. This is triggered by
+		// the/delete <target-msg-id> command on IRC.
+		i.handleClearMessage(m)
+
 	case "JOIN":
 		// JOIN (Default IRC Command)
 		// User enters the channel, might be triggered multiple times
@@ -239,6 +245,18 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 	}
 
 	go handleMessage(i.c, m, evt, fields)
+}
+
+func (i ircHandler) handleClearMessage(m *irc.Message) {
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"message_id":  m.Tags["target-msg-id"],
+		"target_name": m.Tags["login"],
+	})
+	log.WithFields(log.Fields(fields.Data())).
+		WithField("message", m.Trailing()).
+		Info("Message was deleted")
+	go handleMessage(i.c, m, eventTypeDelete, fields)
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {

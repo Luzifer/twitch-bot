@@ -20,6 +20,7 @@ var (
 	eventTypeBits               = ptrStr("bits")
 	eventTypeChannelPointRedeem = ptrStr("channelpoint_redeem")
 	eventTypeClearChat          = ptrStr("clearchat")
+	eventTypeDelete             = ptrStr("delete")
 	eventTypeFollow             = ptrStr("follow")
 	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
 	eventTypeHost               = ptrStr("host")
@@ -44,6 +45,7 @@ var (
 		eventTypeBits,
 		eventTypeChannelPointRedeem,
 		eventTypeClearChat,
+		eventTypeDelete,
 		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,
 		eventTypeHost,
