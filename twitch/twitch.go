@@ -783,6 +783,12 @@ func (c *Client) request(opts clientRequestOpts) error {
 		}
 		defer resp.Body.Close()
 
+		if opts.AuthType == authTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
+			// Seems our token was somehow revoked, clear the token and retry which will get a new token
+			c.appAccessToken = ""
+			return errors.New("app-access-token is invalid")
+		}
+
 		if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
