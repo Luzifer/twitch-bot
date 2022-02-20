@@ -3,6 +3,7 @@
  * @typedef {Object} EventClient~Options
  * @prop {string} [channel] - Filter for specific channel events (format: `#channel`)
  * @prop {Object} handlers - Map event types to callback functions `(event, fields, time, live) => {...}`
+ * @prop {number} [maxReplayAge=-1] - Number of hours to replay the events for (-1 = infinite)
  * @prop {boolean} replay - Request a replay at connect (requires channel to be set to a channel name)
  * @prop {string} [token] - API access token to use to connect to the WebSocket
  */
@@ -63,7 +64,10 @@ export default class EventClient {
         // Auth was confirmed, request replay if wanted by client
         if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
           this.socket.send(JSON.stringify({
-            fields: { channel: this.paramOptionFallback('channel') },
+            fields: {
+              channel: this.paramOptionFallback('channel'),
+              maxage: Number(this.paramOptionFallback('maxReplayAge', -1)),
+            },
             type: '_replay',
           }))
         }

@@ -49,6 +49,7 @@ var (
 
 	fsStack httpFSStack
 
+	ptrIntMinusOne = func(v int64) *int64 { return &v }(-1)
 	ptrStringEmpty = func(v string) *string { return &v }("")
 
 	store          plugins.StorageManager
@@ -246,7 +247,13 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 			case msgTypeRequestReplay:
 				go func() {
+					maxAge := time.Duration(recvMsg.Fields.MustInt64("maxage", ptrIntMinusOne)) * time.Hour
+					log.Errorf("DEBUG %s %T", maxAge, recvMsg.Fields.Data()["maxage"])
 					for _, msg := range storedObject.GetChannelEvents(recvMsg.Fields.MustString("channel", ptrStringEmpty)) {
+						if maxAge > 0 && time.Since(msg.Time) > maxAge {
+							continue
+						}
+
 						sendMsgC <- msg
 					}
 				}()
