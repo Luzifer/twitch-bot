@@ -1,0 +1,38 @@
+<html>
+  <style>
+    [v-cloak] { display: none; }
+    html {
+      font-family: sans-serif;
+    }
+  </style>
+
+  <div id="content" />
+
+  <script type="module">
+    import EventClient from './eventclient.mjs'
+
+    function updateTemplate(botClient) {
+      return botClient.renderTemplate(botClient.paramOptionFallback('template', ''))
+        .then(content => { document.querySelector('#content').innerText = content })
+    }
+
+    (() => {
+      // Connect to Bot
+      const botClient = new EventClient({
+        handlers: {},
+        replay: false,
+      })
+
+      // Initially fetch template string
+      updateTemplate(botClient)
+
+      // Add interval if requested
+      const interval = Number(botClient.paramOptionFallback('interval', 0))
+      if (interval && interval > 0) {
+        window.setInterval(() => updateTemplate(botClient), interval * 1000)
+      }
+    })()
+  </script>
+</html>
+
+<!-- vim: set sw=2 : -->
