@@ -294,7 +294,11 @@ func (s *storageFile) UpdateCounter(counter string, value int64, absolute bool) 
 		value = s.Counters[counter] + value
 	}
 
-	s.Counters[counter] = value
+	if value == 0 {
+		delete(s.Counters, counter)
+	} else {
+		s.Counters[counter] = value
+	}
 
 	return errors.Wrap(s.Save(), "saving store")
 }
