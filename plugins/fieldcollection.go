@@ -220,6 +220,8 @@ func (f *FieldCollection) Int64(name string) (int64, error) {
 	}
 
 	switch v := v.(type) {
+	case float64:
+		return int64(v), nil
 	case int:
 		return int64(v), nil
 	case int16:
