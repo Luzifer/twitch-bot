@@ -37,6 +37,15 @@ export default class EventClient {
   }
 
   /**
+   * Returns the API base URL without trailing slash
+   *
+   * @returns {string} API base URL
+   */
+  apiBase() {
+    return window.location.href.substr(0, window.location.href.indexOf('/overlays/'))
+  }
+
+  /**
    * Connects the EventClient to the socket
    *
    * @private
@@ -105,13 +114,27 @@ export default class EventClient {
   }
 
   /**
+   * Renders a given template using the bots msgformat API (supports all templating you can use in bot messages)
+   *
+   * @params {string} template The template to render
+   * @returns {Promise} Promise resolving to the rendered output of the template
+   */
+  renderTemplate(template) {
+    return fetch(`${this.apiBase()}/msgformat/format?template=${encodeURIComponent(template)}`, {
+      headers: {
+        authorization: this.paramOptionFallback('token'),
+      },
+    })
+      .then(resp => resp.text())
+  }
+
+  /**
    * Modifies the overlay address to the websocket address the bot listens to
    *
    * @private
    * @returns {string} Websocket address in form ws://... or wss://...
    */
   socketAddr() {
-    const base = window.location.href.substr(0, window.location.href.indexOf('/overlays/') + '/overlays/'.length)
-    return `${base.replace(/^http/, 'ws')}events.sock`
+    return `${this.apiBase().replace(/^http/, 'ws')}/overlays/events.sock`
   }
 }

@@ -71,7 +71,7 @@
       },
 
       mounted() {
-        new EventClient({
+        window.botClient = new EventClient({
           handlers: {
             _: (evt, data, time, live) => {
               this.events = [
