@@ -18,7 +18,6 @@ RUN set -ex \
  && make frontend \
  && go install \
       -trimpath \
-      -buildmode=pie \
       -mod=readonly \
       -modcacherw \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
