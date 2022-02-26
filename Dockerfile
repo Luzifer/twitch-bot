@@ -17,8 +17,11 @@ RUN set -ex \
       npm \
  && make frontend \
  && go install \
-      -ldflags "-X main.version=$(git describe --tags --always || echo dev)" \
-      -mod=readonly
+      -trimpath \
+      -buildmode=pie \
+      -mod=readonly \
+      -modcacherw \
+      -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
 
 
 FROM alpine:latest
