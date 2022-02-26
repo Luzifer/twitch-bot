@@ -726,6 +726,7 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 	return rData.AccessToken, nil
 }
 
+//nolint: gocognit,gocyclo // Not gonna split to keep as a logical unit
 func (c *Client) request(opts clientRequestOpts) error {
 	log.WithFields(log.Fields{
 		"method": opts.Method,
