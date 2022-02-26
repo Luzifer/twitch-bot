@@ -172,6 +172,7 @@ Fields:
 
 - `channel` - The channel the event occurred in
 - `gifted_months` - Number of months the user gifted
+- `origin_id` - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
 - `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `to` - The user who received the sub
 - `username` - The login-name of the user who gifted the subscription
@@ -184,6 +185,7 @@ Fields:
 
 - `channel` - The channel the event occurred in
 - `number` - The amount of gifted subs
+- `origin_id` - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
 - `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `username` - The login-name of the user who gifted the subscription
 
