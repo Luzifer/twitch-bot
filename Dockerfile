@@ -13,7 +13,7 @@ RUN set -ex \
       git \
       go \
       make \
-      nodejs-lts-fermium \
+      nodejs-lts-gallium \
       npm \
  && make frontend \
  && go install \
