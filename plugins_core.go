@@ -13,6 +13,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
+	"github.com/Luzifer/twitch-bot/internal/actors/filesay"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/internal/actors/nuke"
 	"github.com/Luzifer/twitch-bot/internal/actors/punish"
@@ -37,6 +38,7 @@ var (
 		ban.Register,
 		delay.Register,
 		deleteactor.Register,
+		filesay.Register,
 		modchannel.Register,
 		nuke.Register,
 		punish.Register,

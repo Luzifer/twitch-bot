@@ -57,6 +57,19 @@ Execute external script / command
     skip_cooldown_on_error: false
 ```
 
+## FileSay
+
+Takes the content of an URL and pastes it to the current channel
+
+```yaml
+- type: filesay
+  attributes:
+    # Source of the content to post
+    # Optional: false
+    # Type:     string (Supports Templating)
+    source: ""
+```
+
 ## Modify Counter
 
 Update counter values
