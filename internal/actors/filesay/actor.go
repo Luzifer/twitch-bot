@@ -19,14 +19,10 @@ const (
 	httpTimeout = 5 * time.Second
 )
 
-var (
-	formatMessage plugins.MsgFormatter
-	send          plugins.SendMessageFunc
-)
+var formatMessage plugins.MsgFormatter
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
-	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
