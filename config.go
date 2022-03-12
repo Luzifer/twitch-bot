@@ -277,7 +277,9 @@ func (c *configFile) fixDurations() {
 
 	// Fix rules
 	for _, r := range c.Rules {
+		r.ChannelCooldown = c.fixedDurationPtr(r.ChannelCooldown)
 		r.Cooldown = c.fixedDurationPtr(r.Cooldown)
+		r.UserCooldown = c.fixedDurationPtr(r.UserCooldown)
 	}
 }
 
@@ -289,7 +291,7 @@ func (configFile) fixedDuration(d time.Duration) time.Duration {
 }
 
 func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
-	if d == nil || *d > time.Second {
+	if d == nil || *d >= time.Second {
 		return d
 	}
 	fd := *d * time.Second
