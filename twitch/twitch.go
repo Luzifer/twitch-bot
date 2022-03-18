@@ -529,22 +529,30 @@ func (c *Client) RefreshToken() error {
 
 	var resp OAuthTokenResponse
 
-	if err := c.request(clientRequestOpts{
+	err := c.request(clientRequestOpts{
 		AuthType: authTypeUnauthorized,
 		Context:  context.Background(),
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
 		Out:      &resp,
 		URL:      fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()),
-	}); err != nil {
+	})
+	switch {
+	case err == nil:
+		// That's fine, just continue
+
+	case errors.Is(err, errAnyHTTPError):
 		// Retried refresh failed, wipe tokens
+		log.WithError(err).Warning("resetting tokens after refresh-failure")
 		c.UpdateToken("", "")
 		if c.tokenUpdateHook != nil {
 			if herr := c.tokenUpdateHook("", ""); herr != nil {
 				log.WithError(err).Error("Unable to store token wipe after refresh failure")
 			}
 		}
+		return errors.Wrap(err, "executing request")
 
+	default:
 		return errors.Wrap(err, "executing request")
 	}
 
@@ -793,9 +801,9 @@ func (c *Client) request(opts clientRequestOpts) error {
 		if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				return errors.Wrapf(err, "unexpected status %d and cannot read body", resp.StatusCode)
+				return newHTTPError(resp.StatusCode, nil, err)
 			}
-			return errors.Errorf("unexpected status %d: %s", resp.StatusCode, body)
+			return newHTTPError(resp.StatusCode, body, nil)
 		}
 
 		if opts.Out == nil {
