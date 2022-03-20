@@ -23,6 +23,8 @@ import (
 const (
 	timeDay = 24 * time.Hour
 
+	tokenValidityRecheckInterval = time.Hour
+
 	twitchMinCacheTime = time.Second * 30
 
 	twitchRequestRetries = 5
@@ -46,10 +48,11 @@ type (
 		clientID     string
 		clientSecret string
 
-		accessToken     string
-		refreshToken    string
-		tokenValidity   time.Time
-		tokenUpdateHook func(string, string) error
+		accessToken          string
+		refreshToken         string
+		tokenValidity        time.Time
+		tokenValidityChecked time.Time
+		tokenUpdateHook      func(string, string) error
 
 		appAccessToken string
 
@@ -577,12 +580,14 @@ func (c *Client) UpdateToken(accessToken, refreshToken string) {
 }
 
 func (c *Client) ValidateToken(ctx context.Context, force bool) error {
-	if c.tokenValidity.After(time.Now()) && !force {
+	if c.tokenValidity.After(time.Now()) && time.Since(c.tokenValidityChecked) < tokenValidityRecheckInterval && !force {
 		// We do have an expiration time and it's not expired
 		// so we can assume we've checked the token and it should
 		// still be valid.
-		// NOTE(kahlers): In case of a token revokation this
-		// assumption is invalid and will lead to failing requests
+		// To detect a token revokation early-ish we re-check the
+		// token in defined interval. This is not the optimal
+		// solution as we will get failing requests between revokation
+		// and recheck but it's better than nothing.
 
 		return nil
 	}
@@ -611,6 +616,7 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	}
 
 	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	c.tokenValidityChecked = time.Now()
 	log.WithField("expiry", c.tokenValidity).Trace("Access token validated")
 
 	return nil
