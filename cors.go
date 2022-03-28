@@ -22,6 +22,7 @@ func corsMiddleware(h http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join([]string{
 			http.MethodDelete,
 			http.MethodGet,
+			http.MethodPatch,
 			http.MethodPost,
 			http.MethodPut,
 		}, ", "))
