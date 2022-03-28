@@ -187,6 +187,16 @@ func main() {
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
 
+	router.MethodNotAllowedHandler = corsMiddleware(http.HandlerFunc(func(res http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			// Most likely JS client asking for CORS headers
+			res.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		res.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+
 	if err = initCorePlugins(); err != nil {
 		log.WithError(err).Fatal("Unable to load core plugins")
 	}
