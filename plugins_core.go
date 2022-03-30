@@ -22,6 +22,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
+	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
@@ -53,6 +54,7 @@ var (
 		random.Register,
 
 		// API-only modules
+		customevent.Register,
 		msgformat.Register,
 		overlays.Register,
 	}
@@ -104,6 +106,10 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
+		CreateEvent: func(evt string, eventData *plugins.FieldCollection) error {
+			handleMessage(ircHdl.Client(), nil, &evt, eventData)
+			return nil
+		},
 		FormatMessage:              formatMessage,
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetStorageManager:          func() plugins.StorageManager { return store },

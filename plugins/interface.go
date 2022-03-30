@@ -47,6 +47,8 @@ type (
 	RegisterFunc func(RegistrationArguments) error
 
 	RegistrationArguments struct {
+		// CreateEvent allows to create an event handed out to all modules to handle
+		CreateEvent EventHandlerFunc
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
