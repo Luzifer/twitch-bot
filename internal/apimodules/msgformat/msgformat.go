@@ -15,9 +15,11 @@ func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		Description: "Takes the given template and renders it using the same renderer as messages in the channel are",
 		HandlerFunc: handleFormattedMessage,
 		Method:      http.MethodGet,
 		Module:      "msgformat",
+		Name:        "Format Message",
 		Path:        "/format",
 		QueryParams: []plugins.HTTPRouteParamDocumentation{
 			{
