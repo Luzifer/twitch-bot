@@ -43,9 +43,11 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		Description: "Executes a ban of an user in the specified channel",
 		HandlerFunc: handleAPIBan,
 		Method:      http.MethodPost,
 		Module:      "ban",
+		Name:        "Ban User",
 		Path:        "/{channel}/{user}",
 		QueryParams: []plugins.HTTPRouteParamDocumentation{
 			{
