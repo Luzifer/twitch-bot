@@ -34,9 +34,11 @@ type (
 
 func init() {
 	registerRoute(plugins.HTTPRouteRegistrationArgs{
+		Description: "Provides a status JSON to check whether the bot is living",
 		HandlerFunc: handleStatusRequest,
 		Method:      http.MethodGet,
 		Module:      "status",
+		Name:        "Status",
 		Path:        "/status.json",
 		QueryParams: []plugins.HTTPRouteParamDocumentation{
 			{
