@@ -18,6 +18,7 @@ var (
 var (
 	eventTypeBan                = ptrStr("ban")
 	eventTypeBits               = ptrStr("bits")
+	eventTypeCustom             = ptrStr("custom")
 	eventTypeChannelPointRedeem = ptrStr("channelpoint_redeem")
 	eventTypeClearChat          = ptrStr("clearchat")
 	eventTypeDelete             = ptrStr("delete")
@@ -43,6 +44,7 @@ var (
 	knownEvents = []*string{
 		eventTypeBan,
 		eventTypeBits,
+		eventTypeCustom,
 		eventTypeChannelPointRedeem,
 		eventTypeClearChat,
 		eventTypeDelete,
