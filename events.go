@@ -16,6 +16,7 @@ var (
 )
 
 var (
+	eventTypeAnnouncement       = ptrStr("announcement")
 	eventTypeBan                = ptrStr("ban")
 	eventTypeBits               = ptrStr("bits")
 	eventTypeCustom             = ptrStr("custom")
@@ -42,6 +43,7 @@ var (
 	eventTypeTwitchTitleUpdate    = ptrStr("title_update")
 
 	knownEvents = []*string{
+		eventTypeAnnouncement,
 		eventTypeBan,
 		eventTypeBits,
 		eventTypeCustom,
