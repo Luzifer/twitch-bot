@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -24,8 +27,7 @@ const (
 
 	moduleUUID = "f9ca2b3a-baf6-45ea-a347-c626168665e8"
 
-	msgTypeRequestAuth   = "_auth"
-	msgTypeRequestReplay = "_replay"
+	msgTypeRequestAuth = "_auth"
 )
 
 type (
@@ -49,7 +51,6 @@ var (
 
 	fsStack httpFSStack
 
-	ptrIntMinusOne = func(v int64) *int64 { return &v }(-1)
 	ptrStringEmpty = func(v string) *string { return &v }("")
 
 	store          plugins.StorageManager
@@ -81,6 +82,31 @@ func Register(args plugins.RegistrationArguments) error {
 		Name:         "Websocket",
 		Path:         "/events.sock",
 		ResponseType: plugins.HTTPRouteResponseTypeMultiple,
+	})
+
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		Description: "Fetch past events for the given channel",
+		HandlerFunc: handleEventsReplay,
+		Method:      http.MethodGet,
+		Module:      "overlays",
+		Name:        "Replay",
+		Path:        "/events/{channel}",
+		QueryParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "ISO / RFC3339 timestamp to fetch the events after",
+				Name:        "since",
+				Required:    false,
+				Type:        "string",
+			},
+		},
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeJSON,
+		RouteParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Channel to fetch the events from",
+				Name:        "channel",
+			},
+		},
 	})
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
@@ -133,6 +159,33 @@ func Register(args plugins.RegistrationArguments) error {
 		store.GetModuleStore(moduleUUID, storedObject),
 		"loading module storage",
 	)
+}
+
+func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
+	var (
+		channel = mux.Vars(r)["channel"]
+		msgs    []socketMessage
+		since   = time.Time{}
+	)
+
+	if s, err := time.Parse(time.RFC3339, r.URL.Query().Get("since")); err == nil {
+		since = s
+	}
+
+	for _, msg := range storedObject.GetChannelEvents("#" + strings.TrimLeft(channel, "#")) {
+		if msg.Time.Before(since) {
+			continue
+		}
+
+		msgs = append(msgs, msg)
+	}
+
+	sort.Slice(msgs, func(i, j int) bool { return msgs[i].Time.Before(msgs[j].Time) })
+
+	if err := json.NewEncoder(w).Encode(msgs); err != nil {
+		http.Error(w, errors.Wrap(err, "encoding response").Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleServeOverlayAsset(w http.ResponseWriter, r *http.Request) {
@@ -244,19 +297,6 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 					Time:   time.Now(),
 					Type:   msgTypeRequestAuth,
 				}
-
-			case msgTypeRequestReplay:
-				go func() {
-					maxAge := time.Duration(recvMsg.Fields.MustInt64("maxage", ptrIntMinusOne)) * time.Hour
-					log.Errorf("DEBUG %s %T", maxAge, recvMsg.Fields.Data()["maxage"])
-					for _, msg := range storedObject.GetChannelEvents(recvMsg.Fields.MustString("channel", ptrStringEmpty)) {
-						if maxAge > 0 && time.Since(msg.Time) > maxAge {
-							continue
-						}
-
-						sendMsgC <- msg
-					}
-				}()
 
 			default:
 				logger.WithField("type", recvMsg.Type).Warn("Got unexpected message type from frontend")

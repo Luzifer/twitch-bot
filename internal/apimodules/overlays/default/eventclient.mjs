@@ -8,6 +8,8 @@
  * @prop {string} [token] - API access token to use to connect to the WebSocket
  */
 
+const HOUR = 3600 * 1000
+
 const initialSocketBackoff = 500
 const maxSocketBackoff = 10000
 const socketBackoffMultiplier = 1.25
@@ -34,6 +36,14 @@ export default class EventClient {
     this.socketBackoff = initialSocketBackoff
 
     this.connect()
+
+    // If reply is enabled and channel is provided, fetch the replay
+    if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
+      this.fetchReplayForChannel(
+        this.paramOptionFallback('channel'),
+        Number(this.paramOptionFallback('maxReplayAge', -1)),
+      )
+    }
   }
 
   /**
@@ -69,18 +79,6 @@ export default class EventClient {
       if (data.type === '_auth') {
         // Special handling for auth confirmation
         this.socketBackoff = initialSocketBackoff
-
-        // Auth was confirmed, request replay if wanted by client
-        if (this.paramOptionFallback('replay', false) && this.paramOptionFallback('channel')) {
-          this.socket.send(JSON.stringify({
-            fields: {
-              channel: this.paramOptionFallback('channel'),
-              maxage: Number(this.paramOptionFallback('maxReplayAge', -1)),
-            },
-            type: '_replay',
-          }))
-        }
-
         return
       }
 
@@ -100,6 +98,38 @@ export default class EventClient {
         type: '_auth',
       }))
     }
+  }
+
+  /*
+   * Requests past events from the API and feed them through the registered handlers
+   *
+   * @params {string} channel The channel to fetch the events for
+   * @params {number} hours The amount of hours to fetch into the past (-1 = infinite)
+   * @returns {Promise} Can be listened for failures using `.catch`
+   */
+  fetchReplayForChannel(channel, hours = -1) {
+    const params = new URLSearchParams()
+    if (hours > -1) {
+      params.set('since', new Date(new Date().getTime() - hours * HOUR).toISOString())
+    }
+
+    return fetch(`${this.apiBase()}/overlays/events/${encodeURIComponent(channel)}?${params.toString()}`, {
+      headers: {
+        authorization: this.paramOptionFallback('token'),
+      },
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        const handlers = []
+
+        for (const msg of data) {
+          for (const fn of [this.handlers[msg.type], this.handlers._].filter(fn => fn)) {
+            handlers.push(fn(msg.type, msg.fields, new Date(msg.time), msg.is_live))
+          }
+        }
+
+        return Promise.all(handlers)
+      })
   }
 
   /**
