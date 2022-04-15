@@ -376,7 +376,8 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
 			"bits":    bits,
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"user":    m.User,          // Compatibility to plugins.DeriveUser
+			"message": m.Trailing(),
+			"user":    m.User, // Compatibility to plugins.DeriveUser
 		})
 
 		log.WithFields(log.Fields(fields.Data())).Info("User spent bits in chat message")
@@ -403,6 +404,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData := plugins.FieldCollectionFromData(map[string]any{
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"color":   m.Tags["msg-param-color"],
+			"message": m.Trailing(),
 			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("Announcement was made")
@@ -435,6 +437,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":           i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":              m.Tags["login"],
+			"message":           m.Trailing(),
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
 			"user":              m.Tags["login"], // Compatibility to plugins.DeriveUser
