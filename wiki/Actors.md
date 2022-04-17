@@ -14,6 +14,19 @@ Ban user from chat
     reason: ""
 ```
 
+## Custom Event
+
+Create a custom event
+
+```yaml
+- type: customevent
+  attributes:
+    # JSON representation of fields in the event (`map[string]any`)
+    # Optional: false
+    # Type:     string (Supports Templating)
+    fields: "{}"
+```
+
 ## Delay
 
 Delay next action
