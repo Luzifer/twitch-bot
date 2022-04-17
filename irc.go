@@ -395,27 +395,28 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		"trailing": m.Trailing(),
 	}).Trace("IRC USERNOTICE event")
 
+	evtData := plugins.FieldCollectionFromData(map[string]any{
+		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+	})
+
 	switch m.Tags["msg-id"] {
 	case "":
 		// Notices SHOULD have msg-id tags...
 		log.WithField("msg", m).Warn("Received usernotice without msg-id")
 
 	case "announcement":
-		evtData := plugins.FieldCollectionFromData(map[string]any{
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		evtData.SetFromData(map[string]any{
 			"color":   m.Tags["msg-param-color"],
 			"message": m.Trailing(),
-			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("Announcement was made")
 
 		go handleMessage(i.c, m, eventTypeAnnouncement, evtData)
 
 	case "giftpaidupgrade":
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"gifter":  m.Tags["msg-param-sender-login"],
-			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+		evtData.SetFromData(map[string]interface{}{
+			"gifter": m.Tags["msg-param-sender-login"],
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User upgraded to paid sub")
 
@@ -423,10 +424,8 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "raid":
 		vc, _ := strconv.ParseInt(string(m.Tags["msg-param-viewerCount"]), 10, 64)
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		evtData.SetFromData(map[string]interface{}{
 			"from":        m.Tags["login"],
-			"user":        m.Tags["login"], // Compatibility to plugins.DeriveUser
 			"viewercount": vc,
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("Incoming raid")
@@ -440,51 +439,43 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 			message = ""
 		}
 
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":           i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		evtData.SetFromData(map[string]interface{}{
 			"from":              m.Tags["login"],
 			"message":           message,
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
-			"user":              m.Tags["login"], // Compatibility to plugins.DeriveUser
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User re-subscribed")
 
 		go handleMessage(i.c, m, eventTypeResub, evtData)
 
 	case "sub":
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"from":    m.Tags["login"],
-			"plan":    m.Tags["msg-param-sub-plan"],
-			"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+		evtData.SetFromData(map[string]interface{}{
+			"from": m.Tags["login"],
+			"plan": m.Tags["msg-param-sub-plan"],
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User subscribed")
 
 		go handleMessage(i.c, m, eventTypeSub, evtData)
 
 	case "subgift", "anonsubgift":
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":       i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		evtData.SetFromData(map[string]interface{}{
 			"from":          m.Tags["login"],
 			"gifted_months": m.Tags["msg-param-gift-months"],
 			"origin_id":     m.Tags["msg-param-origin-id"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
-			"user":          m.Tags["login"], // Compatibility to plugins.DeriveUser
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User gifted a sub")
 
 		go handleMessage(i.c, m, eventTypeSubgift, evtData)
 
 	case "submysterygift":
-		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":   i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		evtData.SetFromData(map[string]interface{}{
 			"from":      m.Tags["login"],
 			"number":    m.Tags["msg-param-mass-gift-count"],
 			"origin_id": m.Tags["msg-param-origin-id"],
 			"plan":      m.Tags["msg-param-sub-plan"],
-			"user":      m.Tags["login"], // Compatibility to plugins.DeriveUser
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User gifted subs to the community")
 
