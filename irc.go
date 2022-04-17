@@ -434,10 +434,16 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeRaid, evtData)
 
 	case "resub":
+		message := m.Trailing()
+		if message == i.getChannel(m) {
+			// If no message is given, Trailing yields the channel name
+			message = ""
+		}
+
 		evtData := plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":           i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"from":              m.Tags["login"],
-			"message":           m.Trailing(),
+			"message":           message,
 			"subscribed_months": m.Tags["msg-param-cumulative-months"],
 			"plan":              m.Tags["msg-param-sub-plan"],
 			"user":              m.Tags["login"], // Compatibility to plugins.DeriveUser
