@@ -372,7 +372,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		return
 	}
 
-	if bits, err := strconv.ParseInt(string(m.Tags["bits"]), 10, 64); err == nil {
+	if bits := i.tagToNumeric(m, "bits", 0); bits > 0 {
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
 			"bits":    bits,
 			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
@@ -423,10 +423,9 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
 
 	case "raid":
-		vc, _ := strconv.ParseInt(string(m.Tags["msg-param-viewerCount"]), 10, 64)
 		evtData.SetFromData(map[string]interface{}{
 			"from":        m.Tags["login"],
-			"viewercount": vc,
+			"viewercount": i.tagToNumeric(m, "msg-param-viewerCount", 0),
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("Incoming raid")
 
@@ -442,7 +441,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData.SetFromData(map[string]interface{}{
 			"from":              m.Tags["login"],
 			"message":           message,
-			"subscribed_months": m.Tags["msg-param-cumulative-months"],
+			"subscribed_months": i.tagToNumeric(m, "msg-param-cumulative-months", 0),
 			"plan":              m.Tags["msg-param-sub-plan"],
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User re-subscribed")
@@ -461,10 +460,11 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	case "subgift", "anonsubgift":
 		evtData.SetFromData(map[string]interface{}{
 			"from":          m.Tags["login"],
-			"gifted_months": m.Tags["msg-param-gift-months"],
+			"gifted_months": i.tagToNumeric(m, "msg-param-gift-months", 1),
 			"origin_id":     m.Tags["msg-param-origin-id"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
+			"total_gifted":  i.tagToNumeric(m, "msg-param-sender-count", 0),
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User gifted a sub")
 
@@ -472,10 +472,11 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "submysterygift":
 		evtData.SetFromData(map[string]interface{}{
-			"from":      m.Tags["login"],
-			"number":    m.Tags["msg-param-mass-gift-count"],
-			"origin_id": m.Tags["msg-param-origin-id"],
-			"plan":      m.Tags["msg-param-sub-plan"],
+			"from":         m.Tags["login"],
+			"number":       i.tagToNumeric(m, "msg-param-mass-gift-count", 0),
+			"origin_id":    m.Tags["msg-param-origin-id"],
+			"plan":         m.Tags["msg-param-sub-plan"],
+			"total_gifted": i.tagToNumeric(m, "msg-param-sender-count", 0),
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User gifted subs to the community")
 
@@ -496,4 +497,18 @@ func (i ircHandler) handleTwitchUserstate(m *irc.Message) {
 
 func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
 	go handleMessage(i.c, m, eventTypeWhisper, nil)
+}
+
+func (ircHandler) tagToNumeric(m *irc.Message, tag string, fallback int64) int64 {
+	tv := string(m.Tags[tag])
+	if tv == "" {
+		return fallback
+	}
+
+	v, err := strconv.ParseInt(tv, 10, 64)
+	if err != nil {
+		return fallback
+	}
+
+	return v
 }
