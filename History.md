@@ -1,3 +1,38 @@
+# 2.3.0 / 2022-04-22
+
+  * New Features
+    * [core] Add more mathematical functions for templating
+    * [customevent] Add API module and actor to create custom events
+    * [filesay] Add FileSay actor to "paste" files with commands
+    * [msgformat] Add module to retrieve filled template through API
+    * [overlays] Add overlays server with some example templates and library
+
+  * Improvements
+    * [core] Add `delete` event for deleted chat messages
+    * [core] Add `origin_id` to subgift / submysterygift events
+    * [core] Add support for `annoumcement` event type
+    * [core] add `total_gifted` field for gifts, use numeric values for some fields
+    * [core] Provide message in `announcement`, `bits` and `resub` events
+    * [counter] Add template support for counter step
+    * [counter] Remove stored counter value on zero value
+    * [editor] Add bot version to frontend
+    * [editor] Improve location of permission warning
+    * [timeout] [#15] Allow timeout reason to be set
+
+  * Bugfixes
+    * [ban] Fix: Add missing API docs
+    * [core] Delete refresh token only for HTTP errors, not on connection issues
+    * [core] Fix: Accept 1s cooldown, fix user and channel cooldowns
+    * [core] Fix: EventSub messages had misformatted channel
+    * [core] Fix: Handle unauthorized error for app-access-tokens
+    * [core] Fix: Raid viewercount should be numeric, not string
+    * [core] Re-check token validity more often than on expiry
+    * [editor] [#19] Validate durations when checking for invalid rules
+    * [editor] [#20] Fix: Strip query parameters from redirect uri
+    * [editor] Fix node package vulnerability / update dependencies
+    * [editor] Fix: Upgrade contains a header send, error must not send headers
+    * [status] Fix: Add missing API docs
+
 # 2.2.0 / 2022-01-16
 
   * [ci] Make installed go binaries available during build
