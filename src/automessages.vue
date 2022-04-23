@@ -352,11 +352,26 @@ export default {
 
   methods: {
     deleteAutoMessage(uuid) {
-      axios.delete(`config-editor/auto-messages/${uuid}`, this.$root.axiosOptions)
-        .then(() => {
-          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
+      this.$bvModal.msgBoxConfirm('Do you really want to delete this message?', {
+        buttonSize: 'sm',
+        cancelTitle: 'NO',
+        centered: true,
+        okTitle: 'YES',
+        okVariant: 'danger',
+        size: 'sm',
+        title: 'Please Confirm',
+      })
+        .then(val => {
+          if (!val) {
+            return
+          }
+
+          return axios.delete(`config-editor/auto-messages/${uuid}`, this.$root.axiosOptions)
+            .then(() => {
+              this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
+            })
+            .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
-        .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
     editAutoMessage(msg) {
