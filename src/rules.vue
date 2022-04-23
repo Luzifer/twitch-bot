@@ -15,7 +15,6 @@
               <b-button @click="editRule(data.item)">
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'pen']"
                 />
               </b-button>
@@ -25,7 +24,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'minus']"
                 />
               </b-button>
@@ -71,7 +69,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'plus']"
                 />
               </b-button>

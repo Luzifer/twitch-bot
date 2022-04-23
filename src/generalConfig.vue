@@ -46,7 +46,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'minus']"
                 />
               </b-button>
@@ -109,7 +108,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'minus']"
                 />
               </b-button>
@@ -162,7 +160,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'plus']"
                 />
               </b-button>
@@ -196,7 +193,6 @@
               >
                 <font-awesome-icon
                   fixed-width
-                  class="mr-1"
                   :icon="['fas', 'minus']"
                 />
               </b-button>
