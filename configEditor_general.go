@@ -186,7 +186,7 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	elevated := make(map[string]bool)
 
 	for _, ch := range config.Channels {
-		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...)
+		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...) && store.UserHasExtendedAuth(ch)
 	}
 
 	var uName *string
