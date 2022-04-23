@@ -1,5 +1,23 @@
 <template>
   <div>
+    <b-row class="mb-2">
+      <b-col>
+        <b-input-group>
+          <b-form-input
+            v-model.lazy="filter"
+            placeholder="Search in / filter rules..."
+          />
+          <b-input-group-append>
+            <b-button @click="filter = ''">
+              <font-awesome-icon
+                fixed-width
+                :icon="['fas', 'trash']"
+              />
+            </b-button>
+          </b-input-group-append>
+        </b-input-group>
+      </b-col>
+    </b-row>
     <b-row>
       <b-col>
         <b-table
@@ -7,7 +25,7 @@
           :busy="!rules"
           :fields="rulesFields"
           hover
-          :items="rules"
+          :items="filteredRules"
           striped
         >
           <template #cell(_actions)="data">
@@ -594,11 +612,19 @@ export default {
       count += this.models.rule.match_users ? 1 : 0
       return count
     },
+
+    filteredRules() {
+      const rules = [...this.rules]
+        .filter(rule => !this.filter || rule.description.toLocaleLowerCase().includes(this.filter.toLocaleLowerCase()))
+      rules.sort((a, b) => a.description.toLocaleLowerCase().localeCompare(b.description.toLocaleLowerCase()))
+      return rules
+    },
   },
 
   data() {
     return {
       actions: [],
+      filter: '',
       models: {
         addAction: '',
         rule: {},
