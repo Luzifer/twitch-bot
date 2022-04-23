@@ -18,23 +18,32 @@ import (
 
 const eventSubSecretLength = 32
 
-type storageFile struct {
-	Counters  map[string]int64              `json:"counters"`
-	Timers    map[string]plugins.TimerEntry `json:"timers"`
-	Variables map[string]string             `json:"variables"`
+type (
+	storageExtendedPermission struct {
+		AccessToken  string   `encrypt:"true" json:"access_token,omitempty"`
+		RefreshToken string   `encrypt:"true" json:"refresh_token,omitempty"`
+		Scopes       []string `json:"scopes,omitempty"`
+	}
 
-	ModuleStorage map[string]json.RawMessage `json:"module_storage"`
+	storageFile struct {
+		Counters  map[string]int64              `json:"counters"`
+		Timers    map[string]plugins.TimerEntry `json:"timers"`
+		Variables map[string]string             `json:"variables"`
 
-	GrantedScopes map[string][]string `json:"granted_scopes"`
+		ModuleStorage map[string]json.RawMessage `json:"module_storage"`
 
-	EventSubSecret string `encrypt:"true" json:"event_sub_secret,omitempty"`
+		GrantedScopes       map[string][]string                   `json:"granted_scopes,omitempty"` // Deprecated, Read-Only
+		ExtendedPermissions map[string]*storageExtendedPermission `json:"extended_permissions"`
 
-	BotAccessToken  string `encrypt:"true" json:"bot_access_token,omitempty"`
-	BotRefreshToken string `encrypt:"true" json:"bot_refresh_token,omitempty"`
+		EventSubSecret string `encrypt:"true" json:"event_sub_secret,omitempty"`
 
-	inMem bool
-	lock  *sync.RWMutex
-}
+		BotAccessToken  string `encrypt:"true" json:"bot_access_token,omitempty"`
+		BotRefreshToken string `encrypt:"true" json:"bot_refresh_token,omitempty"`
+
+		inMem bool
+		lock  *sync.RWMutex
+	}
+)
 
 func newStorageFile(inMemStore bool) *storageFile {
 	return &storageFile{
@@ -44,18 +53,19 @@ func newStorageFile(inMemStore bool) *storageFile {
 
 		ModuleStorage: map[string]json.RawMessage{},
 
-		GrantedScopes: map[string][]string{},
+		GrantedScopes:       map[string][]string{},
+		ExtendedPermissions: map[string]*storageExtendedPermission{},
 
 		inMem: inMemStore,
 		lock:  new(sync.RWMutex),
 	}
 }
 
-func (s *storageFile) DeleteGrantedScopes(user string) error {
+func (s *storageFile) DeleteExtendedPermissions(user string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	delete(s.GrantedScopes, user)
+	delete(s.ExtendedPermissions, user)
 
 	return errors.Wrap(s.Save(), "saving store")
 }
@@ -166,7 +176,7 @@ func (s *storageFile) Load() error {
 		return errors.Wrap(err, "decrypting storage object")
 	}
 
-	return nil
+	return errors.Wrap(s.migrate(), "migrating storage")
 }
 
 func (s *storageFile) Save() error {
@@ -218,19 +228,28 @@ func (s *storageFile) Save() error {
 	return nil
 }
 
-func (s *storageFile) SetGrantedScopes(user string, scopes []string, merge bool) error {
+func (s *storageFile) SetExtendedPermissions(user string, data storageExtendedPermission, merge bool) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if merge {
-		for _, sc := range s.GrantedScopes[user] {
-			if !str.StringInSlice(sc, scopes) {
-				scopes = append(scopes, sc)
+	prev := s.ExtendedPermissions[user]
+	if merge && prev != nil {
+		for _, sc := range prev.Scopes {
+			if !str.StringInSlice(sc, data.Scopes) {
+				data.Scopes = append(data.Scopes, sc)
 			}
+		}
+
+		if data.AccessToken == "" && prev.AccessToken != "" {
+			data.AccessToken = prev.AccessToken
+		}
+
+		if data.RefreshToken == "" && prev.RefreshToken != "" {
+			data.RefreshToken = prev.RefreshToken
 		}
 	}
 
-	s.GrantedScopes[user] = scopes
+	s.ExtendedPermissions[user] = &data
 
 	return errors.Wrap(s.Save(), "saving store")
 }
@@ -303,15 +322,23 @@ func (s *storageFile) UpdateCounter(counter string, value int64, absolute bool) 
 	return errors.Wrap(s.Save(), "saving store")
 }
 
+func (s *storageFile) UserHasExtendedAuth(user string) bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	ep := s.ExtendedPermissions[user]
+	return ep != nil && ep.AccessToken != "" && ep.RefreshToken != ""
+}
+
 func (s *storageFile) UserHasGrantedAnyScope(user string, scopes ...string) bool {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	grantedScopes, ok := s.GrantedScopes[user]
-	if !ok {
+	if s.ExtendedPermissions[user] == nil {
 		return false
 	}
 
+	grantedScopes := s.ExtendedPermissions[user].Scopes
 	for _, scope := range scopes {
 		if str.StringInSlice(scope, grantedScopes) {
 			return true
@@ -325,11 +352,11 @@ func (s *storageFile) UserHasGrantedScopes(user string, scopes ...string) bool {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	grantedScopes, ok := s.GrantedScopes[user]
-	if !ok {
+	if s.ExtendedPermissions[user] == nil {
 		return false
 	}
 
+	grantedScopes := s.ExtendedPermissions[user].Scopes
 	for _, scope := range scopes {
 		if !str.StringInSlice(scope, grantedScopes) {
 			return false
@@ -337,4 +364,19 @@ func (s *storageFile) UserHasGrantedScopes(user string, scopes ...string) bool {
 	}
 
 	return true
+}
+
+func (s *storageFile) migrate() error {
+	// Do NOT lock, use during locked call
+
+	// Migration: Transform GrantedScopes and delete
+	for ch, scopes := range s.GrantedScopes {
+		if s.ExtendedPermissions[ch] != nil {
+			continue
+		}
+		s.ExtendedPermissions[ch] = &storageExtendedPermission{Scopes: scopes}
+	}
+	s.GrantedScopes = nil
+
+	return nil
 }

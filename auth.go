@@ -92,7 +92,11 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 
 	twitchClient.UpdateToken(rData.AccessToken, rData.RefreshToken)
 
-	if err = store.SetGrantedScopes(botUser, rData.Scope, true); err != nil {
+	if err = store.SetExtendedPermissions(botUser, storageExtendedPermission{
+		AccessToken:  rData.AccessToken,
+		RefreshToken: rData.RefreshToken,
+		Scopes:       rData.Scope,
+	}, true); err != nil {
 		http.Error(w, errors.Wrap(err, "storing access scopes").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -141,8 +145,12 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = store.SetGrantedScopes(grantUser, rData.Scope, false); err != nil {
-		http.Error(w, errors.Wrap(err, "storing access scopes").Error(), http.StatusInternalServerError)
+	if err = store.SetExtendedPermissions(grantUser, storageExtendedPermission{
+		AccessToken:  rData.AccessToken,
+		RefreshToken: rData.RefreshToken,
+		Scopes:       rData.Scope,
+	}, false); err != nil {
+		http.Error(w, errors.Wrap(err, "storing access token").Error(), http.StatusInternalServerError)
 		return
 	}
 

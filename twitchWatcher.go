@@ -171,7 +171,7 @@ func (t *twitchWatcher) handleEventUserAuthRevoke(m json.RawMessage) error {
 	}
 
 	return errors.Wrap(
-		store.DeleteGrantedScopes(payload.UserLogin),
+		store.DeleteExtendedPermissions(payload.UserLogin),
 		"deleting granted scopes",
 	)
 }

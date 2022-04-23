@@ -65,6 +65,16 @@ func handleEncryptedTags(obj interface{}, passphrase string, action encryptActio
 		hasEncryption := t.Tag.Get("encrypt") == "true"
 
 		switch t.Type.Kind() {
+		// Type: Map - see whether value is struct
+		case reflect.Map:
+			if t.Type.Elem().Kind() == reflect.Ptr && t.Type.Elem().Elem().Kind() == reflect.Struct {
+				for _, k := range v.MapKeys() {
+					if err := handleEncryptedTags(v.MapIndex(k).Interface(), passphrase, action); err != nil {
+						return err
+					}
+				}
+			}
+
 		// Type: Pointer - Recurse if not nil and struct inside
 		case reflect.Ptr:
 			if !v.IsNil() && v.Elem().Kind() == reflect.Struct && t.Type != reflect.TypeOf(&time.Time{}) {
