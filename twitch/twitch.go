@@ -512,7 +512,7 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 			Body:     body,
 			Context:  ctx,
 			Method:   http.MethodPatch,
-			OKStatus: http.StatusOK,
+			OKStatus: http.StatusNoContent,
 			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster),
 		}),
 		"executing request",
