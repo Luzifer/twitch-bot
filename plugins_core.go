@@ -114,6 +114,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetStorageManager:          func() plugins.StorageManager { return store },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
+		GetTwitchClientForChannel:  store.GetTwitchClientForChannel,
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,

@@ -57,6 +57,8 @@ type (
 		GetStorageManager func() StorageManager
 		// GetTwitchClient retrieves a fully configured Twitch client with initialized cache
 		GetTwitchClient func() *twitch.Client
+		// GetTwitchClientForChannel retrieves a fully configured Twitch client with initialized cache for extended permission channels
+		GetTwitchClientForChannel func(string) (*twitch.Client, error)
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 		// RegisterActorDocumentation is used to register an ActorDocumentation for the config editor

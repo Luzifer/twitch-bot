@@ -15,12 +15,12 @@ const actorName = "modchannel"
 
 var (
 	formatMessage plugins.MsgFormatter
-	twitchClient  *twitch.Client
+	tcGetter      func(string) (*twitch.Client, error)
 )
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
-	twitchClient = args.GetTwitchClient()
+	tcGetter = args.GetTwitchClientForChannel
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -99,6 +99,11 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		updTitle = &parsedTitle
+	}
+
+	twitchClient, err := tcGetter(strings.TrimLeft(channel, "#"))
+	if err != nil {
+		return false, errors.Wrap(err, "getting Twitch client")
 	}
 
 	return false, errors.Wrap(
