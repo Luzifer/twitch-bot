@@ -14,9 +14,12 @@ import (
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/crypt"
 	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 const eventSubSecretLength = 32
+
+var errExtendedPermissionsMissing = errors.New("no extended permissions greanted")
 
 type (
 	storageExtendedPermission struct {
@@ -126,6 +129,26 @@ func (s *storageFile) GetModuleStore(moduleUUID string, storedObject plugins.Sto
 		storedObject.UnmarshalStoredObject(s.ModuleStorage[moduleUUID]),
 		"unmarshalling stored object",
 	)
+}
+
+func (s *storageFile) GetTwitchClientForChannel(channel string) (*twitch.Client, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	perms := s.ExtendedPermissions[channel]
+	if perms == nil {
+		return nil, errExtendedPermissionsMissing
+	}
+
+	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, perms.AccessToken, perms.RefreshToken)
+	tc.SetTokenUpdateHook(func(at, rt string) error {
+		return errors.Wrap(s.SetExtendedPermissions(channel, storageExtendedPermission{
+			AccessToken:  at,
+			RefreshToken: rt,
+		}, true), "updating extended permissions token")
+	})
+
+	return tc, nil
 }
 
 func (s *storageFile) GetVariable(key string) string {
