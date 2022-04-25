@@ -615,8 +615,8 @@ export default {
 
     filteredRules() {
       const rules = [...this.rules]
-        .filter(rule => !this.filter || rule.description.toLocaleLowerCase().includes(this.filter.toLocaleLowerCase()))
-      rules.sort((a, b) => a.description.toLocaleLowerCase().localeCompare(b.description.toLocaleLowerCase()))
+        .filter(rule => !this.filter || rule.description?.toLocaleLowerCase().includes(this.filter?.toLocaleLowerCase()))
+      rules.sort((a, b) => a.description?.toLocaleLowerCase().localeCompare(b.description?.toLocaleLowerCase()))
       return rules
     },
   },
