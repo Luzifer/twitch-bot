@@ -66,6 +66,11 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 }
 
 func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plugins.FieldCollection) {
+	// Send events to registered handlers
+	if event != nil {
+		go notifyEventHandlers(*event, eventData)
+	}
+
 	for _, r := range config.GetMatchingRules(m, event, eventData) {
 		var preventCooldown bool
 
@@ -82,10 +87,5 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 		if !preventCooldown {
 			r.SetCooldown(timerStore, m, eventData)
 		}
-	}
-
-	// Send events to registered handlers
-	if event != nil {
-		notifyEventHandlers(*event, eventData)
 	}
 }
