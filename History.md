@@ -1,3 +1,15 @@
+# 2.4.0 / 2022-05-07
+
+  * Improvements
+    * [editor] [#23] Add confirmation for delete buttons
+    * [editor] [#25] Allow searching in / sort rules
+
+  * Bugfixes
+    * [core] Fix: Notify event handlers before rules to prevent delays
+    * [editor] [#28] Fix: Allow saving with empty optional duration
+    * [editor] Fix: Remove asymmetric margin from buttons
+    * [modchannel] [#26] Fix: Modify channel module not working for editor-bots (#27)
+
 # 2.3.0 / 2022-04-22
 
   * New Features
