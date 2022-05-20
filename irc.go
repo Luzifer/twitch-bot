@@ -441,6 +441,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData.SetFromData(map[string]interface{}{
 			"from":              m.Tags["login"],
 			"message":           message,
+			"multi_month":       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
 			"subscribed_months": i.tagToNumeric(m, "msg-param-cumulative-months", 0),
 			"plan":              m.Tags["msg-param-sub-plan"],
 		})
@@ -450,8 +451,9 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 
 	case "sub":
 		evtData.SetFromData(map[string]interface{}{
-			"from": m.Tags["login"],
-			"plan": m.Tags["msg-param-sub-plan"],
+			"from":        m.Tags["login"],
+			"multi_month": i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
+			"plan":        m.Tags["msg-param-sub-plan"],
 		})
 		log.WithFields(log.Fields(evtData.Data())).Info("User subscribed")
 
@@ -461,6 +463,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData.SetFromData(map[string]interface{}{
 			"from":          m.Tags["login"],
 			"gifted_months": i.tagToNumeric(m, "msg-param-gift-months", 1),
+			"multi_month":   i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
 			"origin_id":     m.Tags["msg-param-origin-id"],
 			"plan":          m.Tags["msg-param-sub-plan"],
 			"to":            m.Tags["msg-param-recipient-user-name"],
@@ -473,6 +476,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	case "submysterygift":
 		evtData.SetFromData(map[string]interface{}{
 			"from":         m.Tags["login"],
+			"multi_month":  i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
 			"number":       i.tagToNumeric(m, "msg-param-mass-gift-count", 0),
 			"origin_id":    m.Tags["msg-param-origin-id"],
 			"plan":         m.Tags["msg-param-sub-plan"],
