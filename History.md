@@ -1,3 +1,8 @@
+# 2.5.0 / 2022-06-06
+
+  * Improvements
+    * [core] Add multi\_month parameter parsing for subs
+
 # 2.4.0 / 2022-05-07
 
   * Improvements
