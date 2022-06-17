@@ -125,7 +125,10 @@
 
           <hr>
 
-          <b-tabs content-class="mt-3">
+          <b-tabs
+            content-class="mt-3"
+            small
+          >
             <b-tab>
               <div slot="title">
                 Matcher <b-badge>{{ countRuleMatchers }}</b-badge>
@@ -188,6 +191,7 @@
                 />
               </b-form-group>
             </b-tab>
+
             <b-tab>
               <div slot="title">
                 Cooldown <b-badge>{{ countRuleCooldowns }}</b-badge>
@@ -254,6 +258,7 @@
                 />
               </b-form-group>
             </b-tab>
+
             <b-tab>
               <div slot="title">
                 Conditions <b-badge>{{ countRuleConditions }}</b-badge>
@@ -343,6 +348,58 @@
                   v-model="models.rule.disable_on_template"
                 />
               </b-form-group>
+            </b-tab>
+
+            <b-tab>
+              <div slot="title">
+                Exceptions <b-badge>{{ countRuleExceptions }}</b-badge>
+              </div>
+
+              <b-list-group flush>
+                <b-list-group-item>
+                  <b-input-group>
+                    <b-form-input
+                      v-model="models.addException"
+                      :state="!!models.addException__validation"
+                      @keyup="validateExceptionRegex"
+                      @paste="validateExceptionRegex"
+                      @keyup.enter="addException"
+                    />
+                    <b-input-group-append>
+                      <b-button
+                        variant="success"
+                        :disabled="!models.addException__validation"
+                        @click="addException"
+                      >
+                        <font-awesome-icon
+                          fixed-width
+                          class="mr-1"
+                          :icon="['fas', 'plus']"
+                        />
+                        Add
+                      </b-button>
+                    </b-input-group-append>
+                  </b-input-group>
+                </b-list-group-item>
+
+                <b-list-group-item
+                  v-for="ex in models.rule.disable_on_match_messages"
+                  :key="ex"
+                  class="d-flex align-items-center align-middle"
+                >
+                  <code class="mr-auto">{{ ex }}</code>
+                  <b-button
+                    size="sm"
+                    variant="danger"
+                    @click="removeException(ex)"
+                  >
+                    <font-awesome-icon
+                      fixed-width
+                      :icon="['fas', 'minus']"
+                    />
+                  </b-button>
+                </b-list-group-item>
+              </b-list-group>
             </b-tab>
           </b-tabs>
         </b-col>
@@ -604,6 +661,10 @@ export default {
       return count
     },
 
+    countRuleExceptions() {
+      return (this.models.rule?.disable_on_match_messages || []).length
+    },
+
     countRuleMatchers() {
       let count = 0
       count += this.models.rule.match_channels ? 1 : 0
@@ -627,6 +688,7 @@ export default {
       filter: '',
       models: {
         addAction: '',
+        addException: '',
         rule: {},
       },
 
@@ -677,6 +739,18 @@ export default {
       }
 
       this.models.rule.actions.push({ attributes: {}, type: this.models.addAction })
+    },
+
+    addException() {
+      this.validateRegex(this.models.addException, false)
+        .then(ok => {
+          if (!ok) {
+            return
+          }
+
+          this.models.rule.disable_on_match_messages.push(this.models.addException)
+          this.models.addException = ''
+        })
     },
 
     deleteRule(uuid) {
@@ -843,6 +917,10 @@ export default {
       this.models.rule.actions = this.models.rule.actions.filter((_, i) => i !== idx)
     },
 
+    removeException(ex) {
+      this.models.rule.disable_on_match_messages = this.models.rule.disable_on_match_messages.filter(r => r !== ex)
+    },
+
     saveRule(evt) {
       if (!this.validateRule()) {
         evt.preventDefault()
@@ -1004,19 +1082,31 @@ export default {
       return Boolean(duration.match(/^(?:\d+(?:s|m|h))+$/))
     },
 
+    validateExceptionRegex() {
+      return this.validateRegex(this.models.addException, false)
+        .then(res => Vue.set(this.models, 'addException__validation', res))
+    },
+
     validateMatcherRegex() {
       if (this.models.rule.match_message === '') {
         Vue.set(this.models.rule, 'match_message__validation', true)
         return
       }
 
-      return axios.put(`config-editor/validate-regex?regexp=${encodeURIComponent(this.models.rule.match_message)}`)
-        .then(() => {
-          Vue.set(this.models.rule, 'match_message__validation', true)
+      return this.validateRegex(this.models.rule.match_message, true)
+        .then(res => Vue.set(this.models.rule, 'match_message__validation', res))
+    },
+
+    validateRegex(regex, allowEmpty = true) {
+      if (regex === '' && !allowEmpty) {
+        return new Promise(resolve => {
+          resolve(false)
         })
-        .catch(() => {
-          Vue.set(this.models.rule, 'match_message__validation', false)
-        })
+      }
+
+      return axios.put(`config-editor/validate-regex?regexp=${encodeURIComponent(regex)}`)
+        .then(() => true)
+        .catch(() => false)
     },
 
     validateRule() {
