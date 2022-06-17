@@ -17,6 +17,13 @@ var (
 	_ plugins.MsgFormatter = formatMessage
 
 	stripNewline = regexp.MustCompile(`(?m)\s*\n\s*`)
+
+	formatMessageFieldSetters = []func(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection){
+		formatMessageFieldChannel,
+		formatMessageFieldMessage,
+		formatMessageFieldUserID,
+		formatMessageFieldUsername,
+	}
 )
 
 func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) (string, error) {
@@ -31,11 +38,9 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 
 	compiledFields.SetFromData(fields.Data())
 
-	if m != nil {
-		compiledFields.Set("msg", m)
+	for _, fn := range formatMessageFieldSetters {
+		fn(compiledFields, m, fields)
 	}
-	compiledFields.Set("username", plugins.DeriveUser(m, fields))
-	compiledFields.Set("channel", plugins.DeriveChannel(m, fields))
 
 	// Template in frontend supports newlines, messages do not
 	tplString = stripNewline.ReplaceAllString(tplString, " ")
@@ -53,4 +58,30 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 	err = tpl.Execute(buf, compiledFields.Data())
 
 	return buf.String(), errors.Wrap(err, "execute template")
+}
+
+func formatMessageFieldChannel(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+	compiledFields.Set(eventFieldChannel, plugins.DeriveChannel(m, fields))
+}
+
+func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+	if m == nil {
+		return
+	}
+
+	compiledFields.Set("msg", m)
+}
+
+func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+	if m == nil {
+		return
+	}
+
+	if uid := m.Tags["user-id"]; uid != "" {
+		compiledFields.Set(eventFieldUserID, uid)
+	}
+}
+
+func formatMessageFieldUsername(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+	compiledFields.Set("username", plugins.DeriveUser(m, fields))
 }

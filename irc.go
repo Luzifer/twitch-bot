@@ -219,7 +219,7 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 		fields = plugins.NewFieldCollection()
 	)
 
-	fields.Set("channel", i.getChannel(m)) // Compatibility to plugins.DeriveChannel
+	fields.Set(eventFieldChannel, i.getChannel(m)) // Compatibility to plugins.DeriveChannel
 
 	switch {
 	case secondsErr == nil && hasTargetUserID:
@@ -249,9 +249,9 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 
 func (i ircHandler) handleClearMessage(m *irc.Message) {
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel":     i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"message_id":  m.Tags["target-msg-id"],
-		"target_name": m.Tags["login"],
+		eventFieldChannel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		"message_id":      m.Tags["target-msg-id"],
+		"target_name":     m.Tags["login"],
 	})
 	log.WithFields(log.Fields(fields.Data())).
 		WithField("message", m.Trailing()).
@@ -261,16 +261,16 @@ func (i ircHandler) handleClearMessage(m *irc.Message) {
 
 func (i ircHandler) handleJoin(m *irc.Message) {
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"user":    m.User,          // Compatibility to plugins.DeriveUser
+		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
 	go handleMessage(i.c, m, eventTypeJoin, fields)
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"user":    m.User,          // Compatibility to plugins.DeriveUser
+		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
 	go handleMessage(i.c, m, eventTypePart, fields)
 }
@@ -290,10 +290,10 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	username := msgParts[1]
 
 	fields := plugins.FieldCollectionFromData(map[string]interface{}{
-		"channel":  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"user":     m.User,          // Compatibility to plugins.DeriveUser
-		"username": username,        // DEPRECATED but kept for comapatibility
-		"to":       username,
+		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
+		eventFieldUserID:   m.Tags["user-id"],
+		"to":               username,
 	})
 
 	log.WithFields(fields.Data()).Debug("Added permit")
@@ -304,9 +304,9 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 	log.WithFields(log.Fields{
-		"channel":  i.getChannel(m),
-		"tags":     m.Tags,
-		"trailing": m.Trailing(),
+		eventFieldChannel: i.getChannel(m),
+		"tags":            m.Tags,
+		"trailing":        m.Trailing(),
 	}).Trace("IRC NOTICE event")
 
 	switch m.Tags["msg-id"] {
@@ -318,8 +318,8 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 		log.WithField("trailing", m.Trailing()).Warn("Incoming host")
 
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"user":    m.User,          // Compatibility to plugins.DeriveUser
+			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 		})
 		go handleMessage(i.c, m, eventTypeHost, fields)
 
@@ -328,11 +328,12 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 
 func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	log.WithFields(log.Fields{
-		"channel":  i.getChannel(m),
-		"name":     m.Name,
-		"user":     m.User,
-		"tags":     m.Tags,
-		"trailing": m.Trailing(),
+		eventFieldChannel:  i.getChannel(m),
+		"name":             m.Name,
+		eventFieldUserName: m.User,
+		eventFieldUserID:   m.Tags["user-id"],
+		"tags":             m.Tags,
+		"trailing":         m.Trailing(),
 	}).Trace("Received privmsg")
 
 	if m.User != i.user {
@@ -352,9 +353,9 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		}
 
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
-			"channel":     fmt.Sprintf("#%s", i.user),
-			"from":        matches[1],
-			"viewerCount": 0,
+			eventFieldChannel: fmt.Sprintf("#%s", i.user),
+			"from":            matches[1],
+			"viewerCount":     0,
 		})
 
 		if v, err := strconv.Atoi(matches[2]); err == nil {
@@ -374,10 +375,11 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 
 	if bits := i.tagToNumeric(m, "bits", 0); bits > 0 {
 		fields := plugins.FieldCollectionFromData(map[string]interface{}{
-			"bits":    bits,
-			"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"message": m.Trailing(),
-			"user":    m.User, // Compatibility to plugins.DeriveUser
+			"bits":             bits,
+			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			"message":          m.Trailing(),
+			eventFieldUserName: m.User, // Compatibility to plugins.DeriveUser
+			eventFieldUserID:   m.Tags["user-id"],
 		})
 
 		log.WithFields(log.Fields(fields.Data())).Info("User spent bits in chat message")
@@ -390,14 +392,15 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 
 func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	log.WithFields(log.Fields{
-		"channel":  i.getChannel(m),
-		"tags":     m.Tags,
-		"trailing": m.Trailing(),
+		eventFieldChannel: i.getChannel(m),
+		"tags":            m.Tags,
+		"trailing":        m.Trailing(),
 	}).Trace("IRC USERNOTICE event")
 
 	evtData := plugins.FieldCollectionFromData(map[string]any{
-		"channel": i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"user":    m.Tags["login"], // Compatibility to plugins.DeriveUser
+		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		eventFieldUserName: m.Tags["login"], // Compatibility to plugins.DeriveUser
+		eventFieldUserID:   m.Tags["user-id"],
 	})
 
 	switch m.Tags["msg-id"] {
