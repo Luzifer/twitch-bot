@@ -184,6 +184,7 @@
                 <b-badge
                   v-for="module in token.modules"
                   :key="module"
+                  class="mr-1"
                 >{{ module === '*' ? 'ANY' : module }}</b-badge>
               </span>
               <b-button
