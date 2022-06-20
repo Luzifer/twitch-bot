@@ -355,6 +355,18 @@
                 Exceptions <b-badge>{{ countRuleExceptions }}</b-badge>
               </div>
 
+              <b-alert
+                show
+                variant="info"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  :icon="['fas', 'info-circle']"
+                />
+                If the message does match one of these regular expressions, the rule is not executed.
+                (Use for example to disable link protection on certain messages.)
+              </b-alert>
+
               <b-list-group flush>
                 <b-list-group-item>
                   <b-input-group>
