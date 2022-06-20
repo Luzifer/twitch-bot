@@ -27,6 +27,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
+	"github.com/Luzifer/twitch-bot/internal/template/slice"
 	"github.com/Luzifer/twitch-bot/plugins"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
@@ -52,6 +53,7 @@ var (
 		// Template functions
 		numeric.Register,
 		random.Register,
+		slice.Register,
 
 		// API-only modules
 		customevent.Register,

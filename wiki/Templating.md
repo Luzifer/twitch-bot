@@ -184,6 +184,21 @@ Example:
 < test - oops
 ```
 
+#### `inList`
+
+Tests whether a string is in a given list of strings (for conditional templates).
+
+Syntax: `inList "search" "item1" "item2" [...]`
+
+Example:
+
+```
+! !command (.*)
+> !command foo
+# {{ inList (group 1) "foo" "bar" }}
+< true
+```
+
 #### `lastQuoteIndex`
 
 Gets the last quote index in the quote database for the current channel
