@@ -212,6 +212,19 @@ Example:
 < Last Quote: #32
 ```
 
+#### `mod`
+
+Returns int from calculation: `int1 % int2`
+
+Syntax: `mod <int1> <int2>`
+
+Example:
+
+```
+# {{ mod 12 10 }}
+< 2
+```
+
 #### `mul` (deprecated: `multiply`)
 
 Returns float from calculation: `float1 * float2`
