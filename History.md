@@ -1,3 +1,17 @@
+# 2.6.0 / 2022-07-15
+
+  * New Features
+    * [editor] [#18] Add editor for `disable_on_match_messages`
+    * [template] Add `inList` function
+    * [template] Add "mod" function for modulo in templating
+
+  * Improvements
+    * [core] Expose user\_id in events
+    * [editor] Add explanatory hint for exceptions
+
+  * Bugfixes
+    * [editor] Fix: Token badges had no spacing
+
 # 2.5.0 / 2022-06-06
 
   * Improvements
