@@ -9,6 +9,7 @@ import (
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterTemplateFunction("add", plugins.GenericTemplateFunctionGetter(add))
 	args.RegisterTemplateFunction("div", plugins.GenericTemplateFunctionGetter(div))
+	args.RegisterTemplateFunction("mod", plugins.GenericTemplateFunctionGetter(mod))
 	args.RegisterTemplateFunction("mul", plugins.GenericTemplateFunctionGetter(mul))
 	args.RegisterTemplateFunction("multiply", plugins.GenericTemplateFunctionGetter(mul)) // DEPRECATED
 	args.RegisterTemplateFunction("pow", plugins.GenericTemplateFunctionGetter(math.Pow))
@@ -18,5 +19,6 @@ func Register(args plugins.RegistrationArguments) error {
 
 func add(m1, m2 float64) float64 { return m1 + m2 }
 func div(m1, m2 float64) float64 { return m1 / m2 }
+func mod(m1, m2 int64) int64     { return m1 % m2 }
 func mul(m1, m2 float64) float64 { return m1 * m2 }
 func sub(m1, m2 float64) float64 { return m1 - m2 }
