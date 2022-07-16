@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
 
@@ -57,7 +58,7 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 	buf := new(bytes.Buffer)
 	err = tpl.Execute(buf, compiledFields.Data())
 
-	return buf.String(), errors.Wrap(err, "execute template")
+	return strings.TrimSpace(buf.String()), errors.Wrap(err, "execute template")
 }
 
 func formatMessageFieldChannel(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
