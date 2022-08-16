@@ -251,6 +251,19 @@ Example:
 < 10000
 ```
 
+#### `randomString`
+
+Randomly picks a string from a list of strings
+
+Syntax: `randomString "a" [...]`
+
+Example:
+
+```
+# {{ randomString "a" "b" "c" "d" }}
+< a
+```
+
 #### `recentGame`
 
 Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.

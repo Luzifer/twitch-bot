@@ -12,8 +12,17 @@ import (
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	args.RegisterTemplateFunction("randomString", plugins.GenericTemplateFunctionGetter(randomString))
 	args.RegisterTemplateFunction("seededRandom", plugins.GenericTemplateFunctionGetter(stableRandomFromSeed))
 	return nil
+}
+
+func randomString(lst ...string) (string, error) {
+	if len(lst) == 0 {
+		return "", errors.New("empty list given")
+	}
+
+	return lst[rand.Intn(len(lst))], nil
 }
 
 func stableRandomFromSeed(seed string) (float64, error) {
