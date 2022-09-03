@@ -1,3 +1,14 @@
+# 2.7.0 / 2022-09-03
+
+  * New Features
+    * [template] Add `randomString` template function
+
+  * Improvements
+    * [core] Make number of subscribed months available for subgift
+
+  * Bugfixes
+    * [msgformatter] Fix: Trim leading / trailing spaces
+
 # 2.6.0 / 2022-07-15
 
   * New Features
