@@ -151,7 +151,7 @@ func handleSubCommand(args []string) {
 	}
 }
 
-//nolint: funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
+//nolint:funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
 

@@ -22,7 +22,7 @@ func randomString(lst ...string) (string, error) {
 		return "", errors.New("empty list given")
 	}
 
-	return lst[rand.Intn(len(lst))], nil
+	return lst[rand.Intn(len(lst))], nil // #nosec:G404 // This is used to select a random string from a list, no crypto-use
 }
 
 func stableRandomFromSeed(seed string) (float64, error) {
@@ -31,11 +31,11 @@ func stableRandomFromSeed(seed string) (float64, error) {
 		return 0, errors.Wrap(err, "generating seed")
 	}
 
-	return rand.New(rand.NewSource(seedValue)).Float64(), nil // #nosec G404 // Only used for generating a random number from static string, no need for cryptographic safety
+	return rand.New(rand.NewSource(seedValue)).Float64(), nil // #nosec:G404 // Only used for generating a random number from static string, no need for cryptographic safety
 }
 
 func stringToSeed(s string) (int64, error) {
-	hash := md5.New() // #nosec G401 // Unly used to convert a string into a numer, no need for cryptographic safety
+	hash := md5.New() // #nosec:G401 // Unly used to convert a string into a numer, no need for cryptographic safety
 	if _, err := fmt.Fprint(hash, s); err != nil {
 		return 0, errors.Wrap(err, "writing string to hasher")
 	}
