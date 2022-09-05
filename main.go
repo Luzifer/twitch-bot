@@ -32,6 +32,8 @@ const (
 	initialIRCRetryBackoff    = 500 * time.Millisecond
 	ircRetryBackoffMultiplier = 1.5
 	maxIRCRetryBackoff        = time.Minute
+
+	httpReadHeaderTimeout = 5 * time.Second
 )
 
 var (
@@ -252,7 +254,12 @@ func main() {
 			log.WithError(err).Fatal("Unable to open http_listen port")
 		}
 
-		go http.Serve(listener, router)
+		server := &http.Server{
+			ReadHeaderTimeout: httpReadHeaderTimeout, // gosec: G114 - Mitigate "slowloris" DoS attack vector
+			Handler:           router,
+		}
+
+		go server.Serve(listener)
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
 
 		checkExternalHTTP()
