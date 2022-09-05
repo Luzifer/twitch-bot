@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"sync"
@@ -199,7 +198,7 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 }
 
 func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *configFile) error {
-	tmpFile, err := ioutil.TempFile(path.Dir(filename), "twitch-bot-*.yaml")
+	tmpFile, err := os.CreateTemp(path.Dir(filename), "twitch-bot-*.yaml")
 	if err != nil {
 		return errors.Wrap(err, "opening tempfile")
 	}

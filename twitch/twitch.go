@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -805,7 +804,7 @@ func (c *Client) request(opts clientRequestOpts) error {
 		}
 
 		if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return newHTTPError(resp.StatusCode, nil, err)
 			}
