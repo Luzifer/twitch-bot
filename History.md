@@ -1,3 +1,18 @@
+# 2.7.1 / 2022-09-06
+
+Bugfix release, repeating `v2.7.0` changelog as of broken release.
+
+  * New Features
+    * [template] Add `randomString` template function
+
+  * Improvements
+    * [core] Make number of subscribed months available for subgift
+    * [security] Add mitigation for slowloris DoS attack vector
+
+  * Bugfixes
+    * [msgformatter] Fix: Trim leading / trailing spaces
+    * [ci / lint] Fix missing CI tooling, fix linter errors
+
 # 2.7.0 / 2022-09-03
 
   * New Features
