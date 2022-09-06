@@ -117,7 +117,6 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
-		GetTwitchClientForChannel:  store.GetTwitchClientForChannel,
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,
@@ -127,6 +126,13 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
 		ValidateToken:              validateAuthToken,
+
+		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
+			return accessStore.GetTwitchClientForChannel(channel, accessstore.ClientConfig{
+				TwitchClient:       cfg.TwitchClient,
+				TwitchClientSecret: cfg.TwitchClientSecret,
+			})
+		},
 	}
 }
 

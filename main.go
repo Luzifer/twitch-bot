@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"math"
@@ -23,6 +25,8 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
+	"github.com/Luzifer/twitch-bot/internal/accessstore"
+	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
@@ -34,6 +38,9 @@ const (
 	maxIRCRetryBackoff        = time.Minute
 
 	httpReadHeaderTimeout = 5 * time.Second
+
+	coreMetaKeyEventSubSecret = "event_sub_secret"
+	eventSubSecretLength      = 32
 )
 
 var (
@@ -44,7 +51,8 @@ var (
 		IRCRateLimit          time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
 		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageFile           string        `flag:"storage-file" default:"./storage.json.gz" description:"Where to store the data"`
+		StorageDatabase       string        `flag:"storage-database" default:"./storage.db" description:"Database file to store data in"`
+		MigrateStorageFile    string        `flag:"migrate-storage-file" default:"" description:"Migrate old storage file into new database format"`
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
 		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
@@ -64,7 +72,9 @@ var (
 	runID                 = uuid.Must(uuid.NewV4()).String()
 	externalHTTPAvailable bool
 
-	store                = newStorageFile(false)
+	db          database.Connector
+	accessStore *accessstore.Store
+
 	twitchClient         *twitch.Client
 	twitchEventSubClient *twitch.EventSubClient
 
@@ -72,14 +82,6 @@ var (
 )
 
 func init() {
-	for _, a := range os.Args {
-		if strings.HasPrefix(a, "-test.") {
-			// Skip initialize for test run
-			store = newStorageFile(true) // Use in-mem-store for tests
-			return
-		}
-	}
-
 	rconfig.AutoEnv(true)
 	if err := rconfig.ParseAndValidate(&cfg); err != nil {
 		log.Fatalf("Unable to parse commandline options: %s", err)
@@ -103,6 +105,35 @@ func init() {
 			cfg.TwitchClientSecret,
 		}, ":")
 	}
+}
+
+func getEventSubSecret() (secret, handle string, err error) {
+	var eventSubSecret string
+
+	err = db.ReadCoreMeta(coreMetaKeyEventSubSecret, &eventSubSecret)
+	switch {
+	case errors.Is(err, nil):
+		return eventSubSecret, eventSubSecret[:5], nil
+
+	case errors.Is(err, database.ErrCoreMetaNotFound):
+		// We need to generate a new secret below
+
+	default:
+		return "", "", errors.Wrap(err, "reading secret from database")
+	}
+
+	key := make([]byte, eventSubSecretLength)
+	n, err := rand.Read(key)
+	if err != nil {
+		return "", "", errors.Wrap(err, "generating random secret")
+	}
+	if n != eventSubSecretLength {
+		return "", "", errors.Errorf("read only %d of %d byte", n, eventSubSecretLength)
+	}
+
+	eventSubSecret = hex.EncodeToString(key)
+
+	return eventSubSecret, eventSubSecret[:5], errors.Wrap(db.StoreCoreMeta(coreMetaKeyEventSubSecret, eventSubSecret), "storing secret to database")
 }
 
 func handleSubCommand(args []string) {
@@ -157,26 +188,28 @@ func handleSubCommand(args []string) {
 func main() {
 	var err error
 
-	if err = store.Load(); err != nil {
-		log.WithError(err).Fatal("Unable to load storage file")
+	if db, err = database.New("sqlite", cfg.StorageDatabase); err != nil {
+		log.WithError(err).Fatal("Unable to open storage database")
 	}
 
+	accessStore = accessstore.New(db)
+
 	cronService = cron.New()
-	twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, store.GetBotToken(cfg.TwitchToken), store.BotRefreshToken)
-	twitchClient.SetTokenUpdateHook(func(at, rt string) error {
-		if err := store.UpdateBotToken(at, rt); err != nil {
-			return errors.Wrap(err, "updating store")
-		}
-
-		// Misuse the config reload hook to let the frontend reload its state
-		configReloadHooksLock.RLock()
-		defer configReloadHooksLock.RUnlock()
-		for _, fn := range configReloadHooks {
-			fn()
-		}
-
-		return nil
-	})
+	if twitchClient, err = accessStore.GetBotTwitchClient(accessstore.ClientConfig{
+		TwitchClient:       cfg.TwitchClient,
+		TwitchClientSecret: cfg.TwitchClientSecret,
+		FallbackToken:      cfg.TwitchToken,
+		TokenUpdateHook: func() {
+			// Misuse the config reload hook to let the frontend reload its state
+			configReloadHooksLock.RLock()
+			defer configReloadHooksLock.RUnlock()
+			for _, fn := range configReloadHooks {
+				fn()
+			}
+		},
+	}); err != nil {
+		log.WithError(err).Fatal("Unable to initialize Twitch client")
+	}
 
 	twitchWatch := newTwitchWatcher()
 	// Query may run that often as the twitchClient has an internal
@@ -265,7 +298,7 @@ func main() {
 		checkExternalHTTP()
 
 		if externalHTTPAvailable && cfg.TwitchClient != "" && cfg.TwitchClientSecret != "" {
-			secret, handle, err := store.GetOrGenerateEventSubSecret()
+			secret, handle, err := getEventSubSecret()
 			if err != nil {
 				log.WithError(err).Fatal("Unable to get or create eventsub secret")
 			}
