@@ -101,6 +101,9 @@ func (c connector) applyCoreSchema() error {
 		return errors.Wrap(err, "reading core.sql content")
 	}
 
-	_, err = c.db.Exec(string(coreSQL))
-	return errors.Wrap(err, "applying core schema")
+	if _, err = c.db.Exec(string(coreSQL)); err != nil {
+		return errors.Wrap(err, "applying core schema")
+	}
+
+	return errors.Wrap(c.Migrate("core", NewEmbedFSMigrator(schema, "schema")), "applying core migration")
 }
