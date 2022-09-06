@@ -25,6 +25,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
+	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
@@ -113,8 +114,8 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 			return nil
 		},
 		FormatMessage:              formatMessage,
+		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
-		GetStorageManager:          func() plugins.StorageManager { return store },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
 		GetTwitchClientForChannel:  store.GetTwitchClientForChannel,
 		RegisterActor:              registerAction,
