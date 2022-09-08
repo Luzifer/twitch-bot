@@ -1,10 +1,12 @@
 package accessstore
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
@@ -77,6 +79,33 @@ func (s Store) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twi
 	})
 
 	return tc, nil
+}
+
+func (s Store) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
+	row := s.db.DB().QueryRow(
+		`SELECT scopes
+			FROM extended_permissions
+			WHERE channel = $1`,
+		channel,
+	)
+
+	var scopeStr string
+	if err := row.Scan(&scopeStr); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "getting scopes from database")
+	}
+
+	storedScopes := strings.Split(scopeStr, " ")
+
+	for _, scope := range scopes {
+		if !str.StringInSlice(scope, storedScopes) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func (s Store) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
