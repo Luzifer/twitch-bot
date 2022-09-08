@@ -1,4 +1,4 @@
-package main
+package variables
 
 import (
 	"fmt"
@@ -8,13 +8,29 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
-func init() {
-	registerAction("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
+var (
+	db            database.Connector
+	formatMessage plugins.MsgFormatter
 
-	registerActorDocumentation(plugins.ActionDocumentation{
+	ptrBoolFalse   = func(b bool) *bool { return &b }(false)
+	ptrStringEmpty = func(s string) *string { return &s }("")
+)
+
+func Register(args plugins.RegistrationArguments) error {
+	db = args.GetDatabaseConnector()
+	if err := db.Migrate("setvariable", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
+
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Modify variable contents",
 		Name:        "Modify Variable",
 		Type:        "setvariable",
@@ -50,7 +66,7 @@ func init() {
 		},
 	})
 
-	registerRoute(plugins.HTTPRouteRegistrationArgs{
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Returns the value as a plain string",
 		HandlerFunc:  routeActorSetVarGetValue,
 		Method:       http.MethodGet,
@@ -66,7 +82,7 @@ func init() {
 		},
 	})
 
-	registerRoute(plugins.HTTPRouteRegistrationArgs{
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Updates the value of the variable",
 		HandlerFunc: routeActorSetVarSetValue,
 		Method:      http.MethodPatch,
@@ -89,6 +105,20 @@ func init() {
 			},
 		},
 	})
+
+	args.RegisterTemplateFunction("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) (string, error) {
+		value, err := getVariable(name)
+		if err != nil {
+			return "", errors.Wrap(err, "getting variable")
+		}
+
+		if value == "" && len(defVal) > 0 {
+			return defVal[0], nil
+		}
+		return value, nil
+	}))
+
+	return nil
 }
 
 type ActorSetVariable struct{}
@@ -101,7 +131,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 
 	if attrs.MustBool("clear", ptrBoolFalse) {
 		return false, errors.Wrap(
-			store.RemoveVariable(varName),
+			removeVariable(varName),
 			"removing variable",
 		)
 	}
@@ -112,7 +142,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 	}
 
 	return false, errors.Wrap(
-		store.SetVariable(varName, value),
+		setVariable(varName, value),
 		"setting variable",
 	)
 }
@@ -129,12 +159,18 @@ func (a ActorSetVariable) Validate(attrs *plugins.FieldCollection) (err error) {
 }
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
+	vc, err := getVariable(mux.Vars(r)["name"])
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text-plain")
-	fmt.Fprint(w, store.GetVariable(mux.Vars(r)["name"]))
+	fmt.Fprint(w, vc)
 }
 
 func routeActorSetVarSetValue(w http.ResponseWriter, r *http.Request) {
-	if err := store.SetVariable(mux.Vars(r)["name"], r.FormValue("value")); err != nil {
+	if err := setVariable(mux.Vars(r)["name"], r.FormValue("value")); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

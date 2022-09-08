@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/internal/database"
-	"github.com/Luzifer/twitch-bot/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -20,8 +19,6 @@ var (
 	formatMessage plugins.MsgFormatter
 
 	ptrStringEmpty = func(s string) *string { return &s }("")
-
-	timerService *timer.Service
 )
 
 func Register(args plugins.RegistrationArguments) error {
