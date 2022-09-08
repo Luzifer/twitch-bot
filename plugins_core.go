@@ -17,6 +17,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/filesay"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/internal/actors/nuke"
+	"github.com/Luzifer/twitch-bot/internal/actors/punish"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
@@ -45,7 +46,7 @@ var (
 		filesay.Register,
 		modchannel.Register,
 		nuke.Register,
-		// punish.Register, // FIXME: Reenable after port
+		punish.Register,
 		// quotedb.Register, // FIXME: Reenable after port
 		raw.Register,
 		respond.Register,
