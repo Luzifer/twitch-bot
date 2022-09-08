@@ -1,0 +1,4 @@
+CREATE TABLE timers (
+  id STRING NOT NULL PRIMARY KEY,
+  expires_at INTEGER
+);

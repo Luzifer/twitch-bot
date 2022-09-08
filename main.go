@@ -27,6 +27,7 @@ import (
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
+	"github.com/Luzifer/twitch-bot/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
@@ -72,8 +73,9 @@ var (
 	runID                 = uuid.Must(uuid.NewV4()).String()
 	externalHTTPAvailable bool
 
-	db          database.Connector
-	accessStore *access.Store
+	db           database.Connector
+	accessStore  *access.Store
+	timerService *timer.Service
 
 	twitchClient         *twitch.Client
 	twitchEventSubClient *twitch.EventSubClient
@@ -193,6 +195,7 @@ func main() {
 	}
 
 	accessStore = access.New(db)
+	timerService = timer.New(db)
 
 	cronService = cron.New()
 	if twitchClient, err = accessStore.GetBotTwitchClient(access.ClientConfig{

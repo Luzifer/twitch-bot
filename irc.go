@@ -297,7 +297,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	})
 
 	log.WithFields(fields.Data()).Debug("Added permit")
-	timerStore.AddPermit(m.Params[0], username)
+	timerService.AddPermit(m.Params[0], username)
 
 	go handleMessage(i.c, m, eventTypePermit, fields)
 }

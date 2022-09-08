@@ -21,10 +21,10 @@ type (
 	}
 
 	TimerStore interface {
-		AddCooldown(tt TimerType, limiter, ruleID string, expiry time.Time)
-		InCooldown(tt TimerType, limiter, ruleID string) bool
-		AddPermit(channel, username string)
-		HasPermit(channel, username string) bool
+		AddCooldown(tt TimerType, limiter, ruleID string, expiry time.Time) error
+		InCooldown(tt TimerType, limiter, ruleID string) (bool, error)
+		AddPermit(channel, username string) error
+		HasPermit(channel, username string) (bool, error)
 	}
 
 	testTimerStore struct {
@@ -32,16 +32,19 @@ type (
 	}
 )
 
+var _ TimerStore = (*testTimerStore)(nil)
+
 func newTestTimerStore() *testTimerStore { return &testTimerStore{timers: map[string]time.Time{}} }
 
 // Cooldown timer
 
-func (t *testTimerStore) AddCooldown(tt TimerType, limiter, ruleID string, expiry time.Time) {
+func (t *testTimerStore) AddCooldown(tt TimerType, limiter, ruleID string, expiry time.Time) error {
 	t.timers[t.getCooldownTimerKey(tt, limiter, ruleID)] = expiry
+	return nil
 }
 
-func (t *testTimerStore) InCooldown(tt TimerType, limiter, ruleID string) bool {
-	return t.timers[t.getCooldownTimerKey(tt, limiter, ruleID)].After(time.Now())
+func (t *testTimerStore) InCooldown(tt TimerType, limiter, ruleID string) (bool, error) {
+	return t.timers[t.getCooldownTimerKey(tt, limiter, ruleID)].After(time.Now()), nil
 }
 
 func (testTimerStore) getCooldownTimerKey(tt TimerType, limiter, ruleID string) string {
@@ -52,12 +55,13 @@ func (testTimerStore) getCooldownTimerKey(tt TimerType, limiter, ruleID string) 
 
 // Permit timer
 
-func (t *testTimerStore) AddPermit(channel, username string) {
+func (t *testTimerStore) AddPermit(channel, username string) error {
 	t.timers[t.getPermitTimerKey(channel, username)] = time.Now().Add(time.Minute)
+	return nil
 }
 
-func (t *testTimerStore) HasPermit(channel, username string) bool {
-	return t.timers[t.getPermitTimerKey(channel, username)].After(time.Now())
+func (t *testTimerStore) HasPermit(channel, username string) (bool, error) {
+	return t.timers[t.getPermitTimerKey(channel, username)].After(time.Now()), nil
 }
 
 func (testTimerStore) getPermitTimerKey(channel, username string) string {
