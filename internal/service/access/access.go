@@ -1,4 +1,4 @@
-package accessstore
+package access
 
 import (
 	"database/sql"

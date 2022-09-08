@@ -25,8 +25,8 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
-	"github.com/Luzifer/twitch-bot/internal/accessstore"
 	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
@@ -73,7 +73,7 @@ var (
 	externalHTTPAvailable bool
 
 	db          database.Connector
-	accessStore *accessstore.Store
+	accessStore *access.Store
 
 	twitchClient         *twitch.Client
 	twitchEventSubClient *twitch.EventSubClient
@@ -192,10 +192,10 @@ func main() {
 		log.WithError(err).Fatal("Unable to open storage database")
 	}
 
-	accessStore = accessstore.New(db)
+	accessStore = access.New(db)
 
 	cronService = cron.New()
-	if twitchClient, err = accessStore.GetBotTwitchClient(accessstore.ClientConfig{
+	if twitchClient, err = accessStore.GetBotTwitchClient(access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,
 		FallbackToken:      cfg.TwitchToken,
