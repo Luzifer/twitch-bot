@@ -81,6 +81,33 @@ func (s Store) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twi
 	return tc, nil
 }
 
+func (s Store) HasAnyPermissionForChannel(channel string, scopes ...string) (bool, error) {
+	row := s.db.DB().QueryRow(
+		`SELECT scopes
+			FROM extended_permissions
+			WHERE channel = $1`,
+		channel,
+	)
+
+	var scopeStr string
+	if err := row.Scan(&scopeStr); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, "getting scopes from database")
+	}
+
+	storedScopes := strings.Split(scopeStr, " ")
+
+	for _, scope := range scopes {
+		if str.StringInSlice(scope, storedScopes) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (s Store) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
 	row := s.db.DB().QueryRow(
 		`SELECT scopes
@@ -106,6 +133,16 @@ func (s Store) HasPermissionsForChannel(channel string, scopes ...string) (bool,
 	}
 
 	return true, nil
+}
+
+func (s Store) RemoveExendedTwitchCredentials(channel string) error {
+	_, err := s.db.DB().Exec(
+		`DELETE FROM extended_permissions
+			WHERE channel = $1`,
+		channel,
+	)
+
+	return errors.Wrap(err, "deleting data from table")
 }
 
 func (s Store) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
