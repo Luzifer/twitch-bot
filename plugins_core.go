@@ -11,21 +11,21 @@ import (
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
+	"github.com/Luzifer/twitch-bot/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/filesay"
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/internal/actors/nuke"
-	"github.com/Luzifer/twitch-bot/internal/actors/punish"
-	"github.com/Luzifer/twitch-bot/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
+	"github.com/Luzifer/twitch-bot/internal/actors/variables"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
-	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
@@ -39,16 +39,18 @@ var (
 	corePluginRegistrations = []plugins.RegisterFunc{
 		// Actors
 		ban.Register,
+		counter.Register,
 		delay.Register,
 		deleteactor.Register,
 		filesay.Register,
 		modchannel.Register,
 		nuke.Register,
-		punish.Register,
-		quotedb.Register,
+		// punish.Register, // FIXME: Reenable after port
+		// quotedb.Register, // FIXME: Reenable after port
 		raw.Register,
 		respond.Register,
 		timeout.Register,
+		variables.Register,
 		whisper.Register,
 
 		// Template functions
@@ -59,7 +61,7 @@ var (
 		// API-only modules
 		customevent.Register,
 		msgformat.Register,
-		overlays.Register,
+		// overlays.Register, // FIXME: Reenable after port
 	}
 	knownModules []string
 )
@@ -128,7 +130,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		ValidateToken:              validateAuthToken,
 
 		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
-			return accessStore.GetTwitchClientForChannel(channel, accessstore.ClientConfig{
+			return accessStore.GetTwitchClientForChannel(channel, access.ClientConfig{
 				TwitchClient:       cfg.TwitchClient,
 				TwitchClientSecret: cfg.TwitchClientSecret,
 			})
