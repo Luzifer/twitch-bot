@@ -6,5 +6,6 @@ editor/app.js
 editor/bundle.*
 .env
 node_modules
+storage.db
 storage.json.gz
 twitch-bot
