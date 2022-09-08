@@ -195,7 +195,9 @@ func main() {
 	}
 
 	accessStore = access.New(db)
-	timerService = timer.New(db)
+	if timerService, err = timer.New(db); err != nil {
+		log.WithError(err).Fatal("Unable to apply timer migration")
+	}
 
 	cronService = cron.New()
 	if twitchClient, err = accessStore.GetBotTwitchClient(access.ClientConfig{

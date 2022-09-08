@@ -2,6 +2,7 @@ package timer
 
 import (
 	"crypto/sha256"
+	"embed"
 	"fmt"
 	"strings"
 	"time"
@@ -19,12 +20,19 @@ type (
 	}
 )
 
-var _ plugins.TimerStore = (*Service)(nil)
+var (
+	_ plugins.TimerStore = (*Service)(nil)
 
-func New(db database.Connector) *Service {
-	return &Service{
+	//go:embed schema/**
+	schema embed.FS
+)
+
+func New(db database.Connector) (*Service, error) {
+	s := &Service{
 		db: db,
 	}
+
+	return s, errors.Wrap(s.db.Migrate("timersvc", database.NewEmbedFSMigrator(schema, "schema")), "applying migrations")
 }
 
 func (s *Service) UpdatePermitTimeout(d time.Duration) {
