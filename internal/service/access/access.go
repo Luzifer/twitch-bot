@@ -13,7 +13,7 @@ import (
 
 const (
 	coreMetaKeyBotToken        = "bot_access_token"
-	coreMetaKeyBotRefreshToken = "bot_refresh_token"
+	coreMetaKeyBotRefreshToken = "bot_refresh_token" //#nosec:G101 // That's a key, not a credential
 )
 
 type (

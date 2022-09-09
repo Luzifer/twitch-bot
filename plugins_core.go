@@ -27,13 +27,13 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
-	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/plugins"
 )
 
 const ircHandleWaitRetries = 10

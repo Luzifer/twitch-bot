@@ -8,14 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/internal/v2migrator/crypt"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
-
-const eventSubSecretLength = 32
-
-var errExtendedPermissionsMissing = errors.New("no extended permissions greanted")
 
 type (
 	Migrator interface {

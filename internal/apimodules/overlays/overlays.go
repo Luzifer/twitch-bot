@@ -26,8 +26,6 @@ const (
 	bufferSizeByte  = 1024
 	socketKeepAlive = 5 * time.Second
 
-	moduleUUID = "f9ca2b3a-baf6-45ea-a347-c626168665e8"
-
 	msgTypeRequestAuth = "_auth"
 )
 

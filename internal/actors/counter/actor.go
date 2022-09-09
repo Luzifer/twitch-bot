@@ -21,6 +21,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+//nolint:funlen // This function is a few lines too long but only contains definitions
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
 	if err := db.Migrate("counter", database.NewEmbedFSMigrator(schema, "schema")); err != nil {

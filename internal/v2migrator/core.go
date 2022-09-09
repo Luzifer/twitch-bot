@@ -3,8 +3,8 @@ package v2migrator
 import (
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
 func (s storageFile) migrateCoreKV(db database.Connector) (err error) {
