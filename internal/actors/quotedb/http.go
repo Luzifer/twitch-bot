@@ -133,12 +133,10 @@ func handleAddQuotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, q := range quotes {
-		storedObject.AddQuote(channel, q)
-	}
-
-	if err := store.SetModuleStore(moduleUUID, storedObject); err != nil {
-		http.Error(w, errors.Wrap(err, "storing quote database").Error(), http.StatusInternalServerError)
-		return
+		if err := addQuote(channel, q); err != nil {
+			http.Error(w, errors.Wrap(err, "adding quote").Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -156,10 +154,8 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedObject.DelQuote(channel, idx)
-
-	if err := store.SetModuleStore(moduleUUID, storedObject); err != nil {
-		http.Error(w, errors.Wrap(err, "storing quote database").Error(), http.StatusInternalServerError)
+	if err = delQuote(channel, idx); err != nil {
+		http.Error(w, errors.Wrap(err, "deleting quote").Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -175,9 +171,13 @@ func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 
 	channel := "#" + strings.TrimLeft(mux.Vars(r)["channel"], "#")
 
-	quotes := storedObject.GetChannelQuotes(channel)
+	quotes, err := getChannelQuotes(channel)
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "getting quotes").Error(), http.StatusInternalServerError)
+		return
+	}
 
-	if err := json.NewEncoder(w).Encode(quotes); err != nil {
+	if err = json.NewEncoder(w).Encode(quotes); err != nil {
 		http.Error(w, errors.Wrap(err, "enocding quote list").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -192,10 +192,8 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedObject.SetQuotes(channel, quotes)
-
-	if err := store.SetModuleStore(moduleUUID, storedObject); err != nil {
-		http.Error(w, errors.Wrap(err, "storing quote database").Error(), http.StatusInternalServerError)
+	if err := setQuotes(channel, quotes); err != nil {
+		http.Error(w, errors.Wrap(err, "replacing quotes").Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -230,10 +228,8 @@ func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storedObject.UpdateQuote(channel, idx, quotes[0])
-
-	if err := store.SetModuleStore(moduleUUID, storedObject); err != nil {
-		http.Error(w, errors.Wrap(err, "storing quote database").Error(), http.StatusInternalServerError)
+	if err = updateQuote(channel, idx, quotes[0]); err != nil {
+		http.Error(w, errors.Wrap(err, "updating quote").Error(), http.StatusInternalServerError)
 		return
 	}
 
