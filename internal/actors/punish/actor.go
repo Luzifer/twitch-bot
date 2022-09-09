@@ -4,7 +4,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-irc/irc"
@@ -132,12 +131,6 @@ type (
 		LastLevel int           `json:"last_level"`
 		Executed  time.Time     `json:"executed"`
 		Cooldown  time.Duration `json:"cooldown"`
-	}
-
-	storage struct {
-		ActiveLevels map[string]*levelConfig `json:"active_levels"`
-
-		lock sync.Mutex
 	}
 )
 

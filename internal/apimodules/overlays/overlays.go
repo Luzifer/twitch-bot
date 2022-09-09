@@ -32,12 +32,6 @@ const (
 )
 
 type (
-	storage struct {
-		ChannelEvents map[string][]socketMessage `json:"channel_events"`
-
-		lock sync.RWMutex
-	}
-
 	socketMessage struct {
 		IsLive bool                     `json:"is_live"`
 		Time   time.Time                `json:"time"`

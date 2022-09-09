@@ -2,7 +2,6 @@ package quotedb
 
 import (
 	"strconv"
-	"sync"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
@@ -93,12 +92,6 @@ func Register(args plugins.RegistrationArguments) error {
 
 type (
 	actor struct{}
-
-	storage struct {
-		ChannelQuotes map[string][]string `json:"channel_quotes"`
-
-		lock sync.RWMutex
-	}
 )
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
