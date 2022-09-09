@@ -17,6 +17,11 @@ const eventSubSecretLength = 32
 var errExtendedPermissionsMissing = errors.New("no extended permissions greanted")
 
 type (
+	Migrator interface {
+		Load(filename, encryptionPass string) error
+		Migrate(db database.Connector) error
+	}
+
 	storageExtendedPermission struct {
 		AccessToken  string   `encrypt:"true" json:"access_token,omitempty"`
 		RefreshToken string   `encrypt:"true" json:"refresh_token,omitempty"`
@@ -43,7 +48,7 @@ type (
 	}
 )
 
-func newStorageFile() *storageFile {
+func NewStorageFile() Migrator {
 	return &storageFile{
 		Counters:  map[string]int64{},
 		Timers:    map[string]plugins.TimerEntry{},

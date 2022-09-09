@@ -28,6 +28,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/service/timer"
+	"github.com/Luzifer/twitch-bot/internal/v2migrator"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
@@ -53,7 +54,6 @@ var (
 		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
 		StorageDatabase       string        `flag:"storage-database" default:"./storage.db" description:"Database file to store data in"`
-		MigrateStorageFile    string        `flag:"migrate-storage-file" default:"" description:"Migrate old storage file into new database format"`
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
 		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
@@ -177,7 +177,24 @@ func handleSubCommand(args []string) {
 		fmt.Println("Supported sub-commands are:")
 		fmt.Println("  actor-docs                     Generate markdown documentation for available actors")
 		fmt.Println("  api-token <name> <scope...>    Generate an api-token to be entered into the config")
+		fmt.Println("  migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database")
 		fmt.Println("  help                           Prints this help message")
+
+	case "migrate-v2":
+		if len(args) < 2 { //nolint:gomnd // Just a count of parameters
+			log.Fatalf("Usage: twitch-bot migrate-v2 <old storage file>")
+		}
+
+		v2s := v2migrator.NewStorageFile()
+		if err := v2s.Load(args[1], cfg.StorageEncryptionPass); err != nil {
+			log.WithError(err).Fatal("loading v2 storage file")
+		}
+
+		if err := v2s.Migrate(db); err != nil {
+			log.WithError(err).Fatal("migrating v2 storage file")
+		}
+
+		log.Info("v2 storage file was migrated")
 
 	default:
 		handleSubCommand([]string{"help"})
