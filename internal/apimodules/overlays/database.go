@@ -25,7 +25,7 @@ func addEvent(channel string, evt socketMessage) error {
 		`INSERT INTO overlays_events
 			(channel, created_at, event_type, fields)
 			VALUES ($1, $2, $3, $4);`,
-		channel, evt.Time.UnixNano(), evt.Type, buf.String(),
+		channel, evt.Time.UnixNano(), evt.Type, strings.TrimSpace(buf.String()),
 	)
 
 	return errors.Wrap(err, "storing event to database")

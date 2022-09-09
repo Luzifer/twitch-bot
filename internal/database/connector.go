@@ -93,7 +93,7 @@ func (c connector) StoreCoreMeta(key string, value any) error {
 		"INSERT INTO core_kv (key, value) VALUES (:key, :value) ON CONFLICT DO UPDATE SET value=excluded.value;",
 		map[string]any{
 			"key":   key,
-			"value": buf.String(),
+			"value": strings.TrimSpace(buf.String()),
 		},
 	)
 
