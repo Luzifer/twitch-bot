@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 

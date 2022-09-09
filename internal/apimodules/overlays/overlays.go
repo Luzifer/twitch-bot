@@ -17,7 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 

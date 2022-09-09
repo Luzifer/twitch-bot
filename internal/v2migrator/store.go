@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/internal/v2migrator/crypt"
 	"github.com/Luzifer/twitch-bot/plugins"
 )

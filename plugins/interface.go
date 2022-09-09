@@ -5,7 +5,7 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/internal/database"
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/twitch"
 )
 
