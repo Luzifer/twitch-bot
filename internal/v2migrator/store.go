@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/crypt"
 	"github.com/Luzifer/twitch-bot/internal/database"
@@ -112,6 +113,7 @@ func (s storageFile) Migrate(db database.Connector) error {
 		"mod_overlays": s.ModuleStorage.ModOverlays.migrate,
 		"mod_quotedb":  s.ModuleStorage.ModQuoteDB.migrate,
 	} {
+		logrus.WithField("module", name).Info("Starting migration...")
 		if err = fn(db); err != nil {
 			return errors.Wrapf(err, "executing %q migration", name)
 		}
