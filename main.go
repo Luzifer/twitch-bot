@@ -194,6 +194,7 @@ func main() {
 		cfg.StorageDatabase,
 		strings.Join([]string{
 			"_pragma=locking_mode(EXCLUSIVE)",
+			"_pragma=synchronous(FULL)",
 		}, "&"),
 	}, "?")
 
