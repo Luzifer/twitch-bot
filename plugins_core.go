@@ -18,6 +18,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/internal/actors/nuke"
 	"github.com/Luzifer/twitch-bot/internal/actors/punish"
+	"github.com/Luzifer/twitch-bot/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
@@ -25,6 +26,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
+	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
@@ -47,7 +49,7 @@ var (
 		modchannel.Register,
 		nuke.Register,
 		punish.Register,
-		// quotedb.Register, // FIXME: Reenable after port
+		quotedb.Register,
 		raw.Register,
 		respond.Register,
 		timeout.Register,
@@ -62,7 +64,7 @@ var (
 		// API-only modules
 		customevent.Register,
 		msgformat.Register,
-		// overlays.Register, // FIXME: Reenable after port
+		overlays.Register,
 	}
 	knownModules []string
 )

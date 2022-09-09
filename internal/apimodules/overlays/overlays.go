@@ -17,6 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/internal/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -49,15 +50,15 @@ var (
 	//go:embed default/**
 	embeddedOverlays embed.FS
 
+	db database.Connector
+
 	fsStack httpFSStack
 
 	ptrStringEmpty = func(v string) *string { return &v }("")
 
-	store          plugins.StorageManager
 	storeExemption = []string{
 		"join", "part", // Those make no sense for replay
 	}
-	storedObject = newStorage()
 
 	subscribers     = map[string]func(event string, eventData *plugins.FieldCollection){}
 	subscribersLock sync.RWMutex
@@ -71,7 +72,11 @@ var (
 )
 
 func Register(args plugins.RegistrationArguments) error {
-	store = args.GetStorageManager()
+	db = args.GetDatabaseConnector()
+	if err := db.Migrate("overlays", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
 	validateToken = args.ValidateToken
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
@@ -131,16 +136,14 @@ func Register(args plugins.RegistrationArguments) error {
 			return nil
 		}
 
-		storedObject.AddEvent(plugins.DeriveChannel(nil, eventData), socketMessage{
-			IsLive: false,
-			Time:   time.Now(),
-			Type:   event,
-			Fields: eventData,
-		})
-
 		return errors.Wrap(
-			store.SetModuleStore(moduleUUID, storedObject),
-			"storing events database",
+			addEvent(plugins.DeriveChannel(nil, eventData), socketMessage{
+				IsLive: false,
+				Time:   time.Now(),
+				Type:   event,
+				Fields: eventData,
+			}),
+			"storing event",
 		)
 	})
 
@@ -155,10 +158,7 @@ func Register(args plugins.RegistrationArguments) error {
 		fsStack = append(httpFSStack{http.Dir(overlaysDir)}, fsStack...)
 	}
 
-	return errors.Wrap(
-		store.GetModuleStore(moduleUUID, storedObject),
-		"loading module storage",
-	)
+	return nil
 }
 
 func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
@@ -172,7 +172,13 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 		since = s
 	}
 
-	for _, msg := range storedObject.GetChannelEvents("#" + strings.TrimLeft(channel, "#")) {
+	events, err := getChannelEvents("#" + strings.TrimLeft(channel, "#"))
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "getting channel events").Error(), http.StatusInternalServerError)
+		return
+	}
+
+	for _, msg := range events {
 		if msg.Time.Before(since) {
 			continue
 		}
@@ -350,46 +356,4 @@ func unsubscribeSocket(id string) {
 	defer subscribersLock.Unlock()
 
 	delete(subscribers, id)
-}
-
-// Storage
-
-func newStorage() *storage {
-	return &storage{
-		ChannelEvents: make(map[string][]socketMessage),
-	}
-}
-
-func (s *storage) AddEvent(channel string, evt socketMessage) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.ChannelEvents[channel] = append(s.ChannelEvents[channel], evt)
-}
-
-func (s *storage) GetChannelEvents(channel string) []socketMessage {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return s.ChannelEvents[channel]
-}
-
-// Implement marshaller interfaces
-func (s *storage) MarshalStoredObject() ([]byte, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return json.Marshal(s)
-}
-
-func (s *storage) UnmarshalStoredObject(data []byte) error {
-	if data == nil {
-		// No data set yet, don't try to unmarshal
-		return nil
-	}
-
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	return json.Unmarshal(data, s)
 }
