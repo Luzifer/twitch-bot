@@ -112,7 +112,7 @@ func init() {
 func getEventSubSecret() (secret, handle string, err error) {
 	var eventSubSecret string
 
-	err = db.ReadCoreMeta(coreMetaKeyEventSubSecret, &eventSubSecret)
+	err = db.ReadEncryptedCoreMeta(coreMetaKeyEventSubSecret, &eventSubSecret)
 	switch {
 	case errors.Is(err, nil):
 		return eventSubSecret, eventSubSecret[:5], nil
@@ -135,7 +135,7 @@ func getEventSubSecret() (secret, handle string, err error) {
 
 	eventSubSecret = hex.EncodeToString(key)
 
-	return eventSubSecret, eventSubSecret[:5], errors.Wrap(db.StoreCoreMeta(coreMetaKeyEventSubSecret, eventSubSecret), "storing secret to database")
+	return eventSubSecret, eventSubSecret[:5], errors.Wrap(db.StoreEncryptedCoreMeta(coreMetaKeyEventSubSecret, eventSubSecret), "storing secret to database")
 }
 
 func handleSubCommand(args []string) {
@@ -215,7 +215,7 @@ func main() {
 		}, "&"),
 	}, "?")
 
-	if db, err = database.New("sqlite", databaseConnectionString); err != nil {
+	if db, err = database.New("sqlite", databaseConnectionString, cfg.StorageEncryptionPass); err != nil {
 		log.WithError(err).Fatal("Unable to open storage database")
 	}
 

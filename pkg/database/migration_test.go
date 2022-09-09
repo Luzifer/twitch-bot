@@ -13,7 +13,7 @@ var (
 )
 
 func TestMigration(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:")
+	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
 	if err != nil {
 		t.Fatalf("creating database connector: %s", err)
 	}

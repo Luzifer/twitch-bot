@@ -6,8 +6,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const testEncryptionPass = "password123"
+
 func TestNewConnector(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:")
+	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
 	if err != nil {
 		t.Fatalf("creating database connector: %s", err)
 	}
@@ -26,7 +28,7 @@ func TestNewConnector(t *testing.T) {
 }
 
 func TestCoreMetaRoundtrip(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:")
+	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
 	if err != nil {
 		t.Fatalf("creating database connector: %s", err)
 	}
@@ -59,4 +61,38 @@ func TestCoreMetaRoundtrip(t *testing.T) {
 
 	checkWriteRead("just a string")         // Turn one: Init from not existing
 	checkWriteRead("another random string") // Turn two: Overwrite
+}
+
+func TestCoreMetaEncryption(t *testing.T) {
+	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
+	if err != nil {
+		t.Fatalf("creating database connector: %s", err)
+	}
+	defer dbc.Close()
+
+	var (
+		arbitrary  struct{ A string }
+		testKey    = "arbitrary"
+		testString = "foobar"
+	)
+
+	arbitrary.A = testString
+
+	if err = dbc.StoreEncryptedCoreMeta(testKey, arbitrary); err != nil {
+		t.Fatalf("storing encrypted core meta: %s", err)
+	}
+
+	if err = dbc.ReadCoreMeta(testKey, &arbitrary); err == nil {
+		t.Error("reading encrypted meta without decryption succeeded")
+	}
+
+	arbitrary.A = ""
+
+	if err = dbc.ReadEncryptedCoreMeta(testKey, &arbitrary); err != nil {
+		t.Errorf("reading encrypted meta: %s", err)
+	}
+
+	if arbitrary.A != testString {
+		t.Errorf("unexpected value: %q != %q", arbitrary.A, testString)
+	}
 }

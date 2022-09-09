@@ -20,6 +20,10 @@ type (
 		Migrate(module string, migrations MigrationStorage) error
 		ReadCoreMeta(key string, value any) error
 		StoreCoreMeta(key string, value any) error
+		ReadEncryptedCoreMeta(key string, value any) error
+		StoreEncryptedCoreMeta(key string, value any) error
+		DecryptField(string) (string, error)
+		EncryptField(string) (string, error)
 	}
 
 	// MigrationStorage represents a file storage containing migration

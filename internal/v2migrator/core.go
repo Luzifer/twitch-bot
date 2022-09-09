@@ -14,7 +14,7 @@ func (s storageFile) migrateCoreKV(db database.Connector) (err error) {
 		return errors.Wrap(err, "setting bot credentials")
 	}
 
-	if err = db.StoreCoreMeta("event_sub_secret", s.EventSubSecret); err != nil {
+	if err = db.StoreEncryptedCoreMeta("event_sub_secret", s.EventSubSecret); err != nil {
 		return errors.Wrap(err, "storing bot eventsub token")
 	}
 

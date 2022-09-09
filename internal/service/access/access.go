@@ -36,7 +36,7 @@ func New(db database.Connector) *Service {
 func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 	var botAccessToken, botRefreshToken string
 
-	err := s.db.ReadCoreMeta(coreMetaKeyBotToken, &botAccessToken)
+	err := s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken)
 	switch {
 	case errors.Is(err, nil):
 		// This is fine
@@ -48,7 +48,7 @@ func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 		return nil, errors.Wrap(err, "getting bot access token from database")
 	}
 
-	if err = s.db.ReadCoreMeta(coreMetaKeyBotToken, &botAccessToken); err != nil && !errors.Is(err, database.ErrCoreMetaNotFound) {
+	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken); err != nil && !errors.Is(err, database.ErrCoreMetaNotFound) {
 		return nil, errors.Wrap(err, "getting bot refresh token from database")
 	}
 
@@ -59,6 +59,7 @@ func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 }
 
 func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twitch.Client, error) {
+	var err error
 	row := s.db.DB().QueryRow(
 		`SELECT access_token, refresh_token, scopes
 			FROM extended_permissions
@@ -67,8 +68,16 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 	)
 
 	var accessToken, refreshToken, scopeStr string
-	if err := row.Scan(&accessToken, &refreshToken, &scopeStr); err != nil {
+	if err = row.Scan(&accessToken, &refreshToken, &scopeStr); err != nil {
 		return nil, errors.Wrap(err, "getting twitch credentials from database")
+	}
+
+	if accessToken, err = s.db.DecryptField(accessToken); err != nil {
+		return nil, errors.Wrap(err, "decrypting access token")
+	}
+
+	if refreshToken, err = s.db.DecryptField(refreshToken); err != nil {
+		return nil, errors.Wrap(err, "decrypting refresh token")
 	}
 
 	scopes := strings.Split(scopeStr, " ")
@@ -146,11 +155,11 @@ func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 }
 
 func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
-	if err = s.db.StoreCoreMeta(coreMetaKeyBotToken, accessToken); err != nil {
+	if err = s.db.StoreEncryptedCoreMeta(coreMetaKeyBotToken, accessToken); err != nil {
 		return errors.Wrap(err, "storing bot access token")
 	}
 
-	if err = s.db.StoreCoreMeta(coreMetaKeyBotRefreshToken, refreshToken); err != nil {
+	if err = s.db.StoreEncryptedCoreMeta(coreMetaKeyBotRefreshToken, refreshToken); err != nil {
 		return errors.Wrap(err, "storing bot refresh token")
 	}
 
@@ -158,6 +167,14 @@ func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err 
 }
 
 func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken string, scope []string) (err error) {
+	if accessToken, err = s.db.EncryptField(accessToken); err != nil {
+		return errors.Wrap(err, "encrypting access token")
+	}
+
+	if refreshToken, err = s.db.EncryptField(refreshToken); err != nil {
+		return errors.Wrap(err, "encrypting refresh token")
+	}
+
 	_, err = s.db.DB().Exec(
 		`INSERT INTO extended_permissions
 			(channel, access_token, refresh_token, scopes)
