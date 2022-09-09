@@ -189,7 +189,7 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	)
 
 	for _, ch := range config.Channels {
-		if elevated[ch], err = accessStore.HasPermissionsForChannel(ch, channelDefaultScopes...); err != nil {
+		if elevated[ch], err = accessService.HasPermissionsForChannel(ch, channelDefaultScopes...); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

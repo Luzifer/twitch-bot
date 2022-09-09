@@ -26,14 +26,14 @@ type (
 		TokenUpdateHook func()
 	}
 
-	Store struct{ db database.Connector }
+	Service struct{ db database.Connector }
 )
 
-func New(db database.Connector) *Store {
-	return &Store{db}
+func New(db database.Connector) *Service {
+	return &Service{db}
 }
 
-func (s Store) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
+func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 	var botAccessToken, botRefreshToken string
 
 	err := s.db.ReadCoreMeta(coreMetaKeyBotToken, &botAccessToken)
@@ -58,7 +58,7 @@ func (s Store) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 	return twitchClient, nil
 }
 
-func (s Store) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twitch.Client, error) {
+func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twitch.Client, error) {
 	row := s.db.DB().QueryRow(
 		`SELECT access_token, refresh_token, scopes
 			FROM extended_permissions
@@ -81,7 +81,7 @@ func (s Store) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twi
 	return tc, nil
 }
 
-func (s Store) HasAnyPermissionForChannel(channel string, scopes ...string) (bool, error) {
+func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (bool, error) {
 	row := s.db.DB().QueryRow(
 		`SELECT scopes
 			FROM extended_permissions
@@ -108,7 +108,7 @@ func (s Store) HasAnyPermissionForChannel(channel string, scopes ...string) (boo
 	return false, nil
 }
 
-func (s Store) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
+func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
 	row := s.db.DB().QueryRow(
 		`SELECT scopes
 			FROM extended_permissions
@@ -135,7 +135,7 @@ func (s Store) HasPermissionsForChannel(channel string, scopes ...string) (bool,
 	return true, nil
 }
 
-func (s Store) RemoveExendedTwitchCredentials(channel string) error {
+func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	_, err := s.db.DB().Exec(
 		`DELETE FROM extended_permissions
 			WHERE channel = $1`,
@@ -145,7 +145,7 @@ func (s Store) RemoveExendedTwitchCredentials(channel string) error {
 	return errors.Wrap(err, "deleting data from table")
 }
 
-func (s Store) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
+func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
 	if err = s.db.StoreCoreMeta(coreMetaKeyBotToken, accessToken); err != nil {
 		return errors.Wrap(err, "storing bot access token")
 	}
@@ -157,7 +157,7 @@ func (s Store) SetBotTwitchCredentials(accessToken, refreshToken string) (err er
 	return nil
 }
 
-func (s Store) SetExtendedTwitchCredentials(channel, accessToken, refreshToken string, scope []string) (err error) {
+func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken string, scope []string) (err error) {
 	_, err = s.db.DB().Exec(
 		`INSERT INTO extended_permissions
 			(channel, access_token, refresh_token, scopes)

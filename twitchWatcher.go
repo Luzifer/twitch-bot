@@ -171,7 +171,7 @@ func (t *twitchWatcher) handleEventUserAuthRevoke(m json.RawMessage) error {
 	}
 
 	return errors.Wrap(
-		accessStore.RemoveExendedTwitchCredentials(payload.UserLogin),
+		accessService.RemoveExendedTwitchCredentials(payload.UserLogin),
 		"deleting granted scopes",
 	)
 }
@@ -284,9 +284,9 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 		})
 
 		if len(tr.RequiredScopes) > 0 {
-			fn := accessStore.HasPermissionsForChannel
+			fn := accessService.HasPermissionsForChannel
 			if tr.AnyScope {
-				fn = accessStore.HasAnyPermissionForChannel
+				fn = accessService.HasAnyPermissionForChannel
 			}
 
 			hasScopes, err := fn(channel, tr.RequiredScopes...)

@@ -73,9 +73,9 @@ var (
 	runID                 = uuid.Must(uuid.NewV4()).String()
 	externalHTTPAvailable bool
 
-	db           database.Connector
-	accessStore  *access.Store
-	timerService *timer.Service
+	db            database.Connector
+	accessService *access.Service
+	timerService  *timer.Service
 
 	twitchClient         *twitch.Client
 	twitchEventSubClient *twitch.EventSubClient
@@ -201,13 +201,13 @@ func main() {
 		log.WithError(err).Fatal("Unable to open storage database")
 	}
 
-	accessStore = access.New(db)
+	accessService = access.New(db)
 	if timerService, err = timer.New(db); err != nil {
 		log.WithError(err).Fatal("Unable to apply timer migration")
 	}
 
 	cronService = cron.New()
-	if twitchClient, err = accessStore.GetBotTwitchClient(access.ClientConfig{
+	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,
 		FallbackToken:      cfg.TwitchToken,

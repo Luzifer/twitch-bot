@@ -133,7 +133,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		ValidateToken:              validateAuthToken,
 
 		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
-			return accessStore.GetTwitchClientForChannel(channel, access.ClientConfig{
+			return accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
 				TwitchClient:       cfg.TwitchClient,
 				TwitchClientSecret: cfg.TwitchClientSecret,
 			})
