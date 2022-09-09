@@ -7,5 +7,6 @@ editor/bundle.*
 .env
 node_modules
 storage.db
+storage.db-journal
 storage.json.gz
 twitch-bot
