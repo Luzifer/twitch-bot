@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 func init() {

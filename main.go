@@ -29,7 +29,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/internal/v2migrator"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 const (

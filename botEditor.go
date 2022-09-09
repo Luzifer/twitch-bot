@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 func getAuthorizationFromRequest(r *http.Request) (string, *twitch.Client, error) {

@@ -33,7 +33,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 const ircHandleWaitRetries = 10

@@ -13,7 +13,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 const (
