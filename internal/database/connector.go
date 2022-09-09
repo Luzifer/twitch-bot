@@ -36,6 +36,11 @@ func New(driverName, dataSourceName string) (Connector, error) {
 		return nil, errors.Wrap(err, "connecting database")
 	}
 
+	db.SetConnMaxIdleTime(0)
+	db.SetConnMaxLifetime(0)
+	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(1)
+
 	conn := &connector{db: db}
 	return conn, errors.Wrap(conn.applyCoreSchema(), "applying core schema")
 }

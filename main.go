@@ -190,7 +190,14 @@ func handleSubCommand(args []string) {
 func main() {
 	var err error
 
-	if db, err = database.New("sqlite", cfg.StorageDatabase); err != nil {
+	databaseConnectionString := strings.Join([]string{
+		cfg.StorageDatabase,
+		strings.Join([]string{
+			"_pragma=locking_mode(EXCLUSIVE)",
+		}, "&"),
+	}, "?")
+
+	if db, err = database.New("sqlite", databaseConnectionString); err != nil {
 		log.WithError(err).Fatal("Unable to open storage database")
 	}
 
