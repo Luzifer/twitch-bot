@@ -48,7 +48,7 @@ func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 		return nil, errors.Wrap(err, "getting bot access token from database")
 	}
 
-	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken); err != nil && !errors.Is(err, database.ErrCoreMetaNotFound) {
+	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotRefreshToken, &botRefreshToken); err != nil && !errors.Is(err, database.ErrCoreMetaNotFound) {
 		return nil, errors.Wrap(err, "getting bot refresh token from database")
 	}
 
