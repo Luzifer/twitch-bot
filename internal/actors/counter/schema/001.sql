@@ -1,0 +1,4 @@
+CREATE TABLE counters (
+  name STRING NOT NULL PRIMARY KEY,
+  value INTEGER
+);

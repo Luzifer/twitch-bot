@@ -1,0 +1,4 @@
+CREATE TABLE variables (
+  name STRING NOT NULL PRIMARY KEY,
+  value STRING
+);

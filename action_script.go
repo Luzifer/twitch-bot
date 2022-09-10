@@ -10,8 +10,8 @@ import (
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 func init() {

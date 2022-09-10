@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 type (
@@ -164,7 +164,13 @@ func (r *Rule) allowExecuteChannelCooldown(logger *log.Entry, m *irc.Message, ev
 		return true
 	}
 
-	if !r.timerStore.InCooldown(TimerTypeCooldown, DeriveChannel(m, evtData), r.MatcherID()) {
+	inCooldown, err := r.timerStore.InCooldown(TimerTypeCooldown, DeriveChannel(m, evtData), r.MatcherID())
+	if err != nil {
+		logger.WithError(err).Error("checking channel cooldown")
+		return false
+	}
+
+	if !inCooldown {
 		return true
 	}
 
@@ -225,7 +231,13 @@ func (r *Rule) allowExecuteDisableOnOffline(logger *log.Entry, m *irc.Message, e
 }
 
 func (r *Rule) allowExecuteDisableOnPermit(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData *FieldCollection) bool {
-	if r.DisableOnPermit != nil && *r.DisableOnPermit && DeriveChannel(m, evtData) != "" && r.timerStore.HasPermit(DeriveChannel(m, evtData), DeriveUser(m, evtData)) {
+	hasPermit, err := r.timerStore.HasPermit(DeriveChannel(m, evtData), DeriveUser(m, evtData))
+	if err != nil {
+		logger.WithError(err).Error("checking permit")
+		return false
+	}
+
+	if r.DisableOnPermit != nil && *r.DisableOnPermit && DeriveChannel(m, evtData) != "" && hasPermit {
 		logger.Trace("Non-Match: Permit")
 		return false
 	}
@@ -328,7 +340,13 @@ func (r *Rule) allowExecuteRuleCooldown(logger *log.Entry, m *irc.Message, event
 		return true
 	}
 
-	if !r.timerStore.InCooldown(TimerTypeCooldown, "", r.MatcherID()) {
+	inCooldown, err := r.timerStore.InCooldown(TimerTypeCooldown, "", r.MatcherID())
+	if err != nil {
+		logger.WithError(err).Error("checking rule cooldown")
+		return false
+	}
+
+	if !inCooldown {
 		return true
 	}
 
@@ -347,7 +365,13 @@ func (r *Rule) allowExecuteUserCooldown(logger *log.Entry, m *irc.Message, event
 		return true
 	}
 
-	if DeriveUser(m, evtData) == "" || !r.timerStore.InCooldown(TimerTypeCooldown, DeriveUser(m, evtData), r.MatcherID()) {
+	inCooldown, err := r.timerStore.InCooldown(TimerTypeCooldown, DeriveUser(m, evtData), r.MatcherID())
+	if err != nil {
+		logger.WithError(err).Error("checking user cooldown")
+		return false
+	}
+
+	if DeriveUser(m, evtData) == "" || !inCooldown {
 		return true
 	}
 

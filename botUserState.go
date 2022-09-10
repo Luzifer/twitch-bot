@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-irc/irc"
 
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 type (

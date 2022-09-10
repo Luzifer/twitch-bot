@@ -5,7 +5,8 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/twitch"
+	"github.com/Luzifer/twitch-bot/pkg/database"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
 type (
@@ -51,10 +52,10 @@ type (
 		CreateEvent EventHandlerFunc
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
+		// GetDatabaseConnector returns an active database.Connector to access the backend storage database
+		GetDatabaseConnector func() database.Connector
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
 		GetLogger LoggerCreationFunc
-		// GetStorageManager returns an interface to access the modules storage
-		GetStorageManager func() StorageManager
 		// GetTwitchClient retrieves a fully configured Twitch client with initialized cache
 		GetTwitchClient func() *twitch.Client
 		// GetTwitchClientForChannel retrieves a fully configured Twitch client with initialized cache for extended permission channels

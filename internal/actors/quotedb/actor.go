@@ -1,14 +1,12 @@
 package quotedb
 
 import (
-	"encoding/json"
-	"math/rand"
 	"strconv"
-	"sync"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -18,9 +16,8 @@ const (
 )
 
 var (
+	db            database.Connector
 	formatMessage plugins.MsgFormatter
-	store         plugins.StorageManager
-	storedObject  = newStorage()
 
 	ptrStringEmpty     = func(v string) *string { return &v }("")
 	ptrStringOutFormat = func(v string) *string { return &v }("Quote #{{ .index }}: {{ .quote }}")
@@ -28,8 +25,12 @@ var (
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	db = args.GetDatabaseConnector()
+	if err := db.Migrate(actorName, database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
 	formatMessage = args.FormatMessage
-	store = args.GetStorageManager()
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -81,25 +82,16 @@ func Register(args plugins.RegistrationArguments) error {
 	registerAPI(args.RegisterAPIRoute)
 
 	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
-		return func() int {
-			return storedObject.GetMaxQuoteIdx(plugins.DeriveChannel(m, nil))
+		return func() (int, error) {
+			return getMaxQuoteIdx(plugins.DeriveChannel(m, nil))
 		}
 	})
 
-	return errors.Wrap(
-		store.GetModuleStore(moduleUUID, storedObject),
-		"loading module storage",
-	)
+	return nil
 }
 
 type (
 	actor struct{}
-
-	storage struct {
-		ChannelQuotes map[string][]string `json:"channel_quotes"`
-
-		lock sync.RWMutex
-	}
 )
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
@@ -129,21 +121,22 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			return false, errors.Wrap(err, "formatting quote")
 		}
 
-		storedObject.AddQuote(plugins.DeriveChannel(m, eventData), quote)
 		return false, errors.Wrap(
-			store.SetModuleStore(moduleUUID, storedObject),
-			"storing quote database",
+			addQuote(plugins.DeriveChannel(m, eventData), quote),
+			"adding quote",
 		)
 
 	case "del":
-		storedObject.DelQuote(plugins.DeriveChannel(m, eventData), index)
 		return false, errors.Wrap(
-			store.SetModuleStore(moduleUUID, storedObject),
+			delQuote(plugins.DeriveChannel(m, eventData), index),
 			"storing quote database",
 		)
 
 	case "get":
-		idx, quote := storedObject.GetQuote(plugins.DeriveChannel(m, eventData), index)
+		idx, quote, err := getQuote(plugins.DeriveChannel(m, eventData), index)
+		if err != nil {
+			return false, errors.Wrap(err, "getting quote")
+		}
 
 		if idx == 0 {
 			// No quote was found for the given idx
@@ -200,109 +193,4 @@ func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	}
 
 	return nil
-}
-
-// Storage
-
-func newStorage() *storage {
-	return &storage{
-		ChannelQuotes: make(map[string][]string),
-	}
-}
-
-func (s *storage) AddQuote(channel, quote string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.ChannelQuotes[channel] = append(s.ChannelQuotes[channel], quote)
-}
-
-func (s *storage) DelQuote(channel string, quote int) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	var quotes []string
-	for i, q := range s.ChannelQuotes[channel] {
-		if i == quote {
-			continue
-		}
-		quotes = append(quotes, q)
-	}
-
-	s.ChannelQuotes[channel] = quotes
-}
-
-func (s *storage) GetChannelQuotes(channel string) []string {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	var out []string
-	out = append(out, s.ChannelQuotes[channel]...)
-	return out
-}
-
-func (s *storage) GetMaxQuoteIdx(channel string) int {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return len(s.ChannelQuotes[channel])
-}
-
-func (s *storage) GetQuote(channel string, quote int) (int, string) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	if quote == 0 {
-		quote = rand.Intn(len(s.ChannelQuotes[channel])) + 1 // #nosec G404 // no need for cryptographic safety
-	}
-
-	if quote > len(s.ChannelQuotes[channel]) {
-		return 0, ""
-	}
-
-	return quote, s.ChannelQuotes[channel][quote-1]
-}
-
-func (s *storage) SetQuotes(channel string, quotes []string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.ChannelQuotes[channel] = quotes
-}
-
-func (s *storage) UpdateQuote(channel string, idx int, quote string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	var quotes []string
-	for i := range s.ChannelQuotes[channel] {
-		if i == idx {
-			quotes = append(quotes, quote)
-			continue
-		}
-
-		quotes = append(quotes, s.ChannelQuotes[channel][i])
-	}
-
-	s.ChannelQuotes[channel] = quotes
-}
-
-// Implement marshaller interfaces
-func (s *storage) MarshalStoredObject() ([]byte, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	return json.Marshal(s)
-}
-
-func (s *storage) UnmarshalStoredObject(data []byte) error {
-	if data == nil {
-		// No data set yet, don't try to unmarshal
-		return nil
-	}
-
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	return json.Unmarshal(data, s)
 }

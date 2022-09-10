@@ -1,21 +1,38 @@
-package main
+package counter
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
-func init() {
-	registerAction("counter", func() plugins.Actor { return &ActorCounter{} })
+var (
+	db            database.Connector
+	formatMessage plugins.MsgFormatter
 
-	registerActorDocumentation(plugins.ActionDocumentation{
+	ptrStringEmpty = func(s string) *string { return &s }("")
+)
+
+//nolint:funlen // This function is a few lines too long but only contains definitions
+func Register(args plugins.RegistrationArguments) error {
+	db = args.GetDatabaseConnector()
+	if err := db.Migrate("counter", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
+	formatMessage = args.FormatMessage
+
+	args.RegisterActor("counter", func() plugins.Actor { return &ActorCounter{} })
+
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Update counter values",
 		Name:        "Modify Counter",
 		Type:        "counter",
@@ -51,7 +68,7 @@ func init() {
 		},
 	})
 
-	registerRoute(plugins.HTTPRouteRegistrationArgs{
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Returns the (formatted) value as a plain string",
 		HandlerFunc: routeActorCounterGetValue,
 		Method:      http.MethodGet,
@@ -75,7 +92,7 @@ func init() {
 		},
 	})
 
-	registerRoute(plugins.HTTPRouteRegistrationArgs{
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Updates the value of the counter",
 		HandlerFunc: routeActorCounterSetValue,
 		Method:      http.MethodPatch,
@@ -104,6 +121,23 @@ func init() {
 			},
 		},
 	})
+
+	args.RegisterTemplateFunction("channelCounter", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+		return func(name string) (string, error) {
+			channel, err := fields.String("channel")
+			if err != nil {
+				return "", errors.Wrap(err, "channel not available")
+			}
+
+			return strings.Join([]string{channel, name}, ":"), nil
+		}
+	})
+
+	args.RegisterTemplateFunction("counterValue", plugins.GenericTemplateFunctionGetter(func(name string, _ ...string) (int64, error) {
+		return getCounterValue(name)
+	}))
+
+	return nil
 }
 
 type ActorCounter struct{}
@@ -126,7 +160,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 		}
 
 		return false, errors.Wrap(
-			store.UpdateCounter(counterName, counterValue, true),
+			updateCounter(counterName, counterValue, true),
 			"set counter",
 		)
 	}
@@ -145,7 +179,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	return false, errors.Wrap(
-		store.UpdateCounter(counterName, counterStep, false),
+		updateCounter(counterName, counterStep, false),
 		"update counter",
 	)
 }
@@ -167,8 +201,14 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 		template = "%d"
 	}
 
+	cv, err := getCounterValue(mux.Vars(r)["name"])
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text-plain")
-	fmt.Fprintf(w, template, store.GetCounterValue(mux.Vars(r)["name"]))
+	fmt.Fprintf(w, template, cv)
 }
 
 func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +223,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = store.UpdateCounter(mux.Vars(r)["name"], value, absolute); err != nil {
+	if err = updateCounter(mux.Vars(r)["name"], value, absolute); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

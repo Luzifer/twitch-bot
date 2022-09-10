@@ -183,10 +183,16 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 }
 
 func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
-	elevated := make(map[string]bool)
+	var (
+		elevated = make(map[string]bool)
+		err      error
+	)
 
 	for _, ch := range config.Channels {
-		elevated[ch] = store.UserHasGrantedScopes(ch, channelDefaultScopes...) && store.UserHasExtendedAuth(ch)
+		if elevated[ch], err = accessService.HasPermissionsForChannel(ch, channelDefaultScopes...); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	var uName *string

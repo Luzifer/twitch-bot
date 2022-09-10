@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 const websocketPingInterval = 30 * time.Second

@@ -1,0 +1,4 @@
+CREATE TABLE testdata (
+  key STRING NOT NULL PRIMARY KEY,
+  value STRING
+);

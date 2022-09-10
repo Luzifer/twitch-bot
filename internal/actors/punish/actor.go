@@ -1,16 +1,15 @@
 package punish
 
 import (
-	"encoding/json"
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
@@ -23,16 +22,19 @@ const (
 )
 
 var (
+	db                 database.Connector
 	formatMessage      plugins.MsgFormatter
 	ptrDefaultCooldown = func(v time.Duration) *time.Duration { return &v }(oneWeek)
 	ptrStringEmpty     = func(v string) *string { return &v }("")
-	store              plugins.StorageManager
-	storedObject       = newStorage()
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	db = args.GetDatabaseConnector()
+	if err := db.Migrate("punish", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
 	formatMessage = args.FormatMessage
-	store = args.GetStorageManager()
 
 	args.RegisterActor(actorNamePunish, func() plugins.Actor { return &actorPunish{} })
 	args.RegisterActor(actorNameResetPunish, func() plugins.Actor { return &actorResetPunish{} })
@@ -118,10 +120,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	return errors.Wrap(
-		store.GetModuleStore(moduleUUID, storedObject),
-		"loading module storage",
-	)
+	return nil
 }
 
 type (
@@ -132,12 +131,6 @@ type (
 		LastLevel int           `json:"last_level"`
 		Executed  time.Time     `json:"executed"`
 		Cooldown  time.Duration `json:"cooldown"`
-	}
-
-	storage struct {
-		ActiveLevels map[string]*levelConfig `json:"active_levels"`
-
-		lock sync.Mutex
 	}
 )
 
@@ -160,7 +153,10 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 		return false, errors.Wrap(err, "preparing user")
 	}
 
-	lvl := storedObject.GetPunishment(plugins.DeriveChannel(m, eventData), user, uuid)
+	lvl, err := getPunishment(plugins.DeriveChannel(m, eventData), user, uuid)
+	if err != nil {
+		return false, errors.Wrap(err, "getting stored punishment")
+	}
 	nLvl := int(math.Min(float64(len(levels)-1), float64(lvl.LastLevel+1)))
 
 	var cmd []string
@@ -207,7 +203,7 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	lvl.LastLevel = nLvl
 
 	return false, errors.Wrap(
-		store.SetModuleStore(moduleUUID, storedObject),
+		setPunishment(plugins.DeriveChannel(m, eventData), user, uuid, lvl),
 		"storing punishment level",
 	)
 }
@@ -239,10 +235,8 @@ func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 		return false, errors.Wrap(err, "preparing user")
 	}
 
-	storedObject.ResetLevel(plugins.DeriveChannel(m, eventData), user, uuid)
-
 	return false, errors.Wrap(
-		store.SetModuleStore(moduleUUID, storedObject),
+		deletePunishment(plugins.DeriveChannel(m, eventData), user, uuid),
 		"resetting punishment level",
 	)
 }
@@ -256,92 +250,4 @@ func (a actorResetPunish) Validate(attrs *plugins.FieldCollection) (err error) {
 	}
 
 	return nil
-}
-
-// Storage
-
-func newStorage() *storage {
-	return &storage{
-		ActiveLevels: make(map[string]*levelConfig),
-	}
-}
-
-func (s *storage) GetPunishment(channel, user, uuid string) *levelConfig {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	// Ensure old state is cleared
-	s.calculateCooldowns()
-
-	var (
-		id  = s.getCacheKey(channel, user, uuid)
-		lvl = s.ActiveLevels[id]
-	)
-
-	if lvl == nil {
-		// Initialize a non-triggered state
-		lvl = &levelConfig{LastLevel: -1}
-		s.ActiveLevels[id] = lvl
-	}
-
-	return lvl
-}
-
-func (s *storage) ResetLevel(channel, user, uuid string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	delete(s.ActiveLevels, s.getCacheKey(channel, user, uuid))
-}
-
-func (s *storage) getCacheKey(channel, user, uuid string) string {
-	return strings.Join([]string{channel, user, uuid}, "::")
-}
-
-func (s *storage) calculateCooldowns() {
-	// This MUST NOT be locked, the lock MUST be set by calling method
-
-	var clear []string
-
-	for id, lvl := range s.ActiveLevels {
-		for {
-			cooldownTime := lvl.Executed.Add(lvl.Cooldown)
-			if cooldownTime.After(time.Now()) {
-				break
-			}
-
-			lvl.Executed = cooldownTime
-			lvl.LastLevel--
-		}
-
-		// Level 0 is the first punishment level, so only remove if it drops below 0
-		if lvl.LastLevel < 0 {
-			clear = append(clear, id)
-		}
-	}
-
-	for _, id := range clear {
-		delete(s.ActiveLevels, id)
-	}
-}
-
-// Implement marshaller interfaces
-func (s *storage) MarshalStoredObject() ([]byte, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.calculateCooldowns()
-	return json.Marshal(s)
-}
-
-func (s *storage) UnmarshalStoredObject(data []byte) error {
-	if data == nil {
-		// No data set yet, don't try to unmarshal
-		return nil
-	}
-
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	return json.Unmarshal(data, s)
 }

@@ -85,7 +85,7 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 
 		// Lock command
 		if !preventCooldown {
-			r.SetCooldown(timerStore, m, eventData)
+			r.SetCooldown(timerService, m, eventData)
 		}
 	}
 }

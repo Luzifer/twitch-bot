@@ -257,7 +257,7 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *p
 	var out []*plugins.Rule
 
 	for _, r := range c.Rules {
-		if r.Matches(m, event, timerStore, formatMessage, twitchClient, eventData) {
+		if r.Matches(m, event, timerService, formatMessage, twitchClient, eventData) {
 			out = append(out, r)
 		}
 	}

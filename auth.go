@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 var instanceState = uuid.Must(uuid.NewV4()).String()
@@ -85,18 +85,14 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = store.UpdateBotToken(rData.AccessToken, rData.RefreshToken); err != nil {
+	if err = accessService.SetBotTwitchCredentials(rData.AccessToken, rData.RefreshToken); err != nil {
 		http.Error(w, errors.Wrap(err, "storing access token").Error(), http.StatusInternalServerError)
 		return
 	}
 
 	twitchClient.UpdateToken(rData.AccessToken, rData.RefreshToken)
 
-	if err = store.SetExtendedPermissions(botUser, storageExtendedPermission{
-		AccessToken:  rData.AccessToken,
-		RefreshToken: rData.RefreshToken,
-		Scopes:       rData.Scope,
-	}, true); err != nil {
+	if err = accessService.SetExtendedTwitchCredentials(botUser, rData.AccessToken, rData.RefreshToken, rData.Scope); err != nil {
 		http.Error(w, errors.Wrap(err, "storing access scopes").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -145,11 +141,7 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = store.SetExtendedPermissions(grantUser, storageExtendedPermission{
-		AccessToken:  rData.AccessToken,
-		RefreshToken: rData.RefreshToken,
-		Scopes:       rData.Scope,
-	}, false); err != nil {
+	if err = accessService.SetExtendedTwitchCredentials(grantUser, rData.AccessToken, rData.RefreshToken, rData.Scope); err != nil {
 		http.Error(w, errors.Wrap(err, "storing access token").Error(), http.StatusInternalServerError)
 		return
 	}

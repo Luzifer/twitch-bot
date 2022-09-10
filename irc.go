@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 var (
@@ -297,7 +297,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	})
 
 	log.WithFields(fields.Data()).Debug("Added permit")
-	timerStore.AddPermit(m.Params[0], username)
+	timerService.AddPermit(m.Params[0], username)
 
 	go handleMessage(i.c, m, eventTypePermit, fields)
 }

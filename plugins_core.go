@@ -11,6 +11,7 @@ import (
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/internal/actors/ban"
+	"github.com/Luzifer/twitch-bot/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/internal/actors/delete"
 	"github.com/Luzifer/twitch-bot/internal/actors/filesay"
@@ -21,15 +22,18 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/internal/actors/timeout"
+	"github.com/Luzifer/twitch-bot/internal/actors/variables"
 	"github.com/Luzifer/twitch-bot/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
+	"github.com/Luzifer/twitch-bot/internal/service/access"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
+	"github.com/Luzifer/twitch-bot/pkg/database"
+	"github.com/Luzifer/twitch-bot/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/plugins"
-	"github.com/Luzifer/twitch-bot/twitch"
 )
 
 const ircHandleWaitRetries = 10
@@ -38,6 +42,7 @@ var (
 	corePluginRegistrations = []plugins.RegisterFunc{
 		// Actors
 		ban.Register,
+		counter.Register,
 		delay.Register,
 		deleteactor.Register,
 		filesay.Register,
@@ -48,6 +53,7 @@ var (
 		raw.Register,
 		respond.Register,
 		timeout.Register,
+		variables.Register,
 		whisper.Register,
 
 		// Template functions
@@ -113,10 +119,9 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 			return nil
 		},
 		FormatMessage:              formatMessage,
+		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
-		GetStorageManager:          func() plugins.StorageManager { return store },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
-		GetTwitchClientForChannel:  store.GetTwitchClientForChannel,
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,
@@ -126,6 +131,13 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
 		ValidateToken:              validateAuthToken,
+
+		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
+			return accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
+				TwitchClient:       cfg.TwitchClient,
+				TwitchClientSecret: cfg.TwitchClientSecret,
+			})
+		},
 	}
 }
 
