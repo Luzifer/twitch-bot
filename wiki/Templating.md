@@ -199,6 +199,21 @@ Example:
 < true
 ```
 
+#### `jsonAPI`
+
+Fetches remote URL and applies jq-like query to it returning the result as string. (Remote API needs to return status 200 within 5 seconds.)
+
+Syntax: `jsonAPI "https://example.com/doc.json" ".data.exampleString" ["fallback"]`
+
+Example:
+
+```
+! !mycmd
+> !mycmd
+# {{ jsonAPI "https://example.com/doc.json" ".data.exampleString" }}
+< example string
+```
+
 #### `lastQuoteIndex`
 
 Gets the last quote index in the quote database for the current channel

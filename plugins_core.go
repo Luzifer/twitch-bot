@@ -28,6 +28,7 @@ import (
 	"github.com/Luzifer/twitch-bot/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
+	"github.com/Luzifer/twitch-bot/internal/template/api"
 	"github.com/Luzifer/twitch-bot/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/internal/template/random"
 	"github.com/Luzifer/twitch-bot/internal/template/slice"
@@ -57,6 +58,7 @@ var (
 		whisper.Register,
 
 		// Template functions
+		api.Register,
 		numeric.Register,
 		random.Register,
 		slice.Register,
