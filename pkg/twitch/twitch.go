@@ -470,7 +470,16 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 		Title: title,
 	}
 
-	if game != nil {
+	switch {
+	case game == nil:
+		// We don't set the GameID
+
+	case (*game)[0] == '@':
+		// We got an ID and don't need to resolve
+		gameID := (*game)[1:]
+		data.GameID = &gameID
+
+	default:
 		categories, err := c.SearchCategories(ctx, *game)
 		if err != nil {
 			return errors.Wrap(err, "searching for game")

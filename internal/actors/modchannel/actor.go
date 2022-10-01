@@ -41,7 +41,7 @@ func Register(args plugins.RegistrationArguments) error {
 			},
 			{
 				Default:         "",
-				Description:     "Category / Game to set",
+				Description:     "Category / Game to set (use `@1234` format to pass an explicit ID)",
 				Key:             "game",
 				Name:            "Game",
 				Optional:        true,
