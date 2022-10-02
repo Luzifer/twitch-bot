@@ -14,7 +14,11 @@ There are certain variables available in the strings with templating enabled:
 
 ### Functions
 
-Additionally to the built-in functions there are extra functions available in the templates:
+Within templates following functions can be used:
+
+- built-in functions in `text/template` engine
+- functions from [sprig](https://masterminds.github.io/sprig/) function collection
+- functions mentioned below
 
 Examples below are using this syntax in the code block:
 
@@ -23,19 +27,6 @@ Examples below are using this syntax in the code block:
 > Input message if used in the example
 # Template used in the fields
 < Output from the template
-```
-
-#### `add`
-
-Returns float from calculation: `float1 + float2`
-
-Syntax: `add <float1> <float2>`
-
-Example:
-
-```
-# {{ printf "%.0f" (add 1 2) }}%
-< 3
 ```
 
 #### `arg`
@@ -80,7 +71,7 @@ Example:
 
 #### `concat`
 
-Join the given string parts with delimiter
+Join the given string parts with delimiter (⚠ this replaces the sprig `concat` function: sprig `concat` is not available!)
 
 Syntax: `concat <delimiter> <...parts>`
 
@@ -115,19 +106,6 @@ Example:
 ```
 # {{ displayName "luziferus" }} - {{ displayName "notexistinguser" "foobar" }}
 < Luziferus - foobar
-```
-
-#### `div`
-
-Returns float from calculation: `float1 / float2`
-
-Syntax: `div <float1> <float2>`
-
-Example:
-
-```
-# {{ printf "%.0f" (div 27 9) }}%
-< 3
 ```
 
 #### `fixUsername`
@@ -227,32 +205,6 @@ Example:
 < Last Quote: #32
 ```
 
-#### `mod`
-
-Returns int from calculation: `int1 % int2`
-
-Syntax: `mod <int1> <int2>`
-
-Example:
-
-```
-# {{ mod 12 10 }}
-< 2
-```
-
-#### `mul` (deprecated: `multiply`)
-
-Returns float from calculation: `float1 * float2`
-
-Syntax: `mul <float1> <float2>`
-
-Example:
-
-```
-# {{ printf "%.0f" (mul 100 (seededRandom "test")) }}%
-< 35%
-```
-
 #### `pow`
 
 Returns float from calculation: `float1 ** float2`
@@ -318,19 +270,6 @@ Example:
 < Your int this hour: 17%
 ```
 
-#### `sub`
-
-Returns float from calculation: `float1 - float2`
-
-Syntax: `sub <float1> <float2>`
-
-Example:
-
-```
-# {{ printf "%.0f" (sub 10 4) }}%
-< 6
-```
-
 #### `tag`
 
 Takes the message sent to the channel, returns the value of the tag specified
@@ -342,19 +281,6 @@ Example:
 ```
 # {{ tag "login" }}
 < luziferus
-```
-
-#### `toLower` / `toUpper`
-
-Converts the given string to lower-case / upper-case
-
-Syntax: `toLower <string>` / `toUpper <string>`
-
-Example:
-
-```
-# {{ toLower "Test" }} - {{ toUpper "Test" }}
-< test - TEST
 ```
 
 #### `variable`
@@ -370,3 +296,11 @@ Example:
 < test - fallback
 ```
 
+###  Upgrade from `v2.x` to `v3.x`
+
+When adding [sprig](https://masterminds.github.io/sprig/) function collection some functions collided and needed replacement. You need to adapt your templates accordingly:
+
+- Math functions (`add`, `div`, `mod`, `mul`, `multiply`, `sub`) were replaced with their sprig-equivalent and are now working with integers instead of floats. If you need them to continue to work with floats you need to use their [float-variants](https://masterminds.github.io/sprig/mathf.html).
+- `now` does no longer format the current date as a string but return the current date. You need to replace this: `now "2006-01-02"` becomes `now | date "2006-01-02"`.
+- `concat` is now used to concat arrays. To join strings you will need to modify your code: `concat ":" "string1" "string2"` becomes `lists "string1" "string2" | join ":"`.
+- `toLower` / `toUpper` need to be replaced with their sprig equivalent `lower` and `upper`.

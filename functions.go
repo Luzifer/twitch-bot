@@ -7,14 +7,20 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/go-irc/irc"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
-var tplFuncs = newTemplateFuncProvider()
+var (
+	korvikeBlacklist = []string{"now"}
+	sprigBlacklist   = []string{"env"}
+	tplFuncs         = newTemplateFuncProvider()
+)
 
 type templateFuncProvider struct {
 	funcs map[string]plugins.TemplateFuncGetter
@@ -36,7 +42,20 @@ func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, field
 
 	out := make(template.FuncMap)
 
+	for n, fn := range sprig.TxtFuncMap() {
+		if str.StringInSlice(n, sprigBlacklist) {
+			continue
+		}
+		if out[n] != nil {
+			panic(fmt.Sprintf("duplicate function: %s (add in sprig)", n))
+		}
+		out[n] = fn
+	}
+
 	for n, fg := range t.funcs {
+		if out[n] != nil {
+			panic(fmt.Sprintf("duplicate function: %s (add in registration)", n))
+		}
 		out[n] = fg(m, r, fields)
 	}
 
@@ -70,10 +89,11 @@ func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGett
 func init() {
 	// Register Korvike functions
 	for n, f := range korvike.GetFunctionMap() {
+		if str.StringInSlice(n, korvikeBlacklist) {
+			continue
+		}
 		tplFuncs.Register(n, plugins.GenericTemplateFunctionGetter(f))
 	}
-
-	tplFuncs.Register("concat", plugins.GenericTemplateFunctionGetter(func(delim string, parts ...string) string { return strings.Join(parts, delim) }))
 
 	tplFuncs.Register("formatDuration", plugins.GenericTemplateFunctionGetter(func(dur time.Duration, units ...string) string {
 		dLeft := dur
@@ -96,7 +116,4 @@ func init() {
 
 		return strings.Join(parts, ", ")
 	}))
-
-	tplFuncs.Register("toLower", plugins.GenericTemplateFunctionGetter(strings.ToLower))
-	tplFuncs.Register("toUpper", plugins.GenericTemplateFunctionGetter(strings.ToUpper))
 }
