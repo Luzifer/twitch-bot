@@ -1,3 +1,21 @@
+# 3.0.0 / Unreleased
+
+**⚠ Breaking Changes:**
+  - Backend storage format has been switched from JSON-file to database. Migrations must be run before use of `v3.x` version. See [README](https://github.com/Luzifer/twitch-bot#upgrade-from-v2x-to-v3x) for instructions.
+  - Some template function have been migrated to a new function collection. See [migration section of Templating documentation](https://github.com/Luzifer/twitch-bot/wiki/Templating#upgrade-from-v2x-to-v3x) for required changes.
+
+**Changelog:**
+
+  * New Features
+    * [templating] Add jsonAPI template function
+
+  * Improvements
+    * ⚠ [core] Move storage to SQLite database (#30)
+    * [core] Allow to pass ID to channel modification
+    * ⚠ [templating] Add sprig functions, replace some built-ins
+
+  * Bugfixes
+
 # 2.7.1 / 2022-09-06
 
 Bugfix release, repeating `v2.7.0` changelog as of broken release.
