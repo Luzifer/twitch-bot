@@ -7,6 +7,7 @@
 **Changelog:**
 
   * New Features
+    * [core] Add rule-subscription feature
     * [templating] Add jsonAPI template function
 
   * Improvements

@@ -247,6 +247,11 @@ func main() {
 	// are retried on error each time
 	cronService.AddFunc("@every 30s", twitchWatch.Check)
 
+	// Allow config to subscribe to external rules
+	updCron := updateConfigCron()
+	cronService.AddFunc(updCron, updateConfigFromRemote)
+	log.WithField("cron", updCron).Debug("Initialized remote update cron")
+
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)

@@ -28,6 +28,8 @@ var (
 
 	configReloadHooks     = map[string]func(){}
 	configReloadHooksLock sync.RWMutex
+
+	errSaveNotRequired = errors.New("save not required")
 )
 
 func registerConfigReloadHook(hook func()) func() {
@@ -187,7 +189,16 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 
 	cfgFile.fixMissingUUIDs()
 
-	if err = patcher(cfgFile); err != nil {
+	err = patcher(cfgFile)
+	switch {
+	case errors.Is(err, nil):
+		// This is fine
+
+	case errors.Is(err, errSaveNotRequired):
+		// This is also fine but we don't need to save
+		return nil
+
+	default:
 		return errors.Wrap(err, "patching config")
 	}
 

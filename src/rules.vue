@@ -30,7 +30,19 @@
         >
           <template #cell(_actions)="data">
             <b-button-group size="sm">
-              <b-button @click="editRule(data.item)">
+              <b-button
+                v-if="data.item.subscribe_from"
+                disabled
+              >
+                <font-awesome-icon
+                  fixed-width
+                  :icon="['fas', 'download']"
+                />
+              </b-button>
+              <b-button
+                v-else
+                @click="editRule(data.item)"
+              >
                 <font-awesome-icon
                   fixed-width
                   :icon="['fas', 'pen']"
@@ -64,6 +76,13 @@
               {{ data.item.description }}<br>
             </template>
             <b-badge
+              v-if="data.item.subscribe_from"
+              class="mt-1 mr-1"
+              variant="primary"
+            >
+              Shared
+            </b-badge>
+            <b-badge
               v-if="data.item.disable"
               class="mt-1 mr-1"
               variant="danger"
@@ -90,11 +109,44 @@
                   :icon="['fas', 'plus']"
                 />
               </b-button>
+              <b-button
+                variant="secondary"
+                @click="showRuleSubscribeModal=true"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  :icon="['fas', 'download']"
+                />
+              </b-button>
             </b-button-group>
           </template>
         </b-table>
       </b-col>
     </b-row>
+
+    <b-modal
+      v-if="showRuleSubscribeModal"
+      hide-header-close
+      :ok-disabled="!models.subscriptionURL"
+      ok-title="Subscribe"
+      size="md"
+      :visible="showRuleSubscribeModal"
+      title="Subscribe Rule"
+      @hidden="showRuleSubscribeModal=false"
+      @ok="subscribeRule"
+    >
+      <b-form-group
+        label="Rule Subscription URL"
+        label-for="formRuleSubURL"
+      >
+        <b-form-input
+          id="formRuleSubURL"
+          v-model="models.subscriptionURL"
+          :state="Boolean(models.subscriptionURL)"
+          type="text"
+        />
+      </b-form-group>
+    </b-modal>
 
     <!-- Rule Editor -->
     <b-modal
@@ -702,6 +754,7 @@ export default {
         addAction: '',
         addException: '',
         rule: {},
+        subscriptionURL: '',
       },
 
       rules: [],
@@ -727,6 +780,7 @@ export default {
       ],
 
       showRuleEditModal: false,
+      showRuleSubscribeModal: false,
       validateReason: null,
     }
   },
@@ -1024,6 +1078,17 @@ export default {
       promise.then(() => {
         this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
       })
+        .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    subscribeRule() {
+      axios.post(`config-editor/rules`, {
+        subscribe_from: this.models.subscriptionURL,
+      }, this.$root.axiosOptions)
+        .then(() => {
+          this.models.subscriptionURL = ''
+          this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
+        })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 

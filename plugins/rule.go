@@ -1,7 +1,12 @@
 package plugins
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -10,15 +15,19 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/pkg/twitch"
 )
 
+const remoteRuleFetchTimeout = 2 * time.Second
+
 type (
 	Rule struct {
-		UUID        string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
-		Description string `json:"description,omitempty" yaml:"description,omitempty"`
+		UUID          string  `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
+		Description   string  `json:"description,omitempty" yaml:"description,omitempty"`
+		SubscribeFrom *string `json:"subscribe_from,omitempty" yaml:"subscribe_from,omitempty"`
 
 		Actions []*RuleAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 
@@ -60,11 +69,7 @@ func (r Rule) MatcherID() string {
 		return r.UUID
 	}
 
-	h, err := hashstructure.Hash(r, hashstructure.FormatV2, nil)
-	if err != nil {
-		panic(errors.Wrap(err, "hashing automessage"))
-	}
-	return fmt.Sprintf("hashstructure:%x", h)
+	return r.hash()
 }
 
 func (r *Rule) Matches(m *irc.Message, event *string, timerStore TimerStore, msgFormatter MsgFormatter, twitchClient *twitch.Client, eventData *FieldCollection) bool {
@@ -130,6 +135,62 @@ func (r *Rule) SetCooldown(timerStore TimerStore, m *irc.Message, evtData *Field
 	if r.UserCooldown != nil && DeriveUser(m, evtData) != "" {
 		timerStore.AddCooldown(TimerTypeCooldown, DeriveUser(m, evtData), r.MatcherID(), time.Now().Add(*r.UserCooldown))
 	}
+}
+
+func (r *Rule) UpdateFromSubscription() (bool, error) {
+	if r.SubscribeFrom == nil || len(*r.SubscribeFrom) == 0 {
+		return false, nil
+	}
+
+	prevHash := r.hash()
+
+	remoteURL, err := url.Parse(*r.SubscribeFrom)
+	if err != nil {
+		return false, errors.Wrap(err, "parsing remote subscription url")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), remoteRuleFetchTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, remoteURL.String(), nil)
+	if err != nil {
+		return false, errors.Wrap(err, "assembling request")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, errors.Wrap(err, "executing request")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, errors.Errorf("unxpected HTTP status %d", resp.StatusCode)
+	}
+
+	var newRule Rule
+	switch path.Ext(remoteURL.Path) {
+	case ".json":
+		err = json.NewDecoder(resp.Body).Decode(&newRule)
+
+	case ".yaml", ".yml":
+		err = yaml.NewDecoder(resp.Body).Decode(&newRule)
+
+	default:
+		return false, errors.New("unexpected format")
+	}
+
+	if err != nil {
+		return false, errors.Wrap(err, "decoding remote rule")
+	}
+
+	if newRule.hash() == prevHash {
+		// No update, exit now
+		return false, nil
+	}
+
+	*r = newRule
+
+	return true, nil
 }
 
 func (r *Rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData *FieldCollection) bool {
@@ -396,4 +457,12 @@ func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 	}
 
 	return true
+}
+
+func (r Rule) hash() string {
+	h, err := hashstructure.Hash(r, hashstructure.FormatV2, nil)
+	if err != nil {
+		panic(errors.Wrap(err, "hashing rule"))
+	}
+	return fmt.Sprintf("hashstructure:%x", h)
 }

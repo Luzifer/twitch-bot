@@ -89,7 +89,14 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg.UUID = uuid.Must(uuid.NewV4()).String()
+	if msg.SubscribeFrom != nil {
+		if _, err = msg.UpdateFromSubscription(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		msg.UUID = uuid.Must(uuid.NewV4()).String()
+	}
 
 	if err := patchConfig(cfg.Config, user, "", "Add rule", func(c *configFile) error {
 		c.Rules = append(c.Rules, msg)
