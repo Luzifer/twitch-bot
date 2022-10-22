@@ -31,7 +31,6 @@ type (
 		Variables map[string]string             `json:"variables"`
 
 		ModuleStorage struct {
-			ModPunish   storageModPunish   `json:"44ab4646-ce50-4e16-9353-c1f0eb68962b"`
 			ModOverlays storageModOverlays `json:"f9ca2b3a-baf6-45ea-a347-c626168665e8"`
 			ModQuoteDB  storageModQuoteDB  `json:"917c83ee-ed40-41e4-a558-1c2e59fdf1f5"`
 		} `json:"module_storage"`
@@ -105,7 +104,6 @@ func (s storageFile) Migrate(db database.Connector) error {
 		"timers":      s.migrateTimers,
 		"variables":   s.migrateVariables,
 		// Modules
-		"mod_punish":   s.ModuleStorage.ModPunish.migrate,
 		"mod_overlays": s.ModuleStorage.ModOverlays.migrate,
 		"mod_quotedb":  s.ModuleStorage.ModQuoteDB.migrate,
 	} {
