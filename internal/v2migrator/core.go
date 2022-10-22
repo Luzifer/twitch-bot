@@ -3,12 +3,18 @@ package v2migrator
 import (
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/internal/actors/counter"
+	"github.com/Luzifer/twitch-bot/internal/actors/variables"
 	"github.com/Luzifer/twitch-bot/internal/service/access"
+	"github.com/Luzifer/twitch-bot/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
 func (s storageFile) migrateCoreKV(db database.Connector) (err error) {
-	as := access.New(db)
+	as, err := access.New(db)
+	if err != nil {
+		return errors.Wrap(err, "creating access service")
+	}
 
 	if err = as.SetBotTwitchCredentials(s.BotAccessToken, s.BotRefreshToken); err != nil {
 		return errors.Wrap(err, "setting bot credentials")
@@ -22,15 +28,8 @@ func (s storageFile) migrateCoreKV(db database.Connector) (err error) {
 }
 
 func (s storageFile) migrateCounters(db database.Connector) (err error) {
-	for counter, value := range s.Counters {
-		if _, err = db.DB().Exec(
-			`INSERT INTO counters
-				(name, value)
-				VALUES ($1, $2)
-				ON CONFLICT DO UPDATE
-					SET value = excluded.value;`,
-			counter, value,
-		); err != nil {
+	for counterName, value := range s.Counters {
+		if err = counter.UpdateCounter(db, counterName, value, true); err != nil {
 			return errors.Wrap(err, "storing counter value")
 		}
 	}
@@ -39,7 +38,10 @@ func (s storageFile) migrateCounters(db database.Connector) (err error) {
 }
 
 func (s storageFile) migratePermissions(db database.Connector) (err error) {
-	as := access.New(db)
+	as, err := access.New(db)
+	if err != nil {
+		return errors.Wrap(err, "creating access service")
+	}
 
 	for channel, perms := range s.ExtendedPermissions {
 		if err = as.SetExtendedTwitchCredentials(
@@ -56,15 +58,13 @@ func (s storageFile) migratePermissions(db database.Connector) (err error) {
 }
 
 func (s storageFile) migrateTimers(db database.Connector) (err error) {
+	ts, err := timer.New(db)
+	if err != nil {
+		return errors.Wrap(err, "creating timer service")
+	}
+
 	for id, expiry := range s.Timers {
-		if _, err := db.DB().Exec(
-			`INSERT INTO timers
-				(id, expires_at)
-				VALUES ($1, $2)
-				ON CONFLICT DO UPDATE
-					SET expires_at = excluded.expires_at;`,
-			id, expiry.Time.Unix(),
-		); err != nil {
+		if err := ts.SetTimer(id, expiry.Time); err != nil {
 			return errors.Wrap(err, "storing counter in database")
 		}
 	}
@@ -74,14 +74,7 @@ func (s storageFile) migrateTimers(db database.Connector) (err error) {
 
 func (s storageFile) migrateVariables(db database.Connector) (err error) {
 	for key, value := range s.Variables {
-		if _, err = db.DB().Exec(
-			`INSERT INTO variables
-				(name, value)
-				VALUES ($1, $2)
-				ON CONFLICT DO UPDATE
-					SET value = excluded.value;`,
-			key, value,
-		); err != nil {
+		if err := variables.SetVariable(db, key, value); err != nil {
 			return errors.Wrap(err, "updating value in database")
 		}
 	}

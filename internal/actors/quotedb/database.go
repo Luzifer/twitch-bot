@@ -1,120 +1,99 @@
 package quotedb
 
 import (
-	"database/sql"
-	"embed"
 	"math/rand"
 	"time"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+
+	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
-//go:embed schema/**
-var schema embed.FS
+type (
+	quote struct {
+		Channel   string `gorm:"not null;uniqueIndex:ensure_sort_idx;size:32"`
+		CreatedAt int64  `gorm:"uniqueIndex:ensure_sort_idx"`
+		Quote     string
+	}
+)
 
-func addQuote(channel, quote string) error {
-	_, err := db.DB().Exec(
-		`INSERT INTO quotedb
-			(channel, created_at, quote)
-			VALUES ($1, $2, $3);`,
-		channel, time.Now().UnixNano(), quote,
+func AddQuote(db database.Connector, channel, quoteStr string) error {
+	return errors.Wrap(
+		db.DB().Create(quote{
+			Channel:   channel,
+			CreatedAt: time.Now().UnixNano(),
+			Quote:     quoteStr,
+		}).Error,
+		"adding quote to database",
 	)
-
-	return errors.Wrap(err, "adding quote to database")
 }
 
-func delQuote(channel string, quote int) error {
-	_, createdAt, _, err := getQuoteRaw(channel, quote)
+func DelQuote(db database.Connector, channel string, quoteIdx int) error {
+	_, createdAt, _, err := GetQuoteRaw(db, channel, quoteIdx)
 	if err != nil {
 		return errors.Wrap(err, "fetching specified quote")
 	}
 
-	_, err = db.DB().Exec(
-		`DELETE FROM quotedb
-			WHERE channel = $1 AND created_at = $2;`,
-		channel, createdAt,
+	return errors.Wrap(
+		db.DB().Delete(&quote{}, "channel = ? AND created_at = ?", channel, createdAt).Error,
+		"deleting quote",
 	)
-
-	return errors.Wrap(err, "deleting quote")
 }
 
-func getChannelQuotes(channel string) ([]string, error) {
-	rows, err := db.DB().Query(
-		`SELECT quote
-			FROM quotedb
-			WHERE channel = $1
-			ORDER BY created_at ASC`,
-		channel,
-	)
-	if err != nil {
+func GetChannelQuotes(db database.Connector, channel string) ([]string, error) {
+	var qs []quote
+	if err := db.DB().Where("channel = ?", channel).Order("created_at").Find(&qs).Error; err != nil {
 		return nil, errors.Wrap(err, "querying quotes")
 	}
 
 	var quotes []string
-	for rows.Next() {
-		if err = rows.Err(); err != nil {
-			return nil, errors.Wrap(err, "advancing row read")
-		}
-
-		var quote string
-		if err = rows.Scan(&quote); err != nil {
-			return nil, errors.Wrap(err, "scanning row")
-		}
-
-		quotes = append(quotes, quote)
+	for _, q := range qs {
+		quotes = append(quotes, q.Quote)
 	}
 
-	return quotes, errors.Wrap(rows.Err(), "advancing row read")
+	return quotes, nil
 }
 
-func getMaxQuoteIdx(channel string) (int, error) {
-	row := db.DB().QueryRow(
-		`SELECT COUNT(1) as quoteCount
-			FROM quotedb
-			WHERE channel = $1;`,
-		channel,
-	)
+func GetMaxQuoteIdx(db database.Connector, channel string) (int, error) {
+	var count int64
+	if err := db.DB().
+		Model(&quote{}).
+		Where("channel = ?", channel).
+		Count(&count).
+		Error; err != nil {
+		return 0, errors.Wrap(err, "getting quote count")
+	}
 
-	var count int
-	err := row.Scan(&count)
-
-	return count, errors.Wrap(err, "getting quote count")
+	return int(count), nil
 }
 
-func getQuote(channel string, quote int) (int, string, error) {
-	quoteIdx, _, quoteText, err := getQuoteRaw(channel, quote)
+func GetQuote(db database.Connector, channel string, quote int) (int, string, error) {
+	quoteIdx, _, quoteText, err := GetQuoteRaw(db, channel, quote)
 	return quoteIdx, quoteText, err
 }
 
-func getQuoteRaw(channel string, quote int) (int, int64, string, error) {
-	if quote == 0 {
-		max, err := getMaxQuoteIdx(channel)
+func GetQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int64, string, error) {
+	if quoteIdx == 0 {
+		max, err := GetMaxQuoteIdx(db, channel)
 		if err != nil {
 			return 0, 0, "", errors.Wrap(err, "getting max quote idx")
 		}
-		quote = rand.Intn(max) + 1 // #nosec G404 // no need for cryptographic safety
+		quoteIdx = rand.Intn(max) + 1 // #nosec G404 // no need for cryptographic safety
 	}
 
-	row := db.DB().QueryRow(
-		`SELECT created_at, quote
-			FROM quotedb
-			WHERE channel = $1
-			ORDER BY created_at ASC
-			LIMIT 1 OFFSET $2`,
-		channel, quote-1,
-	)
+	var q quote
+	err := db.DB().
+		Where("channel = ?", channel).
+		Limit(1).
+		Offset(quoteIdx - 1).
+		First(&q).Error
 
-	var (
-		createdAt int64
-		quoteText string
-	)
-
-	err := row.Scan(&createdAt, &quoteText)
 	switch {
 	case err == nil:
-		return quote, createdAt, quoteText, nil
+		return quoteIdx, q.CreatedAt, q.Quote, nil
 
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return 0, 0, "", nil
 
 	default:
@@ -122,52 +101,43 @@ func getQuoteRaw(channel string, quote int) (int, int64, string, error) {
 	}
 }
 
-func setQuotes(channel string, quotes []string) error {
-	tx, err := db.DB().Begin()
-	if err != nil {
-		return errors.Wrap(err, "creating transaction")
-	}
+func SetQuotes(db database.Connector, channel string, quotes []string) error {
+	return errors.Wrap(
+		db.DB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("channel = ?", channel).Delete(&quote{}).Error; err != nil {
+				return errors.Wrap(err, "deleting quotes for channel")
+			}
 
-	if _, err = tx.Exec(
-		`DELETE FROM quotedb
-			WHERE channel = $1;`,
-		channel,
-	); err != nil {
-		defer tx.Rollback()
-		return errors.Wrap(err, "deleting quotes for channel")
-	}
+			t := time.Now()
+			for _, quoteStr := range quotes {
+				if err := tx.Create(quote{
+					Channel:   channel,
+					CreatedAt: t.UnixNano(),
+					Quote:     quoteStr,
+				}).Error; err != nil {
+					return errors.Wrap(err, "adding quote")
+				}
 
-	t := time.Now()
-	for _, quote := range quotes {
-		if _, err = tx.Exec(
-			`INSERT INTO quotedb
-				(channel, created_at, quote)
-				VALUES ($1, $2, $3);`,
-			channel, t.UnixNano(), quote,
-		); err != nil {
-			defer tx.Rollback()
-			return errors.Wrap(err, "adding quote for channel")
-		}
+				t = t.Add(time.Nanosecond) // Increase by one ns to adhere to unique index
+			}
 
-		t = t.Add(time.Nanosecond) // Increase by one ns to adhere to unique index
-	}
-
-	return errors.Wrap(tx.Commit(), "committing change")
+			return nil
+		}),
+		"replacing quotes",
+	)
 }
 
-func updateQuote(channel string, idx int, quote string) error {
-	_, createdAt, _, err := getQuoteRaw(channel, idx)
+func UpdateQuote(db database.Connector, channel string, idx int, quoteStr string) error {
+	_, createdAt, _, err := GetQuoteRaw(db, channel, idx)
 	if err != nil {
 		return errors.Wrap(err, "fetching specified quote")
 	}
 
-	_, err = db.DB().Exec(
-		`UPDATE quotedb
-			SET quote = $3
-			WHERE channel = $1
-				AND created_at = $2;`,
-		channel, createdAt, quote,
+	return errors.Wrap(
+		db.DB().
+			Where("channel = ? AND created_at = ?", channel, createdAt).
+			Update("quote", quoteStr).
+			Error,
+		"updating quote",
 	)
-
-	return errors.Wrap(err, "updating quote")
 }

@@ -22,7 +22,7 @@ var (
 
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.Migrate("setvariable", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+	if err := db.DB().AutoMigrate(&variable{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -107,7 +107,7 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	args.RegisterTemplateFunction("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) (string, error) {
-		value, err := getVariable(name)
+		value, err := GetVariable(db, name)
 		if err != nil {
 			return "", errors.Wrap(err, "getting variable")
 		}
@@ -131,7 +131,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 
 	if attrs.MustBool("clear", ptrBoolFalse) {
 		return false, errors.Wrap(
-			removeVariable(varName),
+			RemoveVariable(db, varName),
 			"removing variable",
 		)
 	}
@@ -142,7 +142,7 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 	}
 
 	return false, errors.Wrap(
-		setVariable(varName, value),
+		SetVariable(db, varName, value),
 		"setting variable",
 	)
 }
@@ -159,7 +159,7 @@ func (a ActorSetVariable) Validate(attrs *plugins.FieldCollection) (err error) {
 }
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
-	vc, err := getVariable(mux.Vars(r)["name"])
+	vc, err := GetVariable(db, mux.Vars(r)["name"])
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
 		return
@@ -170,7 +170,7 @@ func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func routeActorSetVarSetValue(w http.ResponseWriter, r *http.Request) {
-	if err := setVariable(mux.Vars(r)["name"], r.FormValue("value")); err != nil {
+	if err := SetVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

@@ -133,7 +133,7 @@ func handleAddQuotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, q := range quotes {
-		if err := addQuote(channel, q); err != nil {
+		if err := AddQuote(db, channel, q); err != nil {
 			http.Error(w, errors.Wrap(err, "adding quote").Error(), http.StatusInternalServerError)
 			return
 		}
@@ -154,7 +154,7 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = delQuote(channel, idx); err != nil {
+	if err = DelQuote(db, channel, idx); err != nil {
 		http.Error(w, errors.Wrap(err, "deleting quote").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -171,7 +171,7 @@ func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 
 	channel := "#" + strings.TrimLeft(mux.Vars(r)["channel"], "#")
 
-	quotes, err := getChannelQuotes(channel)
+	quotes, err := GetChannelQuotes(db, channel)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting quotes").Error(), http.StatusInternalServerError)
 		return
@@ -192,7 +192,7 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := setQuotes(channel, quotes); err != nil {
+	if err := SetQuotes(db, channel, quotes); err != nil {
 		http.Error(w, errors.Wrap(err, "replacing quotes").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -228,7 +228,7 @@ func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = updateQuote(channel, idx, quotes[0]); err != nil {
+	if err = UpdateQuote(db, channel, idx, quotes[0]); err != nil {
 		http.Error(w, errors.Wrap(err, "updating quote").Error(), http.StatusInternalServerError)
 		return
 	}

@@ -1,98 +1,44 @@
 package database
 
 import (
+	"path"
 	"testing"
 
-	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testEncryptionPass = "password123"
 
 func TestNewConnector(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
-	if err != nil {
-		t.Fatalf("creating database connector: %s", err)
-	}
-	defer dbc.Close()
-
-	row := dbc.DB().QueryRow("SELECT count(1) AS tables FROM sqlite_master WHERE type='table' AND name='core_kv';")
-
-	var count int
-	if err = row.Scan(&count); err != nil {
-		t.Fatalf("reading table count result")
+	cStrings := map[string]string{
+		"filesystem": path.Join(t.TempDir(), "storage.db"),
+		"memory":     "file::memory:?cache=shared",
 	}
 
-	if count != 1 {
-		t.Errorf("expected to find one result, got %d in count of core_kv table", count)
+	for name := range cStrings {
+		t.Run(name, func(t *testing.T) {
+			dbc, err := New("sqlite", cStrings[name], testEncryptionPass)
+			require.NoError(t, err, "creating database connector")
+			t.Cleanup(func() { dbc.Close() })
+
+			row := dbc.DB().Raw("SELECT count(1) AS tables FROM sqlite_master WHERE type='table' AND name='core_kvs';")
+
+			var count int
+			assert.NoError(t, row.Scan(&count).Error, "reading table count result")
+
+			assert.Equal(t, 1, count)
+		})
 	}
 }
 
-func TestCoreMetaRoundtrip(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
-	if err != nil {
-		t.Fatalf("creating database connector: %s", err)
-	}
-	defer dbc.Close()
-
-	var (
-		arbitrary struct{ A string }
-		testKey   = "arbitrary"
-	)
-
-	if err = dbc.ReadCoreMeta(testKey, &arbitrary); !errors.Is(err, ErrCoreMetaNotFound) {
-		t.Error("expected core_kv not to contain key after init")
-	}
-
-	checkWriteRead := func(testString string) {
-		arbitrary.A = testString
-		if err = dbc.StoreCoreMeta(testKey, arbitrary); err != nil {
-			t.Errorf("storing core_kv: %s", err)
-		}
-
-		arbitrary.A = "" // Clear to test unmarshal
-		if err = dbc.ReadCoreMeta(testKey, &arbitrary); err != nil {
-			t.Errorf("reading core_kv: %s", err)
-		}
-
-		if arbitrary.A != testString {
-			t.Errorf("expected meta entry to have %q, got %q", testString, arbitrary.A)
-		}
-	}
-
-	checkWriteRead("just a string")         // Turn one: Init from not existing
-	checkWriteRead("another random string") // Turn two: Overwrite
-}
-
-func TestCoreMetaEncryption(t *testing.T) {
-	dbc, err := New("sqlite", ":memory:", testEncryptionPass)
-	if err != nil {
-		t.Fatalf("creating database connector: %s", err)
-	}
-	defer dbc.Close()
-
-	var (
-		arbitrary  struct{ A string }
-		testKey    = "arbitrary"
-		testString = "foobar"
-	)
-
-	arbitrary.A = testString
-
-	if err = dbc.StoreEncryptedCoreMeta(testKey, arbitrary); err != nil {
-		t.Fatalf("storing encrypted core meta: %s", err)
-	}
-
-	if err = dbc.ReadCoreMeta(testKey, &arbitrary); err == nil {
-		t.Error("reading encrypted meta without decryption succeeded")
-	}
-
-	arbitrary.A = ""
-
-	if err = dbc.ReadEncryptedCoreMeta(testKey, &arbitrary); err != nil {
-		t.Errorf("reading encrypted meta: %s", err)
-	}
-
-	if arbitrary.A != testString {
-		t.Errorf("unexpected value: %q != %q", arbitrary.A, testString)
+func TestPatchSQLiteConnString(t *testing.T) {
+	for in, out := range map[string]string{
+		"storage.db":                 "storage.db?_pragma=locking_mode(EXCLUSIVE)&_pragma=synchronous(FULL)",
+		"file::memory:?cache=shared": "file::memory:?_pragma=locking_mode(EXCLUSIVE)&_pragma=synchronous(FULL)&cache=shared",
+	} {
+		cs, err := patchSQLiteConnString(in)
+		require.NoError(t, err, "patching conn string %q", in)
+		assert.Equal(t, out, cs, "patching conn string %q", in)
 	}
 }

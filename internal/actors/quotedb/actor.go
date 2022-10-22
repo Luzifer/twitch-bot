@@ -26,7 +26,7 @@ var (
 
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.Migrate(actorName, database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+	if err := db.DB().AutoMigrate(&quote{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -83,7 +83,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func() (int, error) {
-			return getMaxQuoteIdx(plugins.DeriveChannel(m, nil))
+			return GetMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}
 	})
 
@@ -122,18 +122,18 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		return false, errors.Wrap(
-			addQuote(plugins.DeriveChannel(m, eventData), quote),
+			AddQuote(db, plugins.DeriveChannel(m, eventData), quote),
 			"adding quote",
 		)
 
 	case "del":
 		return false, errors.Wrap(
-			delQuote(plugins.DeriveChannel(m, eventData), index),
+			DelQuote(db, plugins.DeriveChannel(m, eventData), index),
 			"storing quote database",
 		)
 
 	case "get":
-		idx, quote, err := getQuote(plugins.DeriveChannel(m, eventData), index)
+		idx, quote, err := GetQuote(db, plugins.DeriveChannel(m, eventData), index)
 		if err != nil {
 			return false, errors.Wrap(err, "getting quote")
 		}

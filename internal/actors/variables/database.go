@@ -1,30 +1,28 @@
 package variables
 
 import (
-	"database/sql"
-	"embed"
-
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
+	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
-//go:embed schema/**
-var schema embed.FS
+type (
+	variable struct {
+		Name  string `gorm:"primaryKey"`
+		Value string
+	}
+)
 
-func getVariable(key string) (string, error) {
-	row := db.DB().QueryRow(
-		`SELECT value
-			FROM variables
-			WHERE name = $1`,
-		key,
-	)
-
-	var vc string
-	err := row.Scan(&vc)
+func GetVariable(db database.Connector, key string) (string, error) {
+	var v variable
+	err := db.DB().First(&v, "name = ?", key).Error
 	switch {
 	case err == nil:
-		return vc, nil
+		return v.Value, nil
 
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return "", nil // Compatibility to old behavior
 
 	default:
@@ -32,25 +30,19 @@ func getVariable(key string) (string, error) {
 	}
 }
 
-func setVariable(key, value string) error {
-	_, err := db.DB().Exec(
-		`INSERT INTO variables
-			(name, value)
-			VALUES ($1, $2)
-			ON CONFLICT DO UPDATE
-				SET value = excluded.value;`,
-		key, value,
+func SetVariable(db database.Connector, key, value string) error {
+	return errors.Wrap(
+		db.DB().Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(variable{Name: key, Value: value}).Error,
+		"updating value in database",
 	)
-
-	return errors.Wrap(err, "updating value in database")
 }
 
-func removeVariable(key string) error {
-	_, err := db.DB().Exec(
-		`DELETE FROM variables
-			WHERE name = $1;`,
-		key,
+func RemoveVariable(db database.Connector, key string) error {
+	return errors.Wrap(
+		db.DB().Delete(&variable{}, "name = ?", key).Error,
+		"deleting value in database",
 	)
-
-	return errors.Wrap(err, "deleting value in database")
 }
