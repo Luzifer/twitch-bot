@@ -49,9 +49,21 @@ Currently these databases are supported and need their corresponding connection 
 ```
 [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
 
-# CREATE DATABASE twbot_tezrian CHARACTER SET utf8mb4;
-tezrian:myverysecretpassword@tcp(mariadb:3306)/twbot_tezrian?charset=utf8mb4&parseTime=True&loc=Local
+Recommended parameters:
+  ?charset=utf8mb4&parseTime=True&loc=Local
 ```
+
+- Create your database as follows:  
+  ```sql
+  CREATE DATABASE twbot_tezrian CHARACTER SET utf8mb4;
+  ```
+- Start your bot:  
+  ```console
+  # twitch-bot \
+      --storage-conn-type mysql \
+      --storage-conn-string 'tezrian:mypass@tcp(mariadb:3306)/twbot_tezrian?charset=utf8mb4&parseTime=True&loc=Local' \
+      ...
+  ```
 
 See [driver documentation](https://github.com/go-sql-driver/mysql#dsn-data-source-name) for more details on parameters.
 
@@ -70,6 +82,15 @@ storage.db
 ```
 
 Just pass the filename you want to use.
+
+- Start your bot:  
+  ```console
+  # twitch-bot \
+      --storage-conn-type sqlite \
+      --storage-conn-string 'storage.db' \
+      ...
+  ```
+
 
 ## Upgrade from `v2.x` to `v3.x`
 
