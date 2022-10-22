@@ -55,7 +55,7 @@ Recommended parameters:
 
 - Create your database as follows:  
   ```sql
-  CREATE DATABASE twbot_tezrian CHARACTER SET utf8mb4;
+  CREATE DATABASE twbot_tezrian DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
   ```
 - Start your bot:  
   ```console
