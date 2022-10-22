@@ -12,7 +12,7 @@ import (
 
 type (
 	coreKV struct {
-		Key   string `gorm:"primaryKey"`
+		Name  string `gorm:"primaryKey"`
 		Value string
 	}
 )
@@ -48,7 +48,7 @@ func (c connector) StoreEncryptedCoreMeta(key string, value any) error {
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	var data coreKV
 
-	if err = c.db.First(&data, "key = ?", key).Error; err != nil {
+	if err = c.db.First(&data, "name = ?", key).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrCoreMetaNotFound
 		}
@@ -85,10 +85,10 @@ func (c connector) storeCoreMeta(key string, value any, processor func(string) (
 		}
 	}
 
-	data := coreKV{Key: key, Value: encValue}
+	data := coreKV{Name: key, Value: encValue}
 	return errors.Wrap(
 		c.db.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "key"}},
+			Columns:   []clause.Column{{Name: "name"}},
 			DoUpdates: clause.AssignmentColumns([]string{"value"}),
 		}).Create(data).Error,
 		"upserting core meta value",

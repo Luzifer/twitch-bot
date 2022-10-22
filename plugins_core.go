@@ -73,9 +73,9 @@ var (
 
 func initCorePlugins() error {
 	args := getRegistrationArguments()
-	for _, rf := range corePluginRegistrations {
+	for idx, rf := range corePluginRegistrations {
 		if err := rf(args); err != nil {
-			return errors.Wrap(err, "registering core plugin")
+			return errors.Wrapf(err, "registering core plugin %d", idx)
 		}
 	}
 	return nil

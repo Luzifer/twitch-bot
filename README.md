@@ -48,6 +48,9 @@ Currently these databases are supported and need their corresponding connection 
 
 ```
 [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+
+# CREATE DATABASE twbot_tezrian CHARACTER SET utf8mb4;
+tezrian:myverysecretpassword@tcp(mariadb:3306)/twbot_tezrian?charset=utf8mb4&parseTime=True&loc=Local
 ```
 
 See [driver documentation](https://github.com/go-sql-driver/mysql#dsn-data-source-name) for more details on parameters.

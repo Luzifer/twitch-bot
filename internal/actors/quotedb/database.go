@@ -12,7 +12,7 @@ import (
 
 type (
 	quote struct {
-		Channel   string `gorm:"not null;uniqueIndex:ensure_sort_idx"`
+		Channel   string `gorm:"not null;uniqueIndex:ensure_sort_idx;size:32"`
 		CreatedAt int64  `gorm:"uniqueIndex:ensure_sort_idx"`
 		Quote     string
 	}
