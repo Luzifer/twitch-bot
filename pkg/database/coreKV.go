@@ -2,11 +2,19 @@ package database
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"strings"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+type (
+	coreKV struct {
+		Key   string `gorm:"primaryKey"`
+		Value string
+	}
 )
 
 // ReadCoreMeta reads an entry of the core_kv table specified by
@@ -38,11 +46,10 @@ func (c connector) StoreEncryptedCoreMeta(key string, value any) error {
 }
 
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
-	var data struct{ Key, Value string }
-	data.Key = key
+	var data coreKV
 
-	if err = c.db.Get(&data, "SELECT * FROM core_kv WHERE key = $1", data.Key); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err = c.db.First(&data, "key = ?", key).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrCoreMetaNotFound
 		}
 		return errors.Wrap(err, "querying core meta table")
@@ -78,13 +85,12 @@ func (c connector) storeCoreMeta(key string, value any, processor func(string) (
 		}
 	}
 
-	_, err = c.db.NamedExec(
-		"INSERT INTO core_kv (key, value) VALUES (:key, :value) ON CONFLICT DO UPDATE SET value=excluded.value;",
-		map[string]any{
-			"key":   key,
-			"value": encValue,
-		},
+	data := coreKV{Key: key, Value: encValue}
+	return errors.Wrap(
+		c.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "key"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(data).Error,
+		"upserting core meta value",
 	)
-
-	return errors.Wrap(err, "upserting core meta value")
 }

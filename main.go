@@ -53,7 +53,8 @@ var (
 		IRCRateLimit          time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
 		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
-		StorageDatabase       string        `flag:"storage-database" default:"./storage.db" description:"Database file to store data in"`
+		StorageConnString     string        `flag:"storage-conn-string" default:"./storage.db" description:"Connection string for the database"`
+		StorageConnType       string        `flag:"storage-conn-type" default:"sqlite" description:"One of: mysql, postgres, sqlite"`
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
 		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
@@ -207,16 +208,8 @@ func handleSubCommand(args []string) {
 func main() {
 	var err error
 
-	databaseConnectionString := strings.Join([]string{
-		cfg.StorageDatabase,
-		strings.Join([]string{
-			"_pragma=locking_mode(EXCLUSIVE)",
-			"_pragma=synchronous(FULL)",
-		}, "&"),
-	}, "?")
-
-	if db, err = database.New("sqlite", databaseConnectionString, cfg.StorageEncryptionPass); err != nil {
-		log.WithError(err).Fatal("Unable to open storage database")
+	if db, err = database.New(cfg.StorageConnType, cfg.StorageConnString, cfg.StorageEncryptionPass); err != nil {
+		log.WithError(err).Fatal("Unable to open storage backend")
 	}
 
 	accessService = access.New(db)
