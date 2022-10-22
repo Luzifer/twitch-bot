@@ -30,7 +30,7 @@ const (
 )
 
 type (
-	socketMessage struct {
+	SocketMessage struct {
 		IsLive bool                     `json:"is_live"`
 		Time   time.Time                `json:"time"`
 		Type   string                   `json:"type"`
@@ -65,7 +65,7 @@ var (
 
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.Migrate("overlays", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+	if err := db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -129,7 +129,7 @@ func Register(args plugins.RegistrationArguments) error {
 		}
 
 		return errors.Wrap(
-			addEvent(plugins.DeriveChannel(nil, eventData), socketMessage{
+			AddChannelEvent(db, plugins.DeriveChannel(nil, eventData), SocketMessage{
 				IsLive: false,
 				Time:   time.Now(),
 				Type:   event,
@@ -156,7 +156,7 @@ func Register(args plugins.RegistrationArguments) error {
 func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 	var (
 		channel = mux.Vars(r)["channel"]
-		msgs    []socketMessage
+		msgs    []SocketMessage
 		since   = time.Time{}
 	)
 
@@ -164,7 +164,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 		since = s
 	}
 
-	events, err := getChannelEvents("#" + strings.TrimLeft(channel, "#"))
+	events, err := GetChannelEvents(db, "#"+strings.TrimLeft(channel, "#"))
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting channel events").Error(), http.StatusInternalServerError)
 		return
@@ -210,12 +210,12 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		connLock     = new(sync.Mutex)
 		errC         = make(chan error, 1)
 		isAuthorized bool
-		sendMsgC     = make(chan socketMessage, 1)
+		sendMsgC     = make(chan SocketMessage, 1)
 	)
 
 	// Register listener
 	unsub := subscribeSocket(func(event string, eventData *plugins.FieldCollection) {
-		sendMsgC <- socketMessage{
+		sendMsgC <- SocketMessage{
 			IsLive: true,
 			Time:   time.Now(),
 			Type:   event,
@@ -269,7 +269,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			var recvMsg socketMessage
+			var recvMsg SocketMessage
 			if err = json.Unmarshal(p, &recvMsg); err != nil {
 				errC <- errors.Wrap(err, "decoding message")
 				return
@@ -290,7 +290,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 				authTimeout.Stop()
 				isAuthorized = true
-				sendMsgC <- socketMessage{
+				sendMsgC <- SocketMessage{
 					IsLive: true,
 					Time:   time.Now(),
 					Type:   msgTypeRequestAuth,

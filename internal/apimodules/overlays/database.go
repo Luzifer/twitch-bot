@@ -2,73 +2,63 @@ package overlays
 
 import (
 	"bytes"
-	"embed"
 	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
 )
 
-//go:embed schema/**
-var schema embed.FS
+type (
+	overlaysEvent struct {
+		Channel   string    `gorm:"not null;index:overlays_events_sort_idx"`
+		CreatedAt time.Time `gorm:"index:overlays_events_sort_idx"`
+		EventType string
+		Fields    string
+	}
+)
 
-func addEvent(channel string, evt socketMessage) error {
+func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) error {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(evt.Fields); err != nil {
 		return errors.Wrap(err, "encoding fields")
 	}
 
-	_, err := db.DB().Exec(
-		`INSERT INTO overlays_events
-			(channel, created_at, event_type, fields)
-			VALUES ($1, $2, $3, $4);`,
-		channel, evt.Time.UnixNano(), evt.Type, strings.TrimSpace(buf.String()),
+	return errors.Wrap(
+		db.DB().Create(overlaysEvent{
+			Channel:   channel,
+			CreatedAt: evt.Time.UTC(),
+			EventType: evt.Type,
+			Fields:    strings.TrimSpace(buf.String()),
+		}).Error,
+		"storing event to database",
 	)
-
-	return errors.Wrap(err, "storing event to database")
 }
 
-func getChannelEvents(channel string) ([]socketMessage, error) {
-	rows, err := db.DB().Query(
-		`SELECT created_at, event_type, fields
-			FROM overlays_events
-			WHERE channel = $1
-			ORDER BY created_at;`,
-		channel,
-	)
-	if err != nil {
+func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, error) {
+	var evts []overlaysEvent
+
+	if err := db.DB().Where("channel = ?", channel).Order("created_at").Find(&evts).Error; err != nil {
 		return nil, errors.Wrap(err, "querying channel events")
 	}
 
-	var out []socketMessage
-	for rows.Next() {
-		if err = rows.Err(); err != nil {
-			return nil, errors.Wrap(err, "advancing row read")
-		}
-
-		var (
-			createdAt            int64
-			eventType, rawFields string
-		)
-		if err = rows.Scan(&createdAt, &eventType, &rawFields); err != nil {
-			return nil, errors.Wrap(err, "scanning row")
-		}
-
+	var out []SocketMessage
+	for _, e := range evts {
 		fields := new(plugins.FieldCollection)
-		if err = json.NewDecoder(strings.NewReader(rawFields)).Decode(fields); err != nil {
+		if err := json.NewDecoder(strings.NewReader(e.Fields)).Decode(fields); err != nil {
 			return nil, errors.Wrap(err, "decoding fields")
 		}
 
-		out = append(out, socketMessage{
+		out = append(out, SocketMessage{
 			IsLive: false,
-			Time:   time.Unix(0, createdAt),
-			Type:   eventType,
+			Time:   e.CreatedAt,
+			Type:   e.EventType,
 			Fields: fields,
 		})
 	}
 
-	return out, errors.Wrap(rows.Err(), "advancing row read")
+	return out, nil
 }
