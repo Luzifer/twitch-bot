@@ -30,7 +30,7 @@ var (
 
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.Migrate("punish", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+	if err := db.DB().AutoMigrate(&punishLevel{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -153,7 +153,7 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 		return false, errors.Wrap(err, "preparing user")
 	}
 
-	lvl, err := getPunishment(plugins.DeriveChannel(m, eventData), user, uuid)
+	lvl, err := getPunishment(db, plugins.DeriveChannel(m, eventData), user, uuid)
 	if err != nil {
 		return false, errors.Wrap(err, "getting stored punishment")
 	}
@@ -199,11 +199,11 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	}
 
 	lvl.Cooldown = cooldown
-	lvl.Executed = time.Now()
+	lvl.Executed = time.Now().UTC()
 	lvl.LastLevel = nLvl
 
 	return false, errors.Wrap(
-		setPunishment(plugins.DeriveChannel(m, eventData), user, uuid, lvl),
+		setPunishment(db, plugins.DeriveChannel(m, eventData), user, uuid, lvl),
 		"storing punishment level",
 	)
 }
@@ -236,7 +236,7 @@ func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 	}
 
 	return false, errors.Wrap(
-		deletePunishment(plugins.DeriveChannel(m, eventData), user, uuid),
+		deletePunishment(db, plugins.DeriveChannel(m, eventData), user, uuid),
 		"resetting punishment level",
 	)
 }

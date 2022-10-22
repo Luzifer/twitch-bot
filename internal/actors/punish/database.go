@@ -1,50 +1,45 @@
 package punish
 
 import (
-	"database/sql"
-	"embed"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
+	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
-//go:embed schema/**
-var schema embed.FS
+type (
+	punishLevel struct {
+		Key string `gorm:"primaryKey"`
 
-func calculateCurrentPunishments() error {
-	rows, err := db.DB().Query(
-		`SELECT key, last_level, executed, cooldown
-			FROM punish_levels;`,
-	)
-	if err != nil {
+		LastLevel int
+		Executed  time.Time
+		Cooldown  time.Duration
+	}
+)
+
+func calculateCurrentPunishments(db database.Connector) (err error) {
+	var ps []punishLevel
+	if err = db.DB().Find(&ps).Error; err != nil {
 		return errors.Wrap(err, "querying punish_levels")
 	}
 
-	for rows.Next() {
-		if err = rows.Err(); err != nil {
-			return errors.Wrap(err, "advancing rows")
-		}
-
+	for _, p := range ps {
 		var (
-			key                           string
-			lastLevel, executed, cooldown int64
-
 			actUpdate bool
+			lvl       = &levelConfig{
+				LastLevel: p.LastLevel,
+				Executed:  p.Executed,
+				Cooldown:  p.Cooldown,
+			}
 		)
-		if err = rows.Scan(&key, &lastLevel, &executed, &cooldown); err != nil {
-			return errors.Wrap(err, "advancing rows")
-		}
-
-		lvl := &levelConfig{
-			LastLevel: int(lastLevel),
-			Cooldown:  time.Duration(cooldown),
-			Executed:  time.Unix(executed, 0),
-		}
 
 		for {
 			cooldownTime := lvl.Executed.Add(lvl.Cooldown)
-			if cooldownTime.After(time.Now()) {
+			if cooldownTime.After(time.Now().UTC()) {
 				break
 			}
 
@@ -55,61 +50,53 @@ func calculateCurrentPunishments() error {
 
 		// Level 0 is the first punishment level, so only remove if it drops below 0
 		if lvl.LastLevel < 0 {
-			if err = deletePunishmentForKey(key); err != nil {
+			if err = deletePunishmentForKey(db, p.Key); err != nil {
 				return errors.Wrap(err, "cleaning up expired punishment")
 			}
 			continue
 		}
 
 		if actUpdate {
-			if err = setPunishmentForKey(key, lvl); err != nil {
+			if err = setPunishmentForKey(db, p.Key, lvl); err != nil {
 				return errors.Wrap(err, "updating punishment")
 			}
 		}
 	}
 
-	return errors.Wrap(rows.Err(), "finishing rows processing")
+	return nil
 }
 
-func deletePunishment(channel, user, uuid string) error {
-	return deletePunishmentForKey(getDBKey(channel, user, uuid))
+func deletePunishment(db database.Connector, channel, user, uuid string) error {
+	return deletePunishmentForKey(db, getDBKey(channel, user, uuid))
 }
 
-func deletePunishmentForKey(key string) error {
-	_, err := db.DB().Exec(
-		`DELETE FROM punish_levels
-			WHERE key = $1;`,
-		key,
+func deletePunishmentForKey(db database.Connector, key string) error {
+	return errors.Wrap(
+		db.DB().Delete(&punishLevel{}, "key = ?", key).Error,
+		"deleting punishment info",
 	)
-
-	return errors.Wrap(err, "deleting punishment info")
 }
 
-func getPunishment(channel, user, uuid string) (*levelConfig, error) {
-	if err := calculateCurrentPunishments(); err != nil {
+func getPunishment(db database.Connector, channel, user, uuid string) (*levelConfig, error) {
+	if err := calculateCurrentPunishments(db); err != nil {
 		return nil, errors.Wrap(err, "updating punishment states")
 	}
 
-	row := db.DB().QueryRow(
-		`SELECT last_level, executed, cooldown
-			FROM punish_levels
-			WHERE key = $1;`,
-		getDBKey(channel, user, uuid),
+	var (
+		lc = &levelConfig{LastLevel: -1}
+		p  punishLevel
 	)
 
-	lc := &levelConfig{LastLevel: -1}
-
-	var lastLevel, executed, cooldown int64
-	err := row.Scan(&lastLevel, &executed, &cooldown)
+	err := db.DB().First(&p, "key = ?", getDBKey(channel, user, uuid)).Error
 	switch {
 	case err == nil:
-		lc.LastLevel = int(lastLevel)
-		lc.Cooldown = time.Duration(cooldown)
-		lc.Executed = time.Unix(executed, 0)
+		return &levelConfig{
+			LastLevel: p.LastLevel,
+			Executed:  p.Executed,
+			Cooldown:  p.Cooldown,
+		}, nil
 
-		return lc, nil
-
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return lc, nil
 
 	default:
@@ -117,24 +104,27 @@ func getPunishment(channel, user, uuid string) (*levelConfig, error) {
 	}
 }
 
-func setPunishment(channel, user, uuid string, lc *levelConfig) error {
-	return setPunishmentForKey(getDBKey(channel, user, uuid), lc)
+func setPunishment(db database.Connector, channel, user, uuid string, lc *levelConfig) error {
+	return setPunishmentForKey(db, getDBKey(channel, user, uuid), lc)
 }
 
-func setPunishmentForKey(key string, lc *levelConfig) error {
-	_, err := db.DB().Exec(
-		`INSERT INTO punish_levels
-			(key, last_level, executed, cooldown)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT DO UPDATE
-				SET last_level = excluded.last_level,
-					executed = excluded.executed,
-					cooldown = excluded.cooldown;`,
-		key,
-		lc.LastLevel, lc.Executed.UTC().Unix(), int64(lc.Cooldown),
-	)
+func setPunishmentForKey(db database.Connector, key string, lc *levelConfig) error {
+	if lc == nil {
+		return errors.New("nil levelConfig given")
+	}
 
-	return errors.Wrap(err, "updating punishment info")
+	return errors.Wrap(
+		db.DB().Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "key"}},
+			UpdateAll: true,
+		}).Create(punishLevel{
+			Key:       key,
+			LastLevel: lc.LastLevel,
+			Executed:  lc.Executed,
+			Cooldown:  lc.Cooldown,
+		}).Error,
+		"updating punishment info",
+	)
 }
 
 func getDBKey(channel, user, uuid string) string {
