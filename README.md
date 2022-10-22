@@ -23,7 +23,8 @@ Usage of twitch-bot:
       --log-level string                 Log level (debug, info, warn, error, fatal) (default "info")
       --plugin-dir string                Where to find and load plugins (default "/usr/lib/twitch-bot")
       --rate-limit duration              How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots) (default 1.5s)
-      --storage-database string          Database file to store data in (default "./storage.db")
+      --storage-conn-string string       Connection string for the database (default "./storage.db")
+      --storage-conn-type string         One of: mysql, postgres, sqlite (default "sqlite")
       --storage-encryption-pass string   Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)
       --twitch-client string             Client ID to act as
       --twitch-client-secret string      Secret for the Client ID
@@ -38,6 +39,34 @@ Supported sub-commands are:
   migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database
   help                           Prints this help message
 ```
+
+### Database Connection Strings
+
+Currently these databases are supported and need their corresponding connection strings:
+
+#### MySQL
+
+```
+[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+```
+
+See [driver documentation](https://github.com/go-sql-driver/mysql#dsn-data-source-name) for more details on parameters.
+
+#### Postgres
+
+```
+host=localhost port=5432 dbname=mydb connect_timeout=10
+```
+
+See [Postgres documentation](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-PARAMKEYWORDS) for more details in paramters.
+
+#### SQLite
+
+```
+storage.db
+```
+
+Just pass the filename you want to use.
 
 ## Upgrade from `v2.x` to `v3.x`
 
