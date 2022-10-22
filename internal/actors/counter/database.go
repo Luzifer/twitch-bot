@@ -1,30 +1,29 @@
 package counter
 
 import (
-	"database/sql"
-	"embed"
-
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
+	"github.com/Luzifer/twitch-bot/pkg/database"
 )
 
-//go:embed schema/**
-var schema embed.FS
+type (
+	counter struct {
+		Name  string `gorm:"primaryKey"`
+		Value int64
+	}
+)
 
-func getCounterValue(counter string) (int64, error) {
-	row := db.DB().QueryRow(
-		`SELECT value
-			FROM counters
-			WHERE name = $1`,
-		counter,
-	)
+func GetCounterValue(db database.Connector, counterName string) (int64, error) {
+	var c counter
 
-	var cv int64
-	err := row.Scan(&cv)
+	err := db.DB().First(&c, "name = ?", counterName).Error
 	switch {
 	case err == nil:
-		return cv, nil
+		return c.Value, nil
 
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, gorm.ErrRecordNotFound):
 		return 0, nil
 
 	default:
@@ -32,9 +31,9 @@ func getCounterValue(counter string) (int64, error) {
 	}
 }
 
-func updateCounter(counter string, value int64, absolute bool) error {
+func UpdateCounter(db database.Connector, counterName string, value int64, absolute bool) error {
 	if !absolute {
-		cv, err := getCounterValue(counter)
+		cv, err := GetCounterValue(db, counterName)
 		if err != nil {
 			return errors.Wrap(err, "getting previous value")
 		}
@@ -42,14 +41,11 @@ func updateCounter(counter string, value int64, absolute bool) error {
 		value += cv
 	}
 
-	_, err := db.DB().Exec(
-		`INSERT INTO counters
-			(name, value)
-			VALUES ($1, $2)
-			ON CONFLICT DO UPDATE
-				SET value = excluded.value;`,
-		counter, value,
+	return errors.Wrap(
+		db.DB().Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(counter{Name: counterName, Value: value}).Error,
+		"storing counter value",
 	)
-
-	return errors.Wrap(err, "storing counter value")
 }

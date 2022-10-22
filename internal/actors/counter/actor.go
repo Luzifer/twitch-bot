@@ -24,7 +24,7 @@ var (
 //nolint:funlen // This function is a few lines too long but only contains definitions
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.Migrate("counter", database.NewEmbedFSMigrator(schema, "schema")); err != nil {
+	if err := db.DB().AutoMigrate(&counter{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -134,7 +134,7 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	args.RegisterTemplateFunction("counterValue", plugins.GenericTemplateFunctionGetter(func(name string, _ ...string) (int64, error) {
-		return getCounterValue(name)
+		return GetCounterValue(db, name)
 	}))
 
 	return nil
@@ -160,7 +160,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 		}
 
 		return false, errors.Wrap(
-			updateCounter(counterName, counterValue, true),
+			UpdateCounter(db, counterName, counterValue, true),
 			"set counter",
 		)
 	}
@@ -179,7 +179,7 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	return false, errors.Wrap(
-		updateCounter(counterName, counterStep, false),
+		UpdateCounter(db, counterName, counterStep, false),
 		"update counter",
 	)
 }
@@ -201,7 +201,7 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 		template = "%d"
 	}
 
-	cv, err := getCounterValue(mux.Vars(r)["name"])
+	cv, err := GetCounterValue(db, mux.Vars(r)["name"])
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
 		return
@@ -223,7 +223,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = updateCounter(mux.Vars(r)["name"], value, absolute); err != nil {
+	if err = UpdateCounter(db, mux.Vars(r)["name"], value, absolute); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}
