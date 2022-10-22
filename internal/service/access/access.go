@@ -1,10 +1,11 @@
 package access
 
 import (
-	"database/sql"
 	"strings"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/pkg/database"
@@ -26,11 +27,21 @@ type (
 		TokenUpdateHook func()
 	}
 
+	extendedPermission struct {
+		Channel      string `gorm:"primaryKey"`
+		AccessToken  string
+		RefreshToken string
+		Scopes       string
+	}
+
 	Service struct{ db database.Connector }
 )
 
-func New(db database.Connector) *Service {
-	return &Service{db}
+func New(db database.Connector) (*Service, error) {
+	return &Service{db}, errors.Wrap(
+		db.DB().AutoMigrate(&extendedPermission{}),
+		"migrating database schema",
+	)
 }
 
 func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
@@ -59,30 +70,26 @@ func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 }
 
 func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twitch.Client, error) {
-	var err error
-	row := s.db.DB().QueryRow(
-		`SELECT access_token, refresh_token, scopes
-			FROM extended_permissions
-			WHERE channel = $1`,
-		channel,
+	var (
+		err  error
+		perm extendedPermission
 	)
 
-	var accessToken, refreshToken, scopeStr string
-	if err = row.Scan(&accessToken, &refreshToken, &scopeStr); err != nil {
-		return nil, errors.Wrap(err, "getting twitch credentials from database")
+	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+		return nil, errors.Wrap(err, "getting twitch credential from database")
 	}
 
-	if accessToken, err = s.db.DecryptField(accessToken); err != nil {
+	if perm.AccessToken, err = s.db.DecryptField(perm.AccessToken); err != nil {
 		return nil, errors.Wrap(err, "decrypting access token")
 	}
 
-	if refreshToken, err = s.db.DecryptField(refreshToken); err != nil {
+	if perm.RefreshToken, err = s.db.DecryptField(perm.RefreshToken); err != nil {
 		return nil, errors.Wrap(err, "decrypting refresh token")
 	}
 
-	scopes := strings.Split(scopeStr, " ")
+	scopes := strings.Split(perm.Scopes, " ")
 
-	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, accessToken, refreshToken)
+	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, perm.AccessToken, perm.RefreshToken)
 	tc.SetTokenUpdateHook(func(at, rt string) error {
 		return errors.Wrap(s.SetExtendedTwitchCredentials(channel, at, rt, scopes), "updating extended permissions token")
 	})
@@ -91,22 +98,19 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 }
 
 func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (bool, error) {
-	row := s.db.DB().QueryRow(
-		`SELECT scopes
-			FROM extended_permissions
-			WHERE channel = $1`,
-		channel,
+	var (
+		err  error
+		perm extendedPermission
 	)
 
-	var scopeStr string
-	if err := row.Scan(&scopeStr); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
-		return false, errors.Wrap(err, "getting scopes from database")
+		return false, errors.Wrap(err, "getting twitch credential from database")
 	}
 
-	storedScopes := strings.Split(scopeStr, " ")
+	storedScopes := strings.Split(perm.Scopes, " ")
 
 	for _, scope := range scopes {
 		if str.StringInSlice(scope, storedScopes) {
@@ -118,22 +122,19 @@ func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (b
 }
 
 func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
-	row := s.db.DB().QueryRow(
-		`SELECT scopes
-			FROM extended_permissions
-			WHERE channel = $1`,
-		channel,
+	var (
+		err  error
+		perm extendedPermission
 	)
 
-	var scopeStr string
-	if err := row.Scan(&scopeStr); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
-		return false, errors.Wrap(err, "getting scopes from database")
+		return false, errors.Wrap(err, "getting twitch credential from database")
 	}
 
-	storedScopes := strings.Split(scopeStr, " ")
+	storedScopes := strings.Split(perm.Scopes, " ")
 
 	for _, scope := range scopes {
 		if !str.StringInSlice(scope, storedScopes) {
@@ -145,13 +146,10 @@ func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (boo
 }
 
 func (s Service) RemoveExendedTwitchCredentials(channel string) error {
-	_, err := s.db.DB().Exec(
-		`DELETE FROM extended_permissions
-			WHERE channel = $1`,
-		channel,
+	return errors.Wrap(
+		s.db.DB().Delete(&extendedPermission{}, "channel = ?", channel).Error,
+		"deleting data from table",
 	)
-
-	return errors.Wrap(err, "deleting data from table")
 }
 
 func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
@@ -175,16 +173,16 @@ func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken
 		return errors.Wrap(err, "encrypting refresh token")
 	}
 
-	_, err = s.db.DB().Exec(
-		`INSERT INTO extended_permissions
-			(channel, access_token, refresh_token, scopes)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT DO UPDATE SET
-				access_token=excluded.access_token,
-				refresh_token=excluded.refresh_token,
-				scopes=excluded.scopes;`,
-		channel, accessToken, refreshToken, strings.Join(scope, " "),
+	return errors.Wrap(
+		s.db.DB().Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "channel"}},
+			DoUpdates: clause.AssignmentColumns([]string{"access_token", "refresh_token", "scopes"}),
+		}).Create(extendedPermission{
+			Channel:      channel,
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			Scopes:       strings.Join(scope, " "),
+		}).Error,
+		"inserting data into table",
 	)
-
-	return errors.Wrap(err, "inserting data into table")
 }

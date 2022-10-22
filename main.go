@@ -212,7 +212,10 @@ func main() {
 		log.WithError(err).Fatal("Unable to open storage backend")
 	}
 
-	accessService = access.New(db)
+	if accessService, err = access.New(db); err != nil {
+		log.WithError(err).Fatal("Unable to apply access migration")
+	}
+
 	if timerService, err = timer.New(db); err != nil {
 		log.WithError(err).Fatal("Unable to apply timer migration")
 	}
