@@ -2,12 +2,13 @@ package timer
 
 import (
 	"crypto/sha256"
-	"embed"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/Luzifer/twitch-bot/pkg/database"
 	"github.com/Luzifer/twitch-bot/plugins"
@@ -18,21 +19,21 @@ type (
 		db            database.Connector
 		permitTimeout time.Duration
 	}
+
+	timer struct {
+		ID        string `gorm:"primaryKey"`
+		ExpiresAt time.Time
+	}
 )
 
-var (
-	_ plugins.TimerStore = (*Service)(nil)
-
-	//go:embed schema/**
-	schema embed.FS
-)
+var _ plugins.TimerStore = (*Service)(nil)
 
 func New(db database.Connector) (*Service, error) {
 	s := &Service{
 		db: db,
 	}
 
-	return s, errors.Wrap(s.db.Migrate("timersvc", database.NewEmbedFSMigrator(schema, "schema")), "applying migrations")
+	return s, errors.Wrap(s.db.DB().AutoMigrate(&timer{}), "applying migrations")
 }
 
 func (s *Service) UpdatePermitTimeout(d time.Duration) {
@@ -42,11 +43,11 @@ func (s *Service) UpdatePermitTimeout(d time.Duration) {
 // Cooldown timer
 
 func (s Service) AddCooldown(tt plugins.TimerType, limiter, ruleID string, expiry time.Time) error {
-	return s.setTimer(s.getCooldownTimerKey(tt, limiter, ruleID), expiry)
+	return s.SetTimer(s.getCooldownTimerKey(tt, limiter, ruleID), expiry)
 }
 
 func (s Service) InCooldown(tt plugins.TimerType, limiter, ruleID string) (bool, error) {
-	return s.hasTimer(s.getCooldownTimerKey(tt, limiter, ruleID))
+	return s.HasTimer(s.getCooldownTimerKey(tt, limiter, ruleID))
 }
 
 func (Service) getCooldownTimerKey(tt plugins.TimerType, limiter, ruleID string) string {
@@ -58,11 +59,11 @@ func (Service) getCooldownTimerKey(tt plugins.TimerType, limiter, ruleID string)
 // Permit timer
 
 func (s Service) AddPermit(channel, username string) error {
-	return s.setTimer(s.getPermitTimerKey(channel, username), time.Now().Add(s.permitTimeout))
+	return s.SetTimer(s.getPermitTimerKey(channel, username), time.Now().Add(s.permitTimeout))
 }
 
 func (s Service) HasPermit(channel, username string) (bool, error) {
-	return s.hasTimer(s.getPermitTimerKey(channel, username))
+	return s.HasTimer(s.getPermitTimerKey(channel, username))
 }
 
 func (Service) getPermitTimerKey(channel, username string) string {
@@ -73,31 +74,30 @@ func (Service) getPermitTimerKey(channel, username string) string {
 
 // Generic timer
 
-func (s Service) hasTimer(id string) (bool, error) {
-	row := s.db.DB().QueryRow(
-		`SELECT COUNT(1) as active_counters
-			FROM timers
-			WHERE id = $1 AND expires_at >= $2`,
-		id, time.Now().UTC().Unix(),
-	)
+func (s Service) HasTimer(id string) (bool, error) {
+	var t timer
+	err := s.db.DB().First(&t, "id = ? AND expires_at >= ?", id, time.Now().UTC()).Error
+	switch {
+	case err == nil:
+		return true, nil
 
-	var nCounters int64
-	if err := row.Scan(&nCounters); err != nil {
-		return false, errors.Wrap(err, "getting active counters from database")
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return false, nil
+
+	default:
+		return false, errors.Wrap(err, "getting timer information")
 	}
-
-	return nCounters > 0, nil
 }
 
-func (s Service) setTimer(id string, expiry time.Time) error {
-	_, err := s.db.DB().Exec(
-		`INSERT INTO timers
-			(id, expires_at)
-			VALUES ($1, $2)
-			ON CONFLICT DO UPDATE
-				SET expires_at = excluded.expires_at;`,
-		id, expiry.UTC().Unix(),
+func (s Service) SetTimer(id string, expiry time.Time) error {
+	return errors.Wrap(
+		s.db.DB().Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"expires_at"}),
+		}).Create(timer{
+			ID:        id,
+			ExpiresAt: expiry.UTC(),
+		}).Error,
+		"storing counter in database",
 	)
-
-	return errors.Wrap(err, "storing counter in database")
 }
