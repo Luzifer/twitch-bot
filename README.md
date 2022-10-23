@@ -98,16 +98,24 @@ With the release of `v3.0.0` the bot changed a lot introducing a new storage for
 
 **Before starting the migration make sure to fully stop the bot!**
 
-This section assumes you were starting your bot the following way:
+This section assumes you were starting your `v2.x` bot the following way:
 
 ```console
-# twitch-bot --storage-file storage.json.gz --twitch-client <clientid> --twitch-client-secret <secret>
+# twitch-bot \
+  --storage-file storage.json.gz
+  --twitch-client <clientid> \
+  --twitch-client-secret <secret>
 ```
 
 To execute the migration we need to provide the same `storage-encryption-pass` or `twitch-client` / `twitch-client-secret` combination if no `storage-encryption-pass` was used.
 
 ```console
-# twitch-bot --storage-database storage.db --twitch-client <clientid> --twitch-client-secret <secret> migrate-v2 storage.json.gz
+# twitch-bot \
+  --storage-conn-type <database type> \
+  --storage-conn-string <database connection string> \
+  --twitch-client <clientid> \
+  --twitch-client-secret <secret> \
+  migrate-v2 storage.json.gz
 WARN[0000] No storage encryption passphrase was set, falling back to client-id:client-secret
 WARN[0000] Module registered unhandled query-param type  module=status type=integer
 WARN[0000] Overlays dir not specified, no dir or non existent  dir=
@@ -122,10 +130,14 @@ INFO[0000] Starting migration...                         module=timers
 INFO[0000] v2 storage file was migrated
 ```
 
-If you see the `v2 storage file was migrated` message the contents of your old storage file were migrated to the new `storage-database`. The old file is not modified in this step.
+If you see the `v2 storage file was migrated` message the contents of your old storage file were migrated to the new database. The old file is not modified in this step.
 
 Afterwards your need to adjust the start parameters of the bot:
 
 ```console
-# twitch-bot --storage-database storage.db --twitch-client <clientid> --twitch-client-secret <secret>
+# twitch-bot \
+  --storage-conn-type <database type> \
+  --storage-conn-string <database connection string> \
+  --twitch-client <clientid> \
+  --twitch-client-secret <secret> \
 ```

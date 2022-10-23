@@ -8,10 +8,10 @@
 
   * New Features
     * [core] Add rule-subscription feature
-    * [templating] Add jsonAPI template function
+    * [templating] Add `jsonAPI` template function
 
   * Improvements
-    * ⚠ [core] Move storage to SQLite database (#30)
+    * ⚠ [core] Move storage to database (#30, #32)
     * [core] Allow to pass ID to channel modification
     * ⚠ [templating] Add sprig functions, replace some built-ins
 
