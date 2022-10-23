@@ -1,7 +1,6 @@
 package nuke
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -22,7 +21,9 @@ const (
 )
 
 var (
-	formatMessage plugins.MsgFormatter
+	botTwitchClient *twitch.Client
+	formatMessage   plugins.MsgFormatter
+	send            plugins.SendMessageFunc
 
 	messageStore     = map[string][]*storedMessage{}
 	messageStoreLock sync.RWMutex
@@ -32,7 +33,9 @@ var (
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
+	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -161,22 +164,28 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 	scanTime := time.Now().Add(-scan)
 
-	var action string
+	var (
+		action     actionFn
+		actionName string
+	)
 	rawAction, err := formatMessage(attrs.MustString("action", ptrStringDelete), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting action")
 	}
 	switch rawAction {
 	case "delete":
-		action = "/delete $msgid"
+		action = actionDelete
+		actionName = "delete $msgid"
 	case "ban":
-		action = `/ban $user Nuke issued for "$match"`
+		action = actionBan
+		actionName = "ban $user"
 	default:
 		to, err := time.ParseDuration(rawAction)
 		if err != nil {
 			return false, errors.Wrap(err, "parsing action duration")
 		}
-		action = fmt.Sprintf(`/timeout $user %d Nuke issued for "$match"`, to/time.Second)
+		action = getActionTimeout(to)
+		actionName = "timeout $user"
 	}
 
 	channel := plugins.DeriveChannel(m, eventData)
@@ -202,23 +211,16 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		enforcement := strings.NewReplacer(
-			"$match", rawMatch,
 			"$msgid", string(stMsg.Msg.Tags["id"]),
 			"$user", plugins.DeriveUser(stMsg.Msg, nil),
-		).Replace(action)
+		).Replace(actionName)
 
 		if str.StringInSlice(enforcement, executedEnforcement) {
 			continue
 		}
 
-		if err = c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				channel,
-				enforcement,
-			},
-		}); err != nil {
-			return false, errors.Wrap(err, "sending action")
+		if err = action(channel, rawMatch, string(stMsg.Msg.Tags["id"]), plugins.DeriveUser(stMsg.Msg, nil)); err != nil {
+			return false, errors.Wrap(err, "executing action")
 		}
 
 		executedEnforcement = append(executedEnforcement, enforcement)

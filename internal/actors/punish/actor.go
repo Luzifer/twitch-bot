@@ -2,7 +2,6 @@ package punish
 
 import (
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/v2/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
@@ -22,6 +22,7 @@ const (
 )
 
 var (
+	botTwitchClient    *twitch.Client
 	db                 database.Connector
 	formatMessage      plugins.MsgFormatter
 	ptrDefaultCooldown = func(v time.Duration) *time.Duration { return &v }(oneWeek)
@@ -34,6 +35,7 @@ func Register(args plugins.RegistrationArguments) error {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorNamePunish, func() plugins.Actor { return &actorPunish{} })
@@ -163,9 +165,13 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 
 	switch lt := levels[nLvl]; lt {
 	case "ban":
-		cmd = []string{"/ban", strings.TrimLeft(user, "@")}
-		if reason != "" {
-			cmd = append(cmd, reason)
+		if err = botTwitchClient.BanUser(
+			plugins.DeriveChannel(m, eventData),
+			strings.TrimLeft(user, "@"),
+			0,
+			reason,
+		); err != nil {
+			return false, errors.Wrap(err, "executing user ban")
 		}
 
 	case "delete":
@@ -176,26 +182,30 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 
 		cmd = []string{"/delete", msgID}
 
+		if err := c.WriteMessage(&irc.Message{
+			Command: "PRIVMSG",
+			Params: []string{
+				plugins.DeriveChannel(m, eventData),
+				strings.Join(cmd, " "),
+			},
+		}); err != nil {
+			return false, errors.Wrap(err, "sending command")
+		}
+
 	default:
 		to, err := time.ParseDuration(lt)
 		if err != nil {
 			return false, errors.Wrap(err, "parsing punishment level")
 		}
 
-		cmd = []string{"/timeout", strings.TrimLeft(user, "@"), strconv.FormatInt(int64(to/time.Second), 10)}
-		if reason != "" {
-			cmd = append(cmd, reason)
-		}
-	}
-
-	if err := c.WriteMessage(&irc.Message{
-		Command: "PRIVMSG",
-		Params: []string{
+		if err = botTwitchClient.BanUser(
 			plugins.DeriveChannel(m, eventData),
-			strings.Join(cmd, " "),
-		},
-	}); err != nil {
-		return false, errors.Wrap(err, "sending command")
+			strings.TrimLeft(user, "@"),
+			to,
+			reason,
+		); err != nil {
+			return false, errors.Wrap(err, "executing user ban")
+		}
 	}
 
 	lvl.Cooldown = cooldown

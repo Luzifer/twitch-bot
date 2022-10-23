@@ -1,24 +1,25 @@
 package timeout
 
 import (
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "timeout"
 
 var (
-	formatMessage  plugins.MsgFormatter
-	ptrStringEmpty = func(v string) *string { return &v }("")
+	botTwitchClient *twitch.Client
+	formatMessage   plugins.MsgFormatter
+	ptrStringEmpty  = func(v string) *string { return &v }("")
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -56,30 +57,19 @@ func Register(args plugins.RegistrationArguments) error {
 type actor struct{}
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
-	cmd := []string{
-		"/timeout",
-		plugins.DeriveUser(m, eventData),
-		strconv.FormatInt(int64(attrs.MustDuration("duration", nil)/time.Second), 10),
-	}
-
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing reason template")
 	}
 
-	if reason != "" {
-		cmd = append(cmd, reason)
-	}
-
 	return false, errors.Wrap(
-		c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				plugins.DeriveChannel(m, eventData),
-				strings.Join(cmd, " "),
-			},
-		}),
-		"sending timeout",
+		botTwitchClient.BanUser(
+			plugins.DeriveChannel(m, eventData),
+			plugins.DeriveUser(m, eventData),
+			attrs.MustDuration("duration", nil),
+			reason,
+		),
+		"executing timeout",
 	)
 }
 
