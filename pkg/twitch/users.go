@@ -19,7 +19,7 @@ type (
 	}
 )
 
-func (c *Client) GetAuthorizedUsername() (string, error) {
+func (c *Client) GetAuthorizedUser() (userID string, userName string, err error) {
 	var payload struct {
 		Data []User `json:"data"`
 	}
@@ -32,14 +32,14 @@ func (c *Client) GetAuthorizedUsername() (string, error) {
 		Out:      &payload,
 		URL:      "https://api.twitch.tv/helix/users",
 	}); err != nil {
-		return "", errors.Wrap(err, "request channel info")
+		return "", "", errors.Wrap(err, "request channel info")
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", "", errors.Errorf("unexpected number of users returned: %d", l)
 	}
 
-	return payload.Data[0].Login, nil
+	return payload.Data[0].ID, payload.Data[0].Login, nil
 }
 
 func (c *Client) GetDisplayNameForUser(username string) (string, error) {

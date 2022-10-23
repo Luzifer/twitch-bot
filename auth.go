@@ -79,7 +79,7 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUsername()
+	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser()
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -135,7 +135,7 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUsername()
+	_, grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser()
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return

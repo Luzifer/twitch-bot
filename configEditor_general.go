@@ -196,7 +196,7 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var uName *string
-	if n, err := twitchClient.GetAuthorizedUsername(); err == nil {
+	if _, n, err := twitchClient.GetAuthorizedUser(); err == nil {
 		uName = &n
 	}
 

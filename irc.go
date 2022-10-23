@@ -55,7 +55,7 @@ type ircHandler struct {
 func newIRCHandler() (*ircHandler, error) {
 	h := new(ircHandler)
 
-	username, err := twitchClient.GetAuthorizedUsername()
+	_, username, err := twitchClient.GetAuthorizedUser()
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching username")
 	}

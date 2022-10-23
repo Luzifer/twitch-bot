@@ -82,7 +82,7 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 					return errors.New("not initialized")
 				}
 
-				_, err := twitchClient.GetAuthorizedUsername()
+				_, _, err := twitchClient.GetAuthorizedUser()
 				return errors.Wrap(err, "fetching username")
 			},
 		},
