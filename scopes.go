@@ -7,13 +7,16 @@ var (
 		twitch.ScopeChannelEditCommercial,
 		twitch.ScopeChannelManageBroadcast,
 		twitch.ScopeChannelReadRedemptions,
+		twitch.ScopeChannelManageRaids,
 	}
 
 	botDefaultScopes = append(channelDefaultScopes,
-		twitch.ScopeChatRead,
 		twitch.ScopeChatEdit,
+		twitch.ScopeChatRead,
+		twitch.ScopeModeratorManageAnnoucements,
+		twitch.ScopeModeratorManageBannedUsers,
+		twitch.ScopeModeratorManageChatMessages,
+		twitch.ScopeModeratorManageChatSettings,
 		twitch.ScopeWhisperRead,
-		twitch.ScopeWhisperEdit,
-		twitch.ScopeChannelModerate,
 	)
 )
