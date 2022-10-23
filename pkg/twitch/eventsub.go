@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -388,8 +389,87 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 	return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 }
 
+func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
+	var (
+		buf  = new(bytes.Buffer)
+		resp struct {
+			Total      int64                  `json:"total"`
+			Data       []eventSubSubscription `json:"data"`
+			Pagination struct {
+				Cursor string `json:"cursor"`
+			} `json:"pagination"`
+		}
+	)
+
+	if err := json.NewEncoder(buf).Encode(sub); err != nil {
+		return nil, errors.Wrap(err, "assemble subscribe payload")
+	}
+
+	if err := c.request(clientRequestOpts{
+		AuthType: authTypeAppAccessToken,
+		Body:     buf,
+		Context:  ctx,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusAccepted,
+		Out:      &resp,
+		URL:      "https://api.twitch.tv/helix/eventsub/subscriptions",
+	}); err != nil {
+		return nil, errors.Wrap(err, "executing request")
+	}
+
+	return &resp.Data[0], nil
+}
+
+func (c *Client) deleteEventSubSubscription(ctx context.Context, id string) error {
+	return errors.Wrap(c.request(clientRequestOpts{
+		AuthType: authTypeAppAccessToken,
+		Context:  ctx,
+		Method:   http.MethodDelete,
+		OKStatus: http.StatusNoContent,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?id=%s", id),
+	}), "executing request")
+}
+
 func (e *EventSubClient) fullAPIurl() string {
 	return strings.Join([]string{e.apiURL, e.secretHandle}, "/")
+}
+
+func (c *Client) getEventSubSubscriptions(ctx context.Context) ([]eventSubSubscription, error) {
+	var (
+		out    []eventSubSubscription
+		params = make(url.Values)
+		resp   struct {
+			Total      int64                  `json:"total"`
+			Data       []eventSubSubscription `json:"data"`
+			Pagination struct {
+				Cursor string `json:"cursor"`
+			} `json:"pagination"`
+		}
+	)
+
+	for {
+		if err := c.request(clientRequestOpts{
+			AuthType: authTypeAppAccessToken,
+			Context:  ctx,
+			Method:   http.MethodGet,
+			OKStatus: http.StatusOK,
+			Out:      &resp,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?%s", params.Encode()),
+		}); err != nil {
+			return nil, errors.Wrap(err, "executing request")
+		}
+
+		out = append(out, resp.Data...)
+
+		if resp.Pagination.Cursor == "" {
+			break
+		}
+
+		params.Set("after", resp.Pagination.Cursor)
+		resp.Pagination.Cursor = "" // Clear from struct as struct is reused
+	}
+
+	return out, nil
 }
 
 func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
