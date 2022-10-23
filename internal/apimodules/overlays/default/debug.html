@@ -74,6 +74,10 @@
         window.botClient = new EventClient({
           handlers: {
             _: (evt, data, time, live) => {
+              if (window.botClient.paramOptionFallback('hide', '').split(',').includes(evt)) {
+                return
+              }
+
               this.events = [
                 { event: evt, fields: data, time },
                 ...this.events,

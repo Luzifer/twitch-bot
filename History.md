@@ -14,6 +14,7 @@
     * [core] Move storage to database (#30, #32) ⚠
     * [core] Allow to pass ID to channel modification
     * [editor] Add all template functions to highlighter
+    * [overlays] Add `hide` option to debug overlay
     * [templating] Add sprig functions, replace some built-ins ⚠
 
   * Bugfixes
