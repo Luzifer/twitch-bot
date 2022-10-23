@@ -11,9 +11,10 @@
     * [templating] Add `jsonAPI` template function
 
   * Improvements
-    * ⚠ [core] Move storage to database (#30, #32)
+    * [core] Move storage to database (#30, #32) ⚠
     * [core] Allow to pass ID to channel modification
-    * ⚠ [templating] Add sprig functions, replace some built-ins
+    * [editor] Add all template functions to highlighter
+    * [templating] Add sprig functions, replace some built-ins ⚠
 
   * Bugfixes
 
