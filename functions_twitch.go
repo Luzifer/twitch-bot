@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 func init() {

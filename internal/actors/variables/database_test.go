@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Luzifer/twitch-bot/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
 )
 
 func TestVariableRoundtrip(t *testing.T) {

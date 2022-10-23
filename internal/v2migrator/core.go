@@ -3,11 +3,11 @@ package v2migrator
 import (
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/internal/actors/counter"
-	"github.com/Luzifer/twitch-bot/internal/actors/variables"
-	"github.com/Luzifer/twitch-bot/internal/service/access"
-	"github.com/Luzifer/twitch-bot/internal/service/timer"
-	"github.com/Luzifer/twitch-bot/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/internal/actors/counter"
+	"github.com/Luzifer/twitch-bot/v2/internal/actors/variables"
+	"github.com/Luzifer/twitch-bot/v2/internal/service/access"
+	"github.com/Luzifer/twitch-bot/v2/internal/service/timer"
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
 )
 
 func (s storageFile) migrateCoreKV(db database.Connector) (err error) {

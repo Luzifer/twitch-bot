@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/internal/v2migrator/crypt"
-	"github.com/Luzifer/twitch-bot/pkg/database"
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/internal/v2migrator/crypt"
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 type (

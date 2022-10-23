@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/pkg/database"
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 var (

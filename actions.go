@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 var (

@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const expectedMinConfigVersion = 2

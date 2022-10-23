@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Luzifer/twitch-bot/pkg/twitch"
+import "github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 
 var (
 	channelDefaultScopes = []string{

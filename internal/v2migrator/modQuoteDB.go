@@ -3,8 +3,8 @@ package v2migrator
 import (
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/internal/actors/quotedb"
-	"github.com/Luzifer/twitch-bot/pkg/database"
+	"github.com/Luzifer/twitch-bot/v2/internal/actors/quotedb"
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
 )
 
 type (

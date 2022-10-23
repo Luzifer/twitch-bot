@@ -1,6 +1,6 @@
-module github.com/Luzifer/twitch-bot
+module github.com/Luzifer/twitch-bot/v2
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.1.0

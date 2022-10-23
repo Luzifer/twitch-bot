@@ -8,7 +8,7 @@ import (
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "timeout"

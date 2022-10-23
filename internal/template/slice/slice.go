@@ -2,7 +2,7 @@ package slice
 
 import (
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/plugins"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 func Register(args plugins.RegistrationArguments) error {
