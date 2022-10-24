@@ -48,7 +48,7 @@ func Register(args plugins.RegistrationArguments) error {
 				Description:     "Reason why the user was timed out",
 				Key:             "reason",
 				Name:            "Reason",
-				Optional:        true,
+				Optional:        false,
 				SupportTemplate: true,
 				Type:            plugins.ActionDocumentationFieldTypeString,
 			},

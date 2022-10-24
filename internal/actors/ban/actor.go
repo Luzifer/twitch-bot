@@ -38,7 +38,7 @@ func Register(args plugins.RegistrationArguments) error {
 				Description:     "Reason why the user was banned",
 				Key:             "reason",
 				Name:            "Reason",
-				Optional:        true,
+				Optional:        false,
 				SupportTemplate: true,
 				Type:            plugins.ActionDocumentationFieldTypeString,
 			},
@@ -56,7 +56,7 @@ func Register(args plugins.RegistrationArguments) error {
 			{
 				Description: "Reason to add to the ban",
 				Name:        "reason",
-				Required:    false,
+				Required:    true,
 				Type:        "string",
 			},
 		},
