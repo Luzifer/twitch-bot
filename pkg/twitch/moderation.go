@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/pkg/errors"
@@ -65,6 +66,43 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 			),
 		}),
 		"executing ban request",
+	)
+}
+
+// DeleteMessage deletes one or all messages from the specified chat.
+// If no messageID is given all messages are deleted. If a message ID
+// is given the message must be no older than 6 hours and it must not
+// be posted by broadcaster or moderator.
+func (c *Client) DeleteMessage(channel, messageID string) error {
+	botID, _, err := c.GetAuthorizedUser()
+	if err != nil {
+		return errors.Wrap(err, "getting bot user-id")
+	}
+
+	channelID, err := c.GetIDForUsername(channel)
+	if err != nil {
+		return errors.Wrap(err, "getting channel user-id")
+	}
+
+	params := new(url.Values)
+	params.Set("broadcaster_id", channelID)
+	params.Set("moderator_id", botID)
+	if messageID != "" {
+		params.Set("message_id", messageID)
+	}
+
+	return errors.Wrap(
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Context:  context.Background(),
+			Method:   http.MethodDelete,
+			OKStatus: http.StatusNoContent,
+			URL: fmt.Sprintf(
+				"https://api.twitch.tv/helix/moderation/chat?%s",
+				params.Encode(),
+			),
+		}),
+		"executing delete request",
 	)
 }
 
