@@ -9,10 +9,14 @@ import (
 
 const actorName = "raw"
 
-var formatMessage plugins.MsgFormatter
+var (
+	formatMessage plugins.MsgFormatter
+	send          plugins.SendMessageFunc
+)
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
+	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -51,7 +55,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	return false, errors.Wrap(
-		c.WriteMessage(msg),
+		send(msg),
 		"sending raw message",
 	)
 }

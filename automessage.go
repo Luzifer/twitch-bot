@@ -151,7 +151,7 @@ func (a *autoMessage) Send(c *irc.Client) error {
 		msg = fmt.Sprintf("\001ACTION %s\001", msg)
 	}
 
-	if err := c.WriteMessage(&irc.Message{
+	if err := sendMessage(&irc.Message{
 		Command: "PRIVMSG",
 		Params: []string{
 			fmt.Sprintf("#%s", strings.TrimLeft(a.Channel, "#")),

@@ -19,10 +19,14 @@ const (
 	httpTimeout = 5 * time.Second
 )
 
-var formatMessage plugins.MsgFormatter
+var (
+	formatMessage plugins.MsgFormatter
+	send          plugins.SendMessageFunc
+)
 
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
+	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -85,7 +89,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
-		if err = c.WriteMessage(&irc.Message{
+		if err = send(&irc.Message{
 			Command: "PRIVMSG",
 			Params: []string{
 				plugins.DeriveChannel(m, eventData),
