@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -27,7 +28,7 @@ func (c *Client) SendChatAnnouncement(channel, color, message string) error {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(channel)
+	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
