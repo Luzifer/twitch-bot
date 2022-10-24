@@ -1,6 +1,8 @@
 package timeout
 
 import (
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/go-irc/irc"
@@ -16,6 +18,8 @@ var (
 	botTwitchClient *twitch.Client
 	formatMessage   plugins.MsgFormatter
 	ptrStringEmpty  = func(v string) *string { return &v }("")
+
+	timeoutChatcommandRegex = regexp.MustCompile(`^/timeout +([^\s]+) +([0-9]+) +(.+)$`)
 )
 
 func Register(args plugins.RegistrationArguments) error {
@@ -51,6 +55,8 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	args.RegisterMessageModFunc("/timeout", handleChatCommand)
+
 	return nil
 }
 
@@ -82,4 +88,24 @@ func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	}
 
 	return nil
+}
+
+func handleChatCommand(m *irc.Message) error {
+	channel := plugins.DeriveChannel(m, nil)
+
+	matches := timeoutChatcommandRegex.FindStringSubmatch(m.Trailing())
+	if matches == nil {
+		return errors.New("timeout message does not match required format")
+	}
+
+	duration, err := strconv.ParseInt(matches[2], 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "parsing timeout duration")
+	}
+
+	if err = botTwitchClient.BanUser(channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
+		return errors.Wrap(err, "executing timeout")
+	}
+
+	return plugins.ErrSkipSendingMessage
 }

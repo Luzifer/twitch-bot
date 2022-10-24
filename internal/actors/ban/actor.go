@@ -2,6 +2,7 @@ package ban
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
@@ -16,6 +17,8 @@ const actorName = "ban"
 var (
 	botTwitchClient *twitch.Client
 	formatMessage   plugins.MsgFormatter
+
+	banChatcommandRegex = regexp.MustCompile(`^/ban +([^\s]+) +(.+)$`)
 )
 
 func Register(args plugins.RegistrationArguments) error {
@@ -71,6 +74,8 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	args.RegisterMessageModFunc("/ban", handleChatCommand)
+
 	return nil
 }
 
@@ -114,4 +119,19 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func handleChatCommand(m *irc.Message) error {
+	channel := plugins.DeriveChannel(m, nil)
+
+	matches := banChatcommandRegex.FindStringSubmatch(m.Trailing())
+	if matches == nil {
+		return errors.New("ban message does not match required format")
+	}
+
+	if err := botTwitchClient.BanUser(channel, matches[1], 0, matches[3]); err != nil {
+		return errors.Wrap(err, "executing ban")
+	}
+
+	return plugins.ErrSkipSendingMessage
 }

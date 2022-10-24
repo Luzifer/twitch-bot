@@ -10,6 +10,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/v2/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/delay"
@@ -42,6 +43,7 @@ const ircHandleWaitRetries = 10
 var (
 	corePluginRegistrations = []plugins.RegisterFunc{
 		// Actors
+		announce.Register,
 		ban.Register,
 		counter.Register,
 		delay.Register,
