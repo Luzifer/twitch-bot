@@ -23,7 +23,6 @@ const (
 var (
 	botTwitchClient *twitch.Client
 	formatMessage   plugins.MsgFormatter
-	send            plugins.SendMessageFunc
 
 	messageStore     = map[string][]*storedMessage{}
 	messageStoreLock sync.RWMutex
@@ -35,7 +34,6 @@ var (
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
-	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 

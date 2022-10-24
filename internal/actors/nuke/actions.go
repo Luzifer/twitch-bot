@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 )
 
@@ -26,14 +25,11 @@ func actionBan(channel, match, msgid, user string) error {
 
 func actionDelete(channel, match, msgid, user string) (err error) {
 	return errors.Wrap(
-		send(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				channel,
-				fmt.Sprintf("/delete %s", msgid),
-			},
-		}),
-		"sending action",
+		botTwitchClient.DeleteMessage(
+			channel,
+			msgid,
+		),
+		"deleting message",
 	)
 }
 

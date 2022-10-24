@@ -161,8 +161,6 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	}
 	nLvl := int(math.Min(float64(len(levels)-1), float64(lvl.LastLevel+1)))
 
-	var cmd []string
-
 	switch lt := levels[nLvl]; lt {
 	case "ban":
 		if err = botTwitchClient.BanUser(
@@ -180,16 +178,11 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 			return false, errors.New("found no mesage id")
 		}
 
-		cmd = []string{"/delete", msgID}
-
-		if err := c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				plugins.DeriveChannel(m, eventData),
-				strings.Join(cmd, " "),
-			},
-		}); err != nil {
-			return false, errors.Wrap(err, "sending command")
+		if err = botTwitchClient.DeleteMessage(
+			plugins.DeriveChannel(m, eventData),
+			msgID,
+		); err != nil {
+			return false, errors.Wrap(err, "deleting message")
 		}
 
 	default:

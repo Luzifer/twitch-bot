@@ -1,17 +1,20 @@
 package deleteactor
 
 import (
-	"fmt"
-
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "delete"
 
+var botTwitchClient *twitch.Client
+
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
+
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
@@ -32,14 +35,11 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	return false, errors.Wrap(
-		c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				m.Params[0],
-				fmt.Sprintf("/delete %s", msgID),
-			},
-		}),
-		"sending delete",
+		botTwitchClient.DeleteMessage(
+			plugins.DeriveChannel(m, eventData),
+			msgID,
+		),
+		"deleting message",
 	)
 }
 
