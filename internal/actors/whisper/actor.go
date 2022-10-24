@@ -1,19 +1,22 @@
 package whisper
 
 import (
-	"fmt"
-
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "whisper"
 
-var formatMessage plugins.MsgFormatter
+var (
+	botTwitchClient *twitch.Client
+	formatMessage   plugins.MsgFormatter
+)
 
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -61,16 +64,8 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		return false, errors.Wrap(err, "preparing whisper message")
 	}
 
-	channel := "#tmijs" // As a fallback, copied from tmi.js
-
 	return false, errors.Wrap(
-		c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				channel,
-				fmt.Sprintf("/w %s %s", to, msg),
-			},
-		}),
+		botTwitchClient.SendWhisper(to, msg),
 		"sending whisper",
 	)
 }
