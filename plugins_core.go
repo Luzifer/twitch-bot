@@ -129,6 +129,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterAPIRoute:           registerRoute,
 		RegisterCron:               cronService.AddFunc,
 		RegisterEventHandler:       registerEventHandlers,
+		RegisterMessageModFunc:     registerChatcommand,
 		RegisterRawMessageHandler:  registerRawMessageHandler,
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
@@ -144,7 +145,22 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 }
 
 func sendMessage(m *irc.Message) error {
-	if err := backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
+	err := handleChatcommandModifications(m)
+	switch {
+	case err == nil:
+		// There was no error, the message should be sent normally
+
+	case errors.Is(err, plugins.ErrSkipSendingMessage):
+		// One chatcommand handler cancelled sending the message
+		// (probably because it was handled otherwise)
+		return nil
+
+	default:
+		// Something in a chatcommand handler went wrong
+		return errors.Wrap(err, "handling chat commands")
+	}
+
+	if err = backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
 		if ircHdl == nil {
 			return errors.New("irc handle not available")
 		}

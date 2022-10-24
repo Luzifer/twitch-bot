@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/go-irc/irc"
+	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
@@ -41,6 +42,9 @@ type (
 
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
 
+	MsgModificationFunc             func(*irc.Message) error
+	MsgModificationRegistrationFunc func(linePrefix string, modFn MsgModificationFunc)
+
 	RawMessageHandlerFunc         func(m *irc.Message) error
 	RawMessageHandlerRegisterFunc func(RawMessageHandlerFunc) error
 
@@ -70,6 +74,8 @@ type (
 		RegisterCron CronRegistrationFunc
 		// RegisterEventHandler is a method to register a handler function receiving ALL events
 		RegisterEventHandler EventHandlerRegisterFunc
+		// RegisterMessageModFunc is a method to register a handler to modify / react on messages
+		RegisterMessageModFunc MsgModificationRegistrationFunc
 		// RegisterRawMessageHandler is a method to register an handler to receive ALL messages received
 		RegisterRawMessageHandler RawMessageHandlerRegisterFunc
 		// RegisterTemplateFunction can be used to register a new template functions
@@ -101,6 +107,8 @@ type (
 
 	ValidateTokenFunc func(token string, modules ...string) error
 )
+
+var ErrSkipSendingMessage = errors.New("skip sending message")
 
 func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {
 	return func(*irc.Message, *Rule, *FieldCollection) interface{} { return f }
