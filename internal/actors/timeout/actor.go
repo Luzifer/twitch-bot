@@ -1,24 +1,29 @@
 package timeout
 
 import (
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "timeout"
 
 var (
-	formatMessage  plugins.MsgFormatter
-	ptrStringEmpty = func(v string) *string { return &v }("")
+	botTwitchClient *twitch.Client
+	formatMessage   plugins.MsgFormatter
+	ptrStringEmpty  = func(v string) *string { return &v }("")
+
+	timeoutChatcommandRegex = regexp.MustCompile(`^/timeout +([^\s]+) +([0-9]+) +(.+)$`)
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -43,12 +48,14 @@ func Register(args plugins.RegistrationArguments) error {
 				Description:     "Reason why the user was timed out",
 				Key:             "reason",
 				Name:            "Reason",
-				Optional:        true,
+				Optional:        false,
 				SupportTemplate: true,
 				Type:            plugins.ActionDocumentationFieldTypeString,
 			},
 		},
 	})
+
+	args.RegisterMessageModFunc("/timeout", handleChatCommand)
 
 	return nil
 }
@@ -56,30 +63,19 @@ func Register(args plugins.RegistrationArguments) error {
 type actor struct{}
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
-	cmd := []string{
-		"/timeout",
-		plugins.DeriveUser(m, eventData),
-		strconv.FormatInt(int64(attrs.MustDuration("duration", nil)/time.Second), 10),
-	}
-
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing reason template")
 	}
 
-	if reason != "" {
-		cmd = append(cmd, reason)
-	}
-
 	return false, errors.Wrap(
-		c.WriteMessage(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				plugins.DeriveChannel(m, eventData),
-				strings.Join(cmd, " "),
-			},
-		}),
-		"sending timeout",
+		botTwitchClient.BanUser(
+			plugins.DeriveChannel(m, eventData),
+			plugins.DeriveUser(m, eventData),
+			attrs.MustDuration("duration", nil),
+			reason,
+		),
+		"executing timeout",
 	)
 }
 
@@ -92,4 +88,24 @@ func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
 	}
 
 	return nil
+}
+
+func handleChatCommand(m *irc.Message) error {
+	channel := plugins.DeriveChannel(m, nil)
+
+	matches := timeoutChatcommandRegex.FindStringSubmatch(m.Trailing())
+	if matches == nil {
+		return errors.New("timeout message does not match required format")
+	}
+
+	duration, err := strconv.ParseInt(matches[2], 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "parsing timeout duration")
+	}
+
+	if err = botTwitchClient.BanUser(channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
+		return errors.Wrap(err, "executing timeout")
+	}
+
+	return plugins.ErrSkipSendingMessage
 }

@@ -17,7 +17,7 @@ func getAuthorizationFromRequest(r *http.Request) (string, *twitch.Client, error
 
 	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, token, "")
 
-	user, err := tc.GetAuthorizedUsername()
+	_, user, err := tc.GetAuthorizedUser()
 	return user, tc, errors.Wrap(err, "getting authorized user")
 }
 

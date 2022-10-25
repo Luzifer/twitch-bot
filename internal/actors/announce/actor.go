@@ -1,0 +1,40 @@
+package announce
+
+import (
+	"regexp"
+
+	"github.com/go-irc/irc"
+	"github.com/pkg/errors"
+
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/v2/plugins"
+)
+
+var (
+	botTwitchClient *twitch.Client
+
+	announceChatcommandRegex = regexp.MustCompile(`^/announce(|blue|green|orange|purple) +(.+)$`)
+)
+
+func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
+
+	args.RegisterMessageModFunc("/announce", handleChatCommand)
+
+	return nil
+}
+
+func handleChatCommand(m *irc.Message) error {
+	channel := plugins.DeriveChannel(m, nil)
+
+	matches := announceChatcommandRegex.FindStringSubmatch(m.Trailing())
+	if matches == nil {
+		return errors.New("announce message does not match required format")
+	}
+
+	if err := botTwitchClient.SendChatAnnouncement(channel, matches[1], matches[2]); err != nil {
+		return errors.Wrap(err, "sending announcement")
+	}
+
+	return plugins.ErrSkipSendingMessage
+}

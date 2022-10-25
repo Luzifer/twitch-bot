@@ -10,6 +10,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/v2/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/v2/internal/actors/delay"
@@ -42,6 +43,7 @@ const ircHandleWaitRetries = 10
 var (
 	corePluginRegistrations = []plugins.RegisterFunc{
 		// Actors
+		announce.Register,
 		ban.Register,
 		counter.Register,
 		delay.Register,
@@ -129,6 +131,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterAPIRoute:           registerRoute,
 		RegisterCron:               cronService.AddFunc,
 		RegisterEventHandler:       registerEventHandlers,
+		RegisterMessageModFunc:     registerChatcommand,
 		RegisterRawMessageHandler:  registerRawMessageHandler,
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
@@ -144,7 +147,22 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 }
 
 func sendMessage(m *irc.Message) error {
-	if err := backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
+	err := handleChatcommandModifications(m)
+	switch {
+	case err == nil:
+		// There was no error, the message should be sent normally
+
+	case errors.Is(err, plugins.ErrSkipSendingMessage):
+		// One chatcommand handler cancelled sending the message
+		// (probably because it was handled otherwise)
+		return nil
+
+	default:
+		// Something in a chatcommand handler went wrong
+		return errors.Wrap(err, "handling chat commands")
+	}
+
+	if err = backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
 		if ircHdl == nil {
 			return errors.New("irc handle not available")
 		}

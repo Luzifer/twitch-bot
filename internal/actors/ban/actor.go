@@ -2,25 +2,28 @@ package ban
 
 import (
 	"net/http"
-	"strings"
+	"regexp"
 
 	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "ban"
 
 var (
-	formatMessage plugins.MsgFormatter
-	send          plugins.SendMessageFunc
+	botTwitchClient *twitch.Client
+	formatMessage   plugins.MsgFormatter
+
+	banChatcommandRegex = regexp.MustCompile(`^/ban +([^\s]+) +(.+)$`)
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
-	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -35,7 +38,7 @@ func Register(args plugins.RegistrationArguments) error {
 				Description:     "Reason why the user was banned",
 				Key:             "reason",
 				Name:            "Reason",
-				Optional:        true,
+				Optional:        false,
 				SupportTemplate: true,
 				Type:            plugins.ActionDocumentationFieldTypeString,
 			},
@@ -53,7 +56,7 @@ func Register(args plugins.RegistrationArguments) error {
 			{
 				Description: "Reason to add to the ban",
 				Name:        "reason",
-				Required:    false,
+				Required:    true,
 				Type:        "string",
 			},
 		},
@@ -71,6 +74,8 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	args.RegisterMessageModFunc("/ban", handleChatCommand)
+
 	return nil
 }
 
@@ -84,32 +89,14 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		return false, errors.Wrap(err, "executing reason template")
 	}
 
-	return a.execBan(
-		plugins.DeriveChannel(m, eventData),
-		plugins.DeriveUser(m, eventData),
-		reason,
-	)
-}
-
-func (actor) execBan(channel, user, reason string) (bool, error) {
-	cmd := []string{
-		"/ban",
-		user,
-	}
-
-	if reason != "" {
-		cmd = append(cmd, reason)
-	}
-
 	return false, errors.Wrap(
-		send(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				"#" + strings.TrimLeft(channel, "#"),
-				strings.Join(cmd, " "),
-			},
-		}),
-		"sending ban",
+		botTwitchClient.BanUser(
+			plugins.DeriveChannel(m, eventData),
+			plugins.DeriveUser(m, eventData),
+			0,
+			reason,
+		),
+		"executing ban",
 	)
 }
 
@@ -126,10 +113,25 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 		reason  = r.FormValue("reason")
 	)
 
-	if _, err := (actor{}).execBan(channel, user, reason); err != nil {
+	if err := botTwitchClient.BanUser(channel, user, 0, reason); err != nil {
 		http.Error(w, errors.Wrap(err, "issuing ban").Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func handleChatCommand(m *irc.Message) error {
+	channel := plugins.DeriveChannel(m, nil)
+
+	matches := banChatcommandRegex.FindStringSubmatch(m.Trailing())
+	if matches == nil {
+		return errors.New("ban message does not match required format")
+	}
+
+	if err := botTwitchClient.BanUser(channel, matches[1], 0, matches[3]); err != nil {
+		return errors.Wrap(err, "executing ban")
+	}
+
+	return plugins.ErrSkipSendingMessage
 }

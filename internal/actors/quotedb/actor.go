@@ -18,6 +18,7 @@ const (
 var (
 	db            database.Connector
 	formatMessage plugins.MsgFormatter
+	send          plugins.SendMessageFunc
 
 	ptrStringEmpty     = func(v string) *string { return &v }("")
 	ptrStringOutFormat = func(v string) *string { return &v }("Quote #{{ .index }}: {{ .quote }}")
@@ -31,6 +32,7 @@ func Register(args plugins.RegistrationArguments) error {
 	}
 
 	formatMessage = args.FormatMessage
+	send = args.SendMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -154,7 +156,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		return false, errors.Wrap(
-			c.WriteMessage(&irc.Message{
+			send(&irc.Message{
 				Command: "PRIVMSG",
 				Params: []string{
 					plugins.DeriveChannel(m, eventData),

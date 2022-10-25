@@ -2,20 +2,27 @@ package twitch
 
 const (
 	// API Scopes
-	ScopeChannelManageRedemptions = "channel:manage:redemptions"
-	ScopeChannelReadRedemptions   = "channel:read:redemptions"
-	ScopeChannelEditCommercial    = "channel:edit:commercial"
-	ScopeChannelManageBroadcast   = "channel:manage:broadcast"
-	ScopeChannelManagePolls       = "channel:manage:polls"
-	ScopeChannelManagePredictions = "channel:manage:predictions"
+	ScopeChannelEditCommercial       = "channel:edit:commercial"
+	ScopeChannelManageBroadcast      = "channel:manage:broadcast"
+	ScopeChannelManageModerators     = "channel:manage:moderators"
+	ScopeChannelManagePolls          = "channel:manage:polls"
+	ScopeChannelManagePredictions    = "channel:manage:predictions"
+	ScopeChannelManageRaids          = "channel:manage:raids"
+	ScopeChannelManageRedemptions    = "channel:manage:redemptions"
+	ScopeChannelManageVIPS           = "channel:manage:vips"
+	ScopeChannelManageWhispers       = "user:manage:whispers"
+	ScopeChannelReadRedemptions      = "channel:read:redemptions"
+	ScopeModeratorManageAnnoucements = "moderator:manage:announcements"
+	ScopeModeratorManageBannedUsers  = "moderator:manage:banned_users"
+	ScopeModeratorManageChatMessages = "moderator:manage:chat_messages"
+	ScopeModeratorManageChatSettings = "moderator:manage:chat_settings"
+	ScopeUserManageChatColor         = "user:manage:chat_color"
 
 	// Deprecated v5 scope but used in chat
 	ScopeV5ChannelEditor = "channel_editor"
 
 	// Chat Scopes
-	ScopeChannelModerate = "channel:moderate" // Perform moderation actions in a channel. The user requesting the scope must be a moderator in the channel.
-	ScopeChatEdit        = "chat:edit"        // Send live stream chat and rooms messages.
-	ScopeChatRead        = "chat:read"        // View live stream chat and rooms messages.
-	ScopeWhisperRead     = "whispers:read"    // View your whisper messages.
-	ScopeWhisperEdit     = "whispers:edit"    // Send whisper messages.
+	ScopeChatEdit    = "chat:edit"     // Send live stream chat and rooms messages.
+	ScopeChatRead    = "chat:read"     // View live stream chat and rooms messages.
+	ScopeWhisperRead = "whispers:read" // View your whisper messages.
 )
