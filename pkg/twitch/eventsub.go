@@ -44,6 +44,7 @@ const (
 	// eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
 
 	EventSubEventTypeChannelFollow = "channel.follow"
+	EventSubEventTypeChannelRaid   = "channel.raid"
 	EventSubEventTypeChannelUpdate = "channel.update"
 	EventSubEventTypeStreamOffline = "stream.offline"
 	EventSubEventTypeStreamOnline  = "stream.online"
@@ -116,6 +117,16 @@ type (
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		FollowedAt           time.Time `json:"followed_at"`
+	}
+
+	EventSubEventRaid struct {
+		FromBroadcasterUserID    string `json:"from_broadcaster_user_id"`
+		FromBroadcasterUserLogin string `json:"from_broadcaster_user_login"`
+		FromBroadcasterUserName  string `json:"from_broadcaster_user_name"`
+		ToBroadcasterUserID      string `json:"to_broadcaster_user_id"`
+		ToBroadcasterUserLogin   string `json:"to_broadcaster_user_login"`
+		ToBroadcasterUserName    string `json:"to_broadcaster_user_name"`
+		Viewers                  int64  `json:"viewers"`
 	}
 
 	EventSubEventStreamOffline struct {

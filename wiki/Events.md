@@ -98,6 +98,17 @@ Fields:
 - `channel` - The channel the event occurred in
 - `user` - The login-name of the user who joined
 
+## `outbound_raid`
+
+The channel has raided another channel. (The event is issued in the moment the raid is executed, not when the raid timer starts!)
+
+Fields:
+
+- `channel` - The channel the raid originated at
+- `to` - The login-name of the channel the viewers are sent to
+- `to_id` - The ID of the channel the viewers are sent to
+- `viewers` - The number of viewers included in the raid
+
 ## `part`
 
 User left the channel-chat. This is **NOT** an indicator they are no longer viewing, the event is **NOT** reliably sent when the user really leaves the chat. The event will be sent with some delay after they leave the chat and is sometimes repeated multiple times during their stay. So this does **NOT** mean they do no longer read the chat!

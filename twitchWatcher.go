@@ -12,6 +12,14 @@ import (
 )
 
 type (
+	topicRegistration struct {
+		Topic          string
+		Condition      twitch.EventSubCondition
+		RequiredScopes []string
+		AnyScope       bool
+		Hook           func(json.RawMessage) error
+	}
+
 	twitchChannelState struct {
 		Category string
 		IsLive   bool
@@ -94,6 +102,48 @@ func (t *twitchWatcher) RemoveChannel(channel string) error {
 	return nil
 }
 
+func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration {
+	return []topicRegistration{
+		{
+			Topic:          twitch.EventSubEventTypeChannelUpdate,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubChannelUpdate,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeStreamOffline,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubStreamOnOff(false),
+		},
+		{
+			Topic:          twitch.EventSubEventTypeStreamOnline,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubStreamOnOff(true),
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelFollow,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubChannelFollow,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelRaid,
+			Condition:      twitch.EventSubCondition{FromBroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubChannelOutboundRaid,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadRedemptions, twitch.ScopeChannelManageRedemptions},
+			AnyScope:       true,
+			Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
+		},
+	}
+}
+
 func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	var payload twitch.EventSubEventFollow
 	if err := json.Unmarshal(m, &payload); err != nil {
@@ -132,6 +182,25 @@ func (t *twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m js
 
 	log.WithFields(log.Fields(fields.Data())).Info("ChannelPoint reward was redeemed")
 	go handleMessage(ircHdl.Client(), nil, eventTypeChannelPointRedeem, fields)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error {
+	var payload twitch.EventSubEventRaid
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		"channel": "#" + payload.FromBroadcasterUserLogin,
+		"to_id":   payload.ToBroadcasterUserID,
+		"to":      payload.ToBroadcasterUserLogin,
+		"viewers": payload.Viewers,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Outbound raid detected")
+	go handleMessage(ircHdl.Client(), nil, eventTypeOutboundRaid, fields)
 
 	return nil
 }
@@ -233,46 +302,8 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 	}
 
 	var (
-		topicRegistrations = []struct {
-			Topic          string
-			Condition      twitch.EventSubCondition
-			RequiredScopes []string
-			AnyScope       bool
-			Hook           func(json.RawMessage) error
-		}{
-			{
-				Topic:          twitch.EventSubEventTypeChannelUpdate,
-				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-				RequiredScopes: nil,
-				Hook:           t.handleEventSubChannelUpdate,
-			},
-			{
-				Topic:          twitch.EventSubEventTypeStreamOffline,
-				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-				RequiredScopes: nil,
-				Hook:           t.handleEventSubStreamOnOff(false),
-			},
-			{
-				Topic:          twitch.EventSubEventTypeStreamOnline,
-				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-				RequiredScopes: nil,
-				Hook:           t.handleEventSubStreamOnOff(true),
-			},
-			{
-				Topic:          twitch.EventSubEventTypeChannelFollow,
-				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-				RequiredScopes: nil,
-				Hook:           t.handleEventSubChannelFollow,
-			},
-			{
-				Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
-				Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-				RequiredScopes: []string{twitch.ScopeChannelReadRedemptions, twitch.ScopeChannelManageRedemptions},
-				AnyScope:       true,
-				Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
-			},
-		}
-		unsubHandlers []func()
+		topicRegistrations = t.getTopicRegistrations(userID)
+		unsubHandlers      []func()
 	)
 
 	for _, tr := range topicRegistrations {

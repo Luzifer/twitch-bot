@@ -27,6 +27,7 @@ var (
 	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
 	eventTypeHost               = ptrStr("host")
 	eventTypeJoin               = ptrStr("join")
+	eventTypeOutboundRaid       = ptrStr("outbound_raid")
 	eventTypePart               = ptrStr("part")
 	eventTypePermit             = ptrStr("permit")
 	eventTypeRaid               = ptrStr("raid")
@@ -54,6 +55,7 @@ var (
 		eventTypeGiftPaidUpgrade,
 		eventTypeHost,
 		eventTypeJoin,
+		eventTypeOutboundRaid,
 		eventTypePart,
 		eventTypePermit,
 		eventTypeRaid,
