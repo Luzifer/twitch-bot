@@ -11,9 +11,13 @@ type (
 	logWriter struct{ io.Writer }
 )
 
-func newLogrusLogWriterWithLevel(level logrus.Level) logWriter {
-	writer := logrus.StandardLogger().WriterLevel(level)
+func newLogrusLogWriterWithLevel(level logrus.Level, dbDriver string) logWriter {
+	writer := logrus.WithField("database", dbDriver).WriterLevel(level)
 	return logWriter{writer}
+}
+
+func (l logWriter) Print(a ...any) {
+	fmt.Fprint(l.Writer, a...)
 }
 
 func (l logWriter) Printf(format string, a ...any) {

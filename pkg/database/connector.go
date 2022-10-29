@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/glebarez/sqlite"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,6 +36,7 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 
 	switch driverName {
 	case "mysql":
+		mysqlDriver.SetLogger(newLogrusLogWriterWithLevel(logrus.ErrorLevel, driverName))
 		innerDB = mysql.Open(connString)
 
 	case "postgres":
@@ -53,7 +55,7 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 	}
 
 	db, err := gorm.Open(innerDB, &gorm.Config{
-		Logger: gormLogger(),
+		Logger: logger.New(newLogrusLogWriterWithLevel(logrus.TraceLevel, driverName), logger.Config{}),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "connecting database")
@@ -83,13 +85,6 @@ func (c connector) DB() *gorm.DB {
 
 func (c connector) applyCoreSchema() error {
 	return errors.Wrap(c.db.AutoMigrate(&coreKV{}), "applying coreKV schema")
-}
-
-func gormLogger() logger.Interface {
-	return logger.New(
-		newLogrusLogWriterWithLevel(logrus.TraceLevel),
-		logger.Config{},
-	)
 }
 
 func patchSQLiteConnString(connString string) (string, error) {
