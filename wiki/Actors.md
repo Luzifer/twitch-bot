@@ -9,7 +9,7 @@ Ban user from chat
 - type: ban
   attributes:
     # Reason why the user was banned
-    # Optional: true
+    # Optional: false
     # Type:     string (Supports Templating)
     reason: ""
 ```
@@ -115,7 +115,7 @@ Update stream information
     # Optional: false
     # Type:     string (Supports Templating)
     channel: ""
-    # Category / Game to set
+    # Category / Game to set (use `@1234` format to pass an explicit ID)
     # Optional: true
     # Type:     string (Supports Templating)
     game: ""
@@ -305,7 +305,7 @@ Timeout user from chat
     # Type:     duration
     duration: 0s
     # Reason why the user was timed out
-    # Optional: true
+    # Optional: false
     # Type:     string (Supports Templating)
     reason: ""
 ```

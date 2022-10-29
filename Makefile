@@ -27,7 +27,7 @@ node_modules:
 # --- Wiki Updates
 
 actor_docs:
-	go run . --storage-file $(shell mktemp).json.gz actor-docs >wiki/Actors.md
+	go run . --storage-conn-string $(shell mktemp).db actor-docs >wiki/Actors.md
 
 pull_wiki:
 	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
