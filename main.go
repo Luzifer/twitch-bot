@@ -179,6 +179,7 @@ func handleSubCommand(args []string) {
 		fmt.Println("  actor-docs                     Generate markdown documentation for available actors")
 		fmt.Println("  api-token <name> <scope...>    Generate an api-token to be entered into the config")
 		fmt.Println("  migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database")
+		fmt.Println("  validate-config                Try to load configuration file and report errors if any")
 		fmt.Println("  help                           Prints this help message")
 
 	case "migrate-v2":
@@ -196,6 +197,11 @@ func handleSubCommand(args []string) {
 		}
 
 		log.Info("v2 storage file was migrated")
+
+	case "validate-config":
+		if err := loadConfig(cfg.Config); err != nil {
+			log.WithError(err).Fatal("loading config")
+		}
 
 	default:
 		handleSubCommand([]string{"help"})

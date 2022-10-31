@@ -12,6 +12,8 @@ const actorName = "raw"
 var (
 	formatMessage plugins.MsgFormatter
 	send          plugins.SendMessageFunc
+
+	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 func Register(args plugins.RegistrationArguments) error {
@@ -63,9 +65,13 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
+	}
+
+	if err = tplValidator(attrs.MustString("message", ptrStringEmpty)); err != nil {
+		return errors.Wrap(err, "validating message template")
 	}
 
 	return nil

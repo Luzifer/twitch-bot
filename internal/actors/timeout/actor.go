@@ -82,9 +82,17 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
 		return errors.New("duration must be of type duration greater or equal one second")
+	}
+
+	if v, err := attrs.String("reason"); err != nil || v == "" {
+		return errors.New("reason must be non-empty string")
+	}
+
+	if err = tplValidator(attrs.MustString("reason", ptrStringEmpty)); err != nil {
+		return errors.Wrap(err, "validating reason template")
 	}
 
 	return nil

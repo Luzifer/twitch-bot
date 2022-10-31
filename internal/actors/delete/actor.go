@@ -46,4 +46,6 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) { return nil }
+func (a actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
+	return nil
+}

@@ -103,7 +103,18 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) { return nil }
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+	reasonTemplate, err := attrs.String("reason")
+	if err != nil || reasonTemplate == "" {
+		return errors.New("reason must be non-empty string")
+	}
+
+	if err = tplValidator(reasonTemplate); err != nil {
+		return errors.Wrap(err, "validating reason template")
+	}
+
+	return nil
+}
 
 func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 	var (

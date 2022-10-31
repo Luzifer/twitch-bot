@@ -13,8 +13,6 @@ import (
 type actor struct{}
 
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
-	ptrStringEmpty := func(v string) *string { return &v }("")
-
 	fd, err := formatMessage(attrs.MustString("fields", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing fields template")
@@ -51,9 +49,15 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("fields"); err != nil || v == "" {
 		return errors.New("fields is expected to be non-empty string")
+	}
+
+	for _, field := range []string{"fields", "schedule_in"} {
+		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
+			return errors.Wrapf(err, "validating %s template", field)
+		}
 	}
 
 	return nil

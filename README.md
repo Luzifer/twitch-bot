@@ -37,6 +37,7 @@ Supported sub-commands are:
   actor-docs                     Generate markdown documentation for available actors
   api-token <name> <scope...>    Generate an api-token to be entered into the config
   migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database
+  validate-config                Try to load configuration file and report errors if any
   help                           Prints this help message
 ```
 

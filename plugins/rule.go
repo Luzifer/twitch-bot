@@ -193,6 +193,22 @@ func (r *Rule) UpdateFromSubscription() (bool, error) {
 	return true, nil
 }
 
+func (r Rule) Validate(tplValidate TemplateValidatorFunc) error {
+	if r.MatchMessage != nil {
+		if _, err := regexp.Compile(*r.MatchMessage); err != nil {
+			return errors.Wrap(err, "compiling match_message field regex")
+		}
+	}
+
+	if r.DisableOnTemplate != nil {
+		if err := tplValidate(*r.DisableOnTemplate); err != nil {
+			return errors.Wrap(err, "parsing disable_on_template template")
+		}
+	}
+
+	return nil
+}
+
 func (r *Rule) allowExecuteBadgeBlacklist(logger *log.Entry, m *irc.Message, event *string, badges twitch.BadgeCollection, evtData *FieldCollection) bool {
 	for _, b := range r.DisableOn {
 		if badges.Has(b) {

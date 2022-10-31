@@ -106,9 +106,14 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return true }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) error {
-	if v, err := attrs.String("source"); err != nil || v == "" {
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) error {
+	sourceTpl, err := attrs.String("source")
+	if err != nil || sourceTpl == "" {
 		return errors.New("source is expected to be non-empty string")
+	}
+
+	if err = tplValidator(sourceTpl); err != nil {
+		return errors.Wrap(err, "validating source template")
 	}
 
 	return nil

@@ -187,9 +187,15 @@ func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, ev
 func (a ActorCounter) IsAsync() bool { return false }
 func (a ActorCounter) Name() string  { return "counter" }
 
-func (a ActorCounter) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a ActorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if cn, err := attrs.String("counter"); err != nil || cn == "" {
 		return errors.New("counter name must be non-empty string")
+	}
+
+	for _, field := range []string{"counter", "counter_step", "counter_set"} {
+		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
+			return errors.Wrapf(err, "validating %s template", field)
+		}
 	}
 
 	return nil

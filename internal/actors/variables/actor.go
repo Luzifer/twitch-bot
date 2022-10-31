@@ -150,9 +150,15 @@ func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 func (a ActorSetVariable) IsAsync() bool { return false }
 func (a ActorSetVariable) Name() string  { return "setvariable" }
 
-func (a ActorSetVariable) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a ActorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("variable"); err != nil || v == "" {
 		return errors.New("variable name must be non-empty string")
+	}
+
+	for _, field := range []string{"set", "variable"} {
+		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
+			return errors.Wrapf(err, "validating %s template", field)
+		}
 	}
 
 	return nil

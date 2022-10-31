@@ -24,7 +24,7 @@ type (
 		// Validate will be called to validate the loaded configuration. It should
 		// return an error if required keys are missing from the AttributeStore
 		// or if keys contain broken configs
-		Validate(*FieldCollection) error
+		Validate(TemplateValidatorFunc, *FieldCollection) error
 	}
 
 	ActorCreationFunc func() Actor
@@ -104,6 +104,8 @@ type (
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
+
+	TemplateValidatorFunc func(raw string) error
 
 	ValidateTokenFunc func(token string, modules ...string) error
 )

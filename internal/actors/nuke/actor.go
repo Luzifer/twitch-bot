@@ -28,6 +28,7 @@ var (
 	messageStoreLock sync.RWMutex
 
 	ptrStringDelete = func(v string) *string { return &v }("delete")
+	ptrStringEmpty  = func(s string) *string { return &s }("")
 	ptrString10m    = func(v string) *string { return &v }("10m")
 )
 
@@ -230,9 +231,15 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 func (a actor) IsAsync() bool { return false }
 func (a actor) Name() string  { return actorName }
 
-func (a actor) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("match"); err != nil || v == "" {
 		return errors.New("match must be non-empty string")
+	}
+
+	for _, field := range []string{"scan", "action", "match"} {
+		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
+			return errors.Wrapf(err, "validating %s template", field)
+		}
 	}
 
 	return nil

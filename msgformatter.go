@@ -86,3 +86,14 @@ func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Me
 func formatMessageFieldUsername(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
 	compiledFields.Set("username", plugins.DeriveUser(m, fields))
 }
+
+func validateTemplate(tplString string) error {
+	// Template in frontend supports newlines, messages do not
+	tplString = stripNewline.ReplaceAllString(tplString, " ")
+
+	_, err := template.
+		New(tplString).
+		Funcs(tplFuncs.GetFuncMap(nil, nil, plugins.NewFieldCollection())).
+		Parse(tplString)
+	return errors.Wrap(err, "parsing template")
+}

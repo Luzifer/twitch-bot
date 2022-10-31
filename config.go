@@ -357,20 +357,33 @@ func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
 }
 
 func (c configFile) validateRuleActions() error {
+	var hasError bool
+
 	for _, r := range c.Rules {
 		logger := log.WithField("rule", r.MatcherID())
+
+		if err := r.Validate(validateTemplate); err != nil {
+			logger.WithError(err).Error("Rule reported invalid config")
+			hasError = true
+		}
+
 		for idx, a := range r.Actions {
 			actor, err := getActorByName(a.Type)
 			if err != nil {
 				logger.WithField("index", idx).WithError(err).Error("Cannot get actor by type")
-				return errors.Wrap(err, "getting actor by type")
+				hasError = true
+				continue
 			}
 
-			if err = actor.Validate(a.Attributes); err != nil {
+			if err = actor.Validate(validateTemplate, a.Attributes); err != nil {
 				logger.WithField("index", idx).WithError(err).Error("Actor reported invalid config")
-				return errors.Wrap(err, "validating action attributes")
+				hasError = true
 			}
 		}
+	}
+
+	if hasError {
+		return errors.New("config validation reported errors, see log")
 	}
 
 	return nil

@@ -124,9 +124,16 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 func (a ActorScript) IsAsync() bool { return false }
 func (a ActorScript) Name() string  { return "script" }
 
-func (a ActorScript) Validate(attrs *plugins.FieldCollection) (err error) {
-	if cmd, err := attrs.StringSlice("command"); err != nil || len(cmd) == 0 {
+func (a ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+	cmd, err := attrs.StringSlice("command")
+	if err != nil || len(cmd) == 0 {
 		return errors.New("command must be slice of strings with length > 0")
+	}
+
+	for i, el := range cmd {
+		if err = tplValidator(el); err != nil {
+			return errors.Wrapf(err, "validating cmd template (element %d)", i)
+		}
 	}
 
 	return nil

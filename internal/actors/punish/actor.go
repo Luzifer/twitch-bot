@@ -214,13 +214,17 @@ func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 func (a actorPunish) IsAsync() bool { return false }
 func (a actorPunish) Name() string  { return actorNamePunish }
 
-func (a actorPunish) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}
 
 	if v, err := attrs.StringSlice("levels"); err != nil || len(v) == 0 {
 		return errors.New("levels must be slice of strings with length > 0")
+	}
+
+	if err = tplValidator(attrs.MustString("user", ptrStringEmpty)); err != nil {
+		return errors.Wrap(err, "validating user template")
 	}
 
 	return nil
@@ -247,9 +251,13 @@ func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule
 func (a actorResetPunish) IsAsync() bool { return false }
 func (a actorResetPunish) Name() string  { return actorNameResetPunish }
 
-func (a actorResetPunish) Validate(attrs *plugins.FieldCollection) (err error) {
+func (a actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
+	}
+
+	if err = tplValidator(attrs.MustString("user", ptrStringEmpty)); err != nil {
+		return errors.Wrap(err, "validating user template")
 	}
 
 	return nil

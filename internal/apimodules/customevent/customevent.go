@@ -21,6 +21,8 @@ var (
 	eventCreatorFunc plugins.EventHandlerFunc
 	formatMessage    plugins.MsgFormatter
 	mc               *memoryCache
+
+	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 func Register(args plugins.RegistrationArguments) error {
