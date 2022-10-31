@@ -25,6 +25,10 @@ Create a custom event
     # Optional: false
     # Type:     string (Supports Templating)
     fields: "{}"
+    # Time until the event is triggered (must be valid duration like 1h, 1h1m, 10s, ...)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    schedule_in: ""
 ```
 
 ## Delay

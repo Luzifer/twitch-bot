@@ -220,7 +220,7 @@ func main() {
 		log.WithError(err).Fatal("Unable to apply timer migration")
 	}
 
-	cronService = cron.New()
+	cronService = cron.New(cron.WithSeconds())
 	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,

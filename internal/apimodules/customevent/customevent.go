@@ -2,6 +2,7 @@ package customevent
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -9,17 +10,27 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v2/pkg/database"
 	"github.com/Luzifer/twitch-bot/v2/plugins"
 )
 
 const actorName = "customevent"
 
 var (
+	db               database.Connector
 	eventCreatorFunc plugins.EventHandlerFunc
 	formatMessage    plugins.MsgFormatter
+	mc               *memoryCache
 )
 
 func Register(args plugins.RegistrationArguments) error {
+	db = args.GetDatabaseConnector()
+	if err := db.DB().AutoMigrate(&storedCustomEvent{}); err != nil {
+		return errors.Wrap(err, "applying schema migration")
+	}
+
+	mc = &memoryCache{dbc: db}
+
 	eventCreatorFunc = args.CreateEvent
 	formatMessage = args.FormatMessage
 
@@ -37,6 +48,15 @@ func Register(args plugins.RegistrationArguments) error {
 				Key:             "fields",
 				Name:            "Fields",
 				Optional:        false,
+				SupportTemplate: true,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+			{
+				Default:         "",
+				Description:     "Time until the event is triggered (must be valid duration like 1h, 1h1m, 10s, ...)",
+				Key:             "schedule_in",
+				Name:            "Schedule In",
+				Optional:        true,
 				SupportTemplate: true,
 				Type:            plugins.ActionDocumentationFieldTypeString,
 			},
@@ -60,6 +80,15 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	for schedule, fn := range map[string]func(){
+		fmt.Sprintf("@every %s", cleanupTimeout): scheduleCleanup,
+		"* * * * * *":                            scheduleSend,
+	} {
+		if _, err := args.RegisterCron(schedule, fn); err != nil {
+			return errors.Wrap(err, "registering cron function")
+		}
+	}
+
 	return nil
 }
 
@@ -80,15 +109,24 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func triggerEvent(channel string, fieldData io.Reader) error {
+func parseEvent(channel string, fieldData io.Reader) (*plugins.FieldCollection, error) {
 	payload := make(map[string]any)
 
 	if err := json.NewDecoder(fieldData).Decode(&payload); err != nil {
-		return errors.Wrap(err, "parsing event payload")
+		return nil, errors.Wrap(err, "parsing event payload")
 	}
 
 	fields := plugins.FieldCollectionFromData(payload)
 	fields.Set("channel", "#"+strings.TrimLeft(channel, "#"))
+
+	return fields, nil
+}
+
+func triggerEvent(channel string, fieldData io.Reader) error {
+	fields, err := parseEvent(channel, fieldData)
+	if err != nil {
+		return errors.Wrap(err, "parsing fields")
+	}
 
 	if err := eventCreatorFunc("custom", fields); err != nil {
 		return errors.Wrap(err, "creating event")
