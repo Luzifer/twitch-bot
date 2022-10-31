@@ -21,7 +21,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
 )
 
-const remoteRuleFetchTimeout = 2 * time.Second
+const remoteRuleFetchTimeout = 5 * time.Second
 
 type (
 	Rule struct {
