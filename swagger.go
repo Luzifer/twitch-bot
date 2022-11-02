@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wzshiming/openapi/spec"
 
-	"github.com/Luzifer/twitch-bot/v2/plugins"
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var (

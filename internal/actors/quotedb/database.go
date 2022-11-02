@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/twitch-bot/v2/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
 type (

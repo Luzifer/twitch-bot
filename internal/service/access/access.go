@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/v2/pkg/database"
-	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
 const (

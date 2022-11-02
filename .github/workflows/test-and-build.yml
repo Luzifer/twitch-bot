@@ -5,6 +5,8 @@ on:
   push:
     branches-ignore:
       - stable
+    tags:
+      - 'v*'
 
 permissions:
   contents: write

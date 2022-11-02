@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/v2/plugins"
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)

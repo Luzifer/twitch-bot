@@ -13,7 +13,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	korvike "github.com/Luzifer/korvike/functions"
-	"github.com/Luzifer/twitch-bot/v2/plugins"
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var (

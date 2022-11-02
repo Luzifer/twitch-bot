@@ -1,4 +1,4 @@
-# 3.0.0 / Unreleased
+# 3.0.0 / 2022-11-02
 
 **⚠ Breaking Changes:**
   - Backend storage format has been switched from JSON-file to database. Migrations must be run before use of `v3.x` version. See [README](https://github.com/Luzifer/twitch-bot#upgrade-from-v2x-to-v3x) for instructions.
@@ -7,17 +7,22 @@
 **Changelog:**
 
   * New Features
+    * [core] Add config validation command
     * [core] Add rule-subscription feature
+    * [core] Add `outbound_raid` event
+    * [customevent] Add scheduled custom events
     * [templating] Add `jsonAPI` template function
 
   * Improvements
     * [core] Move storage to database (#30, #32) ⚠
     * [core] Allow to pass ID to channel modification
+    * [core] Extend API and replace deprecated chat commands (#34)
     * [editor] Add all template functions to highlighter
     * [overlays] Add `hide` option to debug overlay
     * [templating] Add sprig functions, replace some built-ins ⚠
 
   * Bugfixes
+    * [core] Fix: Allow 5s for rule updates
 
 # 2.7.1 / 2022-09-06
 

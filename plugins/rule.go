@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
 const remoteRuleFetchTimeout = 5 * time.Second

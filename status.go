@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/Luzifer/twitch-bot/v2/plugins"
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const statusIRCMessageReceivedTimeout = 5 * time.Minute

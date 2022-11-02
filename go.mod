@@ -1,4 +1,4 @@
-module github.com/Luzifer/twitch-bot/v2
+module github.com/Luzifer/twitch-bot/v3
 
 go 1.19
 

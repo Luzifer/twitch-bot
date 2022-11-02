@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Luzifer/twitch-bot/v2/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
 func TestCounterStoreLoop(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"github.com/go-irc/irc"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
 var (

@@ -6,8 +6,8 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/twitch-bot/v2/pkg/database"
-	"github.com/Luzifer/twitch-bot/v2/pkg/twitch"
+	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
 type (
