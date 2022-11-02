@@ -69,8 +69,8 @@ jobs:
       - name: Update stable branch
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          git branch -f debug ${GITHUB_SHA}
-          git push -f origin debug
+          git branch -f stable ${GITHUB_SHA}
+          git push -f origin stable
 
       - name: Release
         uses: softprops/action-gh-release@v1
