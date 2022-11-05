@@ -16,8 +16,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
+	"github.com/orandin/sentrus"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -53,6 +55,7 @@ var (
 		IRCRateLimit          time.Duration `flag:"rate-limit" default:"1500ms" description:"How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots)"`
 		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
+		SentryDSN             string        `flag:"sentry-dsn" default:"" description:"Sentry / GlitchTip DSN for error reporting"`
 		StorageConnString     string        `flag:"storage-conn-string" default:"./storage.db" description:"Connection string for the database"`
 		StorageConnType       string        `flag:"storage-conn-type" default:"sqlite" description:"One of: mysql, postgres, sqlite"`
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
@@ -84,10 +87,10 @@ var (
 	version = "dev"
 )
 
-func init() {
+func initApp() error {
 	rconfig.AutoEnv(true)
 	if err := rconfig.ParseAndValidate(&cfg); err != nil {
-		log.Fatalf("Unable to parse commandline options: %s", err)
+		return errors.Wrap(err, "parsing cli options")
 	}
 
 	if cfg.VersionAndExit {
@@ -95,10 +98,22 @@ func init() {
 		os.Exit(0)
 	}
 
-	if l, err := log.ParseLevel(cfg.LogLevel); err != nil {
-		log.WithError(err).Fatal("Unable to parse log level")
-	} else {
-		log.SetLevel(l)
+	l, err := log.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		return errors.Wrap(err, "parsing log level")
+	}
+	log.SetLevel(l)
+
+	if cfg.SentryDSN != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:     cfg.SentryDSN,
+			Release: strings.Join([]string{"twitch-bot", version}, "@"),
+		}); err != nil {
+			return errors.Wrap(err, "initializing sentry sdk")
+		}
+		log.AddHook(sentrus.NewHook(
+			[]log.Level{log.ErrorLevel, log.FatalLevel, log.PanicLevel},
+		))
 	}
 
 	if cfg.StorageEncryptionPass == "" {
@@ -108,6 +123,8 @@ func init() {
 			cfg.TwitchClientSecret,
 		}, ":")
 	}
+
+	return nil
 }
 
 func getEventSubSecret() (secret, handle string, err error) {
@@ -213,6 +230,10 @@ func handleSubCommand(args []string) {
 //nolint:funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
+
+	if err = initApp(); err != nil {
+		log.WithError(err).Fatal("initializing application")
+	}
 
 	if db, err = database.New(cfg.StorageConnType, cfg.StorageConnString, cfg.StorageEncryptionPass); err != nil {
 		log.WithError(err).Fatal("Unable to open storage backend")

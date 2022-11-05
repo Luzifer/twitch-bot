@@ -8,6 +8,7 @@ require (
 	github.com/Luzifer/korvike/functions v0.11.0
 	github.com/Luzifer/rconfig/v2 v2.4.0
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/getsentry/sentry-go v0.14.0
 	github.com/glebarez/sqlite v1.5.0
 	github.com/go-irc/irc v2.1.0+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
@@ -17,6 +18,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/mitchellh/hashstructure/v2 v2.0.2
+	github.com/orandin/sentrus v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.0
