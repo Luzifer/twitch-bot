@@ -1,3 +1,8 @@
+# 3.1.0 / 2022-11-24
+
+  * New Features
+    * [core] Add Sentry / GlitchTip error reporting
+
 # 3.0.0 / 2022-11-02
 
 **⚠ Breaking Changes:**
