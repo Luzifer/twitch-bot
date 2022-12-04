@@ -25,7 +25,7 @@
               {{ channel }}
               <span class="ml-auto mr-2">
                 <font-awesome-icon
-                  v-if="!generalConfig.channel_has_scopes[channel]"
+                  v-if="!hasAllExtendedScopes(channel)"
                   :id="`channelPublicWarn${channel}`"
                   fixed-width
                   class="ml-1 text-warning"
@@ -35,20 +35,30 @@
                   :target="`channelPublicWarn${channel}`"
                   triggers="hover"
                 >
-                  Channel cannot use features like channel-point redemptions.
-                  See "Channel Permissions" for more info how to authorize.
+                  Channel is missing {{ missingExtendedScopes(channel).length }} extended permissions.
+                  Click pencil to change granted permissions.
                 </b-tooltip>
               </span>
-              <b-button
-                size="sm"
-                variant="danger"
-                @click="removeChannel(channel)"
-              >
-                <font-awesome-icon
-                  fixed-width
-                  :icon="['fas', 'minus']"
-                />
-              </b-button>
+              <b-button-group size="sm">
+                <b-button
+                  variant="primary"
+                  @click="editChannelPermissions(channel)"
+                >
+                  <font-awesome-icon
+                    fixed-width
+                    :icon="['fas', 'pencil-alt']"
+                  />
+                </b-button>
+                <b-button
+                  variant="danger"
+                  @click="removeChannel(channel)"
+                >
+                  <font-awesome-icon
+                    fixed-width
+                    :icon="['fas', 'minus']"
+                  />
+                </b-button>
+              </b-button-group>
             </b-list-group-item>
 
             <b-list-group-item>
@@ -281,52 +291,6 @@
             </b-input-group>
           </b-card-body>
         </b-card>
-
-        <b-card
-          no-body
-          class="mb-3"
-        >
-          <b-card-header>
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'sign-in-alt']"
-            />
-            Channel Permissions
-          </b-card-header>
-
-          <b-card-body>
-            <p>
-              In order to access non-public information as channel-point redemptions the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!
-            </p>
-            <ul>
-              <li>Copy the URL provided below</li>
-              <li>Pass the URL to the channel owner and tell them to open it with their personal account logged in</li>
-              <li>The bot will display a message containing the updated account</li>
-            </ul>
-            <b-input-group>
-              <b-form-input
-                placeholder="Loading..."
-                readonly
-                :value="authURLs.update_channel_scopes"
-                @focus="$event.target.select()"
-              />
-              <b-input-group-append>
-                <b-button
-                  :variant="copyButtonVariant.channelPermission"
-                  @click="copyAuthURL('channelPermission')"
-                >
-                  <font-awesome-icon
-                    fixed-width
-                    class="mr-1"
-                    :icon="['fas', 'clipboard']"
-                  />
-                  Copy
-                </b-button>
-              </b-input-group-append>
-            </b-input-group>
-          </b-card-body>
-        </b-card>
       </b-col>
     </b-row>
 
@@ -366,6 +330,70 @@
         />
       </b-form-group>
     </b-modal>
+
+    <!-- Channel Permission Editor -->
+    <b-modal
+      v-if="showPermissionEditModal"
+      hide-footer
+      size="lg"
+      title="Edit Permissions for Channel"
+      :visible="showPermissionEditModal"
+      @hidden="showPermissionEditModal=false"
+    >
+      <b-row>
+        <b-col>
+          <p>The bot should be able to&hellip;</p>
+          <b-form-checkbox-group
+            id="channelPermissions"
+            v-model="models.channelPermissions"
+            :options="extendedPermissions"
+            multiple
+            :select-size="extendedPermissions.length"
+            stacked
+            switches
+          />
+          <p class="mt-3">
+            &hellip;on this channel.
+          </p>
+        </b-col>
+        <b-col>
+          <p>
+            In order to access non-public information as channel-point redemptions or take actions limited to the channel owner the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!
+          </p>
+          <ul>
+            <li>Select permissions on the left side</li>
+            <li>Copy the URL provided below</li>
+            <li>Pass the URL to the channel owner and tell them to open it with their personal account logged in</li>
+            <li>The bot will display a message containing the updated account</li>
+          </ul>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col>
+          <b-input-group>
+            <b-form-input
+              placeholder="Loading..."
+              readonly
+              :value="extendedPermissionsURL"
+              @focus="$event.target.select()"
+            />
+            <b-input-group-append>
+              <b-button
+                :variant="copyButtonVariant.channelPermission"
+                @click="copyAuthURL('channelPermission')"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  class="mr-1"
+                  :icon="['fas', 'clipboard']"
+                />
+                Copy
+              </b-button>
+            </b-input-group-append>
+          </b-input-group>
+        </b-col>
+      </b-row>
+    </b-modal>
   </div>
 </template>
 
@@ -391,6 +419,22 @@ export default {
         return 'secondary'
       }
       return 'warning'
+    },
+
+    extendedPermissions() {
+      return Object.keys(this.authURLs.available_extended_scopes || {})
+        .map(v => ({ text: this.authURLs.available_extended_scopes[v], value: v }))
+        .sort((a, b) => a.value.localeCompare(b.value))
+    },
+
+    extendedPermissionsURL() {
+      if (!this.authURLs?.update_channel_scopes) {
+        return null
+      }
+
+      const u = new URL(this.authURLs.update_channel_scopes)
+      u.searchParams.set('scope', this.models.channelPermissions.join(' '))
+      return u.toString()
     },
 
     sortedChannels() {
@@ -426,11 +470,13 @@ export default {
         addChannel: '',
         addEditor: '',
         apiToken: {},
+        channelPermissions: [],
       },
 
       modules: [],
 
       showAPITokenEditModal: false,
+      showPermissionEditModal: false,
       userProfiles: {},
     }
   },
@@ -469,7 +515,7 @@ export default {
         btnField = 'botConnection'
         break
       case 'channelPermission':
-        prom = navigator.clipboard.writeText(this.authURLs.update_channel_scopes)
+        prom = navigator.clipboard.writeText(this.extendedPermissionsURL)
         btnField = 'channelPermission'
         break
       }
@@ -486,6 +532,11 @@ export default {
             this.copyButtonVariant[btnField] = 'primary'
           }, 2000)
         })
+    },
+
+    editChannelPermissions(channel) {
+      this.models.channelPermissions = this.generalConfig.channel_scopes[channel] || []
+      this.showPermissionEditModal = true
     },
 
     fetchAPITokens() {
@@ -539,6 +590,36 @@ export default {
           this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    hasAllExtendedScopes(channel) {
+      if (!this.generalConfig.channel_scopes[channel]) {
+        return false
+      }
+
+      for (const scope in this.authURLs.available_extended_scopes) {
+        if (!this.generalConfig.channel_scopes[channel].includes(scope)) {
+          return false
+        }
+      }
+
+      return true
+    },
+
+    missingExtendedScopes(channel) {
+      if (!this.generalConfig.channel_scopes[channel]) {
+        return Object.keys(this.authURLs.available_extended_scopes)
+      }
+
+      const missing = []
+
+      for (const scope in this.authURLs.available_extended_scopes) {
+        if (!this.generalConfig.channel_scopes[channel].includes(scope)) {
+          missing.push(scope)
+        }
+      }
+
+      return missing
     },
 
     newAPIToken() {

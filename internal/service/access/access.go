@@ -44,6 +44,22 @@ func New(db database.Connector) (*Service, error) {
 	)
 }
 
+func (s Service) GetChannelPermissions(channel string) ([]string, error) {
+	var (
+		err  error
+		perm extendedPermission
+	)
+
+	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "getting twitch credential from database")
+	}
+
+	return strings.Split(perm.Scopes, " "), nil
+}
+
 func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 	var botAccessToken, botRefreshToken string
 
@@ -98,19 +114,10 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 }
 
 func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (bool, error) {
-	var (
-		err  error
-		perm extendedPermission
-	)
-
-	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-		return false, errors.Wrap(err, "getting twitch credential from database")
+	storedScopes, err := s.GetChannelPermissions(channel)
+	if err != nil {
+		return false, errors.Wrap(err, "getting channel scopes")
 	}
-
-	storedScopes := strings.Split(perm.Scopes, " ")
 
 	for _, scope := range scopes {
 		if str.StringInSlice(scope, storedScopes) {
@@ -122,19 +129,10 @@ func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (b
 }
 
 func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (bool, error) {
-	var (
-		err  error
-		perm extendedPermission
-	)
-
-	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-		return false, errors.Wrap(err, "getting twitch credential from database")
+	storedScopes, err := s.GetChannelPermissions(channel)
+	if err != nil {
+		return false, errors.Wrap(err, "getting channel scopes")
 	}
-
-	storedScopes := strings.Split(perm.Scopes, " ")
 
 	for _, scope := range scopes {
 		if !str.StringInSlice(scope, storedScopes) {

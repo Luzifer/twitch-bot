@@ -17,10 +17,10 @@ import (
 
 type (
 	configEditorGeneralConfig struct {
-		BotEditors       []string        `json:"bot_editors"`
-		BotName          *string         `json:"bot_name,omitempty"`
-		Channels         []string        `json:"channels"`
-		ChannelHasScopes map[string]bool `json:"channel_has_scopes"`
+		BotEditors    []string            `json:"bot_editors"`
+		BotName       *string             `json:"bot_name,omitempty"`
+		Channels      []string            `json:"channels"`
+		ChannelScopes map[string][]string `json:"channel_scopes"`
 	}
 )
 
@@ -135,9 +135,12 @@ func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Reques
 
 func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, r *http.Request) {
 	var out struct {
-		UpdateBotToken      string `json:"update_bot_token"`
-		UpdateChannelScopes string `json:"update_channel_scopes"`
+		AvailableExtendedScopes map[string]string `json:"available_extended_scopes"`
+		UpdateBotToken          string            `json:"update_bot_token"`
+		UpdateChannelScopes     string            `json:"update_channel_scopes"`
 	}
+
+	out.AvailableExtendedScopes = channelExtendedScopes
 
 	params := make(url.Values)
 	params.Set("client_id", cfg.TwitchClient)
@@ -155,7 +158,7 @@ func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, r *http.Request) {
 		strings.TrimRight(cfg.BaseURL, "/"),
 		"auth", "update-channel-scopes",
 	}, "/"))
-	params.Set("scope", strings.Join(channelDefaultScopes, " "))
+	params.Set("scope", "")
 
 	out.UpdateChannelScopes = fmt.Sprintf("https://id.twitch.tv/oauth2/authorize?%s", params.Encode())
 
@@ -184,12 +187,12 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 
 func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	var (
-		elevated = make(map[string]bool)
-		err      error
+		channelScopes = make(map[string][]string)
+		err           error
 	)
 
 	for _, ch := range config.Channels {
-		if elevated[ch], err = accessService.HasPermissionsForChannel(ch, channelDefaultScopes...); err != nil {
+		if channelScopes[ch], err = accessService.GetChannelPermissions(ch); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -201,10 +204,10 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(configEditorGeneralConfig{
-		BotEditors:       config.BotEditors,
-		BotName:          uName,
-		Channels:         config.Channels,
-		ChannelHasScopes: elevated,
+		BotEditors:    config.BotEditors,
+		BotName:       uName,
+		Channels:      config.Channels,
+		ChannelScopes: channelScopes,
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
