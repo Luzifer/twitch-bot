@@ -10,6 +10,29 @@ import (
 	"github.com/pkg/errors"
 )
 
+func (c *Client) AddChannelVIP(ctx context.Context, broadcasterName, userName string) error {
+	broadcaster, err := c.GetIDForUsername(broadcasterName)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for broadcaster name")
+	}
+
+	userID, err := c.GetIDForUsername(userName)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for user name")
+	}
+
+	return errors.Wrap(
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Context:  ctx,
+			Method:   http.MethodPost,
+			OKStatus: http.StatusNoContent,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
+		}),
+		"executing request",
+	)
+}
+
 func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName string, game, title *string) error {
 	if game == nil && title == nil {
 		return errors.New("netiher game nor title provided")
@@ -79,6 +102,29 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 			Method:   http.MethodPatch,
 			OKStatus: http.StatusNoContent,
 			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster),
+		}),
+		"executing request",
+	)
+}
+
+func (c *Client) RemoveChannelVIP(ctx context.Context, broadcasterName, userName string) error {
+	broadcaster, err := c.GetIDForUsername(broadcasterName)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for broadcaster name")
+	}
+
+	userID, err := c.GetIDForUsername(userName)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for user name")
+	}
+
+	return errors.Wrap(
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Context:  ctx,
+			Method:   http.MethodDelete,
+			OKStatus: http.StatusNoContent,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
 		}),
 		"executing request",
 	)
