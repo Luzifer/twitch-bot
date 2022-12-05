@@ -24,6 +24,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/variables"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/vip"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/msgformat"
@@ -57,6 +58,7 @@ var (
 		respond.Register,
 		timeout.Register,
 		variables.Register,
+		vip.Register,
 		whisper.Register,
 
 		// Template functions

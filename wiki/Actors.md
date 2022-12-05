@@ -1,6 +1,23 @@
 # Available Actions
 
 
+## Add VIP
+
+Add VIP for the given channel
+
+```yaml
+- type: vip
+  attributes:
+    # Channel to add the VIP to
+    # Optional: false
+    # Type:     string (Supports Templating)
+    channel: ""
+    # User to add as VIP
+    # Optional: false
+    # Type:     string (Supports Templating)
+    user: ""
+```
+
 ## Ban User
 
 Ban user from chat
@@ -223,6 +240,23 @@ Manage a database of quotes in your channel
     # Optional: true
     # Type:     string (Supports Templating)
     format: "Quote #{{ .index }}: {{ .quote }}"
+```
+
+## Remove VIP
+
+Remove VIP for the given channel
+
+```yaml
+- type: unvip
+  attributes:
+    # Channel to remove the VIP from
+    # Optional: false
+    # Type:     string (Supports Templating)
+    channel: ""
+    # User to remove as VIP
+    # Optional: false
+    # Type:     string (Supports Templating)
+    user: ""
 ```
 
 ## Reset User Punishment
