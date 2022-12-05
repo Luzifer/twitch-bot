@@ -33,6 +33,9 @@ type (
 
 	ActorDocumentationRegistrationFunc func(ActionDocumentation)
 
+	ChannelPermissionCheckFunc    func(channel string, scopes ...string) (bool, error)
+	ChannelAnyPermissionCheckFunc func(channel string, scopes ...string) (bool, error)
+
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 
 	EventHandlerFunc         func(evt string, eventData *FieldCollection) error
@@ -64,6 +67,10 @@ type (
 		GetTwitchClient func() *twitch.Client
 		// GetTwitchClientForChannel retrieves a fully configured Twitch client with initialized cache for extended permission channels
 		GetTwitchClientForChannel func(string) (*twitch.Client, error)
+		// HasAnyPermissionForChannel checks whether ANY of the given permissions were granted for the given channel
+		HasAnyPermissionForChannel ChannelAnyPermissionCheckFunc
+		// HasPermissionForChannel checks whether ALL of the given permissions were granted for the given channel
+		HasPermissionForChannel ChannelPermissionCheckFunc
 		// RegisterActor is used to register a new IRC rule-actor implementing the Actor interface
 		RegisterActor ActorRegistrationFunc
 		// RegisterActorDocumentation is used to register an ActorDocumentation for the config editor

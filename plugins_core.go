@@ -126,6 +126,8 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
+		HasAnyPermissionForChannel: accessService.HasAnyPermissionForChannel,
+		HasPermissionForChannel:    accessService.HasPermissionsForChannel,
 		RegisterActor:              registerAction,
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,
