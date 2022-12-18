@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -104,16 +105,8 @@ func loadConfig(filename string) error {
 		return errors.Wrap(err, "parsing config")
 	}
 
-	if len(tmpConfig.Channels) == 0 {
-		log.Warn("Loaded config with empty channel list")
-	}
-
-	if len(tmpConfig.Rules) == 0 {
-		log.Warn("Loaded config with empty ruleset")
-	}
-
-	if err = tmpConfig.validateRuleActions(); err != nil {
-		return errors.Wrap(err, "validating rule actions")
+	if err = tmpConfig.runLoadChecks(); err != nil {
+		return errors.Wrap(err, "running load-checks on config")
 	}
 
 	configLock.Lock()
@@ -322,6 +315,30 @@ func (c *configFile) fixMissingUUIDs() {
 		}
 		c.Rules[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.Rules[i].MatcherID()).String()
 	}
+}
+
+func (c *configFile) runLoadChecks() (err error) {
+	if len(c.Channels) == 0 {
+		log.Warn("Loaded config with empty channel list")
+	}
+
+	if len(c.Rules) == 0 {
+		log.Warn("Loaded config with empty ruleset")
+	}
+
+	var seen []string
+	for _, r := range c.Rules {
+		if r.UUID != "" && str.StringInSlice(r.UUID, seen) {
+			return errors.New("duplicate rule UUIDs found")
+		}
+		seen = append(seen, r.UUID)
+	}
+
+	if err = c.validateRuleActions(); err != nil {
+		return errors.Wrap(err, "validating rule actions")
+	}
+
+	return nil
 }
 
 func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {

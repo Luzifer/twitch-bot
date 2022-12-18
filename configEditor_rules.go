@@ -99,6 +99,12 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := patchConfig(cfg.Config, user, "", "Add rule", func(c *configFile) error {
+		for _, r := range c.Rules {
+			if r.UUID == msg.UUID {
+				return errors.New("rule already exists (UUID duplicate)")
+			}
+		}
+
 		c.Rules = append(c.Rules, msg)
 		return nil
 	}); err != nil {
