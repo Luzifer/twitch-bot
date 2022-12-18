@@ -21,7 +21,12 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
-const remoteRuleFetchTimeout = 5 * time.Second
+const (
+	contentTypeJSON = "json"
+	contentTypeYAML = "yaml"
+
+	remoteRuleFetchTimeout = 5 * time.Second
+)
 
 type (
 	Rule struct {
@@ -167,12 +172,17 @@ func (r *Rule) UpdateFromSubscription() (bool, error) {
 		return false, errors.Errorf("unxpected HTTP status %d", resp.StatusCode)
 	}
 
+	inputType, err := r.fileTypeFromRequest(remoteURL, resp)
+	if err != nil {
+		return false, errors.Wrap(err, "detecting content type")
+	}
+
 	var newRule Rule
-	switch path.Ext(remoteURL.Path) {
-	case ".json":
+	switch inputType {
+	case contentTypeJSON:
 		err = json.NewDecoder(resp.Body).Decode(&newRule)
 
-	case ".yaml", ".yml":
+	case contentTypeYAML:
 		err = yaml.NewDecoder(resp.Body).Decode(&newRule)
 
 	default:
@@ -473,6 +483,26 @@ func (r *Rule) allowExecuteUserWhitelist(logger *log.Entry, m *irc.Message, even
 	}
 
 	return true
+}
+
+func (r Rule) fileTypeFromRequest(remoteURL *url.URL, resp *http.Response) (string, error) {
+	switch path.Ext(remoteURL.Path) {
+	case ".json":
+		return contentTypeJSON, nil
+
+	case ".yaml", ".yml":
+		return contentTypeYAML, nil
+	}
+
+	switch strings.Split(resp.Header.Get("Content-Type"), ";")[0] {
+	case "application/json":
+		return contentTypeJSON, nil
+
+	case "application/yaml", "application/x-yaml", "text/x-yaml":
+		return contentTypeYAML, nil
+	}
+
+	return "", errors.New("no valid file type detected")
 }
 
 func (r Rule) hash() string {
