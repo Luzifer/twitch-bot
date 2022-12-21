@@ -25,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
@@ -64,6 +65,7 @@ var (
 		TwitchToken           string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
 		ValidateConfig        bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
 		VersionAndExit        bool          `flag:"version" default:"false" description:"Prints current version and exits"`
+		WaitForSelfcheck      time.Duration `flag:"wait-for-selfcheck" default:"60s" description:"Maximum time to wait for the self-check to respond when behind load-balancers"`
 	}{}
 
 	config     *configFile
@@ -470,9 +472,6 @@ func main() {
 }
 
 func checkExternalHTTP() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
 	base, err := url.Parse(cfg.BaseURL)
 	if err != nil {
 		log.WithError(err).Error("Unable to parse BaseURL")
@@ -489,27 +488,35 @@ func checkExternalHTTP() {
 		"selfcheck",
 	}, "/")
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.WithError(err).Error("Unable to fetch selfcheck")
+	var data []byte
+	if err = backoff.NewBackoff().WithMaxTotalTime(cfg.WaitForSelfcheck).Retry(func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return errors.Wrap(err, "requesting self-check URL")
+		}
+		defer resp.Body.Close()
+
+		data, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return errors.Wrap(err, "reading self-check response")
+		}
+
+		if strings.TrimSpace(string(data)) != runID {
+			return errors.New("found unexpected run-id")
+		}
+
+		return nil
+	}); err != nil {
+		log.WithError(err).Error("executing self-check")
 		return
 	}
-	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.WithError(err).Error("Unable to read selfcheck response")
-		return
-	}
-
-	if strings.TrimSpace(string(data)) == runID {
-		externalHTTPAvailable = true
-		log.Debug("Self-Check successful, EventSub support is available")
-	} else {
-		externalHTTPAvailable = false
-		log.Debug("Self-Check failed, EventSub support is not available")
-	}
+	externalHTTPAvailable = true
+	log.Debug("Self-Check successful, EventSub support is available")
 }
 
 func startCheck() error {
