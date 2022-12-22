@@ -1,3 +1,16 @@
+# 3.2.0 / 2022-12-22
+
+  * New Features
+    * Add fine-grained permission control for extended channel permissions (#35)
+    * [twitch] Implement `AddChannelVIP`, `RemoveChannelVIP`
+    * [vip/unvip] Implement actors and chat commands
+
+  * Improvements
+    * [core] Add content-type detection for remote rule subscriptions
+    * [core] Add retries for eventsub-self-check
+    * [core] Add validation for rule UUIDs to be unique
+    * [core] Allow plugins to evaluate whether permissions are available
+
 # 3.1.0 / 2022-11-24
 
   * New Features
