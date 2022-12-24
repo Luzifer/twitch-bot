@@ -487,7 +487,10 @@ func (c *Client) getEventSubSubscriptions(ctx context.Context) ([]eventSubSubscr
 		}
 
 		params.Set("after", resp.Pagination.Cursor)
-		resp.Pagination.Cursor = "" // Clear from struct as struct is reused
+
+		// Clear from struct as struct is reused
+		resp.Data = nil
+		resp.Pagination.Cursor = ""
 	}
 
 	return out, nil
