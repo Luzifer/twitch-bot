@@ -324,6 +324,11 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 			return errors.Wrap(err, "hashing condition")
 		}
 
+		log.WithFields(log.Fields{
+			"condition": sub.Condition,
+			"type":      sub.Type,
+		}).Debug("found existing eventsub subscription")
+
 		cacheKey := strings.Join([]string{sub.Type, condHash}, "::")
 		e.subscriptions[cacheKey] = &registeredSubscription{
 			Type:         sub.Type,
@@ -362,6 +367,11 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 		e.subscriptions[cacheKey].Callbacks[cbKey] = callback
 		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
+
+	log.WithFields(log.Fields{
+		"condition": condition,
+		"type":      event,
+	}).Debug("registering new eventsub subscription")
 
 	// Register subscriptions
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
