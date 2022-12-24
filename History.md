@@ -1,3 +1,8 @@
+# 3.2.1 / 2022-12-24
+
+  * Bugfixes
+    * [twitch] Fix: Pagination fetching broken for eventsub subscriptions
+
 # 3.2.0 / 2022-12-22
 
   * New Features
