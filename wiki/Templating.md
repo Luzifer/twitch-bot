@@ -108,6 +108,32 @@ Example:
 < Luziferus - foobar
 ```
 
+#### `doesFollow`
+
+Returns whether `from` follows `to`
+
+Syntax: `doesFollow <from> <to>`
+
+Example:
+
+```
+# {{ doesFollow "tezrian" "luziferus" }}
+< true
+```
+
+#### `doesFollowLongerThan`
+
+Returns whether `from` follows `to` for more than `duration`
+
+Syntax: `doesFollowLongerThan <from> <to> <duration>`
+
+Example:
+
+```
+# {{ doesFollowLongerThan "tezrian" "luziferus" "168h" }}
+< true
+```
+
 #### `fixUsername`
 
 Ensures the username no longer contains the `@` or `#` prefix

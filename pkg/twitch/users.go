@@ -19,6 +19,8 @@ type (
 	}
 )
 
+var ErrUserDoesNotFollow = errors.New("no follow-relation found")
+
 func (c *Client) GetAuthorizedUser() (userID string, userName string, err error) {
 	var payload struct {
 		Data []User `json:"data"`
@@ -104,8 +106,15 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 		return time.Time{}, errors.Wrap(err, "request follow info")
 	}
 
-	if l := len(payload.Data); l != 1 {
-		return time.Time{}, errors.Errorf("unexpected number of records returned: %d", l)
+	switch len(payload.Data) {
+	case 0:
+		return time.Time{}, ErrUserDoesNotFollow
+
+	case 1:
+		// Handled below, no error
+
+	default:
+		return time.Time{}, errors.Errorf("unexpected number of records returned: %d", len(payload.Data))
 	}
 
 	// Follow date will not change that often, cache for a long time
