@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -66,12 +67,18 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
-		Description:       "Creates an `custom` event containing the fields provided in the request body",
-		HandlerFunc:       handleCreateEvent,
-		Method:            http.MethodPost,
-		Module:            "customevent",
-		Name:              "Create custom event",
-		Path:              "/{channel}",
+		Description: "Creates an `custom` event containing the fields provided in the request body",
+		HandlerFunc: handleCreateEvent,
+		Method:      http.MethodPost,
+		Module:      "customevent",
+		Name:        "Create custom event",
+		Path:        "/{channel}",
+		QueryParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Time until the event is triggered (must be valid duration like 1h, 1h1m, 10s, ...)",
+				Name:        "schedule_in",
+			},
+		},
 		RequiresWriteAuth: true,
 		ResponseType:      plugins.HTTPRouteResponseTypeNo200,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{
@@ -103,7 +110,7 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	channel = "#" + strings.TrimLeft(channel, "#") // Sanitize
 
-	if err := triggerEvent(channel, r.Body); err != nil {
+	if err := triggerOrStoreEvent(channel, r.Body, r.FormValue("schedule_in")); err != nil {
 		http.Error(w, errors.Wrap(err, "creating event").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -124,12 +131,21 @@ func parseEvent(channel string, fieldData io.Reader) (*plugins.FieldCollection, 
 	return fields, nil
 }
 
-func triggerEvent(channel string, fieldData io.Reader) error {
+func triggerOrStoreEvent(channel string, fieldData io.Reader, rawDelay string) error {
 	fields, err := parseEvent(channel, fieldData)
 	if err != nil {
 		return errors.Wrap(err, "parsing fields")
 	}
 
+	if delay, err := time.ParseDuration(rawDelay); err == nil && delay > 0 {
+		// Delay set, store for later triggering
+		if err = storeEvent(db, time.Now().Add(delay).UTC(), channel, fields); err != nil {
+			return errors.Wrap(err, "storing event")
+		}
+		return errors.Wrap(mc.Refresh(), "refreshing memory cache")
+	}
+
+	// No delay, trigger instantly
 	if err := eventCreatorFunc("custom", fields); err != nil {
 		return errors.Wrap(err, "creating event")
 	}
