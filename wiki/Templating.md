@@ -134,6 +134,19 @@ Example:
 < 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
 ```
 
+#### `followAge`
+
+Looks up when `from` followed `to` and returns the duration between then and now
+
+Syntax: `followAge <from> <to>`
+
+Example:
+
+```
+# {{ followAge "tezrian" "luziferus" }}
+< 15004h14m59.116620989s
+```
+
 #### `followDate`
 
 Looks up when `from` followed `to`
