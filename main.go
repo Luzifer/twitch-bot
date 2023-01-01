@@ -274,7 +274,9 @@ func main() {
 
 	// Allow config to subscribe to external rules
 	updCron := updateConfigCron()
-	cronService.AddFunc(updCron, updateConfigFromRemote)
+	if _, err = cronService.AddFunc(updCron, updateConfigFromRemote); err != nil {
+		log.WithError(err).Error("adding remote-update cron")
+	}
 	log.WithField("cron", updCron).Debug("Initialized remote update cron")
 
 	router.Use(corsMiddleware)

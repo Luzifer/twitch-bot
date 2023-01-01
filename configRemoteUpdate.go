@@ -9,16 +9,17 @@ import (
 
 func updateConfigCron() string {
 	minute := rand.Intn(60) //nolint:gomnd,gosec // Only used to distribute load
-	return fmt.Sprintf("%d * * * *", minute)
+	return fmt.Sprintf("0 %d * * * *", minute)
 }
 
 func updateConfigFromRemote() {
+	log.Debug("starting remote rule update")
 	err := patchConfig(
 		cfg.Config,
 		"Remote Update", "twitch-bot@luzifer.io",
 		"update rules from subscription URLs",
 		func(cfg *configFile) error {
-			var hasUpdate bool
+			var updates int
 
 			for _, r := range cfg.Rules {
 				logger := log.WithField("rule", r.MatcherID())
@@ -30,13 +31,13 @@ func updateConfigFromRemote() {
 				}
 
 				if rhu {
-					hasUpdate = true
+					updates++
 					logger.Info("updated rule from remote URL")
 				}
-
 			}
 
-			if !hasUpdate {
+			log.WithField("updates", updates).Debug("remote rule update finished")
+			if updates == 0 {
 				return errSaveNotRequired
 			}
 			return nil
