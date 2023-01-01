@@ -104,6 +104,19 @@ Takes the content of an URL and pastes it to the current channel
     source: ""
 ```
 
+## Log output
+
+Print info log-line to bot log
+
+```yaml
+- type: log
+  attributes:
+    # Messsage to log into bot-log
+    # Optional: false
+    # Type:     string (Supports Templating)
+    message: ""
+```
+
 ## Modify Counter
 
 Update counter values
