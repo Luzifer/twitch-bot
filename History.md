@@ -1,3 +1,16 @@
+# 3.3.0 / 2023-01-07
+
+  * Bugfixes
+    * [core] Fix: Remote-update cron broken as of missing field
+
+  * New Features
+    * [log] Add `log`-actor
+    * [template] Add `doesFollow` and `doesFollowLongerThan` functions
+    * [templating] Add `followAge` function
+
+  * Improvements
+    * [customevent] Add scheduled events to API handler
+
 # 3.2.1 / 2022-12-24
 
   * Bugfixes
