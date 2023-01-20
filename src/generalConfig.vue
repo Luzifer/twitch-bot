@@ -268,6 +268,17 @@
               <li>Open the copied URL, sign in with the bot account and accept the permissions</li>
               <li>The bot will display a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten.</li>
             </ul>
+            <p
+              v-if="botMissingScopes > 0"
+              class="text-warning"
+            >
+              <font-awesome-icon
+                fixed-width
+                class="mr-1"
+                :icon="['fas', 'exclamation-triangle']"
+              />
+              Bot is missing {{ botMissingScopes }} of its default scopes, please re-authorize the bot.
+            </p>
             <b-input-group>
               <b-form-input
                 placeholder="Loading..."
@@ -419,6 +430,22 @@ export default {
         return 'secondary'
       }
       return 'warning'
+    },
+
+    botMissingScopes() {
+      let missing = 0
+
+      if (!this.generalConfig || !this.generalConfig.channel_scopes || !this.generalConfig.bot_name || !this.generalConfig.channel_scopes[this.generalConfig.bot_name]) {
+        return -1
+      }
+
+      for (const scope of this.$root.vars.DefaultBotScopes) {
+        if (!this.generalConfig.channel_scopes[this.generalConfig.bot_name].includes(scope)) {
+          missing++
+        }
+      }
+
+      return missing
     },
 
     extendedPermissions() {

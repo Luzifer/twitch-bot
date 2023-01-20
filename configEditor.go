@@ -55,12 +55,14 @@ func registerEditorFrontend() {
 
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(struct {
+			DefaultBotScopes  []string
 			IRCBadges         []string
 			KnownEvents       []*string
 			TemplateFunctions []string
 			TwitchClientID    string
 			Version           string
 		}{
+			DefaultBotScopes:  botDefaultScopes,
 			IRCBadges:         twitch.KnownBadges,
 			KnownEvents:       knownEvents,
 			TemplateFunctions: tplFuncs.GetFuncNames(),
