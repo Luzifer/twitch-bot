@@ -1,3 +1,11 @@
+# 3.4.0 / 2023-01-27
+
+  * New Features
+    * [shoutout] Implement actor and slash-command for shoutout API
+
+  * Improvements
+    * [editor] Add notification in case bot is missing default-scopes
+
 # 3.3.0 / 2023-01-07
 
   * Bugfixes
