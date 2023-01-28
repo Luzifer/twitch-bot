@@ -283,6 +283,20 @@ Example:
 < Metro Exodus - none
 ```
 
+
+#### `recentTitle`
+
+Returns the last stream title of the specified user or the `fallback` if the title could not be fetched. If no fallback was supplied the message will fail and not be sent.
+
+Syntax: `recentTitle <username> [fallback]`
+
+Example:
+
+```
+# {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
+< Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
+```
+
 #### `streamUptime`
 
 Returns the duration the stream is online (causes an error if no current stream is found)
