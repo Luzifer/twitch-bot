@@ -1048,6 +1048,8 @@ export default {
               return true
             })),
         })),
+
+        match_message: this.models.rule.match_message === '' ? null : this.models.rule.match_message,
       }
 
       if (obj.cooldown) {
