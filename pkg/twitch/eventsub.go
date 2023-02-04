@@ -52,6 +52,10 @@ const (
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
 
 	EventSubEventTypeUserAuthorizationRevoke = "user.authorization.revoke"
+
+	EventSubTopicVersion1    = "1"
+	EventSubTopicVersion2    = "2"
+	EventSubTopicVersionBeta = "beta"
 )
 
 type (
@@ -340,7 +344,11 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 	return nil
 }
 
-func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubCondition, callback func(json.RawMessage) error) (func(), error) {
+func (e *EventSubClient) RegisterEventSubHooks(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) (func(), error) {
+	if version == "" {
+		version = EventSubTopicVersion1
+	}
+
 	condHash, err := condition.Hash()
 	if err != nil {
 		return nil, errors.Wrap(err, "hashing condition")
@@ -379,7 +387,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event string, condition EventSubC
 
 	newSub, err := e.twitchClient.createEventSubSubscription(ctx, eventSubSubscription{
 		Type:      event,
-		Version:   "1",
+		Version:   version,
 		Condition: condition,
 		Transport: eventSubTransport{
 			Method:   "webhook",

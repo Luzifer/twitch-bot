@@ -11,6 +11,7 @@ var (
 		twitch.ScopeChannelManageRaids:       "start raids",
 		twitch.ScopeChannelManageVIPS:        "manage VIPs",
 		twitch.ScopeChannelReadRedemptions:   "see channel-point redemptions",
+		twitch.ScopeModeratorReadFollowers:   "see who follows this channel",
 	}
 
 	botDefaultScopes = []string{

@@ -18,6 +18,7 @@ type (
 		RequiredScopes []string
 		AnyScope       bool
 		Hook           func(json.RawMessage) error
+		Version        string
 	}
 
 	twitchChannelState struct {
@@ -124,8 +125,9 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelFollow,
+			Version:        twitch.EventSubTopicVersion1, // DEPRECATED, to be removed August 3, 2023
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-			RequiredScopes: nil,
+			RequiredScopes: nil, // Switch to []string{twitch.ScopeModeratorReadFollowers} after August 3, 2023
 			Hook:           t.handleEventSubChannelFollow,
 		},
 		{
@@ -331,7 +333,7 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 			}
 		}
 
-		uf, err := twitchEventSubClient.RegisterEventSubHooks(tr.Topic, tr.Condition, tr.Hook)
+		uf, err := twitchEventSubClient.RegisterEventSubHooks(tr.Topic, tr.Version, tr.Condition, tr.Hook)
 		if err != nil {
 			logger.WithError(err).Error("Unable to register topic")
 
@@ -356,6 +358,7 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 func (t *twitchWatcher) registerGlobalHooks() error {
 	_, err := twitchEventSubClient.RegisterEventSubHooks(
 		twitch.EventSubEventTypeUserAuthorizationRevoke,
+		twitch.EventSubTopicVersion1,
 		twitch.EventSubCondition{ClientID: cfg.TwitchClient},
 		t.handleEventUserAuthRevoke,
 	)

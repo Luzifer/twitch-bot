@@ -17,6 +17,7 @@ const (
 	ScopeModeratorManageChatMessages = "moderator:manage:chat_messages"
 	ScopeModeratorManageChatSettings = "moderator:manage:chat_settings"
 	ScopeModeratorManageShoutouts    = "moderator:manage:shoutouts"
+	ScopeModeratorReadFollowers      = "moderator:read:followers"
 	ScopeUserManageChatColor         = "user:manage:chat_color"
 
 	// Deprecated v5 scope but used in chat
