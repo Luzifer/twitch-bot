@@ -1015,7 +1015,7 @@ export default {
               // Check for zero-values and drop the field on zero-value
               switch (field.type) {
               case 'bool':
-                if (att[1] === false) {
+                if (att[1] === false && field.optional) {
                   return false
                 }
                 break
@@ -1109,7 +1109,7 @@ export default {
 
         switch (field.type) {
         case 'bool':
-          if (!field.optional && !action.attributes[field.key]) {
+          if (!field.optional && typeof action.attributes[field.key] !== 'boolean') {
             return false
           }
           break
@@ -1222,7 +1222,7 @@ export default {
         }
 
         for (const field of def.fields) {
-          if (!field.optional && !action.attributes[field.key]) {
+          if (!field.optional && action.attributes[field.key] === undefined) {
             this.validateReason = `${action.type} -> ${field.key} -> opt`
             return false
           }
