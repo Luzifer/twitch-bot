@@ -344,6 +344,19 @@ Send a whisper (requires a verified bot!)
     to: ""
 ```
 
+## Shoutout
+
+Perform a Twitch-native shoutout
+
+```yaml
+- type: shoutout
+  attributes:
+    # User to give the shoutout to
+    # Optional: false
+    # Type:     string (Supports Templating)
+    user: ""
+```
+
 ## Timeout User
 
 Timeout user from chat
@@ -359,4 +372,17 @@ Timeout user from chat
     # Optional: false
     # Type:     string (Supports Templating)
     reason: ""
+```
+
+## Update Shield Mode
+
+Update shield mode for the given channel
+
+```yaml
+- type: shield
+  attributes:
+    # Whether the shield-mode should be enabled or disabled
+    # Optional: false
+    # Type:     bool
+    enable: false
 ```

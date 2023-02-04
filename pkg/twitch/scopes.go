@@ -16,6 +16,7 @@ const (
 	ScopeModeratorManageBannedUsers  = "moderator:manage:banned_users"
 	ScopeModeratorManageChatMessages = "moderator:manage:chat_messages"
 	ScopeModeratorManageChatSettings = "moderator:manage:chat_settings"
+	ScopeModeratorManageShieldMode   = "moderator:manage:shield_mode"
 	ScopeModeratorManageShoutouts    = "moderator:manage:shoutouts"
 	ScopeModeratorReadFollowers      = "moderator:read:followers"
 	ScopeUserManageChatColor         = "user:manage:chat_color"

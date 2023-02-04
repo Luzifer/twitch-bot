@@ -23,6 +23,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/raw"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/respond"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/shield"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/shoutout"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/variables"
@@ -59,6 +60,7 @@ var (
 		quotedb.Register,
 		raw.Register,
 		respond.Register,
+		shield.Register,
 		shoutout.Register,
 		timeout.Register,
 		variables.Register,

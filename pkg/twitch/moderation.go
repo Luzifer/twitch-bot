@@ -138,3 +138,38 @@ func (c *Client) UnbanUser(channel, username string) error {
 		"executing unban request",
 	)
 }
+
+// UpdateShieldMode activates or deactivates the Shield Mode in the given channel
+func (c *Client) UpdateShieldMode(ctx context.Context, channel string, enable bool) error {
+	botID, _, err := c.GetAuthorizedUser()
+	if err != nil {
+		return errors.Wrap(err, "getting bot user-id")
+	}
+
+	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	if err != nil {
+		return errors.Wrap(err, "getting channel user-id")
+	}
+
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(map[string]bool{
+		"is_active": enable,
+	}); err != nil {
+		return errors.Wrap(err, "encoding payload")
+	}
+
+	return errors.Wrap(
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Context:  ctx,
+			Method:   http.MethodPut,
+			OKStatus: http.StatusOK,
+			Body:     body,
+			URL: fmt.Sprintf(
+				"https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=%s&moderator_id=%s",
+				channelID, botID,
+			),
+		}),
+		"executing update request",
+	)
+}

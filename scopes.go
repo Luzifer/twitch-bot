@@ -20,6 +20,7 @@ var (
 		twitch.ScopeModeratorManageBannedUsers,
 		twitch.ScopeModeratorManageChatMessages,
 		twitch.ScopeModeratorManageChatSettings,
+		twitch.ScopeModeratorManageShieldMode,
 		twitch.ScopeModeratorManageShoutouts,
 
 		// Chat Scopes
