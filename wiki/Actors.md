@@ -357,6 +357,19 @@ Perform a Twitch-native shoutout
     user: ""
 ```
 
+## Stop Execution
+
+Stop Rule Execution on Condition
+
+```yaml
+- type: stopexec
+  attributes:
+    # Condition when to stop execution (must evaluate to "true" to stop execution)
+    # Optional: false
+    # Type:     string (Supports Templating)
+    when: ""
+```
+
 ## Timeout User
 
 Timeout user from chat

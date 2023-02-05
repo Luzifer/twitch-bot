@@ -74,13 +74,29 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 	for _, r := range config.GetMatchingRules(m, event, eventData) {
 		var preventCooldown bool
 
+	ActionsLoop:
 		for _, a := range r.Actions {
 			apc, err := triggerAction(c, m, r, a, eventData)
-			if err != nil {
+			switch {
+			case err == nil:
+				// Rule execution did not cause an error, we store the
+				// cooldown modifier and continue
+				preventCooldown = preventCooldown || apc
+				continue ActionsLoop
+
+			case errors.Is(err, plugins.ErrStopRuleExecution):
+				// Action has asked to stop executing this rule so we store
+				// the cooldown modifier and stop executing the actions stack
+				preventCooldown = preventCooldown || apc
+				break ActionsLoop
+
+			default:
+				// Action experienced an error: We don't store the cooldown
+				// state of this action and stop executing the actions stack
+				// for this rule
 				log.WithError(err).Error("Unable to trigger action")
-				break // Break execution when one action fails
+				break ActionsLoop // Break execution for this rule when one action fails
 			}
-			preventCooldown = preventCooldown || apc
 		}
 
 		// Lock command

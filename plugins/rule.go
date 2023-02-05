@@ -28,6 +28,11 @@ const (
 	remoteRuleFetchTimeout = 5 * time.Second
 )
 
+// ErrStopRuleExecution is a way for actions to terminate execution
+// of the current rule gracefully. No actions after this has been
+// returned will be executed and no error state will be set
+var ErrStopRuleExecution = errors.New("stop rule execution now")
+
 type (
 	Rule struct {
 		UUID          string  `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
