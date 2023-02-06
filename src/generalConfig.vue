@@ -283,7 +283,7 @@
               <b-form-input
                 placeholder="Loading..."
                 readonly
-                :value="authURLs.update_bot_token"
+                :value="botAuthTokenURL"
                 @focus="$event.target.select()"
               />
               <b-input-group-append>
@@ -425,6 +425,27 @@ export default {
       ]
     },
 
+    botAuthTokenURL() {
+      if (!this.authURLs || !this.authURLs.update_bot_token) {
+        return ''
+      }
+
+      let scopes = [...this.$root.vars.DefaultBotScopes]
+
+      if (this.generalConfig && this.generalConfig.channel_scopes && this.generalConfig.channel_scopes[this.generalConfig.bot_name]) {
+        scopes = [
+          ...new Set([
+            ...scopes,
+            ...this.generalConfig.channel_scopes[this.generalConfig.bot_name],
+          ]),
+        ]
+      }
+
+      const u = new URL(this.authURLs.update_bot_token)
+      u.searchParams.set('scope', scopes.join(' '))
+      return u.toString()
+    },
+
     botConnectionCardVariant() {
       if (this.$parent.status.overall_status_success) {
         return 'secondary'
@@ -435,12 +456,14 @@ export default {
     botMissingScopes() {
       let missing = 0
 
-      if (!this.generalConfig || !this.generalConfig.channel_scopes || !this.generalConfig.bot_name || !this.generalConfig.channel_scopes[this.generalConfig.bot_name]) {
+      if (!this.generalConfig || !this.generalConfig.channel_scopes || !this.generalConfig.bot_name) {
         return -1
       }
 
+      const grantedScopes = [...this.generalConfig.channel_scopes[this.generalConfig.bot_name] || []]
+
       for (const scope of this.$root.vars.DefaultBotScopes) {
-        if (!this.generalConfig.channel_scopes[this.generalConfig.bot_name].includes(scope)) {
+        if (!grantedScopes.includes(scope)) {
           missing++
         }
       }
@@ -538,7 +561,7 @@ export default {
 
       switch (type) {
       case 'botConnection':
-        prom = navigator.clipboard.writeText(this.authURLs.update_bot_token)
+        prom = navigator.clipboard.writeText(this.botAuthTokenURL)
         btnField = 'botConnection'
         break
       case 'channelPermission':
@@ -562,7 +585,16 @@ export default {
     },
 
     editChannelPermissions(channel) {
-      this.models.channelPermissions = this.generalConfig.channel_scopes[channel] || []
+      let permissionSet = [...this.generalConfig.channel_scopes[channel] || []]
+
+      if (channel === this.generalConfig.bot_name) {
+        permissionSet = [
+          ...permissionSet,
+          ...this.$root.vars.DefaultBotScopes,
+        ]
+      }
+
+      this.models.channelPermissions = [...new Set(permissionSet)]
       this.showPermissionEditModal = true
     },
 
@@ -635,7 +667,7 @@ export default {
 
     missingExtendedScopes(channel) {
       if (!this.generalConfig.channel_scopes[channel]) {
-        return Object.keys(this.authURLs.available_extended_scopes)
+        return Object.keys(this.authURLs.available_extended_scopes || {})
       }
 
       const missing = []
