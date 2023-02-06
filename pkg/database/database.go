@@ -12,6 +12,7 @@ type (
 	Connector interface {
 		Close() error
 		DB() *gorm.DB
+		DeleteCoreMeta(key string) error
 		ReadCoreMeta(key string, value any) error
 		StoreCoreMeta(key string, value any) error
 		ReadEncryptedCoreMeta(key string, value any) error

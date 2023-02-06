@@ -16,6 +16,7 @@ func (s storageFile) migrateCoreKV(db database.Connector) (err error) {
 		return errors.Wrap(err, "creating access service")
 	}
 
+	//nolint:staticcheck // Use of deprecated function is fine for this purpose
 	if err = as.SetBotTwitchCredentials(s.BotAccessToken, s.BotRefreshToken); err != nil {
 		return errors.Wrap(err, "setting bot credentials")
 	}

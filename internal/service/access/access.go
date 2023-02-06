@@ -14,6 +14,7 @@ import (
 
 const (
 	coreMetaKeyBotToken        = "bot_access_token"
+	coreMetaKeyBotUsername     = "bot_username"
 	coreMetaKeyBotRefreshToken = "bot_refresh_token" //#nosec:G101 // That's a key, not a credential
 )
 
@@ -44,6 +45,12 @@ func New(db database.Connector) (*Service, error) {
 	)
 }
 
+func (s Service) GetBotUsername() (string, error) {
+	var botUsername string
+	err := s.db.ReadCoreMeta(coreMetaKeyBotUsername, &botUsername)
+	return botUsername, errors.Wrap(err, "reading bot username")
+}
+
 func (s Service) GetChannelPermissions(channel string) ([]string, error) {
 	var (
 		err  error
@@ -61,28 +68,73 @@ func (s Service) GetChannelPermissions(channel string) ([]string, error) {
 }
 
 func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
-	var botAccessToken, botRefreshToken string
-
-	err := s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken)
+	botUsername, err := s.GetBotUsername()
 	switch {
 	case errors.Is(err, nil):
-		// This is fine
+		// This is fine, we have a username
+		return s.GetTwitchClientForChannel(botUsername, cfg)
 
 	case errors.Is(err, database.ErrCoreMetaNotFound):
-		botAccessToken = cfg.FallbackToken
+		// The bot has no username stored, we try to auto-migrate below
+
+	default:
+		return nil, errors.Wrap(err, "getting bot username from database")
+	}
+
+	// Bot username is not set, either we're running from fallback token
+	// or did not yet execute the v3.5.0 migration
+
+	var botAccessToken, botRefreshToken string
+	err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken)
+	switch {
+	case errors.Is(err, nil):
+		// This is fine, we do have a pre-v3.5.0 config, lets do the migration
+
+	case errors.Is(err, database.ErrCoreMetaNotFound):
+		// We're don't have a stored pre-v3.5.0 token either, so we're
+		// running from the fallback token (which might be empty)
+		return twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.FallbackToken, ""), nil
 
 	default:
 		return nil, errors.Wrap(err, "getting bot access token from database")
 	}
 
-	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotRefreshToken, &botRefreshToken); err != nil && !errors.Is(err, database.ErrCoreMetaNotFound) {
+	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotRefreshToken, &botRefreshToken); err != nil {
 		return nil, errors.Wrap(err, "getting bot refresh token from database")
 	}
 
-	twitchClient := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, botAccessToken, botRefreshToken)
-	twitchClient.SetTokenUpdateHook(s.SetBotTwitchCredentials)
+	// Now we do have (hopefully valid) tokens for the bot and therefore
+	// can determine who the bot is. That means we can set the username
+	// for later reference and afterwards delete the duplicated tokens.
 
-	return twitchClient, nil
+	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, botAccessToken, botRefreshToken).GetAuthorizedUser()
+	if err != nil {
+		return nil, errors.Wrap(err, "validating stored access token")
+	}
+
+	if err = s.db.StoreCoreMeta(coreMetaKeyBotUsername, botUser); err != nil {
+		return nil, errors.Wrap(err, "setting bot username")
+	}
+
+	if _, err = s.GetTwitchClientForChannel(botUser, cfg); errors.Is(err, gorm.ErrRecordNotFound) {
+		// There is no extended permission for that channel, we probably
+		// are in a state created by the v2 migrator. Lets just store the
+		// token without any permissions as we cannot know the permissions
+		// assigned to that token
+		if err = s.SetExtendedTwitchCredentials(botUser, botAccessToken, botRefreshToken, nil); err != nil {
+			return nil, errors.Wrap(err, "moving bot access token")
+		}
+	}
+
+	if err = s.db.DeleteCoreMeta(coreMetaKeyBotToken); err != nil {
+		return nil, errors.Wrap(err, "deleting deprecated bot token")
+	}
+
+	if err = s.db.DeleteCoreMeta(coreMetaKeyBotRefreshToken); err != nil {
+		return nil, errors.Wrap(err, "deleting deprecated bot refresh-token")
+	}
+
+	return s.GetTwitchClientForChannel(botUser, cfg)
 }
 
 func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*twitch.Client, error) {
@@ -150,6 +202,8 @@ func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	)
 }
 
+// Deprecated: Use SetBotUsername and SetExtendedTwitchCredentials
+// instead. This function is only required for the v2 migration tool.
 func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
 	if err = s.db.StoreEncryptedCoreMeta(coreMetaKeyBotToken, accessToken); err != nil {
 		return errors.Wrap(err, "storing bot access token")
@@ -160,6 +214,13 @@ func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err 
 	}
 
 	return nil
+}
+
+func (s Service) SetBotUsername(channel string) (err error) {
+	return errors.Wrap(
+		s.db.StoreCoreMeta(coreMetaKeyBotUsername, channel),
+		"storing bot username",
+	)
 }
 
 func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken string, scope []string) (err error) {

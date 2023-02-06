@@ -85,8 +85,8 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = accessService.SetBotTwitchCredentials(rData.AccessToken, rData.RefreshToken); err != nil {
-		http.Error(w, errors.Wrap(err, "storing access token").Error(), http.StatusInternalServerError)
+	if err = accessService.SetBotUsername(botUser); err != nil {
+		http.Error(w, errors.Wrap(err, "storing bot username").Error(), http.StatusInternalServerError)
 		return
 	}
 

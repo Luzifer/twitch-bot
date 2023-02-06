@@ -198,14 +198,15 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var uName *string
-	if _, n, err := twitchClient.GetAuthorizedUser(); err == nil {
-		uName = &n
+	uName, err := accessService.GetBotUsername()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(configEditorGeneralConfig{
+	if err = json.NewEncoder(w).Encode(configEditorGeneralConfig{
 		BotEditors:    config.BotEditors,
-		BotName:       uName,
+		BotName:       &uName,
 		Channels:      config.Channels,
 		ChannelScopes: channelScopes,
 	}); err != nil {

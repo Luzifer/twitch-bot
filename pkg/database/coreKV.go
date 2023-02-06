@@ -17,6 +17,14 @@ type (
 	}
 )
 
+// DeleteCoreMeta removes a core_kv table entry
+func (c connector) DeleteCoreMeta(key string) error {
+	return errors.Wrap(
+		c.db.Delete(&coreKV{}, "name = ?", key).Error,
+		"deleting key from database",
+	)
+}
+
 // ReadCoreMeta reads an entry of the core_kv table specified by
 // the given `key` and unmarshals it into the `value`. The value must
 // be a valid variable to `json.NewDecoder(...).Decode(value)`
