@@ -98,6 +98,8 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, fmt.Sprintf("Authorization as %q complete, you can now close this window.", botUser), http.StatusOK)
+
+	frontendReloadHooks.Ping() // Tell frontend to update its config
 }
 
 func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +149,6 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, fmt.Sprintf("Scopes for %q updated, you can now close this window.", grantUser), http.StatusOK)
+
+	frontendReloadHooks.Ping() // Tell frontend to update its config
 }

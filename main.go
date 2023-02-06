@@ -255,12 +255,8 @@ func main() {
 		TwitchClientSecret: cfg.TwitchClientSecret,
 		FallbackToken:      cfg.TwitchToken,
 		TokenUpdateHook: func() {
-			// Misuse the config reload hook to let the frontend reload its state
-			configReloadHooksLock.RLock()
-			defer configReloadHooksLock.RUnlock()
-			for _, fn := range configReloadHooks {
-				fn()
-			}
+			// make frontend reload its state as of token change
+			frontendReloadHooks.Ping()
 		},
 	}); err != nil {
 		log.WithError(err).Fatal("Unable to initialize Twitch client")

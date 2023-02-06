@@ -11,6 +11,8 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+var frontendReloadHooks = newHooker()
+
 func registerEditorGlobalMethods() {
 	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
@@ -143,7 +145,7 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 	var (
 		configReloadNotify = make(chan struct{}, 1)
 		pingTimer          = time.NewTicker(websocketPingInterval)
-		unsubscribe        = registerConfigReloadHook(func() { configReloadNotify <- struct{}{} })
+		unsubscribe        = frontendReloadHooks.Register(func() { configReloadNotify <- struct{}{} })
 	)
 	defer unsubscribe()
 
