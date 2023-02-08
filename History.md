@@ -1,3 +1,21 @@
+# 3.5.0 / 2023-02-08
+
+  * New Features
+    * [shield] Add shield mode actor
+    * [stopexec] Add `stopexec` actor
+    * [template] Add `recentTitle` template function
+
+  * Improvements
+    * [core] Rewrite bot token storage logic
+    * [editor] Add new `moderator:read:followers` scope and pin follow subscription version
+    * [editor] Notify frontend to reload data after token change
+
+  * Bugfixes
+    * [editor] Ensure updating bot token does not drop scopes
+    * [editor] Fix Node package vulnerabilities
+    * [editor] Fix non-optional booleans causing rules to be non-saveable
+    * [editor] Fix: When `match_message` is cleared, remove it completely
+
 # 3.4.0 / 2023-01-27
 
   * New Features
