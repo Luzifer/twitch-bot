@@ -195,6 +195,20 @@ func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (boo
 	return true, nil
 }
 
+func (s Service) ListPermittedChannels() ([]string, error) {
+	var perms []extendedPermission
+	if err := s.db.DB().Find(&perms).Error; err != nil {
+		return nil, errors.Wrap(err, "listing permissions")
+	}
+
+	var out []string
+	for _, perm := range perms {
+		out = append(out, perm.Channel)
+	}
+
+	return out, nil
+}
+
 func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	return errors.Wrap(
 		s.db.DB().Delete(&extendedPermission{}, "channel = ?", channel).Error,
