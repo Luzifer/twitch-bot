@@ -1,3 +1,8 @@
+# 3.5.1 / 2023-02-08
+
+  * Bugfixes
+    * [core] Fix: List all configured channel permissions
+
 # 3.5.0 / 2023-02-08
 
   * New Features
