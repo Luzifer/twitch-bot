@@ -19,6 +19,7 @@ const (
 	ScopeModeratorManageShieldMode   = "moderator:manage:shield_mode"
 	ScopeModeratorManageShoutouts    = "moderator:manage:shoutouts"
 	ScopeModeratorReadFollowers      = "moderator:read:followers"
+	ScopeModeratorReadShoutouts      = "moderator:read:shoutouts"
 	ScopeUserManageChatColor         = "user:manage:chat_color"
 
 	// Deprecated v5 scope but used in chat

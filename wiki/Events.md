@@ -149,6 +149,17 @@ Fields:
 - `subscribed_months` - How long have they been subscribed
 - `username` - The login-name of the user who resubscribed
 
+## `shoutout_received`
+
+The channel received a (Twitch native) shoutout by another channel.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `from_id` - The ID of the channel who issued the shoutout
+- `from` - The login-name of the channel who issued the shoutout
+- `viewers` - The amount of viewers the shoutout was shown to
+
 ## `stream_offline`
 
 The channels stream went offline. (This event has some delay to the real category change!)

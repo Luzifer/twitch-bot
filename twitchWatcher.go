@@ -143,6 +143,13 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			AnyScope:       true,
 			Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
 		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelShoutoutReceive,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
+			AnyScope:       true,
+			Hook:           t.handleEventSubShoutoutReceived,
+		},
 	}
 }
 
@@ -214,6 +221,25 @@ func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
 	}
 
 	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
+	var payload twitch.EventSubEventShoutoutReceived
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]any{
+		"channel": "#" + payload.FromBroadcasterUserLogin,
+		"from_id": payload.FromBroadcasterUserID,
+		"from":    payload.FromBroadcasterUserLogin,
+		"viewers": payload.ViewerCount,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Shoutout received")
+	go handleMessage(ircHdl.Client(), nil, eventTypeShoutoutReceived, fields)
 
 	return nil
 }

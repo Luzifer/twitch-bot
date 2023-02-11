@@ -43,15 +43,14 @@ const (
 	// eventSubStatusUserRemoved          = "user_removed"
 	// eventSubStatusVerificationFailed   = "webhook_callback_verification_failed"
 
-	EventSubEventTypeChannelFollow = "channel.follow"
-	EventSubEventTypeChannelRaid   = "channel.raid"
-	EventSubEventTypeChannelUpdate = "channel.update"
-	EventSubEventTypeStreamOffline = "stream.offline"
-	EventSubEventTypeStreamOnline  = "stream.online"
-
+	EventSubEventTypeChannelFollow                         = "channel.follow"
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
-
-	EventSubEventTypeUserAuthorizationRevoke = "user.authorization.revoke"
+	EventSubEventTypeChannelRaid                           = "channel.raid"
+	EventSubEventTypeChannelShoutoutReceive                = "channel.shoutout.receive"
+	EventSubEventTypeChannelUpdate                         = "channel.update"
+	EventSubEventTypeStreamOffline                         = "stream.offline"
+	EventSubEventTypeStreamOnline                          = "stream.online"
+	EventSubEventTypeUserAuthorizationRevoke               = "user.authorization.revoke"
 
 	EventSubTopicVersion1    = "1"
 	EventSubTopicVersion2    = "2"
@@ -81,6 +80,7 @@ type (
 		RewardID              string `json:"reward_id,omitempty"`
 		ToBroadcasterUserID   string `json:"to_broadcaster_user_id,omitempty"`
 		UserID                string `json:"user_id,omitempty"`
+		ModeratorUserID       string `json:"moderator_user_id,omitempty"`
 	}
 
 	EventSubEventChannelPointCustomRewardRedemptionAdd struct {
@@ -131,6 +131,17 @@ type (
 		ToBroadcasterUserLogin   string `json:"to_broadcaster_user_login"`
 		ToBroadcasterUserName    string `json:"to_broadcaster_user_name"`
 		Viewers                  int64  `json:"viewers"`
+	}
+
+	EventSubEventShoutoutReceived struct {
+		BroadcasterUserID        string    `json:"broadcaster_user_id"`
+		BroadcasterUserLogin     string    `json:"broadcaster_user_login"`
+		BroadcasterUserName      string    `json:"broadcaster_user_name"`
+		FromBroadcasterUserID    string    `json:"from_broadcaster_user_id"`
+		FromBroadcasterUserLogin string    `json:"from_broadcaster_user_login"`
+		FromBroadcasterUserName  string    `json:"from_broadcaster_user_name"`
+		ViewerCount              int64     `json:"viewer_count"`
+		StartedAt                time.Time `json:"started_at"`
 	}
 
 	EventSubEventStreamOffline struct {

@@ -32,6 +32,7 @@ var (
 	eventTypePermit             = ptrStr("permit")
 	eventTypeRaid               = ptrStr("raid")
 	eventTypeResub              = ptrStr("resub")
+	eventTypeShoutoutReceived   = ptrStr("shoutout_received")
 	eventTypeSubgift            = ptrStr("subgift")
 	eventTypeSubmysterygift     = ptrStr("submysterygift")
 	eventTypeSub                = ptrStr("sub")
@@ -60,6 +61,7 @@ var (
 		eventTypePermit,
 		eventTypeRaid,
 		eventTypeResub,
+		eventTypeShoutoutReceived,
 		eventTypeSub,
 		eventTypeSubgift,
 		eventTypeSubmysterygift,
