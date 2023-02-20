@@ -72,11 +72,18 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 	}
 
 	for _, r := range config.GetMatchingRules(m, event, eventData) {
-		var preventCooldown bool
+		var (
+			ruleEventData   = plugins.NewFieldCollection()
+			preventCooldown bool
+		)
+
+		if eventData != nil {
+			ruleEventData.SetFromData(eventData.Data())
+		}
 
 	ActionsLoop:
 		for _, a := range r.Actions {
-			apc, err := triggerAction(c, m, r, a, eventData)
+			apc, err := triggerAction(c, m, r, a, ruleEventData)
 			switch {
 			case err == nil:
 				// Rule execution did not cause an error, we store the

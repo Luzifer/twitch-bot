@@ -1,6 +1,19 @@
 # Available Actions
 
 
+## Add Fields to Event
+
+Add custom fields to the event to be used as template variables later on
+
+```yaml
+- type: eventmod
+  attributes:
+    # Fields to set in the event (must produce valid JSON: `map[string]any`)
+    # Optional: false
+    # Type:     string (Supports Templating)
+    fields: ""
+```
+
 ## Add VIP
 
 Add VIP for the given channel
