@@ -92,7 +92,7 @@ func (a ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		return attrs.MustBool("skip_cooldown_on_error", ptrBoolFalse), errors.Wrap(err, "running command")
+		return attrs.MustBool("skip_cooldown_on_error", ptrBoolFalse), errors.Wrapf(err, "running command in rule %s", r.UUID)
 	}
 
 	if stdout.Len() == 0 {
