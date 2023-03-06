@@ -407,6 +407,7 @@ export default {
         delete obj.message_interval
       } else if (this.models.autoMessage.sendMode === 'lines') {
         delete obj.cron
+        obj.message_interval = Number(obj.message_interval) // Enforce this is a number, not a string
       }
 
       let promise = null
