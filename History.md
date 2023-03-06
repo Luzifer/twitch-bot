@@ -1,3 +1,15 @@
+# 3.6.0 / 2023-03-06
+
+  * New Features
+    * [eventmod] Add `eventmod` actor
+    * [eventsub] Add `shoutout_received` event
+
+  * Improvements
+    * [script] Add rule ID to error
+
+  * Bugfixes
+    * [editor] Fix number-of-lines mode causing type-error
+
 # 3.5.1 / 2023-02-08
 
   * Bugfixes
