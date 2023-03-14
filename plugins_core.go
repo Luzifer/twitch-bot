@@ -12,6 +12,7 @@ import (
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/ban"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/commercial"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/delay"
 	deleteactor "github.com/Luzifer/twitch-bot/v3/internal/actors/delete"
@@ -51,6 +52,7 @@ var (
 		// Actors
 		announce.Register,
 		ban.Register,
+		commercial.Register,
 		counter.Register,
 		delay.Register,
 		deleteactor.Register,

@@ -44,6 +44,19 @@ Ban user from chat
     reason: ""
 ```
 
+## Commercial
+
+Start Commercial
+
+```yaml
+- type: commercial
+  attributes:
+    # Duration of the commercial (must not be longer than 180s and must yield an integer)
+    # Optional: false
+    # Type:     string (Supports Templating)
+    duration: ""
+```
+
 ## Custom Event
 
 Create a custom event

@@ -129,3 +129,36 @@ func (c *Client) RemoveChannelVIP(ctx context.Context, broadcasterName, userName
 		"executing request",
 	)
 }
+
+// RunCommercial starts a commercial on the specified channel
+func (c *Client) RunCommercial(ctx context.Context, channel string, duration int64) error {
+	channelID, err := c.GetIDForUsername(channel)
+	if err != nil {
+		return errors.Wrap(err, "getting ID for channel name")
+	}
+
+	payload := struct {
+		BroadcasterID string `json:"broadcaster_id"`
+		Length        int64  `json:"length"`
+	}{
+		BroadcasterID: channelID,
+		Length:        duration,
+	}
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(payload); err != nil {
+		return errors.Wrap(err, "encoding payload")
+	}
+
+	return errors.Wrap(
+		c.request(clientRequestOpts{
+			AuthType: authTypeBearerToken,
+			Body:     body,
+			Context:  ctx,
+			Method:   http.MethodPost,
+			OKStatus: http.StatusOK,
+			URL:      "https://api.twitch.tv/helix/channels/commercial",
+		}),
+		"executing request",
+	)
+}
