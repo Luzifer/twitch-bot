@@ -57,7 +57,7 @@ func (s Service) GetChannelPermissions(channel string) ([]string, error) {
 		perm extendedPermission
 	)
 
-	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+	if err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -143,7 +143,7 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 		perm extendedPermission
 	)
 
-	if err = s.db.DB().First(&perm, "channel = ?", channel).Error; err != nil {
+	if err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error; err != nil {
 		return nil, errors.Wrap(err, "getting twitch credential from database")
 	}
 
@@ -211,7 +211,7 @@ func (s Service) ListPermittedChannels() ([]string, error) {
 
 func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	return errors.Wrap(
-		s.db.DB().Delete(&extendedPermission{}, "channel = ?", channel).Error,
+		s.db.DB().Delete(&extendedPermission{}, "channel = ?", strings.TrimLeft(channel, "#")).Error,
 		"deleting data from table",
 	)
 }
@@ -232,7 +232,7 @@ func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err 
 
 func (s Service) SetBotUsername(channel string) (err error) {
 	return errors.Wrap(
-		s.db.StoreCoreMeta(coreMetaKeyBotUsername, channel),
+		s.db.StoreCoreMeta(coreMetaKeyBotUsername, strings.TrimLeft(channel, "#")),
 		"storing bot username",
 	)
 }
@@ -251,7 +251,7 @@ func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken
 			Columns:   []clause.Column{{Name: "channel"}},
 			DoUpdates: clause.AssignmentColumns([]string{"access_token", "refresh_token", "scopes"}),
 		}).Create(extendedPermission{
-			Channel:      channel,
+			Channel:      strings.TrimLeft(channel, "#"),
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 			Scopes:       strings.Join(scope, " "),
