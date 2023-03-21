@@ -46,6 +46,7 @@ const (
 	EventSubEventTypeChannelFollow                         = "channel.follow"
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
 	EventSubEventTypeChannelRaid                           = "channel.raid"
+	EventSubEventTypeChannelShoutoutCreate                 = "channel.shoutout.create"
 	EventSubEventTypeChannelShoutoutReceive                = "channel.shoutout.receive"
 	EventSubEventTypeChannelUpdate                         = "channel.update"
 	EventSubEventTypeStreamOffline                         = "stream.offline"
@@ -131,6 +132,22 @@ type (
 		ToBroadcasterUserLogin   string `json:"to_broadcaster_user_login"`
 		ToBroadcasterUserName    string `json:"to_broadcaster_user_name"`
 		Viewers                  int64  `json:"viewers"`
+	}
+
+	EventSubEventShoutoutCreated struct {
+		BroadcasterUserID      string    `json:"broadcaster_user_id"`
+		BroadcasterUserLogin   string    `json:"broadcaster_user_login"`
+		BroadcasterUserName    string    `json:"broadcaster_user_name"`
+		ModeratorUserID        string    `json:"moderator_user_id"`
+		ModeratorUserLogin     string    `json:"moderator_user_login"`
+		ModeratorUserName      string    `json:"moderator_user_name"`
+		ToBroadcasterUserID    string    `json:"to_broadcaster_user_id"`
+		ToBroadcasterUserLogin string    `json:"to_broadcaster_user_login"`
+		ToBroadcasterUserName  string    `json:"to_broadcaster_user_name"`
+		ViewerCount            int64     `json:"viewer_count"`
+		StartedAt              time.Time `json:"started_at"`
+		CooldownEndsAt         time.Time `json:"cooldown_ends_at"`
+		TargetCooldownEndsAt   time.Time `json:"target_cooldown_ends_at"`
 	}
 
 	EventSubEventShoutoutReceived struct {

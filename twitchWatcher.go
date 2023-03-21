@@ -144,6 +144,13 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
 		},
 		{
+			Topic:          twitch.EventSubEventTypeChannelShoutoutCreate,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
+			AnyScope:       true,
+			Hook:           t.handleEventSubShoutoutCreated,
+		},
+		{
 			Topic:          twitch.EventSubEventTypeChannelShoutoutReceive,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
@@ -221,6 +228,25 @@ func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
 	}
 
 	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
+
+	return nil
+}
+
+func (t *twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
+	var payload twitch.EventSubEventShoutoutCreated
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]any{
+		"channel": "#" + payload.BroadcasterUserLogin,
+		"to_id":   payload.ToBroadcasterUserID,
+		"to":      payload.ToBroadcasterUserLogin,
+		"viewers": payload.ViewerCount,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Shoutout created")
+	go handleMessage(ircHdl.Client(), nil, eventTypeShoutoutCreated, fields)
 
 	return nil
 }

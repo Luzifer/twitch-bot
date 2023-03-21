@@ -32,6 +32,7 @@ var (
 	eventTypePermit             = ptrStr("permit")
 	eventTypeRaid               = ptrStr("raid")
 	eventTypeResub              = ptrStr("resub")
+	eventTypeShoutoutCreated    = ptrStr("shoutout_created")
 	eventTypeShoutoutReceived   = ptrStr("shoutout_received")
 	eventTypeSubgift            = ptrStr("subgift")
 	eventTypeSubmysterygift     = ptrStr("submysterygift")

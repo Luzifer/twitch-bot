@@ -149,6 +149,17 @@ Fields:
 - `subscribed_months` - How long have they been subscribed
 - `username` - The login-name of the user who resubscribed
 
+## `shoutout_created`
+
+The channel gave another streamer a (Twitch native) shoutout
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `to_id` - The ID of the channel who received the shoutout
+- `to` - The login-name of the channel who received the shoutout
+- `viewers` - The amount of viewers the shoutout was shown to
+
 ## `shoutout_received`
 
 The channel received a (Twitch native) shoutout by another channel.
