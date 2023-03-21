@@ -297,7 +297,7 @@ func (e *EventSubClient) HandleEventsubPush(w http.ResponseWriter, r *http.Reque
 	e.subscriptionsLock.RLock()
 	defer e.subscriptionsLock.RUnlock()
 
-	cacheKey := strings.Join([]string{message.Subscription.Type, condHash}, "::")
+	cacheKey := strings.Join([]string{message.Subscription.Type, message.Subscription.Version, condHash}, "::")
 
 	reg, ok := e.subscriptions[cacheKey]
 	if !ok {
@@ -336,8 +336,9 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 			// so we should be able to deregister it without causing any
 			// trouble
 			logger := log.WithFields(log.Fields{
-				"id":    sub.ID,
-				"topic": sub.Type,
+				"id":      sub.ID,
+				"topic":   sub.Type,
+				"version": sub.Version,
 			})
 			logger.Debug("Removing deprecated EventSub subscription")
 			if err = e.twitchClient.deleteEventSubSubscription(ctx, sub.ID); err != nil {
@@ -359,9 +360,10 @@ func (e *EventSubClient) PreFetchSubscriptions(ctx context.Context) error {
 		log.WithFields(log.Fields{
 			"condition": sub.Condition,
 			"type":      sub.Type,
+			"version":   sub.Version,
 		}).Debug("found existing eventsub subscription")
 
-		cacheKey := strings.Join([]string{sub.Type, condHash}, "::")
+		cacheKey := strings.Join([]string{sub.Type, sub.Version, condHash}, "::")
 		e.subscriptions[cacheKey] = &registeredSubscription{
 			Type:         sub.Type,
 			Callbacks:    map[string]func(json.RawMessage) error{},
@@ -383,8 +385,12 @@ func (e *EventSubClient) RegisterEventSubHooks(event, version string, condition 
 	}
 
 	var (
-		cacheKey = strings.Join([]string{event, condHash}, "::")
-		logger   = log.WithField("event", event)
+		cacheKey = strings.Join([]string{event, version, condHash}, "::")
+		logger   = log.WithFields(log.Fields{
+			"condition": condition,
+			"type":      event,
+			"version":   version,
+		})
 	)
 
 	e.subscriptionsLock.RLock()
@@ -404,10 +410,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event, version string, condition 
 		return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 	}
 
-	log.WithFields(log.Fields{
-		"condition": condition,
-		"type":      event,
-	}).Debug("registering new eventsub subscription")
+	logger.Debug("registering new eventsub subscription")
 
 	// Register subscriptions
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)

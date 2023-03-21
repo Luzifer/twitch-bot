@@ -125,9 +125,9 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelFollow,
-			Version:        twitch.EventSubTopicVersion1, // DEPRECATED, to be removed August 3, 2023
-			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-			RequiredScopes: nil, // Switch to []string{twitch.ScopeModeratorReadFollowers} after August 3, 2023
+			Version:        twitch.EventSubTopicVersion2,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModeratorReadFollowers},
 			Hook:           t.handleEventSubChannelFollow,
 		},
 		{
