@@ -46,7 +46,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		ptrZeroDuration = func(v time.Duration) *time.Duration { return &v }(0)
 		delay           = attrs.MustDuration("delay", ptrZeroDuration)

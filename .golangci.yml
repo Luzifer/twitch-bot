@@ -11,6 +11,11 @@ run:
 output:
   format: tab
 
+issues:
+  # Don't limit the number of shown issues: Report ALL of them
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
 linters-settings:
   forbidigo:
     forbid:

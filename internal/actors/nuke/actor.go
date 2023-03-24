@@ -146,7 +146,7 @@ type (
 	}
 )
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	rawMatch, err := formatMessage(attrs.MustString("match", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting match")

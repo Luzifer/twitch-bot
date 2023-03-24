@@ -11,7 +11,7 @@ type (
 	actionFn func(channel, match, msgid, user string) error
 )
 
-func actionBan(channel, match, msgid, user string) error {
+func actionBan(channel, match, _, user string) error {
 	return errors.Wrap(
 		botTwitchClient.BanUser(
 			channel,
@@ -23,7 +23,7 @@ func actionBan(channel, match, msgid, user string) error {
 	)
 }
 
-func actionDelete(channel, match, msgid, user string) (err error) {
+func actionDelete(channel, _, msgid, _ string) (err error) {
 	return errors.Wrap(
 		botTwitchClient.DeleteMessage(
 			channel,

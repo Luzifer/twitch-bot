@@ -65,7 +65,7 @@ func formatMessageFieldChannel(compiledFields *plugins.FieldCollection, m *irc.M
 	compiledFields.Set(eventFieldChannel, plugins.DeriveChannel(m, fields))
 }
 
-func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.Message, _ *plugins.FieldCollection) {
 	if m == nil {
 		return
 	}
@@ -73,7 +73,7 @@ func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.M
 	compiledFields.Set("msg", m)
 }
 
-func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Message, _ *plugins.FieldCollection) {
 	if m == nil {
 		return
 	}

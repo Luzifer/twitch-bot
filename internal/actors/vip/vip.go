@@ -122,7 +122,7 @@ func (a actor) getParams(m *irc.Message, r *plugins.Rule, eventData *plugins.Fie
 	return strings.TrimLeft(channel, "#"), user, nil
 }
 
-func (u unvipActor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (u unvipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	channel, user, err := u.getParams(m, r, eventData, attrs)
 	if err != nil {
 		return false, errors.Wrap(err, "getting parameters")
@@ -136,7 +136,7 @@ func (u unvipActor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, even
 
 func (unvipActor) Name() string { return "unvip" }
 
-func (v vipActor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (v vipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	channel, user, err := v.getParams(m, r, eventData, attrs)
 	if err != nil {
 		return false, errors.Wrap(err, "getting parameters")

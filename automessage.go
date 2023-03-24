@@ -138,7 +138,7 @@ func (a *autoMessage) IsValid() bool {
 	return true
 }
 
-func (a *autoMessage) Send(c *irc.Client) error {
+func (a *autoMessage) Send(_ *irc.Client) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 

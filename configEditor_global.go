@@ -107,7 +107,7 @@ func registerEditorGlobalMethods() {
 	}
 }
 
-func configEditorGlobalGetActions(w http.ResponseWriter, r *http.Request) {
+func configEditorGlobalGetActions(w http.ResponseWriter, _ *http.Request) {
 	availableActorDocsLock.Lock()
 	defer availableActorDocsLock.Unlock()
 
@@ -116,7 +116,7 @@ func configEditorGlobalGetActions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func configEditorGlobalGetModules(w http.ResponseWriter, r *http.Request) {
+func configEditorGlobalGetModules(w http.ResponseWriter, _ *http.Request) {
 	if err := json.NewEncoder(w).Encode(knownModules); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

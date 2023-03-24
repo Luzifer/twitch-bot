@@ -67,7 +67,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		game  = attrs.MustString("game", ptrStringEmpty)
 		title = attrs.MustString("title", ptrStringEmpty)

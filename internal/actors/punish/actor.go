@@ -138,7 +138,7 @@ type (
 
 // Punish
 
-func (a actorPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		cooldown = attrs.MustDuration("cooldown", ptrDefaultCooldown)
 		reason   = attrs.MustString("reason", ptrStringEmpty)
@@ -232,7 +232,7 @@ func (a actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs 
 
 // Reset
 
-func (a actorResetPunish) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		user = attrs.MustString("user", nil)
 		uuid = attrs.MustString("uuid", ptrStringEmpty)

@@ -142,7 +142,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type ActorCounter struct{}
 
-func (a ActorCounter) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a ActorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")

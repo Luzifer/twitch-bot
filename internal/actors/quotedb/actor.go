@@ -96,7 +96,7 @@ type (
 	actor struct{}
 )
 
-func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		action   = attrs.MustString("action", ptrStringEmpty)
 		indexStr = attrs.MustString("index", ptrStringZero)

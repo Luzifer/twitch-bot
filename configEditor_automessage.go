@@ -132,7 +132,7 @@ func configEditorHandleAutoMessageDelete(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func configEditorHandleAutoMessagesGet(w http.ResponseWriter, r *http.Request) {
+func configEditorHandleAutoMessagesGet(w http.ResponseWriter, _ *http.Request) {
 	if err := json.NewEncoder(w).Encode(config.AutoMessages); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

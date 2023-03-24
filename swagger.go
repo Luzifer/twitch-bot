@@ -52,7 +52,7 @@ func init() {
 	}
 }
 
-func handleSwaggerHTML(w http.ResponseWriter, r *http.Request) {
+func handleSwaggerHTML(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	if _, err := io.Copy(w, bytes.NewReader(swaggerHTML)); err != nil {
@@ -60,7 +60,7 @@ func handleSwaggerHTML(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleSwaggerRequest(w http.ResponseWriter, r *http.Request) {
+func handleSwaggerRequest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(swaggerDoc); err != nil {

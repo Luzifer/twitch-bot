@@ -200,7 +200,7 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func handleScript(w http.ResponseWriter, r *http.Request) {
+func handleScript(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript")
 	w.Write(listScript)
 }

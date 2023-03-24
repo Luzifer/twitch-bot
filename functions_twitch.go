@@ -24,7 +24,7 @@ func init() {
 func tplTwitchDisplayName(username string, v ...string) (string, error) {
 	displayName, err := twitchClient.GetDisplayNameForUser(strings.TrimLeft(username, "#"))
 	if len(v) > 0 && (err != nil || displayName == "") {
-		return v[0], nil
+		return v[0], nil //nolint:nilerr // Default value, no need to return error
 	}
 
 	return displayName, err

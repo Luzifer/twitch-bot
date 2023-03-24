@@ -49,7 +49,7 @@ func TestFieldCollectionYAMLMarshal(t *testing.T) {
 	}
 }
 
-func TestFieldCollectionNilModify(t *testing.T) {
+func TestFieldCollectionNilModify(_ *testing.T) {
 	var f *FieldCollection
 
 	f.Set("foo", "bar")
@@ -58,7 +58,7 @@ func TestFieldCollectionNilModify(t *testing.T) {
 	f.SetFromData(map[string]interface{}{"foo": "bar"})
 }
 
-func TestFieldCollectionNilClone(t *testing.T) {
+func TestFieldCollectionNilClone(_ *testing.T) {
 	var f *FieldCollection
 
 	f.Clone()

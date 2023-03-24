@@ -123,7 +123,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type ActorSetVariable struct{}
 
-func (a ActorSetVariable) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (a ActorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")

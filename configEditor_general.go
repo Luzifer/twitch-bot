@@ -133,7 +133,7 @@ func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, r *http.Request) {
+func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, _ *http.Request) {
 	var out struct {
 		AvailableExtendedScopes map[string]string `json:"available_extended_scopes"`
 		UpdateBotToken          string            `json:"update_bot_token"`
@@ -185,7 +185,7 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
+func configEditorHandleGeneralGet(w http.ResponseWriter, _ *http.Request) {
 	channelScopes := make(map[string][]string)
 
 	channels, err := accessService.ListPermittedChannels()
@@ -217,7 +217,7 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func configEditorHandleGeneralListAuthTokens(w http.ResponseWriter, r *http.Request) {
+func configEditorHandleGeneralListAuthTokens(w http.ResponseWriter, _ *http.Request) {
 	if err := json.NewEncoder(w).Encode(config.AuthTokens); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
