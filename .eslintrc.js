@@ -44,7 +44,8 @@ module.exports = {
 
   parserOptions: {
     ecmaVersion: 2020,
-    parser: 'babel-eslint',
+    parser: '@babel/eslint-parser',
+    requireConfigFile: false,
   },
 
   plugins: [
