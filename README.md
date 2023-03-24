@@ -23,6 +23,7 @@ Usage of twitch-bot:
       --log-level string                 Log level (debug, info, warn, error, fatal) (default "info")
       --plugin-dir string                Where to find and load plugins (default "/usr/lib/twitch-bot")
       --rate-limit duration              How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots) (default 1.5s)
+      --sentry-dsn string                Sentry / GlitchTip DSN for error reporting
       --storage-conn-string string       Connection string for the database (default "./storage.db")
       --storage-conn-type string         One of: mysql, postgres, sqlite (default "sqlite")
       --storage-encryption-pass string   Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)
@@ -31,14 +32,15 @@ Usage of twitch-bot:
       --twitch-token string              OAuth token valid for client (fallback if no token was set in interface)
   -v, --validate-config                  Loads the config, logs any errors and quits with status 0 on success
       --version                          Prints current version and exits
+      --wait-for-selfcheck duration      Maximum time to wait for the self-check to respond when behind load-balancers (default 1m0s)
 
 # twitch-bot help
 Supported sub-commands are:
-  actor-docs                     Generate markdown documentation for available actors
-  api-token <name> <scope...>    Generate an api-token to be entered into the config
-  migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database
-  validate-config                Try to load configuration file and report errors if any
-  help                           Prints this help message
+  actor-docs                                 Generate markdown documentation for available actors
+  api-token <token-name> <scope> [...scope]  Generate an api-token to be entered into the config
+  migrate-v2 <old-file>                      Migrate old (*.json.gz) storage file into new database
+  reset-secrets                              Remove encrypted data to reset encryption passphrase
+  validate-config                            Try to load configuration file and report errors if any
 ```
 
 ### Database Connection Strings
