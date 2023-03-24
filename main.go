@@ -272,7 +272,10 @@ func main() {
 			frontendReloadHooks.Ping()
 		},
 	}); err != nil {
-		log.WithError(err).Fatal("Unable to initialize Twitch client")
+		if !errors.Is(err, access.ErrChannelNotAuthorized) {
+			log.WithError(err).Fatal("Unable to initialize Twitch client")
+		}
+		twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.TwitchToken, "")
 	}
 
 	twitchWatch := newTwitchWatcher()

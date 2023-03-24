@@ -38,6 +38,8 @@ type (
 	Service struct{ db database.Connector }
 )
 
+var ErrChannelNotAuthorized = errors.New("channel is not authorized")
+
 func New(db database.Connector) (*Service, error) {
 	return &Service{db}, errors.Wrap(
 		db.DB().AutoMigrate(&extendedPermission{}),
@@ -144,6 +146,9 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 	)
 
 	if err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrChannelNotAuthorized
+		}
 		return nil, errors.Wrap(err, "getting twitch credential from database")
 	}
 
