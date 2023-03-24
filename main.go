@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -23,14 +22,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/timer"
-	"github.com/Luzifer/twitch-bot/v3/internal/v2migrator"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
@@ -158,90 +155,6 @@ func getEventSubSecret() (secret, handle string, err error) {
 	return eventSubSecret, eventSubSecret[:5], errors.Wrap(db.StoreEncryptedCoreMeta(coreMetaKeyEventSubSecret, eventSubSecret), "storing secret to database")
 }
 
-func handleSubCommand(args []string) {
-	switch args[0] {
-
-	case "actor-docs":
-		doc, err := generateActorDocs()
-		if err != nil {
-			log.WithError(err).Fatal("Unable to generate actor docs")
-		}
-		if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
-			log.WithError(err).Fatal("Unable to write actor docs to stdout")
-		}
-
-	case "api-token":
-		if len(args) < 3 { //nolint:gomnd // Just a count of parameters
-			log.Fatalf("Usage: twitch-bot api-token <token name> <scope> [...scope]")
-		}
-
-		t := configAuthToken{
-			Name:    args[1],
-			Modules: args[2:],
-		}
-
-		if err := fillAuthToken(&t); err != nil {
-			log.WithError(err).Fatal("Unable to generate token")
-		}
-
-		log.WithField("token", t.Token).Info("Token generated, add this to your config:")
-		if err := yaml.NewEncoder(os.Stdout).Encode(map[string]map[string]configAuthToken{
-			"auth_tokens": {
-				uuid.Must(uuid.NewV4()).String(): t,
-			},
-		}); err != nil {
-			log.WithError(err).Fatal("Unable to output token info")
-		}
-
-	case "help":
-		fmt.Println("Supported sub-commands are:")
-		fmt.Println("  actor-docs                     Generate markdown documentation for available actors")
-		fmt.Println("  api-token <name> <scope...>    Generate an api-token to be entered into the config")
-		fmt.Println("  migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database")
-		fmt.Println("  reset-secrets                  Remove encrypted data to reset encryption passphrase")
-		fmt.Println("  validate-config                Try to load configuration file and report errors if any")
-		fmt.Println("  help                           Prints this help message")
-
-	case "migrate-v2":
-		if len(args) < 2 { //nolint:gomnd // Just a count of parameters
-			log.Fatalf("Usage: twitch-bot migrate-v2 <old storage file>")
-		}
-
-		v2s := v2migrator.NewStorageFile()
-		if err := v2s.Load(args[1], cfg.StorageEncryptionPass); err != nil {
-			log.WithError(err).Fatal("loading v2 storage file")
-		}
-
-		if err := v2s.Migrate(db); err != nil {
-			log.WithError(err).Fatal("migrating v2 storage file")
-		}
-
-		log.Info("v2 storage file was migrated")
-
-	case "reset-secrets":
-		// Nuke permission table entries
-		if err := accessService.RemoveAllExtendedTwitchCredentials(); err != nil {
-			log.WithError(err).Fatal("resetting Twitch credentials")
-		}
-		log.Info("removed stored Twitch credentials")
-
-		if err := db.ResetEncryptedCoreMeta(); err != nil {
-			log.WithError(err).Fatal("resetting encrypted meta entries")
-		}
-		log.Info("removed encrypted meta entries")
-
-	case "validate-config":
-		if err := loadConfig(cfg.Config); err != nil {
-			log.WithError(err).Fatal("loading config")
-		}
-
-	default:
-		handleSubCommand([]string{"help"})
-		log.Fatalf("Unknown sub-command %q", args[0])
-
-	}
-}
-
 //nolint:funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
 func main() {
 	var err error
@@ -315,7 +228,9 @@ func main() {
 	}
 
 	if len(rconfig.Args()) > 1 {
-		handleSubCommand(rconfig.Args()[1:])
+		if err = cli.Call(rconfig.Args()[1:]); err != nil {
+			log.Fatalf("error in command: %s", err)
+		}
 		return
 	}
 
