@@ -198,6 +198,7 @@ func handleSubCommand(args []string) {
 		fmt.Println("  actor-docs                     Generate markdown documentation for available actors")
 		fmt.Println("  api-token <name> <scope...>    Generate an api-token to be entered into the config")
 		fmt.Println("  migrate-v2 <old file>          Migrate old (*.json.gz) storage file into new database")
+		fmt.Println("  reset-secrets                  Remove encrypted data to reset encryption passphrase")
 		fmt.Println("  validate-config                Try to load configuration file and report errors if any")
 		fmt.Println("  help                           Prints this help message")
 
@@ -216,6 +217,18 @@ func handleSubCommand(args []string) {
 		}
 
 		log.Info("v2 storage file was migrated")
+
+	case "reset-secrets":
+		// Nuke permission table entries
+		if err := accessService.RemoveAllExtendedTwitchCredentials(); err != nil {
+			log.WithError(err).Fatal("resetting Twitch credentials")
+		}
+		log.Info("removed stored Twitch credentials")
+
+		if err := db.ResetEncryptedCoreMeta(); err != nil {
+			log.WithError(err).Fatal("resetting encrypted meta entries")
+		}
+		log.Info("removed encrypted meta entries")
 
 	case "validate-config":
 		if err := loadConfig(cfg.Config); err != nil {
@@ -301,6 +314,10 @@ func main() {
 	if len(rconfig.Args()) > 1 {
 		handleSubCommand(rconfig.Args()[1:])
 		return
+	}
+
+	if err = db.ValidateEncryption(); err != nil {
+		log.WithError(err).Fatal("validation of database encryption failed, fix encryption passphrase or use 'twitch-bot reset-secrets' to wipe encrypted data")
 	}
 
 	if err = loadConfig(cfg.Config); err != nil {

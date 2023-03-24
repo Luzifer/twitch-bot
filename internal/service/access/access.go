@@ -209,6 +209,13 @@ func (s Service) ListPermittedChannels() ([]string, error) {
 	return out, nil
 }
 
+func (s Service) RemoveAllExtendedTwitchCredentials() error {
+	return errors.Wrap(
+		s.db.DB().Delete(&extendedPermission{}, "1 = 1").Error,
+		"deleting data from table",
+	)
+}
+
 func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	return errors.Wrap(
 		s.db.DB().Delete(&extendedPermission{}, "channel = ?", strings.TrimLeft(channel, "#")).Error,

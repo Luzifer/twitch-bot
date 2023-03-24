@@ -2,12 +2,23 @@ package database
 
 import (
 	"bytes"
+	"crypto/sha512"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/Luzifer/go_helpers/v2/backoff"
+)
+
+const (
+	encryptionValidationKey        = "encryption-validation"
+	encryptionValidationMinBackoff = 500 * time.Millisecond
+	encryptionValidationTries      = 5
 )
 
 type (
@@ -47,10 +58,53 @@ func (c connector) ReadEncryptedCoreMeta(key string, value any) error {
 	return c.readCoreMeta(key, value, c.DecryptField)
 }
 
+// ResetEncryptedCoreMeta removes all CoreKV entries from the database
+func (c connector) ResetEncryptedCoreMeta() error {
+	return errors.Wrap(
+		c.db.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error,
+		"removing encrypted meta entries",
+	)
+}
+
 // StoreEncryptedCoreMeta works like StoreCoreMeta but encrypts the
 // marshalled value before storing it
 func (c connector) StoreEncryptedCoreMeta(key string, value any) error {
 	return c.storeCoreMeta(key, value, c.EncryptField)
+}
+
+func (c connector) ValidateEncryption() error {
+	validationHasher := sha512.New()
+	fmt.Fprint(validationHasher, c.encryptionSecret)
+
+	var (
+		storedHash     string
+		validationHash = fmt.Sprintf("%x", validationHasher.Sum(nil))
+	)
+
+	err := backoff.NewBackoff().
+		WithMaxIterations(encryptionValidationTries).
+		WithMinIterationTime(encryptionValidationMinBackoff).
+		Retry(func() error {
+			return c.ReadEncryptedCoreMeta(encryptionValidationKey, &storedHash)
+		})
+
+	switch {
+	case err == nil:
+		if storedHash != validationHash {
+			// Shouldn't happen: When decryption is possible it should match
+			return errors.New("mismatch between expected and stored hash")
+		}
+		return nil
+
+	case errors.Is(err, ErrCoreMetaNotFound):
+		return errors.Wrap(
+			c.StoreEncryptedCoreMeta(encryptionValidationKey, validationHash),
+			"initializing encryption validation",
+		)
+
+	default:
+		return errors.Wrap(err, "reading encryption-validation")
+	}
 }
 
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
