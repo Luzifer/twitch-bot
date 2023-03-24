@@ -52,7 +52,7 @@ jobs:
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
 
       - name: Lint and test code
-        run: make lint test
+        run: make lint test frontend_lint
 
       - name: Build release
         run: make publish
