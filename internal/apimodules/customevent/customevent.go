@@ -77,6 +77,8 @@ func Register(args plugins.RegistrationArguments) error {
 			{
 				Description: "Time until the event is triggered (must be valid duration like 1h, 1h1m, 10s, ...)",
 				Name:        "schedule_in",
+				Required:    false,
+				Type:        "duration",
 			},
 		},
 		RequiresWriteAuth: true,

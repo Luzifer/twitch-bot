@@ -45,7 +45,7 @@ func init() {
 				Description: "Set the response status for failing checks",
 				Name:        "fail-status",
 				Required:    false,
-				Type:        "integer",
+				Type:        "int",
 			},
 		},
 		RequiresWriteAuth: false,

@@ -140,7 +140,7 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		case "int", "int64":
 			ps = spec.Int64Property()
 
-		case "string":
+		case "duration", "string":
 			ps = spec.StringProperty()
 
 		default:
