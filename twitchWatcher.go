@@ -258,7 +258,7 @@ func (t *twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error 
 	}
 
 	fields := plugins.FieldCollectionFromData(map[string]any{
-		"channel": "#" + payload.FromBroadcasterUserLogin,
+		"channel": "#" + payload.BroadcasterUserLogin,
 		"from_id": payload.FromBroadcasterUserID,
 		"from":    payload.FromBroadcasterUserLogin,
 		"viewers": payload.ViewerCount,
