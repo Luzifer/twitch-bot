@@ -1,3 +1,19 @@
+# 3.7.0 / 2023-03-31
+
+  * New Features
+    * [commercial] Add `commercial` actor
+    * [eventsub] Add `shoutout_created` event
+
+  * Improvements
+    * [core] Add validation and reset of encrypted values
+    * [eventsub] Switch to v2 follows topic
+
+  * Bugfixes
+    * [core] Ensure channel has correct format in access service
+    * [core] Fix: Allow start when no tokens are available
+    * [core] Fix type warnings for Swagger documentation
+    * [eventsub] Fix wrong channel in `shoutout_received` event
+
 # 3.6.0 / 2023-03-06
 
   * New Features
