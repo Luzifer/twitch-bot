@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,11 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+)
+
+const (
+	mysqlMaxIdleConnections = 2 // Default as of Go 1.20
+	mysqlMaxOpenConnections = 10
 )
 
 type (
@@ -38,6 +44,7 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 	case "mysql":
 		mysqlDriver.SetLogger(newLogrusLogWriterWithLevel(logrus.ErrorLevel, driverName))
 		innerDB = mysql.Open(connString)
+		dbTuner = tuneMySQLDatabase
 
 	case "postgres":
 		innerDB = postgres.Open(connString)
@@ -104,6 +111,25 @@ func patchSQLiteConnString(connString string) (string, error) {
 	).Replace(q.Encode())
 
 	return u.String(), nil
+}
+
+func tuneMySQLDatabase(db *sql.DB, err error) error {
+	if err != nil {
+		return errors.Wrap(err, "getting database")
+	}
+
+	// By default the package allows unlimited connections and the
+	// default value of a MySQL / MariaDB server is to allow 151
+	// connections at most. Therefore we tune the connection pool to
+	// sane values in order not to flood the database with connections
+	// in case a lot of events occur at the same time.
+
+	db.SetConnMaxIdleTime(time.Hour)
+	db.SetConnMaxLifetime(time.Hour)
+	db.SetMaxIdleConns(mysqlMaxIdleConnections)
+	db.SetMaxOpenConns(mysqlMaxOpenConnections)
+
+	return nil
 }
 
 func tuneSQLiteDatabase(db *sql.DB, err error) error {
