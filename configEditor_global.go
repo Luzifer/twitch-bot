@@ -13,6 +13,7 @@ import (
 
 var frontendReloadHooks = newHooker()
 
+//nolint:funlen // Just contains a collection of objects
 func registerEditorGlobalMethods() {
 	for _, rd := range []plugins.HTTPRouteRegistrationArgs{
 		{
@@ -94,6 +95,23 @@ func registerEditorGlobalMethods() {
 				{
 					Description: "The regular expression to test",
 					Name:        "regexp",
+					Required:    true,
+					Type:        "string",
+				},
+			},
+			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		},
+		{
+			Description: "Validate a template expression against the built in template function library",
+			HandlerFunc: configEditorGlobalValidateTemplate,
+			Method:      http.MethodPut,
+			Module:      "config-editor",
+			Name:        "Validate template expression",
+			Path:        "/validate-template",
+			QueryParams: []plugins.HTTPRouteParamDocumentation{
+				{
+					Description: "The template expression to test",
+					Name:        "template",
 					Required:    true,
 					Type:        "string",
 				},
@@ -209,6 +227,15 @@ func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
 
 func configEditorGlobalValidateRegex(w http.ResponseWriter, r *http.Request) {
 	if _, err := regexp.Compile(r.FormValue("regexp")); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func configEditorGlobalValidateTemplate(w http.ResponseWriter, r *http.Request) {
+	if err := validateTemplate(r.FormValue("template")); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

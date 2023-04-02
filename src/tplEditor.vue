@@ -1,11 +1,20 @@
 <template>
-  <div :class="wrapClasses">
-    <div ref="editor" />
+  <div>
+    <div :class="wrapClasses">
+      <div ref="editor" />
+    </div>
+    <div
+      v-if="!isValid && validationError"
+      class="d-block invalid-feedback"
+    >
+      {{ validationError }}
+    </div>
   </div>
 </template>
 
 <script>
 import * as constants from './const.js'
+import axios from 'axios'
 import { CodeJar } from 'codejar/codejar.js'
 import Prism from 'prismjs'
 import { withLineNumbers } from 'codejar/linenumbers.js'
@@ -38,8 +47,8 @@ export default {
     wrapClasses() {
       return {
         'form-control': true,
-        'is-invalid': this.state === false,
-        'is-valid': this.state === true,
+        'is-invalid': this.state === false || !this.isValid,
+        'is-valid': this.state === true && this.isValid,
         'template-editor': true,
       }
     },
@@ -48,7 +57,9 @@ export default {
   data() {
     return {
       emittedCode: '',
+      isValid: true,
       jar: null,
+      validationError: '',
     }
   },
 
@@ -56,6 +67,27 @@ export default {
     highlight(editor) {
       const code = editor.textContent
       editor.innerHTML = Prism.highlight(code, this.grammar, 'template')
+    },
+
+    validateTemplate(template) {
+      if (template === '') {
+        this.isValid = true
+        this.validationError = ''
+        this.$emit('valid-template', true)
+        return
+      }
+
+      return axios.put(`config-editor/validate-template?template=${encodeURIComponent(template)}`)
+        .then(() => {
+          this.isValid = true
+          this.validationError = ''
+          this.$emit('valid-template', true)
+        })
+        .catch(resp => {
+          this.isValid = false
+          this.validationError = resp.response.data.split(':1:')[1]
+          this.$emit('valid-template', false)
+        })
     },
   },
 
@@ -65,6 +97,7 @@ export default {
       tab: ' '.repeat(2),
     })
     this.jar.onUpdate(code => {
+      this.validateTemplate(code)
       this.emittedCode = code
       this.$emit('input', code)
     })
@@ -101,13 +134,16 @@ export default {
 
 <style>
 .template-editor {
-  background-color: #fff;
-  border-radius: 0.25rem;
   color: #444;
   font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
   font-size: 87.5%;
   height: fit-content;
   padding: 0;
+}
+
+.template-editor .codejar-wrap {
+  background-color: #fff;
+  border-radius: 0.25rem;
 }
 
 .template-editor .codejar-linenumbers {

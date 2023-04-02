@@ -398,6 +398,7 @@
                 <template-editor
                   id="formRuleDisableOnTemplate"
                   v-model="models.rule.disable_on_template"
+                  @valid-template="valid => updateTemplateValid('rule.disable_on_template', valid)"
                 />
               </b-form-group>
             </b-tab>
@@ -603,6 +604,7 @@
                         :id="`${models.rule.uuid}-action-${idx}-${field.key}`"
                         v-model="models.rule.actions[idx].attributes[field.key]"
                         :state="validateActionArgument(idx, field.key)"
+                        @valid-template="valid => updateTemplateValid(`${models.rule.uuid}-action-${idx}-${field.key}`, valid)"
                       />
                     </b-form-group>
 
@@ -781,6 +783,7 @@ export default {
 
       showRuleEditModal: false,
       showRuleSubscribeModal: false,
+      templateValid: {},
       validateReason: null,
     }
   },
@@ -850,6 +853,7 @@ export default {
         cooldown: this.fixDurationRepresentationToString(msg.cooldown),
         user_cooldown: this.fixDurationRepresentationToString(msg.user_cooldown),
       })
+      this.templateValid = {}
       this.showRuleEditModal = true
       this.validateMatcherRegex()
     },
@@ -976,6 +980,7 @@ export default {
 
     newRule() {
       Vue.set(this.models, 'rule', { match_message__validation: true })
+      this.templateValid = {}
       this.showRuleEditModal = true
     },
 
@@ -1094,6 +1099,10 @@ export default {
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
+    updateTemplateValid(id, valid) {
+      Vue.set(this.templateValid, id, valid)
+    },
+
     validateActionArgument(idx, key) {
       const action = this.models.rule.actions[idx]
       const def = this.getActionDefinitionByType(action.type)
@@ -1189,6 +1198,11 @@ export default {
     },
 
     validateRule() {
+      if (Object.entries(this.templateValid).filter(e => !e[1]).length > 0) {
+        this.validateReason = 'templateValid'
+        return false
+      }
+
       if (!this.models.rule.match_message__validation) {
         this.validateReason = 'rule.match_message__validation'
         return false

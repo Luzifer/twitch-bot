@@ -124,6 +124,7 @@
               id="formAutoMessageMessage"
               v-model="models.autoMessage.message"
               :state="models.autoMessage.message ? models.autoMessage.message.length <= validateAutoMessageMessageLength : false"
+              @valid-template="valid => updateTemplateValid('autoMessage.message', valid)"
             />
             <div slot="description">
               <font-awesome-icon
@@ -227,6 +228,7 @@
             <template-editor
               id="formAutoMessageDisableOnTemplate"
               v-model="models.autoMessage.disable_on_template"
+              @valid-template="valid => updateTemplateValid('autoMessage.disable_on_template', valid)"
             />
           </b-form-group>
         </b-col>
@@ -281,6 +283,10 @@ export default {
       }
 
       if (!this.validateAutoMessageChannel) {
+        return false
+      }
+
+      if (Object.entries(this.templateValid).filter(e => !e[1]).length > 0) {
         return false
       }
 
@@ -344,6 +350,7 @@ export default {
       },
 
       showAutoMessageEditModal: false,
+      templateValid: {},
     }
   },
 
@@ -376,6 +383,7 @@ export default {
         ...msg,
         sendMode: msg.cron ? 'cron' : 'lines',
       })
+      this.templateValid = {}
       this.showAutoMessageEditModal = true
     },
 
@@ -392,6 +400,7 @@ export default {
 
     newAutoMessage() {
       Vue.set(this.models, 'autoMessage', {})
+      this.templateValid = {}
       this.showAutoMessageEditModal = true
     },
 
@@ -421,6 +430,10 @@ export default {
         this.$bus.$emit(constants.NOTIFY_CHANGE_PENDING, true)
       })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    updateTemplateValid(id, valid) {
+      Vue.set(this.templateValid, id, valid)
     },
   },
 

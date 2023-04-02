@@ -172,6 +172,10 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 		return errors.Wrap(err, "patching config")
 	}
 
+	if err = cfgFile.runLoadChecks(); err != nil {
+		return errors.Wrap(err, "checking config after patch")
+	}
+
 	return errors.Wrap(
 		writeConfigToYAML(filename, authorName, authorEmail, summary, cfgFile),
 		"replacing config",
