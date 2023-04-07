@@ -195,7 +195,24 @@ func (actor) IsAsync() bool { return false }
 
 func (actor) Name() string { return actorName }
 
-func (actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) error { return nil }
+func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) error {
+	if v, err := attrs.String("action"); err != nil || v == "" {
+		return errors.New("action must be non-empty string")
+	}
+
+	if v, err := attrs.String("reason"); err != nil || v == "" {
+		return errors.New("reason must be non-empty string")
+	}
+
+	if len(attrs.MustStringSlice("allowed_links"))+
+		len(attrs.MustStringSlice("disallowed_links"))+
+		len(attrs.MustStringSlice("allowed_clip_channels"))+
+		len(attrs.MustStringSlice("disallowed_clip_channels")) == 0 {
+		return errors.New("no conditions are provided")
+	}
+
+	return nil
+}
 
 func (a actor) check(links []string, clips []twitch.ClipInfo, attrs *plugins.FieldCollection) (v verdict) {
 	hasClipDefinition := len(attrs.MustStringSlice("allowed_clip_channels"))+len(attrs.MustStringSlice("disallowed_clip_channels")) > 0
