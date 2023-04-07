@@ -68,6 +68,25 @@ func TestScanForLinks(t *testing.T) {
 				"https://example.com/",
 			},
 		},
+		// Case: obfuscation with "dot"
+		{
+			Message: "I'm live now on twitch dot tv/twitch",
+			ExpectedLinks: []string{
+				"https://www.twitch.tv/twitch",
+			},
+		},
+		// Case: enhanced "dot" obfuscation
+		{
+			Message: "You can visit Archive(Dot) org in your browser",
+			ExpectedLinks: []string{
+				"http://Archive.org",
+			},
+		},
+		// Case: false positive but not resolvable link
+		{
+			Message:       "game dot exe has stopped working",
+			ExpectedLinks: nil,
+		},
 	} {
 		linksFound := c.ScanForLinks(testCase.Message)
 		sort.Strings(linksFound)

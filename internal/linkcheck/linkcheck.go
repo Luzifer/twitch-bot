@@ -54,6 +54,7 @@ func (c Checker) ScanForLinks(message string) (links []string) {
 		c.scanPlainNoObfuscate,
 		c.scanObfuscateSpace,
 		c.scanObfuscateSpecialCharsAndSpaces,
+		c.scanDotObfuscation,
 	} {
 		if links = scanner(message); links != nil {
 			return links
@@ -131,6 +132,11 @@ func (Checker) resolveReference(origin *url.URL, loc *url.URL) string {
 func (Checker) getJar() *cookiejar.Jar {
 	jar, _ := cookiejar.New(nil)
 	return jar
+}
+
+func (c Checker) scanDotObfuscation(message string) (links []string) {
+	message = regexp.MustCompile(`(?i)\s*\(?dot\)?\s*`).ReplaceAllString(message, ".")
+	return c.scanPlainNoObfuscate(message)
 }
 
 func (c Checker) scanObfuscateSpace(message string) (links []string) {
