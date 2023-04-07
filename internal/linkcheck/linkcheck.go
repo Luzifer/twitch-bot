@@ -37,6 +37,7 @@ var (
 	defaultUserAgents = []string{}
 	dropSet           = regexp.MustCompile(`[^a-zA-Z0-9.:/\s_-]`)
 	linkTest          = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
+	numericHost       = regexp.MustCompile(`^(?:[0-9]+\.)*[0-9]+(?::[0-9]+)?$`)
 
 	//go:embed user-agents.txt
 	uaList string
@@ -100,7 +101,18 @@ func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack [
 	}
 
 	if u.Scheme == "" {
+		// We have no scheme and the url is in the path, lets add the
+		// scheme and re-parse the URL to avoid some confusion
 		u.Scheme = "http"
+		u, err = url.Parse(u.String())
+		if err != nil {
+			return ""
+		}
+	}
+
+	if numericHost.MatchString(u.Host) && !c.skipValidation {
+		// Host is fully numeric: We don't support scanning that
+		return ""
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)

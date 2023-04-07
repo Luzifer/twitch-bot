@@ -60,7 +60,6 @@ func TestScanForLinks(t *testing.T) {
 	}
 
 	c := New()
-	c.skipValidation = true
 
 	for _, testCase := range []struct {
 		Message       string
