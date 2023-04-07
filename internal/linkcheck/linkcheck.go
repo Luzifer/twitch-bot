@@ -100,6 +100,7 @@ func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, userAgent s
 	if err != nil {
 		return ""
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode > 299 && resp.StatusCode < 400 {
 		// We got a redirect

@@ -122,6 +122,7 @@ const (
 	verdictMisbehave
 )
 
+//nolint:gocyclo // Minimum over the limit, makes no sense to split
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	// In case the clip detector did not run before, lets run it now
 	if preventCooldown, err = (clipdetector.Actor{}).Execute(c, m, r, eventData, attrs); err != nil {
@@ -258,7 +259,7 @@ func (actor) checkAllClipChannelsAllowed(allowList []string, clips []twitch.Clip
 	for _, clip := range clips {
 		clipAllowed := false
 		for _, allowed := range allowList {
-			if strings.ToLower(clip.BroadcasterName) == strings.ToLower(allowed) {
+			if strings.EqualFold(clip.BroadcasterName, allowed) {
 				clipAllowed = true
 			}
 		}
@@ -278,7 +279,7 @@ func (actor) checkAllClipChannelsAllowed(allowList []string, clips []twitch.Clip
 func (actor) checkClipChannelDenied(denyList []string, clips []twitch.ClipInfo) verdict {
 	for _, clip := range clips {
 		for _, denied := range denyList {
-			if strings.ToLower(clip.BroadcasterName) == strings.ToLower(denied) {
+			if strings.EqualFold(clip.BroadcasterName, denied) {
 				return verdictMisbehave
 			}
 		}
