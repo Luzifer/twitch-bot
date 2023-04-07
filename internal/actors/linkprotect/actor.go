@@ -71,7 +71,7 @@ func Register(args plugins.RegistrationArguments) error {
 			},
 			{
 				Default:         "",
-				Description:     "Enforcement action to take when disallowed link / clip is detected",
+				Description:     "Enforcement action to take when disallowed link / clip is detected (ban, delete, duration-value i.e. 1m)",
 				Key:             "action",
 				Name:            "Action",
 				Optional:        false,

@@ -123,7 +123,7 @@ Uses link- and clip-scanner to detect links / clips and applies link protection 
     # Optional: true
     # Type:     array of strings
     disallowed_clip_channels: []
-    # Enforcement action to take when disallowed link / clip is detected
+    # Enforcement action to take when disallowed link / clip is detected (ban, delete, duration-value i.e. 1m)
     # Optional: false
     # Type:     string
     action: ""
