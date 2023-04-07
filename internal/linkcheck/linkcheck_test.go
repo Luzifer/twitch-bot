@@ -5,19 +5,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strconv"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInfiniteRedirect(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/test", http.StatusFound) })
-	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/", http.StatusFound) })
+	hdl := http.NewServeMux()
+	hdl.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/test", http.StatusFound) })
+	hdl.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/", http.StatusFound) })
 
 	var (
 		c  = New()
-		ts = httptest.NewServer(mux)
+		ts = httptest.NewServer(hdl)
 	)
 	t.Cleanup(ts.Close)
 
@@ -28,6 +30,28 @@ func TestInfiniteRedirect(t *testing.T) {
 	// We expect /test to be the first repeat as the callstack will look like this:
 	// ":12345", ":12345/test", ":12345/", ":12345/test" (which is the duplicate)
 	assert.Equal(t, []string{fmt.Sprintf("%s/test", ts.URL)}, c.ScanForLinks(msg))
+}
+
+func TestMaxRedirects(t *testing.T) {
+	hdl := mux.NewRouter()
+	hdl.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/1", http.StatusFound) })
+	hdl.HandleFunc("/{num}", func(w http.ResponseWriter, r *http.Request) {
+		tn, _ := strconv.Atoi(mux.Vars(r)["num"])
+		http.Redirect(w, r, fmt.Sprintf("/%d", tn+1), http.StatusFound)
+	})
+
+	var (
+		c  = New()
+		ts = httptest.NewServer(hdl)
+	)
+	t.Cleanup(ts.Close)
+
+	c.skipValidation = true
+
+	msg := fmt.Sprintf("Here have a redirect loop: %s", ts.URL)
+
+	// We expect the call to `/N` to have N previous entries and therefore be the break-point
+	assert.Equal(t, []string{fmt.Sprintf("%s/%d", ts.URL, maxRedirects)}, c.ScanForLinks(msg))
 }
 
 func TestScanForLinks(t *testing.T) {

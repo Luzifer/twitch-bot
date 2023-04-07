@@ -15,9 +15,13 @@ import (
 	"github.com/Luzifer/go_helpers/v2/str"
 )
 
-// DefaultCheckTimeout defines the default time the request to a site
-// may take to answer
-const DefaultCheckTimeout = 10 * time.Second
+const (
+	// DefaultCheckTimeout defines the default time the request to a site
+	// may take to answer
+	DefaultCheckTimeout = 10 * time.Second
+
+	maxRedirects = 50
+)
 
 type (
 	// Checker contains logic to detect and resolve links in a message
@@ -75,7 +79,7 @@ func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack [
 		return ""
 	}
 
-	if str.StringInSlice(link, callStack) {
+	if str.StringInSlice(link, callStack) || len(callStack) == maxRedirects {
 		// We got ourselves a loop: Yay!
 		return link
 	}
