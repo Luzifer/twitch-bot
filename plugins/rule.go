@@ -99,7 +99,7 @@ func (r *Rule) Matches(m *irc.Message, event *string, timerStore TimerStore, msg
 		r.allowExecuteDisable,
 		r.allowExecuteChannelWhitelist,
 		r.allowExecuteUserWhitelist,
-		r.allowExecuteEventWhitelist,
+		r.allowExecuteEventMatch,
 		r.allowExecuteMessageMatcherWhitelist,
 		r.allowExecuteMessageMatcherBlacklist,
 		r.allowExecuteBadgeBlacklist,
@@ -358,18 +358,50 @@ func (r *Rule) allowExecuteDisableOnTemplate(logger *log.Entry, m *irc.Message, 
 	return true
 }
 
-func (r *Rule) allowExecuteEventWhitelist(logger *log.Entry, _ *irc.Message, event *string, _ twitch.BadgeCollection, _ *FieldCollection) bool {
-	if r.MatchEvent == nil || *r.MatchEvent == "" {
-		// No match criteria set, does not speak against matching
+func (r *Rule) allowExecuteEventMatch(logger *log.Entry, _ *irc.Message, event *string, _ twitch.BadgeCollection, _ *FieldCollection) bool {
+	// The user defines either no event to match or they define an
+	// event to match. We now need to ensure this match is valid for
+	// the current execution:
+	//
+	// - If the user gave no event we MUST NOT have an event defined
+	// - If the user gave an event we MUST have the same event defined
+	//
+	// To aid fighting spam we do define some excemption from these
+	// rules:
+	//
+	// - Bits are sent using IRC messages and might contains spam
+	//   therefore we additionally match them through a message
+	//   matcher
+	// - Resubs are also IRC messages and might be abused to spam
+	//   though this is quite unlikely. Even though it's unlikely
+	//   we also allow a match for message matchers to aid mods
+	//
+	// As all set events are always pointer to non-empty strings we
+	// assume an empty string in case either is not set and then
+	// compare the string contents.
+
+	var mE, gE string
+
+	if r.MatchEvent != nil {
+		mE = *r.MatchEvent
+	}
+
+	if event != nil {
+		gE = *event
+	}
+
+	if mE == gE {
+		// Event does exactly match
 		return true
 	}
 
-	if event == nil || *r.MatchEvent != *event {
-		logger.Trace("Non-Match: Event")
-		return false
+	if mE == "" && str.StringInSlice(gE, []string{"bits", "resub"}) {
+		// Additional message matchers - see explanation above
+		return true
 	}
 
-	return true
+	logger.Trace("Non-Match: Event")
+	return false
 }
 
 func (r *Rule) allowExecuteMessageMatcherBlacklist(logger *log.Entry, m *irc.Message, _ *string, _ twitch.BadgeCollection, _ *FieldCollection) bool {

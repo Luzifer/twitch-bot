@@ -157,7 +157,7 @@ func TestAllowExecuteEventWhitelist(t *testing.T) {
 		"foobar": false,
 		"test":   true,
 	} {
-		if res := r.allowExecuteEventWhitelist(testLogger, nil, &evt, twitch.BadgeCollection{}, nil); exp != res {
+		if res := r.allowExecuteEventMatch(testLogger, nil, &evt, twitch.BadgeCollection{}, nil); exp != res {
 			t.Errorf("Event %q yield unexpected result: exp=%v res=%v", evt, exp, res)
 		}
 	}
