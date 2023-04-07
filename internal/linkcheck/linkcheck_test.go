@@ -60,6 +60,7 @@ func TestScanForLinks(t *testing.T) {
 	}
 
 	c := New()
+	c.skipValidation = true
 
 	for _, testCase := range []struct {
 		Message       string
@@ -129,16 +130,30 @@ func TestScanForLinks(t *testing.T) {
 				"http://Archive.org",
 			},
 		},
-		// Case: false positive but not resolvable link
+		// Case: Youtube does weird stuff
 		{
-			Message:       "game dot exe has stopped working",
-			ExpectedLinks: nil,
+			Message: "https://luziferus.tv/youtube",
+			ExpectedLinks: []string{
+				"https://www.youtube.com/channel/UCjsRmaAQ0IHR2CNEBqfNOSQ",
+			},
 		},
+		// Case: Instagram also does weird things
+		{
+			Message: "https://bit.ly/3KHpJuy",
+			ExpectedLinks: []string{
+				"https://www.instagram.com/instagram/",
+			},
+		},
+		// Case: false positives
+		{Message: "game dot exe has stopped working", ExpectedLinks: nil},
+		{Message: "You're following since 12.12.2020 DogChamp", ExpectedLinks: nil},
 	} {
-		linksFound := c.ScanForLinks(testCase.Message)
-		sort.Strings(linksFound)
+		t.Run(testCase.Message, func(t *testing.T) {
+			linksFound := c.ScanForLinks(testCase.Message)
+			sort.Strings(linksFound)
 
-		assert.Equal(t, testCase.ExpectedLinks, linksFound, "links from message %q", testCase.Message)
+			assert.Equal(t, testCase.ExpectedLinks, linksFound, "links from message %q", testCase.Message)
+		})
 	}
 }
 

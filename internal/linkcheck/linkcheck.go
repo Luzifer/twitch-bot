@@ -138,6 +138,31 @@ func (Checker) resolveReference(origin *url.URL, loc *url.URL) string {
 		return loc.Query().Get("to")
 	}
 
+	if loc.Host == "consent.youtube.com" && loc.Query().Has("continue") {
+		// Youtube links end up in consent page but we want the real
+		// target so we use the continue parameter where we strip the
+		// cbrd query parameters as that one causes an infinite loop.
+
+		contTarget, err := url.Parse(loc.Query().Get("continue"))
+		if err == nil {
+			v := contTarget.Query()
+			v.Del("cbrd")
+
+			contTarget.RawQuery = v.Encode()
+			return contTarget.String()
+		}
+
+		return loc.Query().Get("continue")
+	}
+
+	if loc.Host == "www.instagram.com" && loc.Query().Has("next") {
+		// Instagram likes its login page, we on the other side don't
+		// care about the sign-in or even the content. Therefore we
+		// just take their redirect target and use that as the next
+		// URL
+		return loc.Query().Get("next")
+	}
+
 	// Default fallback behavior: Do a normal resolve
 	return origin.ResolveReference(loc).String()
 }
