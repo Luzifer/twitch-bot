@@ -17,17 +17,17 @@ var (
 )
 
 type FieldCollection struct {
-	data map[string]interface{}
+	data map[string]any
 	lock sync.RWMutex
 }
 
 // NewFieldCollection creates a new FieldCollection with empty data store
 func NewFieldCollection() *FieldCollection {
-	return &FieldCollection{data: make(map[string]interface{})}
+	return &FieldCollection{data: make(map[string]any)}
 }
 
 // FieldCollectionFromData is a wrapper around NewFieldCollection and SetFromData
-func FieldCollectionFromData(data map[string]interface{}) *FieldCollection {
+func FieldCollectionFromData(data map[string]any) *FieldCollection {
 	o := NewFieldCollection()
 	o.SetFromData(data)
 	return o
@@ -65,7 +65,7 @@ func (f *FieldCollection) Clone() *FieldCollection {
 }
 
 // Data creates a map-copy of the data stored inside the FieldCollection
-func (f *FieldCollection) Data() map[string]interface{} {
+func (f *FieldCollection) Data() map[string]any {
 	if f == nil {
 		return nil
 	}
@@ -73,7 +73,7 @@ func (f *FieldCollection) Data() map[string]interface{} {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
-	out := make(map[string]interface{})
+	out := make(map[string]any)
 	for k := range f.data {
 		out[k] = f.data[k]
 	}
@@ -162,6 +162,32 @@ func (f *FieldCollection) MustString(name string, defVal *string) string {
 	return v
 }
 
+// MustStringSlice is a wrapper around StringSlice and returns nil in case name is not set
+func (f *FieldCollection) MustStringSlice(name string) []string {
+	v, err := f.StringSlice(name)
+	if err != nil {
+		return nil
+	}
+	return v
+}
+
+// Any tries to read key name as any-type (interface)
+func (f *FieldCollection) Any(name string) (any, error) {
+	if f == nil || f.data == nil {
+		return false, errors.New("uninitialized field collection")
+	}
+
+	f.lock.RLock()
+	defer f.lock.RUnlock()
+
+	v, ok := f.data[name]
+	if !ok {
+		return false, ErrValueNotSet
+	}
+
+	return v, nil
+}
+
 // Bool tries to read key name as bool
 func (f *FieldCollection) Bool(name string) (bool, error) {
 	if f == nil || f.data == nil {
@@ -236,7 +262,7 @@ func (f *FieldCollection) Int64(name string) (int64, error) {
 }
 
 // Set sets a single key to specified value
-func (f *FieldCollection) Set(key string, value interface{}) {
+func (f *FieldCollection) Set(key string, value any) {
 	if f == nil {
 		f = NewFieldCollection()
 	}
@@ -245,14 +271,14 @@ func (f *FieldCollection) Set(key string, value interface{}) {
 	defer f.lock.Unlock()
 
 	if f.data == nil {
-		f.data = make(map[string]interface{})
+		f.data = make(map[string]any)
 	}
 
 	f.data[key] = value
 }
 
 // SetFromData takes a map of data and copies all data into the FieldCollection
-func (f *FieldCollection) SetFromData(data map[string]interface{}) {
+func (f *FieldCollection) SetFromData(data map[string]any) {
 	if f == nil {
 		f = NewFieldCollection()
 	}
@@ -261,7 +287,7 @@ func (f *FieldCollection) SetFromData(data map[string]interface{}) {
 	defer f.lock.Unlock()
 
 	if f.data == nil {
-		f.data = make(map[string]interface{})
+		f.data = make(map[string]any)
 	}
 
 	for key, value := range data {
@@ -312,7 +338,7 @@ func (f *FieldCollection) StringSlice(name string) ([]string, error) {
 	case []string:
 		return v, nil
 
-	case []interface{}:
+	case []any:
 		var out []string
 
 		for _, iv := range v {
@@ -329,7 +355,7 @@ func (f *FieldCollection) StringSlice(name string) ([]string, error) {
 	return nil, ErrValueMismatch
 }
 
-// Implement JSON marshalling to plain underlying map[string]interface{}
+// Implement JSON marshalling to plain underlying map[string]any
 
 func (f *FieldCollection) MarshalJSON() ([]byte, error) {
 	if f == nil || f.data == nil {
@@ -343,7 +369,7 @@ func (f *FieldCollection) MarshalJSON() ([]byte, error) {
 }
 
 func (f *FieldCollection) UnmarshalJSON(raw []byte) error {
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return errors.Wrap(err, "unmarshalling from JSON")
 	}
@@ -352,14 +378,14 @@ func (f *FieldCollection) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 
-// Implement YAML marshalling to plain underlying map[string]interface{}
+// Implement YAML marshalling to plain underlying map[string]any
 
-func (f *FieldCollection) MarshalYAML() (interface{}, error) {
+func (f *FieldCollection) MarshalYAML() (any, error) {
 	return f.Data(), nil
 }
 
-func (f *FieldCollection) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	data := make(map[string]interface{})
+func (f *FieldCollection) UnmarshalYAML(unmarshal func(any) error) error {
+	data := make(map[string]any)
 	if err := unmarshal(&data); err != nil {
 		return errors.Wrap(err, "unmarshalling from YAML")
 	}

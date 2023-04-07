@@ -100,6 +100,47 @@ Delete message which caused the rule to be executed
   # Does not have configuration attributes
 ```
 
+## Enforce Link-Protection
+
+Uses link- and clip-scanner to detect links / clips and applies link protection as defined
+
+```yaml
+- type: linkprotect
+  attributes:
+    # Allowed links (if any is specified all non matching links will cause enforcement action, link must contain any of these strings)
+    # Optional: true
+    # Type:     array of strings
+    allowed_links: []
+    # Disallowed links (if any is specified all non matching links will not cause enforcement action, link must contain any of these strings)
+    # Optional: true
+    # Type:     array of strings
+    disallowed_links: []
+    # Allowed clip channels (if any is specified clips of all other channels will cause enforcement action, clip-links will be ignored in link-protection when this is used)
+    # Optional: true
+    # Type:     array of strings
+    allowed_clip_channels: []
+    # Disallowed clip channels (if any is specified clips of all other channels will not cause enforcement action, clip-links will be ignored in link-protection when this is used)
+    # Optional: true
+    # Type:     array of strings
+    disallowed_clip_channels: []
+    # Enforcement action to take when disallowed link / clip is detected (ban, delete, duration-value i.e. 1m)
+    # Optional: false
+    # Type:     string
+    action: ""
+    # Reason why the enforcement action was taken
+    # Optional: false
+    # Type:     string
+    reason: ""
+    # Stop rule execution when action is applied (i.e. not to post a message after a ban for spam links)
+    # Optional: true
+    # Type:     bool
+    stop_on_action: false
+    # Stop rule execution when no action is applied (i.e. not to post a message when no enforcement action is taken)
+    # Optional: true
+    # Type:     bool
+    stop_on_no_action: false
+```
+
 ## Execute Script / Command
 
 Execute external script / command
@@ -338,6 +379,24 @@ Respond to message with a new message
     # Optional: true
     # Type:     string
     to_channel: ""
+```
+
+## Scan for Clips
+
+Scans for clip-links in the message and adds the "clips" field to the event data
+
+```yaml
+- type: clipdetector
+  # Does not have configuration attributes
+```
+
+## Scan for Links
+
+Scans for links in the message and adds the "links" field to the event data
+
+```yaml
+- type: linkdetector
+  # Does not have configuration attributes
 ```
 
 ## Send RAW Message
