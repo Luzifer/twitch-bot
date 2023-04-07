@@ -39,25 +39,25 @@ func TestScanForLinks(t *testing.T) {
 				"https://example.com/",
 			},
 		},
-		// Case: typical spam message with vk.cc shortener
+		// Case: message with vk.cc shortener
 		{
-			Message: "Wanna become famous?  Upgrade your channel on vk.cc/cmskar",
+			Message: "See more here: vk.cc/ckGZN2",
 			ExpectedLinks: []string{
-				"https://goodness.selly.store",
+				"https://vk.com/club206261664",
 			},
 		},
 		// Case: link is obfuscated using space
 		{
-			Message: "Wow! Upgrade your channel on yourfollowz. com",
+			Message: "Take a look at example. com",
 			ExpectedLinks: []string{
-				"http://yourfollowz.com",
+				"http://example.com",
 			},
 		},
 		// Case: link is obfuscated using space and braces
 		{
-			Message: "Wow! Upgrade your channel on yourfollowz. (com)",
+			Message: "Take a look at example. (com)",
 			ExpectedLinks: []string{
-				"http://yourfollowz.com",
+				"http://example.com",
 			},
 		},
 		// Case: multiple links in one message
