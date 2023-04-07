@@ -39,4 +39,4 @@ push_wiki:
 
 update_ua_list:
 	# User-Agents provided by https://www.useragents.me/
-	curl -sSf https://www.useragents.me/api | jq -r '.data[].ua' >internal/linkcheck/user-agents.txt
+	curl -sSf https://www.useragents.me/api | jq -r '.data[].ua' | grep -v 'Trident' >internal/linkcheck/user-agents.txt
