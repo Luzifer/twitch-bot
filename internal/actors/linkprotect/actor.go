@@ -96,6 +96,15 @@ func Register(args plugins.RegistrationArguments) error {
 				SupportTemplate: false,
 				Type:            plugins.ActionDocumentationFieldTypeBool,
 			},
+			{
+				Default:         "false",
+				Description:     "Stop rule execution when no action is applied (i.e. not to post a message when no enforcement action is taken)",
+				Key:             "stop_on_no_action",
+				Name:            "Stop on no Action",
+				Optional:        true,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeBool,
+			},
 		},
 	})
 
@@ -140,6 +149,9 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	if a.check(links, clips, attrs) == verdictAllFine {
+		if attrs.MustBool("stop_on_no_action", ptrBoolFalse) {
+			return false, plugins.ErrStopRuleExecution
+		}
 		return false, nil
 	}
 

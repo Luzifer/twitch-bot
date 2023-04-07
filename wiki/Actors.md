@@ -135,6 +135,10 @@ Uses link- and clip-scanner to detect links / clips and applies link protection 
     # Optional: true
     # Type:     bool
     stop_on_action: false
+    # Stop rule execution when no action is applied (i.e. not to post a message when no enforcement action is taken)
+    # Optional: true
+    # Type:     bool
+    stop_on_no_action: false
 ```
 
 ## Execute Script / Command
