@@ -90,8 +90,8 @@
               Disabled
             </b-badge>
             <b-badge
-              v-for="badge in formatRuleActions(data.item)"
-              :key="badge"
+              v-for="(badge, idx) in formatRuleActions(data.item)"
+              :key="`${badge}-${idx}`"
               class="mt-1 mr-1"
             >
               {{ badge }}
