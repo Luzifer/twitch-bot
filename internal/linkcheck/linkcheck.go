@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Luzifer/go_helpers/v2/str"
 )
 
 // DefaultCheckTimeout defines the default time the request to a site
@@ -22,6 +24,8 @@ type (
 	Checker struct {
 		checkTimeout time.Duration
 		userAgents   []string
+
+		skipValidation bool // Only for tests, not settable from the outside
 	}
 )
 
@@ -66,9 +70,14 @@ func (c Checker) ScanForLinks(message string) (links []string) {
 
 // resolveFinal takes a link and looks up the final destination of
 // that link after all redirects were followed
-func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, userAgent string) string {
-	if !linkTest.MatchString(link) {
+func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack []string, userAgent string) string {
+	if !linkTest.MatchString(link) && !c.skipValidation {
 		return ""
+	}
+
+	if str.StringInSlice(link, callStack) {
+		// We got ourselves a loop: Yay!
+		return link
 	}
 
 	client := &http.Client{
@@ -110,7 +119,7 @@ func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, userAgent s
 			return ""
 		}
 		target := c.resolveReference(u, tu)
-		return c.resolveFinal(target, cookieJar, userAgent)
+		return c.resolveFinal(target, cookieJar, append(callStack, link), userAgent)
 	}
 
 	// We got a response, it's no redirect, we count this as a success
@@ -144,7 +153,7 @@ func (c Checker) scanObfuscateSpace(message string) (links []string) {
 	parts := regexp.MustCompile(`\s+`).Split(message, -1)
 
 	for i := 0; i < len(parts)-1; i++ {
-		if link := c.resolveFinal(strings.Join(parts[i:i+2], ""), c.getJar(), c.userAgent()); link != "" {
+		if link := c.resolveFinal(strings.Join(parts[i:i+2], ""), c.getJar(), nil, c.userAgent()); link != "" {
 			links = append(links, link)
 		}
 	}
@@ -162,7 +171,7 @@ func (c Checker) scanPlainNoObfuscate(message string) (links []string) {
 	parts := regexp.MustCompile(`\s+`).Split(message, -1)
 
 	for _, part := range parts {
-		if link := c.resolveFinal(part, c.getJar(), c.userAgent()); link != "" {
+		if link := c.resolveFinal(part, c.getJar(), nil, c.userAgent()); link != "" {
 			links = append(links, link)
 		}
 	}
