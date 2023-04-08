@@ -25,7 +25,6 @@ var (
 	eventTypeDelete             = ptrStr("delete")
 	eventTypeFollow             = ptrStr("follow")
 	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
-	eventTypeHost               = ptrStr("host")
 	eventTypeJoin               = ptrStr("join")
 	eventTypeOutboundRaid       = ptrStr("outbound_raid")
 	eventTypePart               = ptrStr("part")
@@ -55,7 +54,6 @@ var (
 		eventTypeDelete,
 		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,
-		eventTypeHost,
 		eventTypeJoin,
 		eventTypeOutboundRaid,
 		eventTypePart,

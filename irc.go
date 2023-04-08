@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,8 +19,6 @@ import (
 var (
 	rawMessageHandlers     []plugins.RawMessageHandlerFunc
 	rawMessageHandlersLock sync.Mutex
-
-	hostNotificationRegex = regexp.MustCompile(`^(?P<actor>\w+) is now(?: auto)? hosting you(?: for(?: up to)? (?P<amount>[0-9]+) viewers)?.$`)
 )
 
 func notifyRawMessageHandlers(m *irc.Message) error {
@@ -314,15 +311,8 @@ func (i ircHandler) handleTwitchNotice(m *irc.Message) {
 		// Notices SHOULD have msg-id tags...
 		log.WithField("msg", m).Warn("Received notice without msg-id")
 
-	case "host_success", "host_success_viewers":
-		log.WithField("trailing", m.Trailing()).Warn("Incoming host")
-
-		fields := plugins.FieldCollectionFromData(map[string]interface{}{
-			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
-		})
-		go handleMessage(i.c, m, eventTypeHost, fields)
-
+	default:
+		log.WithField("id", m.Tags["msg-id"]).Debug("unhandled notice received")
 	}
 }
 
@@ -343,29 +333,6 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 			am.CountMessage(m.Params[0])
 		}
 		configLock.RUnlock()
-	}
-
-	// Handle the jtv host message for hosts
-	if m.User == "jtv" && hostNotificationRegex.MatchString(m.Trailing()) {
-		matches := hostNotificationRegex.FindStringSubmatch(m.Trailing())
-		if matches[2] == "" {
-			matches[2] = "0"
-		}
-
-		fields := plugins.FieldCollectionFromData(map[string]interface{}{
-			eventFieldChannel: fmt.Sprintf("#%s", i.user),
-			"from":            matches[1],
-			"viewerCount":     0,
-		})
-
-		if v, err := strconv.Atoi(matches[2]); err == nil {
-			fields.Set("viewerCount", v)
-		}
-
-		log.WithFields(log.Fields(fields.Data())).Info("Incoming Host (jtv announce)")
-
-		go handleMessage(i.c, m, eventTypeHost, fields)
-		return
 	}
 
 	if strings.HasPrefix(m.Trailing(), "!permit") {
