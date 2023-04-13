@@ -137,6 +137,9 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	if len(links) == 0 {
 		// If there are no links there is nothing to protect and there
 		// are also no clips as they are parsed from the links
+		if attrs.MustBool("stop_on_no_action", ptrBoolFalse) {
+			return false, plugins.ErrStopRuleExecution
+		}
 		return false, nil
 	}
 
