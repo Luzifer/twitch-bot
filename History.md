@@ -1,3 +1,17 @@
+# 3.8.0 / 2023-04-14
+
+  * New Features
+    * [linkprotect] Add Link-, Clip-Detector and Link-Protection actor (#42)
+
+  * Improvements
+    * [core] Add connection tuning for MySQL databases
+    * [core] Remove "host" related functionality
+    * [editor] Add validation for template fields
+
+  * Bugfixes
+    * [core] Fix: Message matcher matched also event content
+    * [editor] Fix badge key-repetition for duplicated actions
+
 # 3.7.0 / 2023-03-31
 
   * New Features
