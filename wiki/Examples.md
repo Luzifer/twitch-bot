@@ -7,8 +7,8 @@
   - actions:
     - type: respond
       attributes:
-        message: '{{ variable (concat ":" "genericcmd" .channel (group 1)) }}'
-    disable_on_template: '{{ eq (variable (concat ":" "genericcmd" .channel (group 1))) "" }}'
+        message: '{{ variable (list "genericcmd" .channel (group 1) | join ":") }}'
+    disable_on_template: '{{ eq (variable (list "genericcmd" .channel (group 1) | joih ":")) "" }}'
     match_channels: ['#mychannel']
     match_message: '^!([^\s]+)(?: |$)'
 
@@ -16,7 +16,7 @@
   - actions:
     - type: setvariable
       attributes:
-        variable: '{{ concat ":" "genericcmd" .channel (group 1) }}'
+        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
         set: '{{ group 2 }}'
     - type: respond
       attributes:
@@ -29,7 +29,7 @@
   - actions:
     - type: setvariable
       attributes:
-        variable: '{{ concat ":" "genericcmd" .channel (group 1) }}'
+        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
         clear: true
     - type: respond
       attributes:

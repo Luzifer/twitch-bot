@@ -69,19 +69,6 @@ Example:
 < 5
 ```
 
-#### `concat`
-
-Join the given string parts with delimiter (⚠ this replaces the sprig `concat` function: sprig `concat` is not available!)
-
-Syntax: `concat <delimiter> <...parts>`
-
-Example:
-
-```
-# {{ concat ":" "test" .username }}
-< test:luziferus
-```
-
 #### `counterValue`
 
 Returns the current value of the counter which identifier was supplied
@@ -91,7 +78,7 @@ Syntax: `counterValue <counter name>`
 Example:
 
 ```
-# {{ counterValue (concat ":" .channel "test") }}
+# {{ counterValue (list .channel "test" | join ":") }}
 < 5
 ```
 
@@ -319,7 +306,7 @@ Syntax: `seededRandom <string-seed>`
 Example:
 
 ```
-# Your int this hour: {{ printf "%.0f" (multiply (seededRandom (concat ":" "int" .username (now "2006-01-02 15"))) 100) }}%
+# Your int this hour: {{ printf "%.0f" (multiply (seededRandom (list "int" .username (now "2006-01-02 15") | join ":")) 100) }}%
 < Your int this hour: 17%
 ```
 
