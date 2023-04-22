@@ -284,6 +284,19 @@ Example:
 < Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
+#### `seededRandom`
+
+Returns a float value stable for the given seed
+
+Syntax: `seededRandom <string-seed>`
+
+Example:
+
+```
+# Your int this hour: {{ printf "%.0f" (multiply (seededRandom (list "int" .username (now "2006-01-02 15") | join ":")) 100) }}%
+< Your int this hour: 17%
+```
+
 #### `streamUptime`
 
 Returns the duration the stream is online (causes an error if no current stream is found)
@@ -297,17 +310,30 @@ Example:
 < 3 hours, 56 minutes
 ```
 
-#### `seededRandom`
+#### `subCount`
 
-Returns a float value stable for the given seed
+Returns the number of subscribers (accounts) currently subscribed to the given channel
 
-Syntax: `seededRandom <string-seed>`
+Syntax: `subCount <channel>`
 
 Example:
 
 ```
-# Your int this hour: {{ printf "%.0f" (multiply (seededRandom (list "int" .username (now "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 17%
+# {{ subCount "luziferus" }}
+< 26
+```
+
+#### `subPoints`
+
+Returns the number of sub-points currently given through the T1 / T2 / T3 subscriptions to the given channel
+
+Syntax: `subPoints <channel>`
+
+Example:
+
+```
+# {{ subPoints "luziferus" }}
+< 26
 ```
 
 #### `tag`
