@@ -1,3 +1,11 @@
+# 3.9.0 / 2023-05-11
+
+  * New Features
+    * [template] Add `subCount`, `subPoints` template functions
+
+  * Bugfixes
+    * [wiki] Remove deprecated `concat` examples
+
 # 3.8.0 / 2023-04-14
 
   * New Features
