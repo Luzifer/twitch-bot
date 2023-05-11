@@ -123,7 +123,7 @@
             <template-editor
               id="formAutoMessageMessage"
               v-model="models.autoMessage.message"
-              :state="models.autoMessage.message ? models.autoMessage.message.length <= validateAutoMessageMessageLength : false"
+              :state="models.autoMessage.message"
               @valid-template="valid => updateTemplateValid('autoMessage.message', valid)"
             />
             <div slot="description">
@@ -133,7 +133,7 @@
                 :icon="['fas', 'code']"
                 title="Supports Templating"
               />
-              {{ models.autoMessage.message && models.autoMessage.message.length || 0 }} / {{ validateAutoMessageMessageLength }}
+              Ensure the template result has a length of less than {{ validateAutoMessageMessageLength }} characters (Twitch message size limit)
             </div>
           </b-form-group>
 
@@ -275,10 +275,6 @@ export default {
       }
 
       if (this.models.autoMessage.sendMode === 'lines' && (!this.models.autoMessage.message_interval || Number(this.models.autoMessage.message_interval) <= 0)) {
-        return false
-      }
-
-      if (this.validateAutoMessageMessageLength < this.models.autoMessage.message?.length) {
         return false
       }
 
