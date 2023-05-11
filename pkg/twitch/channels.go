@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -75,7 +76,7 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 		default:
 			// Multiple matches: Search for exact one
 			for _, c := range categories {
-				if c.Name == *game {
+				if strings.EqualFold(c.Name, *game) {
 					gid := c.ID
 					data.GameID = &gid
 					break
