@@ -141,7 +141,6 @@ func WithTwitchClient(c *Client) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.twitch = c }
 }
 
-//nolint:funlen,gocognit,gocyclo // Prefer to keep the case handlings together
 func (e *EventSubSocketClient) Run() error {
 	var (
 		errC             = make(chan error, 1)
@@ -158,58 +157,9 @@ func (e *EventSubSocketClient) Run() error {
 		select {
 		case err := <-errC:
 			// Something went wrong
-			var closeErr *websocket.CloseError
-			if errors.As(err, &closeErr) {
-				switch closeErr.Code {
-				case eventsubCloseCodeInternalServerError:
-					e.logger.Warn("websocket reported internal server error")
-					if err = e.connect(e.socketDest, msgC, errC); err != nil {
-						return errors.Wrap(err, "re-connecting after internal-server-error")
-					}
-					continue
-
-				case eventsubCloseCodeClientSentTraffic:
-					e.logger.Error("wrong usage of websocket (client-sent-traffic)")
-
-				case eventsubCloseCodeClientFailedPingPong:
-					e.logger.Error("wrong usage of websocket (missing-ping-pong)")
-
-				case eventsubCloseCodeConnectionUnused:
-					e.logger.Error("wrong usage of websocket (no-topics-subscribed)")
-
-				case eventsubCloseCodeReconnectGraceExpire:
-					e.logger.Error("wrong usage of websocket (no-reconnect-in-time)")
-
-				case eventsubCloseCodeNetworkTimeout:
-					e.logger.Warn("websocket reported network timeout")
-					if err = e.connect(e.socketDest, msgC, errC); err != nil {
-						return errors.Wrap(err, "re-connecting after network-timeout")
-					}
-					continue
-
-				case eventsubCloseCodeNetworkError:
-					e.logger.Warn("websocket reported network error")
-					if err = e.connect(e.socketDest, msgC, errC); err != nil {
-						return errors.Wrap(err, "re-connecting after network-error")
-					}
-					continue
-
-				case eventsubCloseCodeInvalidReconnect:
-					e.logger.Warn("websocket reported invalid reconnect url")
-
-				case websocket.CloseNormalClosure:
-					// We don't take action here as a graceful close should
-					// be initiated by us after establishing a new conn
-					e.logger.Debug("websocket was closed normally")
-					continue
-
-				default:
-					// Some non-twitch close code we did not expect
-					e.logger.WithError(closeErr).Error("websocket reported unexpected error code")
-				}
+			if err = e.handleSocketError(err, msgC, errC); err != nil {
+				return err
 			}
-
-			return err
 
 		case <-socketTimeout.C:
 			// No message received, deeming connection dead
@@ -231,74 +181,21 @@ func (e *EventSubSocketClient) Run() error {
 
 			case eventsubSocketMessageTypeNotification:
 				// We got mail! Yay!
-				var payload eventSubSocketPayloadNotification
-				if err := msg.Unmarshal(&payload); err != nil {
-					errC <- errors.Wrap(err, "unmarshalling notification")
-					continue
-				}
-
-				for _, st := range e.subscriptionTypes {
-					if st.Event != payload.Subscription.Type || st.Version != payload.Subscription.Version || !reflect.DeepEqual(st.Condition, payload.Subscription.Condition) {
-						continue
-					}
-
-					if err := st.Callback(payload.Event); err != nil {
-						e.logger.WithError(err).WithFields(logrus.Fields{
-							"condition": st.Condition,
-							"event":     st.Event,
-							"version":   st.Version,
-						}).Error("callback caused error")
-					}
+				if err := e.handleNotificationMessage(msg); err != nil {
+					errC <- err
 				}
 
 			case eventsubSocketMessageTypeReconnect:
 				// Twitch politely asked us to reconnect
-				var payload eventSubSocketPayloadSession
-				if err := msg.Unmarshal(&payload); err != nil {
-					errC <- errors.Wrap(err, "unmarshalling reconnect message")
-					continue
-				}
-				if payload.Session.ReconnectURL == nil {
-					errC <- errors.New("reconnect message did not contain reconnect_url")
-					continue
-				}
-				if err := e.connect(*payload.Session.ReconnectURL, msgC, errC); err != nil {
-					errC <- errors.Wrap(err, "re-connecting after reconnect message")
-					continue
+				if err := e.handleReconnectMessage(msg, msgC, errC); err != nil {
+					errC <- err
 				}
 
 			case eventsubSocketMessageTypeWelcome:
-				var payload eventSubSocketPayloadSession
-				if err := msg.Unmarshal(&payload); err != nil {
-					errC <- errors.Wrap(err, "unmarshalling welcome message")
-					continue
+				var err error
+				if keepaliveTimeout, err = e.handleWelcomeMessage(msg); err != nil {
+					errC <- err
 				}
-
-				// Configure proper keepalive
-				keepaliveTimeout = time.Duration(payload.Session.KeepaliveTimeoutSeconds) * time.Second
-
-				// Close old connection if present
-				if e.conn != nil {
-					// We had an existing connection, close it
-					if err := e.conn.Close(); err != nil {
-						e.logger.WithError(err).Error("closing old websocket")
-					}
-				}
-
-				// Promote new connection to existing conn
-				e.conn, e.newconn = e.newconn, nil
-
-				// Subscribe to topics if the socket ID changed (should only
-				// happen on first connect or if we established a new
-				// connection after something broke)
-				if e.socketID != payload.Session.ID {
-					if err := e.subscribe(); err != nil {
-						errC <- errors.Wrap(err, "subscribing to topics")
-					}
-				}
-
-				e.socketID = payload.Session.ID
-				e.logger.WithField("id", e.socketID).Debug("websocket connected successfully")
 
 			default:
 				e.logger.WithField("type", msg.Metadata.MessageType).Error("unknown message type received")
@@ -327,6 +224,125 @@ func (e *EventSubSocketClient) connect(url string, msgC chan eventSubSocketMessa
 
 	e.newconn = conn
 	return nil
+}
+
+func (e *EventSubSocketClient) handleNotificationMessage(msg eventSubSocketMessage) error {
+	var payload eventSubSocketPayloadNotification
+	if err := msg.Unmarshal(&payload); err != nil {
+		return errors.Wrap(err, "unmarshalling notification")
+	}
+
+	for _, st := range e.subscriptionTypes {
+		if st.Event != payload.Subscription.Type || st.Version != payload.Subscription.Version || !reflect.DeepEqual(st.Condition, payload.Subscription.Condition) {
+			continue
+		}
+
+		if err := st.Callback(payload.Event); err != nil {
+			e.logger.WithError(err).WithFields(logrus.Fields{
+				"condition": st.Condition,
+				"event":     st.Event,
+				"version":   st.Version,
+			}).Error("callback caused error")
+		}
+	}
+
+	return nil
+}
+
+func (e *EventSubSocketClient) handleReconnectMessage(msg eventSubSocketMessage, msgC chan eventSubSocketMessage, errC chan error) error {
+	var payload eventSubSocketPayloadSession
+	if err := msg.Unmarshal(&payload); err != nil {
+		return errors.Wrap(err, "unmarshalling reconnect message")
+	}
+
+	if payload.Session.ReconnectURL == nil {
+		return errors.New("reconnect message did not contain reconnect_url")
+	}
+
+	if err := e.connect(*payload.Session.ReconnectURL, msgC, errC); err != nil {
+		return errors.Wrap(err, "re-connecting after reconnect message")
+	}
+
+	return nil
+}
+
+func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSocketMessage, errC chan error) error {
+	var closeErr *websocket.CloseError
+	if errors.As(err, &closeErr) {
+		switch closeErr.Code {
+		case eventsubCloseCodeInternalServerError:
+			e.logger.Warn("websocket reported internal server error")
+			return errors.Wrap(e.connect(e.socketDest, msgC, errC), "re-connecting after internal-server-error")
+
+		case eventsubCloseCodeClientSentTraffic:
+			e.logger.Error("wrong usage of websocket (client-sent-traffic)")
+
+		case eventsubCloseCodeClientFailedPingPong:
+			e.logger.Error("wrong usage of websocket (missing-ping-pong)")
+
+		case eventsubCloseCodeConnectionUnused:
+			e.logger.Error("wrong usage of websocket (no-topics-subscribed)")
+
+		case eventsubCloseCodeReconnectGraceExpire:
+			e.logger.Error("wrong usage of websocket (no-reconnect-in-time)")
+
+		case eventsubCloseCodeNetworkTimeout:
+			e.logger.Warn("websocket reported network timeout")
+			return errors.Wrap(e.connect(e.socketDest, msgC, errC), "re-connecting after network-timeout")
+
+		case eventsubCloseCodeNetworkError:
+			e.logger.Warn("websocket reported network error")
+			return errors.Wrap(e.connect(e.socketDest, msgC, errC), "re-connecting after network-error")
+
+		case eventsubCloseCodeInvalidReconnect:
+			e.logger.Warn("websocket reported invalid reconnect url")
+
+		case websocket.CloseNormalClosure:
+			// We don't take action here as a graceful close should
+			// be initiated by us after establishing a new conn
+			e.logger.Debug("websocket was closed normally")
+			return nil
+
+		default:
+			// Some non-twitch close code we did not expect
+			e.logger.WithError(closeErr).Error("websocket reported unexpected error code")
+		}
+	}
+
+	return err
+}
+
+func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (time.Duration, error) {
+	var payload eventSubSocketPayloadSession
+	if err := msg.Unmarshal(&payload); err != nil {
+		return socketInitialTimeout, errors.Wrap(err, "unmarshalling welcome message")
+	}
+
+	// Close old connection if present
+	if e.conn != nil {
+		// We had an existing connection, close it
+		if err := e.conn.Close(); err != nil {
+			e.logger.WithError(err).Error("closing old websocket")
+		}
+	}
+
+	// Promote new connection to existing conn
+	e.conn, e.newconn = e.newconn, nil
+
+	// Subscribe to topics if the socket ID changed (should only
+	// happen on first connect or if we established a new
+	// connection after something broke)
+	if e.socketID != payload.Session.ID {
+		if err := e.subscribe(); err != nil {
+			return socketInitialTimeout, errors.Wrap(err, "subscribing to topics")
+		}
+	}
+
+	e.socketID = payload.Session.ID
+	e.logger.WithField("id", e.socketID).Debug("websocket connected successfully")
+
+	// Configure proper keepalive
+	return time.Duration(payload.Session.KeepaliveTimeoutSeconds) * time.Second, nil
 }
 
 func (e *EventSubSocketClient) subscribe() error {
