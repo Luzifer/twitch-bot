@@ -331,6 +331,7 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 	}
 
 	if storedStatus.esc != nil {
+		log.WithField("channel", channel).Info("watching for eventsub events")
 		go func(storedStatus *twitchChannelState) {
 			if err := storedStatus.esc.Run(); err != nil {
 				log.WithField("channel", channel).WithError(err).Error("eventsub client caused error")
@@ -349,7 +350,6 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 	})
 	if err != nil {
 		if errors.Is(err, access.ErrChannelNotAuthorized) {
-			log.WithField("channel", channel).Debug("channel has no credentials assigned, not listening for eventsub events")
 			return nil, nil
 		}
 
