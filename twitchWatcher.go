@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -26,8 +27,8 @@ type (
 		IsLive   bool
 		Title    string
 
-		isInitialized  bool
-		unregisterFunc func()
+		isInitialized bool
+		esc           *twitch.EventSubSocketClient
 	}
 
 	twitchWatcher struct {
@@ -76,7 +77,7 @@ func (t *twitchWatcher) Check() {
 	var channels []string
 	t.lock.RLock()
 	for c := range t.ChannelStatus {
-		if t.ChannelStatus[c].unregisterFunc != nil {
+		if t.ChannelStatus[c].esc != nil {
 			continue
 		}
 
@@ -95,8 +96,8 @@ func (t *twitchWatcher) RemoveChannel(channel string) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	if f := t.ChannelStatus[channel].unregisterFunc; f != nil {
-		f()
+	if t.ChannelStatus[channel].esc != nil {
+		t.ChannelStatus[channel].esc.Close()
 	}
 
 	delete(t.ChannelStatus, channel)
@@ -282,23 +283,6 @@ func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMe
 	}
 }
 
-func (t *twitchWatcher) handleEventUserAuthRevoke(m json.RawMessage) error {
-	var payload twitch.EventSubEventUserAuthorizationRevoke
-	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
-	}
-
-	if payload.ClientID != cfg.TwitchClient {
-		// We got an revoke for a different ID: Shouldn't happen but whatever.
-		return nil
-	}
-
-	return errors.Wrap(
-		accessService.RemoveExendedTwitchCredentials(payload.UserLogin),
-		"deleting granted scopes",
-	)
-}
-
 func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -332,32 +316,35 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 	storedStatus.Update(status)
 	storedStatus.isInitialized = true
 
-	if storedStatus.unregisterFunc != nil {
+	if storedStatus.esc != nil {
 		// Do not register twice
 		return nil
 	}
 
-	if storedStatus.unregisterFunc, err = t.registerEventSubCallbacks(channel); err != nil {
+	if storedStatus.esc, err = t.registerEventSubCallbacks(channel); err != nil {
 		return errors.Wrap(err, "registering eventsub callbacks")
 	}
 
 	return nil
 }
 
-func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error) {
-	if twitchEventSubClient == nil {
-		// We don't have eventsub functionality
-		return nil, nil
-	}
-
+func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.EventSubSocketClient, error) {
 	userID, err := twitchClient.GetIDForUsername(channel)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolving channel to user-id")
 	}
 
+	tc, err := accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
+		TwitchClient:       cfg.TwitchClient,
+		TwitchClientSecret: cfg.TwitchClientSecret,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "getting twitch client for channel")
+	}
+
 	var (
 		topicRegistrations = t.getTopicRegistrations(userID)
-		unsubHandlers      []func()
+		topicOpts          []twitch.EventSubSocketClientOpt
 	)
 
 	for _, tr := range topicRegistrations {
@@ -385,37 +372,19 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (func(), error
 			}
 		}
 
-		uf, err := twitchEventSubClient.RegisterEventSubHooks(tr.Topic, tr.Version, tr.Condition, tr.Hook)
-		if err != nil {
-			logger.WithError(err).Error("Unable to register topic")
-
-			for _, f := range unsubHandlers {
-				// Error will cause unsub handlers not to be stored, therefore we unsub them now
-				f()
-			}
-
-			return nil, errors.Wrap(err, "registering topic")
-		}
-
-		unsubHandlers = append(unsubHandlers, uf)
+		topicOpts = append(topicOpts, twitch.WithSubscription(tr.Topic, tr.Version, tr.Condition, tr.Hook))
 	}
 
-	return func() {
-		for _, f := range unsubHandlers {
-			f()
-		}
-	}, nil
-}
+	esClient, err := twitch.NewEventSubSocketClient(append(
+		topicOpts,
+		twitch.WithLogger(log.WithField("channel", channel)),
+		twitch.WithTwitchClient(tc),
+	)...)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting eventsub client for channel")
+	}
 
-func (t *twitchWatcher) registerGlobalHooks() error {
-	_, err := twitchEventSubClient.RegisterEventSubHooks(
-		twitch.EventSubEventTypeUserAuthorizationRevoke,
-		twitch.EventSubTopicVersion1,
-		twitch.EventSubCondition{ClientID: cfg.TwitchClient},
-		t.handleEventUserAuthRevoke,
-	)
-
-	return errors.Wrap(err, "registering user auth hook")
+	return esClient, nil
 }
 
 func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, online *bool) {

@@ -59,6 +59,8 @@ const (
 )
 
 type (
+	// Deprecated: This client should no longer be used and will not be
+	// maintained afterwards. Replace with EventSubSocketClient.
 	EventSubClient struct {
 		apiURL       string
 		secret       string
@@ -223,6 +225,7 @@ func (e EventSubCondition) Hash() (string, error) {
 	return fmt.Sprintf("%x", h), nil
 }
 
+// Deprecated: See deprecation notice of EventSubClient
 func NewEventSubClient(twitchClient *Client, apiURL, secret, secretHandle string) (*EventSubClient, error) {
 	c := &EventSubClient{
 		apiURL:       apiURL,

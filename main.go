@@ -1,15 +1,10 @@
 package main
 
 import (
-	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"math"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -23,7 +18,6 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
@@ -40,9 +34,6 @@ const (
 	maxIRCRetryBackoff        = time.Minute
 
 	httpReadHeaderTimeout = 5 * time.Second
-
-	coreMetaKeyEventSubSecret = "event_sub_secret"
-	eventSubSecretLength      = 32
 )
 
 var (
@@ -73,15 +64,13 @@ var (
 	ircHdl       *ircHandler
 	router       = mux.NewRouter()
 
-	runID                 = uuid.Must(uuid.NewV4()).String()
-	externalHTTPAvailable bool
+	runID = uuid.Must(uuid.NewV4()).String()
 
 	db            database.Connector
 	accessService *access.Service
 	timerService  *timer.Service
 
-	twitchClient         *twitch.Client
-	twitchEventSubClient *twitch.EventSubClient
+	twitchClient *twitch.Client
 
 	version = "dev"
 )
@@ -124,35 +113,6 @@ func initApp() error {
 	}
 
 	return nil
-}
-
-func getEventSubSecret() (secret, handle string, err error) {
-	var eventSubSecret string
-
-	err = db.ReadEncryptedCoreMeta(coreMetaKeyEventSubSecret, &eventSubSecret)
-	switch {
-	case errors.Is(err, nil):
-		return eventSubSecret, eventSubSecret[:5], nil
-
-	case errors.Is(err, database.ErrCoreMetaNotFound):
-		// We need to generate a new secret below
-
-	default:
-		return "", "", errors.Wrap(err, "reading secret from database")
-	}
-
-	key := make([]byte, eventSubSecretLength)
-	n, err := rand.Read(key)
-	if err != nil {
-		return "", "", errors.Wrap(err, "generating random secret")
-	}
-	if n != eventSubSecretLength {
-		return "", "", errors.Errorf("read only %d of %d byte", n, eventSubSecretLength)
-	}
-
-	eventSubSecret = hex.EncodeToString(key)
-
-	return eventSubSecret, eventSubSecret[:5], errors.Wrap(db.StoreEncryptedCoreMeta(coreMetaKeyEventSubSecret, eventSubSecret), "storing secret to database")
 }
 
 //nolint:funlen,gocognit,gocyclo // Complexity is a little too high but makes no sense to split
@@ -287,30 +247,6 @@ func main() {
 
 		go server.Serve(listener)
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
-
-		checkExternalHTTP()
-
-		if externalHTTPAvailable && cfg.TwitchClient != "" && cfg.TwitchClientSecret != "" {
-			secret, handle, err := getEventSubSecret()
-			if err != nil {
-				log.WithError(err).Fatal("Unable to get or create eventsub secret")
-			}
-
-			twitchEventSubClient, err = twitch.NewEventSubClient(twitchClient, strings.Join([]string{
-				strings.TrimRight(cfg.BaseURL, "/"),
-				"eventsub",
-			}, "/"), secret, handle)
-
-			if err != nil {
-				log.WithError(err).Fatal("Unable to create eventsub client")
-			}
-
-			if err := twitchWatch.registerGlobalHooks(); err != nil {
-				log.WithError(err).Fatal("Unable to register global eventsub hooks")
-			}
-
-			router.HandleFunc("/eventsub/{keyhandle}", twitchEventSubClient.HandleEventsubPush).Methods(http.MethodPost)
-		}
 	}
 
 	for _, c := range config.Channels {
@@ -402,54 +338,6 @@ func main() {
 
 		}
 	}
-}
-
-func checkExternalHTTP() {
-	base, err := url.Parse(cfg.BaseURL)
-	if err != nil {
-		log.WithError(err).Error("Unable to parse BaseURL")
-		return
-	}
-
-	if base.String() == "" {
-		log.Debug("No BaseURL set, disabling EventSub support")
-		return
-	}
-
-	base.Path = strings.Join([]string{
-		strings.TrimRight(base.Path, "/"),
-		"selfcheck",
-	}, "/")
-
-	var data []byte
-	if err = backoff.NewBackoff().WithMaxTotalTime(cfg.WaitForSelfcheck).Retry(func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, base.String(), nil)
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return errors.Wrap(err, "requesting self-check URL")
-		}
-		defer resp.Body.Close()
-
-		data, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return errors.Wrap(err, "reading self-check response")
-		}
-
-		if strings.TrimSpace(string(data)) != runID {
-			return errors.New("found unexpected run-id")
-		}
-
-		return nil
-	}); err != nil {
-		log.WithError(err).Error("executing self-check")
-		return
-	}
-
-	externalHTTPAvailable = true
-	log.Debug("Self-Check successful, EventSub support is available")
 }
 
 func startCheck() error {

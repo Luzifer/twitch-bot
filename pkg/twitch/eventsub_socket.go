@@ -45,6 +45,9 @@ type (
 
 		conn    *websocket.Conn
 		newconn *websocket.Conn
+
+		runCtx       context.Context
+		runCtxCancel context.CancelFunc
 	}
 
 	EventSubSocketClientOpt func(*EventSubSocketClient)
@@ -95,7 +98,12 @@ type (
 )
 
 func NewEventSubSocketClient(opts ...EventSubSocketClientOpt) (*EventSubSocketClient, error) {
-	c := &EventSubSocketClient{}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := &EventSubSocketClient{
+		runCtx:       ctx,
+		runCtxCancel: cancel,
+	}
 
 	for _, opt := range opts {
 		opt(c)
@@ -141,6 +149,9 @@ func WithTwitchClient(c *Client) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.twitch = c }
 }
 
+func (e *EventSubSocketClient) Close() { e.runCtxCancel() }
+
+//nolint:gocyclo // Makes no sense to split further
 func (e *EventSubSocketClient) Run() error {
 	var (
 		errC             = make(chan error, 1)
@@ -152,6 +163,12 @@ func (e *EventSubSocketClient) Run() error {
 	if err := e.connect(e.socketDest, msgC, errC); err != nil {
 		return errors.Wrap(err, "establishing initial connection")
 	}
+
+	defer func() {
+		if err := e.conn.Close(); err != nil {
+			e.logger.WithError(err).Error("finally closing socket")
+		}
+	}()
 
 	for {
 		select {
@@ -200,6 +217,9 @@ func (e *EventSubSocketClient) Run() error {
 			default:
 				e.logger.WithField("type", msg.Metadata.MessageType).Error("unknown message type received")
 			}
+
+		case <-e.runCtx.Done():
+			return nil
 		}
 	}
 }
@@ -320,7 +340,6 @@ func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (
 
 	// Close old connection if present
 	if e.conn != nil {
-		// We had an existing connection, close it
 		if err := e.conn.Close(); err != nil {
 			e.logger.WithError(err).Error("closing old websocket")
 		}
