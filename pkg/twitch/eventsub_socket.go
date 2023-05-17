@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	eventsubLiveSocketDest = "wss://eventsub.wss.twitch.tv/ws"
-	socketInitialTimeout   = 30 * time.Second
+	eventsubLiveSocketDest       = "wss://eventsub.wss.twitch.tv/ws"
+	socketInitialTimeout         = 30 * time.Second
+	socketTimeoutGraceMultiplier = 1.5
 )
 
 const (
@@ -376,7 +377,7 @@ func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (
 	e.logger.WithField("id", e.socketID).Debug("websocket connected successfully")
 
 	// Configure proper keepalive
-	return time.Duration(float64(payload.Session.KeepaliveTimeoutSeconds)*1.5) * time.Second, nil
+	return time.Duration(float64(payload.Session.KeepaliveTimeoutSeconds)*socketTimeoutGraceMultiplier) * time.Second, nil
 }
 
 func (e *EventSubSocketClient) subscribe() error {
