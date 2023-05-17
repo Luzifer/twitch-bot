@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"reflect"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -73,7 +74,7 @@ type (
 			Type      string            `json:"type"`
 			Version   string            `json:"version"`
 			Cost      int64             `json:"cost"`
-			Condition map[string]string `json:"condition"`
+			Condition EventSubCondition `json:"condition"`
 			Transport struct {
 				Method    string `json:"method"`
 				SessionID string `json:"session_id"`
@@ -84,11 +85,11 @@ type (
 
 	eventSubSocketPayloadSession struct {
 		Session struct {
-			ID                      string        `json:"id"`
-			Status                  string        `json:"status"`
-			ConnectedAt             time.Time     `json:"connected_at"`
-			KeepaliveTimeoutSeconds time.Duration `json:"keepalive_timeout_seconds"`
-			ReconnectURL            *string       `json:"reconnect_url"`
+			ID                      string    `json:"id"`
+			Status                  string    `json:"status"`
+			ConnectedAt             time.Time `json:"connected_at"`
+			KeepaliveTimeoutSeconds int64     `json:"keepalive_timeout_seconds"`
+			ReconnectURL            *string   `json:"reconnect_url"`
 		} `json:"session"`
 	}
 )
@@ -140,9 +141,10 @@ func WithTwitchClient(c *Client) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.twitch = c }
 }
 
+//nolint:funlen,gocognit,gocyclo // Prefer to keep the case handlings together
 func (e *EventSubSocketClient) Run() error {
 	var (
-		errC             = make(chan error, 10)
+		errC             = make(chan error, 1)
 		keepaliveTimeout = socketInitialTimeout
 		msgC             = make(chan eventSubSocketMessage, 1)
 		socketTimeout    = time.NewTimer(keepaliveTimeout)
@@ -229,7 +231,25 @@ func (e *EventSubSocketClient) Run() error {
 
 			case eventsubSocketMessageTypeNotification:
 				// We got mail! Yay!
-				e.logger.Warnf("Received message: %s", msg.Payload)
+				var payload eventSubSocketPayloadNotification
+				if err := msg.Unmarshal(&payload); err != nil {
+					errC <- errors.Wrap(err, "unmarshalling notification")
+					continue
+				}
+
+				for _, st := range e.subscriptionTypes {
+					if st.Event != payload.Subscription.Type || st.Version != payload.Subscription.Version || !reflect.DeepEqual(st.Condition, payload.Subscription.Condition) {
+						continue
+					}
+
+					if err := st.Callback(payload.Event); err != nil {
+						e.logger.WithError(err).WithFields(logrus.Fields{
+							"condition": st.Condition,
+							"event":     st.Event,
+							"version":   st.Version,
+						}).Error("callback caused error")
+					}
+				}
 
 			case eventsubSocketMessageTypeReconnect:
 				// Twitch politely asked us to reconnect
@@ -255,7 +275,7 @@ func (e *EventSubSocketClient) Run() error {
 				}
 
 				// Configure proper keepalive
-				keepaliveTimeout = payload.Session.KeepaliveTimeoutSeconds * time.Second
+				keepaliveTimeout = time.Duration(payload.Session.KeepaliveTimeoutSeconds) * time.Second
 
 				// Close old connection if present
 				if e.conn != nil {
@@ -288,7 +308,7 @@ func (e *EventSubSocketClient) Run() error {
 }
 
 func (e *EventSubSocketClient) connect(url string, msgC chan eventSubSocketMessage, errC chan error) error {
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil) //nolint:bodyclose // Close is implemented at other place
 	if err != nil {
 		return errors.Wrap(err, "dialing websocket")
 	}
