@@ -199,7 +199,7 @@ func (e *EventSubSocketClient) Run() error {
 			switch msg.Metadata.MessageType {
 			case eventsubSocketMessageTypeKeepalive:
 				// Handle only for debug, timer reset is done above
-				e.logger.Debug("keepalive received")
+				e.logger.Trace("keepalive received")
 
 			case eventsubSocketMessageTypeNotification:
 				// We got mail! Yay!
