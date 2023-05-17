@@ -420,7 +420,7 @@ func (e *EventSubClient) RegisterEventSubHooks(event, version string, condition 
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
-	newSub, err := e.twitchClient.createEventSubSubscription(ctx, eventSubSubscription{
+	newSub, err := e.twitchClient.createEventSubSubscriptionWebhook(ctx, eventSubSubscription{
 		Type:      event,
 		Version:   version,
 		Condition: condition,
@@ -453,7 +453,15 @@ func (e *EventSubClient) RegisterEventSubHooks(event, version string, condition 
 	return func() { e.unregisterCallback(cacheKey, cbKey) }, nil
 }
 
-func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
+func (c *Client) createEventSubSubscriptionWebhook(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
+	return c.createEventSubSubscription(ctx, authTypeAppAccessToken, sub)
+}
+
+func (c *Client) createEventSubSubscriptionWebsocket(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
+	return c.createEventSubSubscription(ctx, authTypeBearerToken, sub)
+}
+
+func (c *Client) createEventSubSubscription(ctx context.Context, auth authType, sub eventSubSubscription) (*eventSubSubscription, error) {
 	var (
 		buf  = new(bytes.Buffer)
 		resp struct {
@@ -470,7 +478,7 @@ func (c *Client) createEventSubSubscription(ctx context.Context, sub eventSubSub
 	}
 
 	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+		AuthType: auth,
 		Body:     buf,
 		Context:  ctx,
 		Method:   http.MethodPost,

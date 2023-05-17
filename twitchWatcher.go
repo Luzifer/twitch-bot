@@ -38,6 +38,11 @@ type (
 	}
 )
 
+func (t *twitchChannelState) CloseESC() {
+	t.esc.Close()
+	t.esc = nil
+}
+
 func (t twitchChannelState) Equals(c twitchChannelState) bool {
 	return t.Category == c.Category &&
 		t.IsLive == c.IsLive &&
@@ -325,21 +330,35 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 		return errors.Wrap(err, "registering eventsub callbacks")
 	}
 
+	if storedStatus.esc != nil {
+		go func(storedStatus *twitchChannelState) {
+			if err := storedStatus.esc.Run(); err != nil {
+				log.WithField("channel", channel).WithError(err).Error("eventsub client caused error")
+			}
+			storedStatus.CloseESC()
+		}(storedStatus)
+	}
+
 	return nil
 }
 
 func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.EventSubSocketClient, error) {
-	userID, err := twitchClient.GetIDForUsername(channel)
-	if err != nil {
-		return nil, errors.Wrap(err, "resolving channel to user-id")
-	}
-
 	tc, err := accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,
 	})
 	if err != nil {
+		if errors.Is(err, access.ErrChannelNotAuthorized) {
+			log.WithField("channel", channel).Debug("channel has no credentials assigned, not listening for eventsub events")
+			return nil, nil
+		}
+
 		return nil, errors.Wrap(err, "getting twitch client for channel")
+	}
+
+	userID, err := twitchClient.GetIDForUsername(channel)
+	if err != nil {
+		return nil, errors.Wrap(err, "resolving channel to user-id")
 	}
 
 	var (
