@@ -254,16 +254,28 @@ func (e *EventSubSocketClient) Run() error {
 					continue
 				}
 
+				// Configure proper keepalive
 				keepaliveTimeout = payload.Session.KeepaliveTimeoutSeconds * time.Second
 
+				// Close old connection if present
 				if e.conn != nil {
 					// We had an existing connection, close it
 					if err := e.conn.Close(); err != nil {
 						e.logger.WithError(err).Error("closing old websocket")
 					}
 				}
+
 				// Promote new connection to existing conn
 				e.conn, e.newconn = e.newconn, nil
+
+				// Subscribe to topics if the socket ID changed (should only
+				// happen on first connect or if we established a new
+				// connection after something broke)
+				if e.socketID != payload.Session.ID {
+					if err := e.subscribe(); err != nil {
+						errC <- errors.Wrap(err, "subscribing to topics")
+					}
+				}
 
 				e.socketID = payload.Session.ID
 				e.logger.WithField("id", e.socketID).Debug("websocket connected successfully")
