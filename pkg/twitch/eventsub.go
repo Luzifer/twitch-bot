@@ -201,9 +201,10 @@ type (
 	}
 
 	eventSubTransport struct {
-		Method   string `json:"method"`
-		Callback string `json:"callback"`
-		Secret   string `json:"secret"`
+		Method    string `json:"method"`
+		Callback  string `json:"callback"`
+		Secret    string `json:"secret"`
+		SessionID string `json:"session_id"`
 	}
 
 	registeredSubscription struct {
