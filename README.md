@@ -17,7 +17,7 @@ Please see the [Wiki](https://github.com/Luzifer/twitch-bot/wiki) for documentat
 ```console
 # twitch-bot --help
 Usage of twitch-bot:
-      --base-url string                  External URL of the config-editor interface (set to enable EventSub support)
+      --base-url string                  External URL of the config-editor interface (used to generate auth-urls)
       --command-timeout duration         Timeout for command execution (default 30s)
   -c, --config string                    Location of configuration file (default "./config.yaml")
       --log-level string                 Log level (debug, info, warn, error, fatal) (default "info")
