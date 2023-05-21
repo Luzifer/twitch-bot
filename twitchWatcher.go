@@ -412,7 +412,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		log.WithFields(log.Fields{
 			"channel":  channel,
 			"category": *category,
-		}).Debug("Twitch metadata changed")
+		}).Info("Category updated")
 		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel":  "#" + channel,
 			"category": *category,
@@ -424,7 +424,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		log.WithFields(log.Fields{
 			"channel": channel,
 			"title":   *title,
-		}).Debug("Twitch metadata changed")
+		}).Info("Title updated")
 		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
 			"channel": "#" + channel,
 			"title":   *title,
@@ -436,7 +436,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 		log.WithFields(log.Fields{
 			"channel": channel,
 			"isLive":  *online,
-		}).Debug("Twitch metadata changed")
+		}).Info("Live-status updated")
 
 		evt := eventTypeTwitchStreamOnline
 		if !*online {
