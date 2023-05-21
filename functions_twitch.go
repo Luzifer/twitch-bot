@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -16,6 +18,7 @@ func init() {
 	tplFuncs.Register("followAge", plugins.GenericTemplateFunctionGetter(tplTwitchFollowAge))
 	tplFuncs.Register("followDate", plugins.GenericTemplateFunctionGetter(tplTwitchFollowDate))
 	tplFuncs.Register("doesFollowLongerThan", plugins.GenericTemplateFunctionGetter(tplTwitchDoesFollowLongerThan))
+	tplFuncs.Register("lastPoll", plugins.GenericTemplateFunctionGetter(tplTwitchLastPoll))
 	tplFuncs.Register("recentGame", plugins.GenericTemplateFunctionGetter(tplTwitchRecentGame))
 	tplFuncs.Register("recentTitle", plugins.GenericTemplateFunctionGetter(tplTwitchRecentTitle))
 	tplFuncs.Register("streamUptime", plugins.GenericTemplateFunctionGetter(tplTwitchStreamUptime))
@@ -83,6 +86,28 @@ func tplTwitchDoesFollowLongerThan(from, to string, t any) (bool, error) {
 	default:
 		return false, errors.Wrap(err, "getting follow date")
 	}
+}
+
+func tplTwitchLastPoll(username string) (*twitch.PollInfo, error) {
+	hasPollAccess, err := accessService.HasAnyPermissionForChannel(username, twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls)
+	if err != nil {
+		return nil, errors.Wrap(err, "checking read-poll-permission")
+	}
+
+	if !hasPollAccess {
+		return nil, errors.Errorf("not authorized to read polls for channel %s", username)
+	}
+
+	tc, err := accessService.GetTwitchClientForChannel(strings.TrimLeft(username, "#"), access.ClientConfig{
+		TwitchClient:       cfg.TwitchClient,
+		TwitchClientSecret: cfg.TwitchClientSecret,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "getting twitch client for user")
+	}
+
+	poll, err := tc.GetLatestPoll(context.Background(), strings.TrimLeft(username, "#"))
+	return poll, errors.Wrap(err, "getting last poll")
 }
 
 func tplTwitchRecentGame(username string, v ...string) (string, error) {

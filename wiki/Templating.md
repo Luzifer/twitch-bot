@@ -218,6 +218,21 @@ Example:
 < example string
 ```
 
+#### `lastPoll`
+
+Gets the last (currently running or archived) poll for the given channel (the channel must have given extended permission for poll access!)
+
+Syntax: `lastPoll <channel>`
+
+Example:
+
+```
+# Last Poll: {{ (lastPoll .channel).Title }}
+< Last Poll: Und wie siehts im Template aus?
+```
+
+See schema of returned object in [`pkg/twitch/polls.go#L13`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/polls.go#L13)
+
 #### `lastQuoteIndex`
 
 Gets the last quote index in the quote database for the current channel
