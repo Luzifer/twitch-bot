@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -393,6 +394,8 @@ func (e *EventSubSocketClient) subscribe() error {
 		}); err != nil {
 			return errors.Wrapf(err, "subscribing to %s/%s", st.Event, st.Version)
 		}
+
+		e.logger.WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).Debug("subscripted to topic")
 	}
 
 	return nil
