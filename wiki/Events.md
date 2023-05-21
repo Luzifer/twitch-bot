@@ -128,6 +128,17 @@ Fields:
 - `user` - The login-name of the user who **gave** the permit
 - `to` - The username who got the permit
 
+## `poll_begin` / `poll_end` / `poll_progress`
+
+A poll was started / was ended / had changes in the given channel.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `poll` - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L92)
+- `status` - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
+- `title` - The title of the poll the event was generated for
+
 ## `raid`
 
 The channel was raided by another user.

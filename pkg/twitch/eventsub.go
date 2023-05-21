@@ -22,6 +22,9 @@ const (
 	EventSubEventTypeChannelShoutoutCreate                 = "channel.shoutout.create"
 	EventSubEventTypeChannelShoutoutReceive                = "channel.shoutout.receive"
 	EventSubEventTypeChannelUpdate                         = "channel.update"
+	EventSubEventTypeChannelPollBegin                      = "channel.poll.begin"
+	EventSubEventTypeChannelPollEnd                        = "channel.poll.end"
+	EventSubEventTypeChannelPollProgress                   = "channel.poll.progress"
 	EventSubEventTypeStreamOffline                         = "stream.offline"
 	EventSubEventTypeStreamOnline                          = "stream.online"
 	EventSubEventTypeUserAuthorizationRevoke               = "user.authorization.revoke"
@@ -84,6 +87,29 @@ type (
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		FollowedAt           time.Time `json:"followed_at"`
+	}
+
+	EventSubEventPoll struct {
+		ID                   string `json:"id"`
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
+		Title                string `json:"title"`
+		Choices              []struct {
+			ID                 string `json:"id"`
+			Title              string `json:"title"`
+			ChannelPointsVotes int    `json:"channel_points_votes"`
+			Votes              int    `json:"votes"`
+		} `json:"choices"`
+		ChannelPointsVoting struct {
+			IsEnabled     bool `json:"is_enabled"`
+			AmountPerVote int  `json:"amount_per_vote"`
+		} `json:"channel_points_voting"`
+
+		StartedAt time.Time `json:"started_at"`         // begin, progress, end
+		EndsAt    time.Time `json:"ends_at,omitempty"`  // begin, progress
+		Status    string    `json:"status,omitempty"`   // end -- enum(completed, archived, terminated)
+		EndedAt   time.Time `json:"ended_at,omitempty"` // end
 	}
 
 	EventSubEventRaid struct {

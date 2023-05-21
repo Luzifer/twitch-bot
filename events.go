@@ -29,6 +29,9 @@ var (
 	eventTypeOutboundRaid       = ptrStr("outbound_raid")
 	eventTypePart               = ptrStr("part")
 	eventTypePermit             = ptrStr("permit")
+	eventTypePollBegin          = ptrStr("poll_begin")
+	eventTypePollEnd            = ptrStr("poll_end")
+	eventTypePollProgress       = ptrStr("poll_progress")
 	eventTypeRaid               = ptrStr("raid")
 	eventTypeResub              = ptrStr("resub")
 	eventTypeShoutoutCreated    = ptrStr("shoutout_created")
@@ -58,6 +61,9 @@ var (
 		eventTypeOutboundRaid,
 		eventTypePart,
 		eventTypePermit,
+		eventTypePollBegin,
+		eventTypePollEnd,
+		eventTypePollProgress,
 		eventTypeRaid,
 		eventTypeResub,
 		eventTypeShoutoutReceived,

@@ -11,6 +11,7 @@ const (
 	ScopeChannelManageRedemptions    = "channel:manage:redemptions"
 	ScopeChannelManageVIPS           = "channel:manage:vips"
 	ScopeChannelManageWhispers       = "user:manage:whispers"
+	ScopeChannelReadPolls            = "channel:read:polls"
 	ScopeChannelReadRedemptions      = "channel:read:redemptions"
 	ScopeChannelReadSubscriptions    = "channel:read:subscriptions"
 	ScopeModeratorManageAnnoucements = "moderator:manage:announcements"

@@ -150,6 +150,27 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
 		},
 		{
+			Topic:          twitch.EventSubEventTypeChannelPollBegin,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
+			AnyScope:       true,
+			Hook:           t.handleEventSubChannelPollChange(eventTypePollBegin),
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelPollEnd,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
+			AnyScope:       true,
+			Hook:           t.handleEventSubChannelPollChange(eventTypePollEnd),
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelPollProgress,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
+			AnyScope:       true,
+			Hook:           t.handleEventSubChannelPollChange(eventTypePollProgress),
+		},
+		{
 			Topic:          twitch.EventSubEventTypeChannelShoutoutCreate,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
@@ -236,6 +257,42 @@ func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
 	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
 
 	return nil
+}
+
+func (t *twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.RawMessage) error {
+	return func(m json.RawMessage) error {
+		var payload twitch.EventSubEventPoll
+		if err := json.Unmarshal(m, &payload); err != nil {
+			return errors.Wrap(err, "unmarshalling event")
+		}
+
+		fields := plugins.FieldCollectionFromData(map[string]any{
+			"channel":               "#" + payload.BroadcasterUserLogin,
+			"hasChannelPointVoting": payload.ChannelPointsVoting.IsEnabled,
+			"title":                 payload.Title,
+		})
+
+		logger := log.WithFields(log.Fields(fields.Data()))
+
+		switch event {
+		case eventTypePollBegin:
+			logger.Info("Poll started")
+
+		case eventTypePollEnd:
+			logger.WithField("status", payload.Status).Info("Poll ended")
+
+		case eventTypePollProgress:
+			// Lets not spam the info-level-log with every single vote but
+			// provide them for bots with debug-level-logging
+			logger.Debug("Poll changed")
+		}
+
+		// Set after logging not to spam logs with full payload
+		fields.Set("poll", payload)
+
+		go handleMessage(ircHdl.Client(), nil, event, fields)
+		return nil
+	}
 }
 
 func (t *twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
