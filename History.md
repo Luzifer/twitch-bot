@@ -1,3 +1,13 @@
+# 3.10.0 / 2023-05-21
+
+  * New Features
+    * [eventsub] Switch to Websocket transport (#46)
+
+  * Improvements
+    * [core] Adjust logging for channel meta updates to match other events
+    * [core] Allow case insensitive category matches
+    * [editor] Remove character limit for AutoMessage template
+
 # 3.9.0 / 2023-05-11
 
   * New Features
