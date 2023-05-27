@@ -1,3 +1,13 @@
+# 3.11.0 / 2023-05-27
+
+  * New Features
+    * [eventsub] Add `poll_begin`, `poll_end`, `poll_progress` events
+    * [template] Add `lastPoll` function
+
+  * Improvements
+    * [core] Reduce variance of Sentry errors containing IPs
+    * [eventsub] Add debug logging for subscribed topics
+
 # 3.10.0 / 2023-05-21
 
   * New Features
