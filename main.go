@@ -266,7 +266,7 @@ func main() {
 			}
 
 			if ircHdl, err = newIRCHandler(); err != nil {
-				log.WithError(err).Error("Unable to connect to IRC")
+				log.WithError(err).Error("connecting to IRC")
 				go func() {
 					time.Sleep(ircRetryBackoff)
 					ircRetryBackoff = time.Duration(math.Min(float64(maxIRCRetryBackoff), float64(ircRetryBackoff)*ircRetryBackoffMultiplier))
@@ -278,8 +278,15 @@ func main() {
 			ircRetryBackoff = initialIRCRetryBackoff // Successfully created, reset backoff
 
 			go func() {
+				log.Info("(re-)connecting IRC client")
 				if err := ircHdl.Run(); err != nil {
-					log.WithError(err).Error("IRC run exited unexpectedly")
+					log.WithError(err).Debug("IRC connection failed")
+					// We don't want to spam Sentry with errors each being unique
+					// and not groupable as it contains `localip:localport -> remoteip:remoteport`
+					// therefore we replace it with a generic error and just put
+					// the underlying error in the debug-level log which doesn't
+					// get sent to Sentry
+					log.WithError(errors.New("connection to Twitch IRC servers broke")).Error("IRC run exited unexpectedly")
 				}
 				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}
