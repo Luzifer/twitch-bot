@@ -56,6 +56,8 @@ func init() {
 		}
 	})
 
+	tplFuncs.Register("mention", plugins.GenericTemplateFunctionGetter(func(username string) string { return "@" + strings.TrimLeft(username, "@#") }))
+
 	tplFuncs.Register("tag", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(tag string) string {
 			s, _ := m.GetTag(tag)

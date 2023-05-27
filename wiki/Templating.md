@@ -246,6 +246,19 @@ Example:
 < Last Quote: #32
 ```
 
+#### `mention`
+
+Strips username and converts into a mention
+
+Syntax: `mention <username>`
+
+Example:
+
+```
+# {{ mention "@user" }} {{ mention "user" }} {{ mention "#user" }}
+< @user @user @user
+```
+
 #### `pow`
 
 Returns float from calculation: `float1 ** float2`
