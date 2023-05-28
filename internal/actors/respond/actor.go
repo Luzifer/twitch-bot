@@ -1,10 +1,13 @@
 package respond
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/go-irc/irc"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -73,6 +76,23 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
+	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		Description:       "Send a message on behalf of the bot (send JSON object with `message` key)",
+		HandlerFunc:       handleAPISend,
+		Method:            http.MethodPost,
+		Module:            actorName,
+		Name:              "Send message",
+		Path:              "/{channel}",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeTextPlain,
+		RouteParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Channel to send the message to",
+				Name:        "channel",
+			},
+		},
+	})
+
 	return nil
 }
 
@@ -134,4 +154,33 @@ func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugi
 	}
 
 	return nil
+}
+
+func handleAPISend(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Message string `json:"message"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, errors.Wrap(err, "parsing payload").Error(), http.StatusBadRequest)
+		return
+	}
+
+	if strings.TrimSpace(payload.Message) == "" {
+		http.Error(w, errors.New("no message found").Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := send(&irc.Message{
+		Command: "PRIVMSG",
+		Params: []string{
+			"#" + strings.TrimLeft(mux.Vars(r)["channel"], "#"),
+			strings.TrimSpace(payload.Message),
+		},
+	}); err != nil {
+		http.Error(w, errors.Wrap(err, "sending message").Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
