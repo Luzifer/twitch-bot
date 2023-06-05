@@ -39,7 +39,6 @@ linters:
   enable:
     - asciicheck    # Simple linter to check that your code does not contain non-ASCII identifiers [fast: true, auto-fix: false]
     - bodyclose     # checks whether HTTP response body is closed successfully [fast: true, auto-fix: false]
-    - depguard      # Go linter that checks if package imports are in a list of acceptable packages [fast: true, auto-fix: false]
     - dogsled       # Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f()) [fast: true, auto-fix: false]
     - exportloopref # checks for pointers to enclosing loop variables [fast: true, auto-fix: false]
     - forbidigo     # Forbids identifiers [fast: true, auto-fix: false]
