@@ -279,6 +279,7 @@ func (t *twitchWatcher) handleEventSubChannelPollChange(event *string) func(json
 			logger.Info("Poll started")
 
 		case eventTypePollEnd:
+			fields.Set("status", payload.Status)
 			logger.WithField("status", payload.Status).Info("Poll ended")
 
 		case eventTypePollProgress:
