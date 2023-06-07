@@ -1,3 +1,12 @@
+# 3.12.0 / 2023-06-07
+
+  * New Features
+    * [respond] Expose API route to send messages directly to chat
+    * [template] Add `mention` function
+
+  * Improvements
+    * [eventsub] Add `status` field to `poll_end` event
+
 # 3.11.0 / 2023-05-27
 
   * New Features
