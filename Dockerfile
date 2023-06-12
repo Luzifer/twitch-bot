@@ -4,8 +4,7 @@ COPY . /go/src/github.com/Luzifer/twitch-bot
 WORKDIR /go/src/github.com/Luzifer/twitch-bot
 
 ENV CGO_ENABLED=0 \
-    GOPATH=/go \
-    NODE_ENV=production
+    GOPATH=/go
 
 RUN set -ex \
  && pacman -Syy --noconfirm \
@@ -28,7 +27,7 @@ FROM alpine:latest
 LABEL maintainer "Knut Ahlers <knut@ahlers.me>"
 
 ENV CONFIG=/data/config.yaml \
-    STORAGE_FILE=/data/store.json.gz
+    STORAGE_CONN_STRING=/data/store.db
 
 RUN set -ex \
  && apk --no-cache add \
@@ -36,10 +35,13 @@ RUN set -ex \
       ca-certificates \
       curl \
       jq \
-      tzdata
+      tzdata \
+ && mkdir /data \
+ && chown 1000:1000 /data
 
 COPY --from=builder /go/bin/twitch-bot /usr/local/bin/twitch-bot
 
+USER 1000:1000
 VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/local/bin/twitch-bot"]

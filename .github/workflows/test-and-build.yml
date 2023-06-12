@@ -42,6 +42,7 @@ jobs:
             nodejs-lts-fermium \
             npm \
             tar \
+            trivy \
             unzip \
             which \
             zip
@@ -62,6 +63,9 @@ jobs:
           NODE_ENV: production
           NO_TESTS: 'true'
           PACKAGES: '.'
+
+      - name: Execute Trivy scan
+        run: make trivy
 
       - name: Extract changelog
         run: 'awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md'

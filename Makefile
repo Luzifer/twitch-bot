@@ -40,3 +40,16 @@ push_wiki:
 update_ua_list:
 	# User-Agents provided by https://www.useragents.me/
 	curl -sSf https://www.useragents.me/api | jq -r '.data[].ua' | grep -v 'Trident' >internal/linkcheck/user-agents.txt
+
+# -- Vulnerability scanning --
+
+trivy:
+	trivy fs . \
+		--dependency-tree \
+		--exit-code 1 \
+		--format table \
+		--ignore-unfixed \
+		--quiet \
+		--scanners config,license,secret,vuln \
+		--severity HIGH,CRITICAL \
+		--skip-dirs docs
