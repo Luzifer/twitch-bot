@@ -1,6 +1,13 @@
 {
-  "dependencies": {
+  "devDependencies": {
     "@babel/eslint-parser": "^7.21.3",
+    "esbuild": "^0.17.13",
+    "esbuild-vue": "^1.2.2",
+    "eslint": "^8.36.0",
+    "eslint-plugin-vue": "^9.10.0",
+    "vue-template-compiler": "^2.7.14"
+  },
+  "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.3.0",
     "@fortawesome/free-brands-svg-icons": "^6.3.0",
     "@fortawesome/free-solid-svg-icons": "^6.3.0",
@@ -10,13 +17,8 @@
     "bootstrap-vue": "^2.23.1",
     "bootswatch": "^4.6.2",
     "codejar": "^3.7.0",
-    "esbuild": "^0.17.13",
-    "esbuild-vue": "^1.2.2",
-    "eslint": "^8.36.0",
-    "eslint-plugin-vue": "^9.10.0",
     "prismjs": "^1.29.0",
     "vue": "^2.7.14",
-    "vue-router": "^3.6.5",
-    "vue-template-compiler": "^2.7.14"
+    "vue-router": "^3.6.5"
   }
 }
