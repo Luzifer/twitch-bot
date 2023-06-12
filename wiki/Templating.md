@@ -82,6 +82,18 @@ Example:
 < 5
 ```
 
+#### `counterValueAdd`
+
+Adds the given value (or 1 if no value) to the counter and returns its new value
+
+Syntax: `counterValueAdd <counter name> [increase=1]`
+
+Example:
+```
+# {{ counterValueAdd "myCounter" }} {{ counterValueAdd "myCounter" 5 }}
+< 1 6
+```
+
 #### `displayName`
 
 Returns the display name the specified user set for themselves

@@ -137,6 +137,19 @@ func Register(args plugins.RegistrationArguments) error {
 		return GetCounterValue(db, name)
 	}))
 
+	args.RegisterTemplateFunction("counterValueAdd", plugins.GenericTemplateFunctionGetter(func(name string, val ...int64) (int64, error) {
+		var mod int64 = 1
+		if len(val) > 0 {
+			mod = val[0]
+		}
+
+		if err := UpdateCounter(db, name, mod, false); err != nil {
+			return 0, errors.Wrap(err, "updating counter")
+		}
+
+		return GetCounterValue(db, name)
+	}))
+
 	return nil
 }
 
