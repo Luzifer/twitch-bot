@@ -121,6 +121,7 @@ func loadConfig(filename string) error {
 	}
 
 	config = tmpConfig
+	timerService.UpdatePermitTimeout(tmpConfig.PermitTimeout)
 
 	log.WithFields(log.Fields{
 		"auto_messages": len(config.AutoMessages),
