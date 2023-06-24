@@ -20,6 +20,7 @@ import (
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
@@ -281,13 +282,7 @@ func main() {
 			go func() {
 				log.Info("(re-)connecting IRC client")
 				if err := ircHdl.Run(); err != nil {
-					log.WithError(err).Debug("IRC connection failed")
-					// We don't want to spam Sentry with errors each being unique
-					// and not groupable as it contains `localip:localport -> remoteip:remoteport`
-					// therefore we replace it with a generic error and just put
-					// the underlying error in the debug-level log which doesn't
-					// get sent to Sentry
-					log.WithError(errors.New("connection to Twitch IRC servers broke")).Error("IRC run exited unexpectedly")
+					log.WithError(helpers.CleanOpError(err)).Error("IRC run exited unexpectedly")
 				}
 				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}
