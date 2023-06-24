@@ -77,13 +77,12 @@ jobs:
           git push -f origin stable
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          body_path: release_changelog.md
+          artifacts: '.build/*'
+          bodyFile: release_changelog.md
           draft: false
-          fail_on_unmatched_files: true
-          files: '.build/*'
-          generate_release_notes: false
+          generateReleaseNotes: false
 
 ...
