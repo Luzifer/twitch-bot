@@ -12,7 +12,7 @@ import (
 
 func TestTimerRoundtrip(t *testing.T) {
 	dbc := database.GetTestDatabase(t)
-	ts, err := New(dbc)
+	ts, err := New(dbc, nil)
 	require.NoError(t, err, "creating timer service")
 
 	id := "78c0176a-938e-497b-bed4-83d5bdec6caf"

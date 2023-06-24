@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -28,9 +30,15 @@ type (
 
 var _ plugins.TimerStore = (*Service)(nil)
 
-func New(db database.Connector) (*Service, error) {
+func New(db database.Connector, cronService *cron.Cron) (*Service, error) {
 	s := &Service{
 		db: db,
+	}
+
+	if cronService != nil {
+		if _, err := cronService.AddFunc("@every 5m", s.cleanupTimers); err != nil {
+			return nil, errors.Wrap(err, "registering timer cleanup cron")
+		}
 	}
 
 	return s, errors.Wrap(s.db.DB().AutoMigrate(&timer{}), "applying migrations")
@@ -100,4 +108,10 @@ func (s Service) SetTimer(id string, expiry time.Time) error {
 		}).Error,
 		"storing counter in database",
 	)
+}
+
+func (s Service) cleanupTimers() {
+	if err := s.db.DB().Delete(&timer{}, "expires_at < ?", time.Now().UTC()).Error; err != nil {
+		logrus.WithError(err).Error("cleaning up expired timers")
+	}
 }

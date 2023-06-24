@@ -59,7 +59,7 @@ func (s storageFile) migratePermissions(db database.Connector) (err error) {
 }
 
 func (s storageFile) migrateTimers(db database.Connector) (err error) {
-	ts, err := timer.New(db)
+	ts, err := timer.New(db, nil)
 	if err != nil {
 		return errors.Wrap(err, "creating timer service")
 	}

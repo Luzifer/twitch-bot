@@ -124,18 +124,19 @@ func main() {
 	}
 
 	if db, err = database.New(cfg.StorageConnType, cfg.StorageConnString, cfg.StorageEncryptionPass); err != nil {
-		log.WithError(err).Fatal("Unable to open storage backend")
+		log.WithError(err).Fatal("opening storage backend")
 	}
 
 	if accessService, err = access.New(db); err != nil {
-		log.WithError(err).Fatal("Unable to apply access migration")
-	}
-
-	if timerService, err = timer.New(db); err != nil {
-		log.WithError(err).Fatal("Unable to apply timer migration")
+		log.WithError(err).Fatal("applying access migration")
 	}
 
 	cronService = cron.New(cron.WithSeconds())
+
+	if timerService, err = timer.New(db, cronService); err != nil {
+		log.WithError(err).Fatal("applying timer migration")
+	}
+
 	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,
@@ -146,7 +147,7 @@ func main() {
 		},
 	}); err != nil {
 		if !errors.Is(err, access.ErrChannelNotAuthorized) {
-			log.WithError(err).Fatal("Unable to initialize Twitch client")
+			log.WithError(err).Fatal("initializing Twitch client")
 		}
 		twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.TwitchToken, "")
 	}
