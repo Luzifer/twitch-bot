@@ -1,3 +1,15 @@
+# 3.13.0 / 2023-06-25
+
+  * New Features
+    * [counter] Add `counterValueAdd` template function
+
+  * Improvements
+    * [core] Add cleanup for expired timers
+    * [core] Clean IPs from socket errors
+
+  * Bugfixes
+    * [core] Fix missing timer configuration for permits
+
 # 3.12.0 / 2023-06-07
 
   * New Features
