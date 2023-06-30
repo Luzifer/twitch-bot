@@ -12,7 +12,7 @@ import (
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -143,7 +143,7 @@ func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	defer f.Close()
 
 	decoder := yaml.NewDecoder(f)
-	decoder.SetStrict(strict)
+	decoder.KnownFields(strict)
 
 	return errors.Wrap(decoder.Decode(obj), "decode config file")
 }
