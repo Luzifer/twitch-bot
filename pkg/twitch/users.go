@@ -26,8 +26,8 @@ func (c *Client) GetAuthorizedUser() (userID string, userName string, err error)
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -54,8 +54,8 @@ func (c *Client) GetDisplayNameForUser(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		Out:      &payload,
@@ -95,8 +95,8 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 		} `json:"data"`
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -133,8 +133,8 @@ func (c *Client) GetIDForUsername(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -173,8 +173,8 @@ func (c *Client) GetUserInformation(user string) (*User, error) {
 		param = "id"
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,

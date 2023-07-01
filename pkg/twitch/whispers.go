@@ -37,8 +37,8 @@ func (c *Client) SendWhisper(toUser, message string) error {
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,

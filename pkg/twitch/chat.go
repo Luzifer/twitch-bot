@@ -40,8 +40,8 @@ func (c *Client) SendChatAnnouncement(channel, color, message string) error {
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,
@@ -79,8 +79,8 @@ func (c *Client) SendShoutout(channel, user string) error {
 	params.Set("to_broadcaster_id", userID)
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,

@@ -29,9 +29,9 @@ const (
 )
 
 const (
-	authTypeUnauthorized authType = iota
-	authTypeAppAccessToken
-	authTypeBearerToken
+	AuthTypeUnauthorized AuthType = iota
+	AuthTypeAppAccessToken
+	AuthTypeBearerToken
 )
 
 type (
@@ -66,10 +66,10 @@ type (
 		ExpiresIn int      `json:"expires_in"`
 	}
 
-	authType uint8
+	AuthType uint8
 
-	clientRequestOpts struct {
-		AuthType        authType
+	ClientRequestOpts struct {
+		AuthType        AuthType
 		Body            io.Reader
 		Context         context.Context
 		Method          string
@@ -120,8 +120,8 @@ func (c *Client) RefreshToken() error {
 
 	var resp OAuthTokenResponse
 
-	err := c.request(clientRequestOpts{
-		AuthType: authTypeUnauthorized,
+	err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeUnauthorized,
 		Context:  context.Background(),
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
@@ -186,8 +186,8 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 
 	var resp OAuthTokenValidationResponse
 
-	if err := c.request(clientRequestOpts{
-		AuthType:        authTypeBearerToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType:        AuthTypeBearerToken,
 		Context:         ctx,
 		Method:          http.MethodGet,
 		NoRetry:         true,
@@ -234,8 +234,8 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
 	defer cancel()
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeUnauthorized,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeUnauthorized,
 		Context:  ctx,
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
@@ -250,7 +250,7 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 }
 
 //nolint:gocognit,gocyclo // Not gonna split to keep as a logical unit
-func (c *Client) request(opts clientRequestOpts) error {
+func (c *Client) Request(opts ClientRequestOpts) error {
 	log.WithFields(log.Fields{
 		"method": opts.Method,
 		"url":    c.replaceSecrets(opts.URL),
@@ -273,10 +273,10 @@ func (c *Client) request(opts clientRequestOpts) error {
 		req.Header.Set("Content-Type", "application/json")
 
 		switch opts.AuthType {
-		case authTypeUnauthorized:
+		case AuthTypeUnauthorized:
 			// Nothing to do
 
-		case authTypeAppAccessToken:
+		case AuthTypeAppAccessToken:
 			accessToken, err := c.getTwitchAppAccessToken()
 			if err != nil {
 				return errors.Wrap(err, "getting app-access-token")
@@ -285,7 +285,7 @@ func (c *Client) request(opts clientRequestOpts) error {
 			req.Header.Set("Authorization", "Bearer "+accessToken)
 			req.Header.Set("Client-Id", c.clientID)
 
-		case authTypeBearerToken:
+		case AuthTypeBearerToken:
 			accessToken := c.accessToken
 			if !opts.NoValidateToken {
 				accessToken, err = c.GetToken()
@@ -307,7 +307,7 @@ func (c *Client) request(opts clientRequestOpts) error {
 		}
 		defer resp.Body.Close()
 
-		if opts.AuthType == authTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
+		if opts.AuthType == AuthTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
 			// Seems our token was somehow revoked, clear the token and retry which will get a new token
 			c.appAccessToken = ""
 			return errors.New("app-access-token is invalid")

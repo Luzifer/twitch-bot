@@ -55,8 +55,8 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusOK,
@@ -93,8 +93,8 @@ func (c *Client) DeleteMessage(channel, messageID string) error {
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodDelete,
 			OKStatus: http.StatusNoContent,
@@ -125,8 +125,8 @@ func (c *Client) UnbanUser(channel, username string) error {
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  context.Background(),
 			Method:   http.MethodDelete,
 			OKStatus: http.StatusNoContent,
@@ -159,8 +159,8 @@ func (c *Client) UpdateShieldMode(ctx context.Context, channel string, enable bo
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  ctx,
 			Method:   http.MethodPut,
 			OKStatus: http.StatusOK,

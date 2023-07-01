@@ -23,8 +23,8 @@ func (c *Client) AddChannelVIP(ctx context.Context, broadcasterName, userName st
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  ctx,
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,
@@ -96,8 +96,8 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, broadcasterName s
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Body:     body,
 			Context:  ctx,
 			Method:   http.MethodPatch,
@@ -120,8 +120,8 @@ func (c *Client) RemoveChannelVIP(ctx context.Context, broadcasterName, userName
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Context:  ctx,
 			Method:   http.MethodDelete,
 			OKStatus: http.StatusNoContent,
@@ -152,8 +152,8 @@ func (c *Client) RunCommercial(ctx context.Context, channel string, duration int
 	}
 
 	return errors.Wrap(
-		c.request(clientRequestOpts{
-			AuthType: authTypeBearerToken,
+		c.Request(ClientRequestOpts{
+			AuthType: AuthTypeBearerToken,
 			Body:     body,
 			Context:  ctx,
 			Method:   http.MethodPost,

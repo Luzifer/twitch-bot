@@ -212,14 +212,14 @@ func (e EventSubCondition) Hash() (string, error) {
 }
 
 func (c *Client) createEventSubSubscriptionWebhook(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
-	return c.createEventSubSubscription(ctx, authTypeAppAccessToken, sub)
+	return c.createEventSubSubscription(ctx, AuthTypeAppAccessToken, sub)
 }
 
 func (c *Client) createEventSubSubscriptionWebsocket(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
-	return c.createEventSubSubscription(ctx, authTypeBearerToken, sub)
+	return c.createEventSubSubscription(ctx, AuthTypeBearerToken, sub)
 }
 
-func (c *Client) createEventSubSubscription(ctx context.Context, auth authType, sub eventSubSubscription) (*eventSubSubscription, error) {
+func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, sub eventSubSubscription) (*eventSubSubscription, error) {
 	var (
 		buf  = new(bytes.Buffer)
 		resp struct {
@@ -235,7 +235,7 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth authType, 
 		return nil, errors.Wrap(err, "assemble subscribe payload")
 	}
 
-	if err := c.request(clientRequestOpts{
+	if err := c.Request(ClientRequestOpts{
 		AuthType: auth,
 		Body:     buf,
 		Context:  ctx,
@@ -251,8 +251,8 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth authType, 
 }
 
 func (c *Client) deleteEventSubSubscription(ctx context.Context, id string) error {
-	return errors.Wrap(c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	return errors.Wrap(c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  ctx,
 		Method:   http.MethodDelete,
 		OKStatus: http.StatusNoContent,
@@ -278,8 +278,8 @@ func (c *Client) getEventSubSubscriptions(ctx context.Context) ([]eventSubSubscr
 	)
 
 	for {
-		if err := c.request(clientRequestOpts{
-			AuthType: authTypeAppAccessToken,
+		if err := c.Request(ClientRequestOpts{
+			AuthType: AuthTypeAppAccessToken,
 			Context:  ctx,
 			Method:   http.MethodGet,
 			OKStatus: http.StatusOK,

@@ -44,8 +44,8 @@ func (c *Client) GetClipByID(ctx context.Context, clipID string) (ClipInfo, erro
 		Data []ClipInfo
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeAppAccessToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
 		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,

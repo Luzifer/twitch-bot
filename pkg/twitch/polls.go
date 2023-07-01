@@ -48,8 +48,8 @@ func (c *Client) GetLatestPoll(ctx context.Context, username string) (*PollInfo,
 		Data []*PollInfo `json:"data"`
 	}
 
-	if err := c.request(clientRequestOpts{
-		AuthType: authTypeBearerToken,
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
 		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
