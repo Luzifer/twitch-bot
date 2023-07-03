@@ -69,14 +69,14 @@ type (
 	}
 
 	EventSubEventChannelUpdate struct {
-		BroadcasterUserID    string `json:"broadcaster_user_id"`
-		BroadcasterUserLogin string `json:"broadcaster_user_login"`
-		BroadcasterUserName  string `json:"broadcaster_user_name"`
-		Title                string `json:"title"`
-		Language             string `json:"language"`
-		CategoryID           string `json:"category_id"`
-		CategoryName         string `json:"category_name"`
-		IsMature             bool   `json:"is_mature"`
+		BroadcasterUserID           string   `json:"broadcaster_user_id"`
+		BroadcasterUserLogin        string   `json:"broadcaster_user_login"`
+		BroadcasterUserName         string   `json:"broadcaster_user_name"`
+		Title                       string   `json:"title"`
+		Language                    string   `json:"language"`
+		CategoryID                  string   `json:"category_id"`
+		CategoryName                string   `json:"category_name"`
+		ContentClassificationLabels []string `json:"content_classification_labels"`
 	}
 
 	EventSubEventFollow struct {
