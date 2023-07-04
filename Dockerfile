@@ -12,7 +12,7 @@ RUN set -ex \
       git \
       go \
       make \
-      nodejs-lts-gallium \
+      nodejs-lts-hydrogen \
       npm \
  && make frontend \
  && go install \
