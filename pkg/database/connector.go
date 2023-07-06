@@ -62,7 +62,8 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 	}
 
 	db, err := gorm.Open(innerDB, &gorm.Config{
-		Logger: logger.New(newLogrusLogWriterWithLevel(logrus.TraceLevel, driverName), logger.Config{}),
+		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   logger.New(newLogrusLogWriterWithLevel(logrus.TraceLevel, driverName), logger.Config{}),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "connecting database")
