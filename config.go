@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 
@@ -245,6 +247,28 @@ func (c configAuthToken) validate(token string) error {
 			bcrypt.CompareHashAndPassword([]byte(c.Hash), []byte(token)),
 			"validating bcrypt",
 		)
+
+	case strings.HasPrefix(c.Hash, "$argon2id$"):
+		var (
+			flds = strings.Split(c.Hash, "$")
+			t, m uint32
+			p    uint8
+		)
+
+		if _, err := fmt.Sscanf(flds[3], "m=%d,t=%d,p=%d", &m, &t, &p); err != nil {
+			return errors.Wrap(err, "scanning argon2id hash params")
+		}
+
+		salt, err := base64.RawStdEncoding.DecodeString(flds[4])
+		if err != nil {
+			return errors.Wrap(err, "decoding salt")
+		}
+
+		if flds[5] == base64.RawStdEncoding.EncodeToString(argon2.IDKey([]byte(token), salt, t, m, p, argonHashLen)) {
+			return nil
+		}
+
+		return errors.New("hash does not match")
 
 	default:
 		return errors.New("unknown hash format found")
