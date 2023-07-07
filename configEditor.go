@@ -15,7 +15,10 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-const websocketPingInterval = 30 * time.Second
+const (
+	moduleConfigEditor    = "config-editor"
+	websocketPingInterval = 30 * time.Second
+)
 
 var (
 	availableActorDocs     = []plugins.ActionDocumentation{}

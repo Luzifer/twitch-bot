@@ -1,15 +1,14 @@
 package main
 
 import (
-	"encoding/hex"
 	"net/http"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
 func fillAuthToken(token *configAuthToken) error {
@@ -20,7 +19,7 @@ func fillAuthToken(token *configAuthToken) error {
 		return errors.Wrap(err, "hashing token")
 	}
 
-	token.Hash = hex.EncodeToString(hash)
+	token.Hash = string(hash)
 
 	return nil
 }
@@ -33,24 +32,27 @@ func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 			return
 		}
 
-		if err := validateAuthToken(token, module); err != nil {
-			http.Error(w, "auth not successful", http.StatusForbidden)
+		for _, fn := range []func() error{
+			// First try to validate against internal token management
+			func() error { return validateAuthToken(token, module) },
+			// If not successful validate against Twitch and check for bot-editors
+			func() error { return validateTwitchBotEditorAuthToken(token) },
+		} {
+			if err := fn(); err != nil {
+				continue
+			}
+
+			h.ServeHTTP(w, r)
 			return
 		}
 
-		h.ServeHTTP(w, r)
+		http.Error(w, "auth not successful", http.StatusForbidden)
 	})
 }
 
 func validateAuthToken(token string, modules ...string) error {
 	for _, auth := range config.AuthTokens {
-		rawHash, err := hex.DecodeString(auth.Hash)
-		if err != nil {
-			log.WithError(err).Error("Invalid token hash found")
-			continue
-		}
-
-		if bcrypt.CompareHashAndPassword(rawHash, []byte(token)) != nil {
+		if auth.validate(token) != nil {
 			continue
 		}
 
@@ -64,4 +66,19 @@ func validateAuthToken(token string, modules ...string) error {
 	}
 
 	return errors.New("no matching token")
+}
+
+func validateTwitchBotEditorAuthToken(token string) error {
+	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, token, "")
+
+	id, user, err := tc.GetAuthorizedUser()
+	if err != nil {
+		return errors.Wrap(err, "getting authorized user")
+	}
+
+	if !str.StringInSlice(user, config.BotEditors) && !str.StringInSlice(id, config.BotEditors) {
+		return errors.New("user is not an bot-edtior")
+	}
+
+	return nil
 }

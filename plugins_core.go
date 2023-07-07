@@ -117,7 +117,7 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	var hdl http.Handler = route.HandlerFunc
 	switch {
 	case route.RequiresEditorsAuth:
-		hdl = botEditorAuthMiddleware(hdl)
+		hdl = writeAuthMiddleware(hdl, moduleConfigEditor)
 	case route.RequiresWriteAuth:
 		hdl = writeAuthMiddleware(hdl, route.Module)
 	}
