@@ -21,14 +21,14 @@ var (
 	tcGetter      func(string) (*twitch.Client, error)
 )
 
-func Register(args plugins.RegistrationArguments) error {
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&raffle{}, &raffleEntry{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	dbc = newDBClient(db)
-	if err := dbc.RefreshActiveRaffles(); err != nil {
+	if err = dbc.RefreshActiveRaffles(); err != nil {
 		return errors.Wrap(err, "refreshing active raffle cache")
 	}
 
@@ -36,7 +36,9 @@ func Register(args plugins.RegistrationArguments) error {
 	send = args.SendMessage
 	tcGetter = args.GetTwitchClientForChannel
 
-	// FIXME: API routes
+	if err = registerAPI(args); err != nil {
+		return errors.Wrap(err, "registering API")
+	}
 
 	if _, err := args.RegisterCron("@every 1m", func() {
 		for name, fn := range map[string]func() error{
