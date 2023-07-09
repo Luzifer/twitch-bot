@@ -4,6 +4,7 @@ import VueRouter from 'vue-router'
 
 import Automessages from './automessages.vue'
 import GeneralConfig from './generalConfig.vue'
+import Raffle from './raffle.vue'
 import Rules from './rules.vue'
 
 const routes = [
@@ -16,6 +17,11 @@ const routes = [
     component: Automessages,
     name: 'edit-automessages',
     path: '/automessages',
+  },
+  {
+    component: Raffle,
+    name: 'raffle',
+    path: '/raffle',
   },
   {
     component: Rules,

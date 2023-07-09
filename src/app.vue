@@ -52,6 +52,16 @@
             />
             Rules
           </b-nav-item>
+          <b-nav-item
+            :to="{ name: 'raffle' }"
+          >
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'dice']"
+            />
+            Raffle
+          </b-nav-item>
         </b-navbar-nav>
 
         <b-navbar-nav class="ml-auto">
