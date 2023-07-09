@@ -38,6 +38,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/overlays"
+	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/raffle"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/api"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/numeric"
@@ -91,6 +92,7 @@ var (
 		customevent.Register,
 		msgformat.Register,
 		overlays.Register,
+		raffle.Register,
 	}
 	knownModules []string
 )
