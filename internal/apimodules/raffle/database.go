@@ -437,6 +437,33 @@ func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
 	return nil
 }
 
+// Reopen updates the CloseAt attribute and status to active to
+// prolong the raffle
+func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
+	r, err := d.Get(raffleID)
+	if err != nil {
+		return errors.Wrap(err, "getting specified raffle")
+	}
+
+	if err = d.db.DB().
+		Model(&raffle{}).
+		Where("id = ?", raffleID).
+		Updates(map[string]any{
+			"CloseAt": time.Now().UTC().Add(duration),
+			"status":  raffleStatusActive,
+		}).
+		Error; err != nil {
+		return errors.Wrap(err, "updating raffle")
+	}
+
+	// Store ID to active-raffle cache
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.activeRaffles[strings.Join([]string{r.Channel, r.Keyword}, "::")] = r.ID
+
+	return nil
+}
+
 // Start fetches the given raffle, updates its CloseAt attribute
 // in case it is not already set, sets the raffle to active, updates
 // the raffle in the database and notes its channel/keyword combo

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
@@ -161,6 +162,38 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		Module:            actorName,
 		Name:              "Pick Raffle Winner",
 		Path:              "/{id}/pick",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeNo200,
+		RouteParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "ID of the raffle to pick a winner for",
+				Name:        "id",
+			},
+		},
+	},
+
+	{
+		Description: "Re-opens a raffle for additional entries, only Status and CloseAt are modified",
+		HandlerFunc: handleWrap(func(w http.ResponseWriter, r *http.Request, ids map[string]uint64) (any, error) {
+			dur, err := strconv.ParseInt(r.URL.Query().Get("duration"), 10, 64)
+			if err != nil {
+				return nil, errors.Wrap(err, "parsing duration")
+			}
+
+			return nil, errors.Wrap(dbc.Reopen(ids["id"], time.Duration(dur)*time.Second), "reopening raffle")
+		}, []string{"id"}),
+		Method: http.MethodPut,
+		Module: actorName,
+		Name:   "Reopen Raffle",
+		Path:   "/{id}/reopen",
+		QueryParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "Number of seconds to leave the raffle open",
+				Name:        "duration",
+				Required:    true,
+				Type:        "integer",
+			},
+		},
 		RequiresWriteAuth: true,
 		ResponseType:      plugins.HTTPRouteResponseTypeNo200,
 		RouteParams: []plugins.HTTPRouteParamDocumentation{

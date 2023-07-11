@@ -23,14 +23,23 @@
                 />
               </b-button>
               <b-button
-                v-else
+                v-else-if="data.item.status === 'active'"
                 variant="warning"
-                :disabled="data.item.status === 'ended'"
                 @click="closeRaffle(data.item.id)"
               >
                 <font-awesome-icon
                   fixed-width
                   :icon="['fas', 'stop']"
+                />
+              </b-button>
+              <b-button
+                v-else-if="data.item.status === 'ended'"
+                variant="warning"
+                @click="reopenRaffle(data.item.id)"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  :icon="['fas', 'play']"
                 />
               </b-button>
 
@@ -254,7 +263,7 @@
       </p>
     </b-modal>
 
-    <!-- Rule Editor -->
+    <!-- Raffle Editor -->
     <b-modal
       v-if="showRaffleEditModal"
       hide-header-close
@@ -473,7 +482,7 @@
               </b-list-group-item>
 
               <b-list-group-item class="d-flex justify-content-between align-items-center">
-                <span>End At*</span>
+                <span>Close At*</span>
                 <b-form-input
                   v-model="models.raffle.closeAt"
                   class="col-7"
@@ -502,7 +511,7 @@
 
               <b-list-group-item>
                 <b-form-text>
-                  * Optional, when <strong>End At</strong> is specified, <strong>Duration</strong> is ignored,
+                  * Optional, when <strong>Close At</strong> is specified, <strong>Duration</strong> is ignored,
                   when no <strong>Auto-Start</strong> is specified the raffle must be started manually. If you
                   set <strong>Respond In</strong> to 0, no chat responses from that user are recorded after
                   picking them as winner.
@@ -690,6 +699,7 @@ export default {
       ],
 
       raffles: [],
+      reopenRaffleDuration: 60,
       showRaffleEditModal: false,
       showRaffleEntriesModal: false,
     }
@@ -809,6 +819,48 @@ export default {
         .then(resp => {
           this.openedRaffle = resp.data
           this.openedRaffleReloading = false
+        })
+    },
+
+    reopenRaffle(raffleId) {
+      let duration
+
+      const h = this.$createElement
+      const content = h('div', {}, [
+        h('b-input-group', { props: { append: 'min' } }, [
+          h('b-form-input', {
+            class: 'text-right',
+            on: {
+              input(value) {
+                duration = Number(value)
+              },
+            },
+            props: {
+              min: '0',
+              step: '1',
+              type: 'number',
+              value: 10,
+            },
+          }),
+        ]),
+        h('b-form-text', { domProps: { innerHTML: 'The raffle will be re-opened and the "Close At" attribute will be set from now plus the given duration.' } }),
+      ])
+
+
+      this.$bvModal.msgBoxConfirm([content], {
+        buttonSize: 'sm',
+        centered: true,
+        size: 'sm',
+        title: 'Re-Open the Raffle?',
+      })
+        .then(val => {
+          if (!val) {
+            return
+          }
+
+          return axios.put(`raffle/${raffleId}/reopen?duration=${duration * 60}`, {}, this.$root.axiosOptions)
+            .then(() => this.fetchRaffles())
+            .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
 
