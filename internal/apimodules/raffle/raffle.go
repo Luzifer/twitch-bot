@@ -31,6 +31,9 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	if err = dbc.RefreshActiveRaffles(); err != nil {
 		return errors.Wrap(err, "refreshing active raffle cache")
 	}
+	if err = dbc.RefreshSpeakUp(); err != nil {
+		return errors.Wrap(err, "refreshing active speak-ups")
+	}
 
 	formatMessage = args.FormatMessage
 	send = args.SendMessage

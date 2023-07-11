@@ -15,6 +15,7 @@ import (
 type (
 	dbClient struct {
 		activeRaffles map[string]uint64
+		speakUp       map[string]*speakUpWait
 		db            database.Connector
 		lock          sync.RWMutex
 	}
@@ -71,11 +72,17 @@ type (
 		WasPicked  bool `json:"wasPicked"`
 		WasRedrawn bool `json:"wasRedrawn"`
 
-		DrawResponse string `json:"drawResponse"`
+		DrawResponse string     `json:"drawResponse,omitempty"`
+		SpeakUpUntil *time.Time `json:"speakUpUntil,omitempty"`
 	}
 
 	raffleMessageEvent uint8
 	raffleStatus       string
+
+	speakUpWait struct {
+		RaffleEntryID uint64
+		Until         time.Time
+	}
 )
 
 const (
@@ -96,6 +103,7 @@ var errRaffleNotFound = errors.New("raffle not found")
 func newDBClient(db database.Connector) *dbClient {
 	return &dbClient{
 		activeRaffles: make(map[string]uint64),
+		speakUp:       make(map[string]*speakUpWait),
 		db:            db,
 	}
 }
@@ -303,12 +311,17 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 		return errors.Wrap(err, "picking winner")
 	}
 
+	speakUpUntil := time.Now().UTC().Add(r.WaitForResponse)
 	if err = d.db.DB().Model(&raffleEntry{}).
 		Where("id = ?", winner.ID).
-		Update("was_picked", true).
+		Updates(map[string]any{"was_picked": true, "speak_up_until": speakUpUntil}).
 		Error; err != nil {
 		return errors.Wrap(err, "updating winner")
 	}
+
+	d.lock.Lock()
+	d.speakUp[strings.Join([]string{r.Channel, winner.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: winner.ID, Until: speakUpUntil}
+	d.lock.Unlock()
 
 	fields := plugins.FieldCollectionFromData(map[string]any{
 		"user_id": winner.UserID,
@@ -358,6 +371,69 @@ func (d *dbClient) RefreshActiveRaffles() error {
 	}
 
 	d.activeRaffles = tmp
+	return nil
+}
+
+// RefreshSpeakUp seeks all still active speak-up entries and
+// populates the speak-up cache with them
+func (d *dbClient) RefreshSpeakUp() error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	var (
+		res []raffleEntry
+		tmp = map[string]*speakUpWait{}
+	)
+
+	if err := d.db.DB().Debug().
+		Where("speak_up_until IS NOT NULL AND speak_up_until > ?", time.Now().UTC()).
+		Find(&res).
+		Error; err != nil {
+		return errors.Wrap(err, "querying active entries")
+	}
+
+	for _, e := range res {
+		var r raffle
+		if err := d.db.DB().
+			Where("id = ?", e.RaffleID).
+			First(&r).
+			Error; err != nil {
+			return errors.Wrap(err, "fetching raffle for entry")
+		}
+		tmp[strings.Join([]string{r.Channel, e.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: e.ID, Until: *e.SpeakUpUntil}
+	}
+
+	d.speakUp = tmp
+	return nil
+}
+
+// RegisterSpeakUp sets the speak-up message if there was a
+// speakUpWait for that user and channel
+func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
+	d.lock.RLock()
+	w := d.speakUp[strings.Join([]string{channel, user}, ":")]
+	d.lock.RUnlock()
+
+	if w == nil || w.Until.Before(time.Now()) {
+		// No speak-up-request for that user or expired
+		return nil
+	}
+
+	if err := d.db.DB().
+		Model(&raffleEntry{}).
+		Where("id = ?", w.RaffleEntryID).
+		Updates(map[string]any{
+			"DrawResponse": message,
+			"SpeakUpUntil": nil,
+		}).
+		Error; err != nil {
+		return errors.Wrap(err, "registering speak-up")
+	}
+
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	delete(d.speakUp, strings.Join([]string{channel, user}, ":"))
+
 	return nil
 }
 

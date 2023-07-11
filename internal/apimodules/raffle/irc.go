@@ -12,7 +12,6 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-//nolint:funlen,gocyclo // Dividing would need to carry over everyhing and make it more complex
 func rawMessageHandler(m *irc.Message) error {
 	if m.Command != "PRIVMSG" {
 		// We only care for messages containing the raffle keyword
@@ -25,6 +24,26 @@ func rawMessageHandler(m *irc.Message) error {
 		return nil
 	}
 
+	user := plugins.DeriveUser(m, nil)
+	if user == "" {
+		// The frick? Messages should have a user but whatever
+		return nil
+	}
+
+	go func() {
+		if err := dbc.RegisterSpeakUp(channel, user, m.Trailing()); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"channel": channel,
+				"user":    user,
+			}).WithError(err).Error("registering speak-up")
+		}
+	}()
+
+	return handleRaffleEntry(m, channel, user)
+}
+
+//nolint:gocyclo // Dividing would need to carry over everyhing and make it more complex
+func handleRaffleEntry(m *irc.Message, channel, user string) error {
 	flds := strings.Fields(m.Trailing())
 	if len(flds) == 0 {
 		// A message also should have: a message!
@@ -51,7 +70,7 @@ func rawMessageHandler(m *irc.Message) error {
 		return errors.Wrap(err, "getting twitch client for raffle")
 	}
 
-	since, err := raffleChan.GetFollowDate(plugins.DeriveUser(m, nil), strings.TrimLeft(channel, "#"))
+	since, err := raffleChan.GetFollowDate(user, strings.TrimLeft(channel, "#"))
 	switch {
 	case err == nil:
 		doesFollow = since.Before(time.Now().Add(-r.MinFollowAge))
@@ -66,7 +85,7 @@ func rawMessageHandler(m *irc.Message) error {
 	re := raffleEntry{
 		RaffleID:        r.ID,
 		UserID:          string(m.Tags["user-id"]),
-		UserLogin:       plugins.DeriveUser(m, nil),
+		UserLogin:       user,
 		UserDisplayName: string(m.Tags["display-name"]),
 		EnteredAt:       time.Now().UTC(),
 	}
@@ -77,7 +96,7 @@ func rawMessageHandler(m *irc.Message) error {
 
 	raffleEventFields := plugins.FieldCollectionFromData(map[string]any{
 		"user_id": string(m.Tags["user-id"]),
-		"user":    plugins.DeriveUser(m, nil),
+		"user":    user,
 	})
 
 	switch {
