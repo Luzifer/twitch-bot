@@ -309,6 +309,7 @@
                 v-model="models.raffle.channel"
                 type="text"
                 :state="validateRaffleChannel()"
+                :disabled="models.raffle.status !== 'planned'"
               />
             </b-input-group>
           </b-form-group>
@@ -324,6 +325,7 @@
               v-model="models.raffle.keyword"
               type="text"
               :state="validateRaffleNonEmpty(models.raffle.keyword)"
+              :disabled="models.raffle.status !== 'planned'"
             />
           </b-form-group>
         </b-col>
@@ -356,6 +358,7 @@
                   v-model="models.raffle.allowEveryone"
                   switch
                   :state="validateRaffleHasAllowedEntries()"
+                  :disabled="models.raffle.status !== 'planned'"
                 >
                   Everyone
                 </b-form-checkbox>
@@ -369,6 +372,7 @@
                     v-model="models.raffle.allowFollower"
                     switch
                     :state="validateRaffleHasAllowedEntries()"
+                    :disabled="models.raffle.status !== 'planned'"
                   >
                     Followers, since
                   </b-form-checkbox>
@@ -384,6 +388,7 @@
                       placeholder="min. Age"
                       min="0"
                       :state="validateRaffleIsNumber(models.raffle.minFollowAge)"
+                      :disabled="models.raffle.status !== 'planned'"
                     />
                   </b-input-group>
                 </b-form>
@@ -393,6 +398,7 @@
                   v-model="models.raffle.allowSubscriber"
                   switch
                   :state="validateRaffleHasAllowedEntries()"
+                  :disabled="models.raffle.status !== 'planned'"
                 >
                   Subscribers
                 </b-form-checkbox>
@@ -402,6 +408,7 @@
                   v-model="models.raffle.allowVIP"
                   switch
                   :state="validateRaffleHasAllowedEntries()"
+                  :disabled="models.raffle.status !== 'planned'"
                 >
                   VIPs
                 </b-form-checkbox>
@@ -426,6 +433,7 @@
                     step="0.1"
                     size="sm"
                     :state="validateRaffleIsNumber(models.raffle.multiFollower)"
+                    :disabled="models.raffle.status !== 'planned'"
                   />
                 </b-form-group>
               </b-col>
@@ -443,6 +451,7 @@
                     step="0.1"
                     size="sm"
                     :state="validateRaffleIsNumber(models.raffle.multiSubscriber)"
+                    :disabled="models.raffle.status !== 'planned'"
                   />
                 </b-form-group>
               </b-col>
@@ -460,6 +469,7 @@
                     step="0.1"
                     size="sm"
                     :state="validateRaffleIsNumber(models.raffle.multiVIP)"
+                    :disabled="models.raffle.status !== 'planned'"
                   />
                 </b-form-group>
               </b-col>
@@ -491,6 +501,7 @@
                   type="datetime-local"
                   size="sm"
                   :min="transformISOToDateTimeLocal(new Date())"
+                  :disabled="models.raffle.status !== 'planned'"
                 />
               </b-list-group-item>
 
@@ -874,6 +885,7 @@ export default {
           }),
         ]),
         h('b-form-text', { domProps: { innerHTML: 'The raffle will be re-opened and the "Close At" attribute will be set to the given duration from now.' } }),
+        h('b-form-text', { domProps: { innerHTML: 'This will <strong>NOT</strong> clear the entrants, so don\'t use this for another raffle, use the "Duplicate Raffle" functionality for that.' } }),
       ])
 
 
@@ -974,7 +986,7 @@ export default {
     },
 
     validateRaffle() {
-      if (this.models.raffle.status !== 'planned') {
+      if (this.models.raffle.status === 'ended') {
         // You must not modify running raffles
         return false
       }

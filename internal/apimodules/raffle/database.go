@@ -522,6 +522,34 @@ func (d *dbClient) Start(raffleID uint64) error {
 // raffle object must be set in order to update it. The object must
 // be completely filled.
 func (d *dbClient) Update(r raffle) error {
+	old, err := d.Get(r.ID)
+	if err != nil {
+		return errors.Wrap(err, "getting previous version")
+	}
+
+	// These information must not be changed after raffle has been started
+	if old.Status != raffleStatusPlanned {
+		r.Channel = old.Channel
+		r.Keyword = old.Keyword
+		r.Status = old.Status
+
+		r.AllowEveryone = old.AllowEveryone
+		r.AllowFollower = old.AllowFollower
+		r.AllowSubscriber = old.AllowSubscriber
+		r.AllowVIP = old.AllowVIP
+		r.MinFollowAge = old.MinFollowAge
+
+		r.MultiFollower = old.MultiFollower
+		r.MultiSubscriber = old.MultiSubscriber
+		r.MultiVIP = old.MultiVIP
+
+		r.AutoStartAt = old.AutoStartAt
+	}
+
+	// This info must be preserved
+	r.Entries = nil
+	r.TextReminderNextSend = old.TextReminderNextSend
+
 	if err := d.db.DB().
 		Model(&raffle{}).
 		Where("id = ?", r.ID).
