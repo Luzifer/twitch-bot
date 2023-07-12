@@ -14,11 +14,12 @@ import (
 const actorName = "raffle"
 
 var (
-	db            database.Connector
-	dbc           *dbClient
-	formatMessage plugins.MsgFormatter
-	send          plugins.SendMessageFunc
-	tcGetter      func(string) (*twitch.Client, error)
+	db             database.Connector
+	dbc            *dbClient
+	formatMessage  plugins.MsgFormatter
+	frontendNotify func(string)
+	send           plugins.SendMessageFunc
+	tcGetter       func(string) (*twitch.Client, error)
 )
 
 func Register(args plugins.RegistrationArguments) (err error) {
@@ -36,6 +37,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	formatMessage = args.FormatMessage
+	frontendNotify = args.FrontendNotify
 	send = args.SendMessage
 	tcGetter = args.GetTwitchClientForChannel
 

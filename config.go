@@ -138,7 +138,7 @@ func loadConfig(filename string) error {
 	}).Info("Config file (re)loaded")
 
 	// Notify listener config has changed
-	frontendReloadHooks.Ping()
+	frontendNotifyHooks.Ping(frontendNotifyTypeReload)
 
 	return nil
 }

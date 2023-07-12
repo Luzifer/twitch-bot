@@ -59,6 +59,8 @@ type (
 		CreateEvent EventHandlerFunc
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
+		// FrontendNotify is a way to send a notification to the frontend
+		FrontendNotify func(string)
 		// GetDatabaseConnector returns an active database.Connector to access the backend storage database
 		GetDatabaseConnector func() database.Connector
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name

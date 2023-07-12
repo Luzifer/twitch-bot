@@ -147,6 +147,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 			return nil
 		},
 		FormatMessage:              formatMessage,
+		FrontendNotify:             func(mt string) { frontendNotifyHooks.Ping(mt) },
 		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },

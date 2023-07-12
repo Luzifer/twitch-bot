@@ -11,7 +11,9 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-var frontendReloadHooks = newHooker()
+const frontendNotifyTypeReload = "configReload"
+
+var frontendNotifyHooks = newHooker()
 
 //nolint:funlen // Just contains a collection of objects
 func registerEditorGlobalMethods() {
@@ -161,9 +163,9 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	var (
-		configReloadNotify = make(chan struct{}, 1)
-		pingTimer          = time.NewTicker(websocketPingInterval)
-		unsubscribe        = frontendReloadHooks.Register(func() { configReloadNotify <- struct{}{} })
+		frontendNotify = make(chan string, 1)
+		pingTimer      = time.NewTicker(websocketPingInterval)
+		unsubscribe    = frontendNotifyHooks.Register(func(payload any) { frontendNotify <- payload.(string) })
 	)
 	defer unsubscribe()
 
@@ -173,9 +175,9 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		select {
-		case <-configReloadNotify:
+		case msgType := <-frontendNotify:
 			if err := conn.WriteJSON(socketMsg{
-				MsgType: "configReload",
+				MsgType: msgType,
 			}); err != nil {
 				log.WithError(err).Debug("Unable to send websocket notification")
 				return

@@ -708,7 +708,6 @@ export default {
   methods: {
     cloneRaffle(id) {
       return axios.put(`raffle/${id}/clone`, {}, this.$root.axiosOptions)
-        .then(() => this.fetchRaffles())
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -728,7 +727,6 @@ export default {
           }
 
           return axios.put(`raffle/${id}/close`, {}, this.$root.axiosOptions)
-            .then(() => this.fetchRaffles())
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
@@ -749,7 +747,6 @@ export default {
           }
 
           return axios.delete(`raffle/${id}`, this.$root.axiosOptions)
-            .then(() => this.fetchRaffles())
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
@@ -823,7 +820,7 @@ export default {
     },
 
     reopenRaffle(raffleId) {
-      let duration
+      let duration = 10
 
       const h = this.$createElement
       const content = h('div', {}, [
@@ -839,7 +836,7 @@ export default {
               min: '0',
               step: '1',
               type: 'number',
-              value: 10,
+              value: duration,
             },
           }),
         ]),
@@ -859,7 +856,6 @@ export default {
           }
 
           return axios.put(`raffle/${raffleId}/reopen?duration=${duration * 60}`, {}, this.$root.axiosOptions)
-            .then(() => this.fetchRaffles())
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
@@ -873,12 +869,10 @@ export default {
     saveRaffle() {
       if (this.models.raffle.id) {
         return axios.put(`raffle/${this.models.raffle.id}`, this.transformRaffleToDB(this.models.raffle), this.$root.axiosOptions)
-          .then(() => this.fetchRaffles())
           .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
       }
 
       return axios.post('raffle/', this.transformRaffleToDB(this.models.raffle), this.$root.axiosOptions)
-        .then(() => this.fetchRaffles())
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -892,7 +886,6 @@ export default {
 
     startRaffle(id) {
       return axios.put(`raffle/${id}/start`, {}, this.$root.axiosOptions)
-        .then(() => this.fetchRaffles())
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -985,6 +978,19 @@ export default {
 
   mounted() {
     this.fetchRaffles()
+
+    this.$bus.$on('raffleChanged', () => {
+      this.fetchRaffles()
+    })
+
+    this.$bus.$on('raffleEntryChanged', () => {
+      if (!this.openedRaffle.id) {
+        // We ignore this when there is no opened raffle
+        return
+      }
+
+      this.refreshOpenendRaffle()
+    })
   },
 
   name: 'TwitchBotEditorAppRaffle',

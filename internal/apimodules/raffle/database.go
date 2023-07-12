@@ -12,6 +12,11 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+const (
+	frontendNotifyEventRaffleChange      = "raffleChanged"
+	frontendNotifyEventRaffleEntryChange = "raffleEntryChanged"
+)
+
 type (
 	dbClient struct {
 		activeRaffles map[string]uint64
@@ -184,7 +189,12 @@ func (d *dbClient) Clone(raffleID uint64) error {
 	raffle.Status = raffleStatusPlanned
 	raffle.Title = strings.Join([]string{"Copy of", raffle.Title}, " ")
 
-	return errors.Wrap(d.Create(raffle), "creating copy")
+	if err = d.Create(raffle); err != nil {
+		return errors.Wrap(err, "creating copy")
+	}
+
+	frontendNotify(frontendNotifyEventRaffleChange)
+	return nil
 }
 
 // Close marks the raffle as closed and removes it from the active
@@ -206,6 +216,7 @@ func (d *dbClient) Close(raffleID uint64) error {
 	defer d.lock.Unlock()
 	delete(d.activeRaffles, strings.Join([]string{r.Channel, r.Keyword}, "::"))
 
+	frontendNotify(frontendNotifyEventRaffleChange)
 	return nil
 }
 
@@ -213,10 +224,12 @@ func (d *dbClient) Close(raffleID uint64) error {
 // the database without modification and therefore need to be filled
 // before calling this function
 func (d *dbClient) Create(r raffle) error {
-	return errors.Wrap(
-		d.db.DB().Create(&r).Error,
-		"creating database record",
-	)
+	if err := d.db.DB().Create(&r).Error; err != nil {
+		return errors.Wrap(err, "creating database record")
+	}
+
+	frontendNotify(frontendNotifyEventRaffleChange)
+	return nil
 }
 
 // Delete removes all entries for the given raffle and afterwards
@@ -229,22 +242,26 @@ func (d *dbClient) Delete(raffleID uint64) (err error) {
 		return errors.Wrap(err, "deleting raffle entries")
 	}
 
-	return errors.Wrap(
-		d.db.DB().
-			Where("id = ?", raffleID).
-			Delete(&raffle{}).Error,
-		"creating database record",
-	)
+	if err = d.db.DB().
+		Where("id = ?", raffleID).
+		Delete(&raffle{}).Error; err != nil {
+		return errors.Wrap(err, "creating database record")
+	}
+
+	frontendNotify(frontendNotifyEventRaffleChange)
+	return nil
 }
 
 // Enter creates a new raffle entry. The entry will be written to
 // the database without modification and therefore need to be filled
 // before calling this function
 func (d *dbClient) Enter(re raffleEntry) error {
-	return errors.Wrap(
-		d.db.DB().Create(&re).Error,
-		"creating database record",
-	)
+	if err := d.db.DB().Create(&re).Error; err != nil {
+		return errors.Wrap(err, "creating database record")
+	}
+
+	frontendNotify(frontendNotifyEventRaffleEntryChange)
+	return nil
 }
 
 // Get retrieves a raffle from the database
@@ -328,6 +345,8 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 		"user":    winner.UserLogin,
 		"winner":  winner,
 	})
+
+	frontendNotify(frontendNotifyEventRaffleEntryChange)
 
 	return errors.Wrap(
 		r.SendEvent(raffleMessageEventWin, fields),
@@ -434,6 +453,7 @@ func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
 	defer d.lock.Unlock()
 	delete(d.speakUp, strings.Join([]string{channel, user}, ":"))
 
+	frontendNotify(frontendNotifyEventRaffleEntryChange)
 	return nil
 }
 
@@ -461,6 +481,7 @@ func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 	defer d.lock.Unlock()
 	d.activeRaffles[strings.Join([]string{r.Channel, r.Keyword}, "::")] = r.ID
 
+	frontendNotify(frontendNotifyEventRaffleChange)
 	return nil
 }
 
@@ -489,6 +510,8 @@ func (d *dbClient) Start(raffleID uint64) error {
 	defer d.lock.Unlock()
 	d.activeRaffles[strings.Join([]string{r.Channel, r.Keyword}, "::")] = r.ID
 
+	frontendNotify(frontendNotifyEventRaffleChange)
+
 	return errors.Wrap(
 		r.SendEvent(raffleMessageEventReminder, nil),
 		"sending first reminder",
@@ -499,14 +522,16 @@ func (d *dbClient) Start(raffleID uint64) error {
 // raffle object must be set in order to update it. The object must
 // be completely filled.
 func (d *dbClient) Update(r raffle) error {
-	return errors.Wrap(
-		d.db.DB().
-			Model(&raffle{}).
-			Where("id = ?", r.ID).
-			Updates(&r).
-			Error,
-		"updating raffle",
-	)
+	if err := d.db.DB().
+		Model(&raffle{}).
+		Where("id = ?", r.ID).
+		Updates(&r).
+		Error; err != nil {
+		return errors.Wrap(err, "updating raffle")
+	}
+
+	frontendNotify(frontendNotifyEventRaffleChange)
+	return nil
 }
 
 // SendEvent processes the text template and sends the message if
