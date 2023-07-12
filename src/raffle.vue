@@ -1076,6 +1076,10 @@ export default {
 
     this.$bus.$on('raffleChanged', () => {
       this.fetchRaffles()
+
+      if (this.openedRaffle.id) {
+        this.refreshOpenendRaffle()
+      }
     })
 
     this.$bus.$on('raffleEntryChanged', () => {
