@@ -156,7 +156,7 @@
       :visible="showRaffleEntriesModal"
       :title="`Entries: ${openedRaffle.title}`"
       hide-footer
-      @hidden="showRaffleEntriesModal=false"
+      @hidden="closeEntriesModal"
     >
       <b-list-group
         v-if="raffleEntries.length > 0"
@@ -715,7 +715,7 @@ export default {
   data() {
     return {
       models: { raffle: {} },
-      openedRaffle: null,
+      openedRaffle: {},
       openedRaffleReloading: false,
       raffleFields: [
         {
@@ -763,6 +763,11 @@ export default {
       return axios.put(`raffle/${id}/clone`, {}, this.$root.axiosOptions)
         .then(() => this.$root.toastSuccess('Raffle cloned'))
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    },
+
+    closeEntriesModal() {
+      this.openedRaffle = {}
+      this.showRaffleEntriesModal = false
     },
 
     closeRaffle(id) {
