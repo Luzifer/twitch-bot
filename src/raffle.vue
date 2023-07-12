@@ -1077,13 +1077,13 @@ export default {
     this.$bus.$on('raffleChanged', () => {
       this.fetchRaffles()
 
-      if (this.openedRaffle.id) {
+      if (this.openedRaffle?.id) {
         this.refreshOpenendRaffle()
       }
     })
 
     this.$bus.$on('raffleEntryChanged', () => {
-      if (!this.openedRaffle.id) {
+      if (!this.openedRaffle?.id) {
         // We ignore this when there is no opened raffle
         return
       }
