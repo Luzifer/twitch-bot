@@ -698,7 +698,17 @@ export default {
     },
 
     raffleTableItems() {
-      return this.raffles
+      const raffles = [...this.raffles]
+      raffles.sort((a, b) => {
+        const scores = { active: 0, ended: 2, planned: 1 }
+
+        if (scores[a.status] !== scores[b.status]) {
+          return scores[a.status] - scores[b.status]
+        }
+
+        return b.id - a.id
+      })
+      return raffles
     },
   },
 
