@@ -47,6 +47,14 @@ new Vue({
 
   data: {
     authToken: null,
+    commonToastOpts: {
+      appendToast: true,
+      autoHideDelay: 3000,
+      bodyClass: 'd-none',
+      solid: true,
+      toaster: 'b-toaster-bottom-right',
+    },
+
     vars: {},
   },
 
@@ -58,6 +66,34 @@ new Vue({
         .then(resp => {
           this.vars = resp.data
         })
+    },
+
+    toastError(message, options = {}) {
+      this.$bvToast.toast('...', {
+        ...this.commonToastOpts,
+        ...options,
+        noAutoHide: true,
+        title: message,
+        variant: 'danger',
+      })
+    },
+
+    toastInfo(message, options = {}) {
+      this.$bvToast.toast('...', {
+        ...this.commonToastOpts,
+        ...options,
+        title: message,
+        variant: 'info',
+      })
+    },
+
+    toastSuccess(message, options = {}) {
+      this.$bvToast.toast('...', {
+        ...this.commonToastOpts,
+        ...options,
+        title: message,
+        variant: 'success',
+      })
     },
   },
 

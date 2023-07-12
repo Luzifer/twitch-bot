@@ -667,7 +667,6 @@ import * as constants from './const.js'
 
 import axios from 'axios'
 import TemplateEditor from './tplEditor.vue'
-import Vue from 'vue'
 
 const ONE_MINUTE = 60000000000 // nanoseconds
 const ONE_SECOND = 1000000000 // nanoseconds
@@ -752,6 +751,7 @@ export default {
   methods: {
     cloneRaffle(id) {
       return axios.put(`raffle/${id}/clone`, {}, this.$root.axiosOptions)
+        .then(() => this.$root.toastSuccess('Raffle cloned'))
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -771,6 +771,7 @@ export default {
           }
 
           return axios.put(`raffle/${id}/close`, {}, this.$root.axiosOptions)
+            .then(() => this.$root.toastSuccess('Raffle closed'))
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
@@ -791,12 +792,13 @@ export default {
           }
 
           return axios.delete(`raffle/${id}`, this.$root.axiosOptions)
+            .then(() => this.$root.toastSuccess('Raffle deleted'))
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
 
     editRaffle(raffle) {
-      Vue.set(this.models, 'raffle', raffle)
+      this.$set(this.models, 'raffle', raffle)
       this.showRaffleEditModal = true
     },
 
@@ -809,7 +811,7 @@ export default {
     },
 
     newRaffle() {
-      Vue.set(this.models, 'raffle', {
+      this.$set(this.models, 'raffle', {
         /* eslint-disable sort-keys */
         channel: '',
         keyword: '!enter',
@@ -851,7 +853,8 @@ export default {
     pickWinner() {
       this.openedRaffleReloading = true
       return axios.put(`raffle/${this.openedRaffle.id}/pick`, {}, this.$root.axiosOptions)
-        .finally(() => this.refreshOpenendRaffle())
+        .then(() => this.$root.toastSuccess('Winner picked!'))
+        .catch(() => this.$root.toastError('Could not pick winner!'))
     },
 
     refreshOpenendRaffle() {
@@ -901,6 +904,7 @@ export default {
           }
 
           return axios.put(`raffle/${raffleId}/reopen?duration=${duration * 60}`, {}, this.$root.axiosOptions)
+            .then(() => this.$root.toastSuccess('Raffle re-opened'))
             .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
         })
     },
@@ -908,16 +912,19 @@ export default {
     repickWinner(winnerId) {
       this.openedRaffleReloading = true
       return axios.put(`raffle/${this.openedRaffle.id}/repick/${winnerId}`, {}, this.$root.axiosOptions)
-        .finally(() => this.refreshOpenendRaffle())
+        .then(() => this.$root.toastSuccess('Winner re-picked!'))
+        .catch(() => this.$root.toastError('Could not re-pick winner!'))
     },
 
     saveRaffle() {
       if (this.models.raffle.id) {
         return axios.put(`raffle/${this.models.raffle.id}`, this.transformRaffleToDB(this.models.raffle), this.$root.axiosOptions)
+          .then(() => this.$root.toastSuccess('Raffle updated'))
           .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
       }
 
       return axios.post('raffle/', this.transformRaffleToDB(this.models.raffle), this.$root.axiosOptions)
+        .then(() => this.$root.toastSuccess('Raffle created'))
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 
@@ -931,6 +938,7 @@ export default {
 
     startRaffle(id) {
       return axios.put(`raffle/${id}/start`, {}, this.$root.axiosOptions)
+        .then(() => this.$root.toastSuccess('Raffle started'))
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
     },
 

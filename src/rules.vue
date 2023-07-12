@@ -677,7 +677,6 @@ import * as constants from './const.js'
 
 import axios from 'axios'
 import TemplateEditor from './tplEditor.vue'
-import Vue from 'vue'
 
 export default {
   components: { TemplateEditor },
@@ -804,7 +803,7 @@ export default {
 
     addAction() {
       if (!this.models.rule.actions) {
-        Vue.set(this.models.rule, 'actions', [])
+        this.$set(this.models.rule, 'actions', [])
       }
 
       this.models.rule.actions.push({ attributes: {}, type: this.models.addAction })
@@ -846,7 +845,7 @@ export default {
     },
 
     editRule(msg) {
-      Vue.set(this.models, 'rule', {
+      this.$set(this.models, 'rule', {
         ...msg,
         actions: msg.actions?.map(action => ({ ...action, attributes: action.attributes || {} })) || [],
         channel_cooldown: this.fixDurationRepresentationToString(msg.channel_cooldown),
@@ -975,11 +974,11 @@ export default {
       tmp[idx] = tmp[idx + direction]
       tmp[idx + direction] = eltmp
 
-      Vue.set(this.models.rule, 'actions', tmp)
+      this.$set(this.models.rule, 'actions', tmp)
     },
 
     newRule() {
-      Vue.set(this.models, 'rule', { match_message__validation: true })
+      this.$set(this.models, 'rule', { match_message__validation: true })
       this.templateValid = {}
       this.showRuleEditModal = true
     },
@@ -1100,7 +1099,7 @@ export default {
     },
 
     updateTemplateValid(id, valid) {
-      Vue.set(this.templateValid, id, valid)
+      this.$set(this.templateValid, id, valid)
     },
 
     validateActionArgument(idx, key) {
@@ -1172,17 +1171,17 @@ export default {
 
     validateExceptionRegex() {
       return this.validateRegex(this.models.addException, false)
-        .then(res => Vue.set(this.models, 'addException__validation', res))
+        .then(res => this.$set(this.models, 'addException__validation', res))
     },
 
     validateMatcherRegex() {
       if (this.models.rule.match_message === '') {
-        Vue.set(this.models.rule, 'match_message__validation', true)
+        this.$set(this.models.rule, 'match_message__validation', true)
         return
       }
 
       return this.validateRegex(this.models.rule.match_message, true)
-        .then(res => Vue.set(this.models.rule, 'match_message__validation', res))
+        .then(res => this.$set(this.models.rule, 'match_message__validation', res))
     },
 
     validateRegex(regex, allowEmpty = true) {
