@@ -45,7 +45,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return errors.Wrap(err, "registering API")
 	}
 
-	if _, err := args.RegisterCron("@every 1m", func() {
+	if _, err := args.RegisterCron("@every 10s", func() {
 		for name, fn := range map[string]func() error{
 			"close":          dbc.AutoCloseExpired,
 			"start":          dbc.AutoStart,
