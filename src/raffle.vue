@@ -15,6 +15,7 @@
               <b-button
                 v-if="data.item.status === 'planned'"
                 variant="success"
+                title="Start Raffle"
                 @click="startRaffle(data.item.id)"
               >
                 <font-awesome-icon
@@ -25,6 +26,7 @@
               <b-button
                 v-else-if="data.item.status === 'active'"
                 variant="warning"
+                title="Close Raffle"
                 @click="closeRaffle(data.item.id)"
               >
                 <font-awesome-icon
@@ -35,6 +37,7 @@
               <b-button
                 v-else-if="data.item.status === 'ended'"
                 variant="warning"
+                title="Re-Open Raffle"
                 @click="reopenRaffle(data.item.id)"
               >
                 <font-awesome-icon
@@ -46,6 +49,7 @@
               <b-button
                 variant="info"
                 :disabled="data.item.status === 'planned'"
+                title="Manage Entries"
                 @click="showEntryDialog(data.item.id)"
               >
                 <font-awesome-icon
@@ -56,6 +60,7 @@
 
               <b-button
                 variant="primary"
+                title="Edit Raffle"
                 @click="editRaffle(data.item)"
               >
                 <font-awesome-icon
@@ -65,6 +70,7 @@
               </b-button>
 
               <b-button
+                title="Duplicate Raffle"
                 @click="cloneRaffle(data.item.id)"
               >
                 <font-awesome-icon
@@ -75,6 +81,7 @@
 
               <b-button
                 variant="danger"
+                title="Delete Raffle"
                 @click="deleteRaffle(data.item.id)"
               >
                 <font-awesome-icon
@@ -90,17 +97,20 @@
               v-if="data.item.status == 'planned'"
               fixed-width
               :icon="['fas', 'pen-ruler']"
+              title="Planned"
             />
             <font-awesome-icon
               v-else-if="data.item.status == 'active'"
               fixed-width
               :icon="['fas', 'spinner']"
               spin-pulse
+              title="In Progress"
             />
             <font-awesome-icon
               v-else-if="data.item.status == 'ended'"
               fixed-width
               :icon="['fas', 'stop']"
+              title="Ended"
             />
             <font-awesome-icon
               v-else
@@ -113,6 +123,7 @@
             <b-button-group size="sm">
               <b-button
                 variant="success"
+                title="Create New Raffle"
                 @click="newRaffle"
               >
                 <font-awesome-icon
@@ -123,6 +134,7 @@
 
               <b-button
                 variant="secondary"
+                title="Refresh Raffle"
                 @click="fetchRaffles"
               >
                 <font-awesome-icon
@@ -166,6 +178,7 @@
             </b-button>
             <b-button
               variant="secondary"
+              title="Refresh Entries"
               @click="refreshOpenendRaffle"
             >
               <font-awesome-icon
@@ -184,6 +197,7 @@
             <font-awesome-layers
               v-if="entry.wasPicked"
               class="mr-1"
+              :title="entry.wasRedrawn ? 'Was Redrawn' : 'Has Won'"
             >
               <font-awesome-icon
                 fixed-width
@@ -202,21 +216,25 @@
               v-if="entry.enteredAs === 'everyone'"
               fixed-width
               :icon="['fas', 'user']"
+              title="Does not Follow"
             />
             <font-awesome-icon
               v-else-if="entry.enteredAs === 'follower'"
               fixed-width
               :icon="['fas', 'heart']"
+              title="Follower"
             />
             <font-awesome-icon
               v-else-if="entry.enteredAs === 'subscriber'"
               fixed-width
               :icon="['fas', 'star']"
+              title="Subscriber"
             />
             <font-awesome-icon
               v-else-if="entry.enteredAs === 'vip'"
               fixed-width
               :icon="['fas', 'gem']"
+              title="VIP"
             />
             <font-awesome-icon
               v-else
@@ -244,6 +262,7 @@
                 v-if="entry.wasPicked && !entry.wasRedrawn"
                 variant="danger"
                 size="sm"
+                title="Re-Draw Winner"
                 @click="repickWinner(entry.id)"
               >
                 <font-awesome-icon
@@ -289,6 +308,7 @@
                 id="formRaffleChannel"
                 v-model="models.raffle.channel"
                 type="text"
+                :state="validateRaffleChannel()"
               />
             </b-input-group>
           </b-form-group>
@@ -303,6 +323,7 @@
               id="formRaffleKeyword"
               v-model="models.raffle.keyword"
               type="text"
+              :state="validateRaffleNonEmpty(models.raffle.keyword)"
             />
           </b-form-group>
         </b-col>
@@ -316,6 +337,7 @@
               id="formRaffleTitle"
               v-model="models.raffle.title"
               type="text"
+              :state="validateRaffleNonEmpty(models.raffle.title)"
             />
           </b-form-group>
         </b-col>
@@ -333,6 +355,7 @@
                 <b-form-checkbox
                   v-model="models.raffle.allowEveryone"
                   switch
+                  :state="validateRaffleHasAllowedEntries()"
                 >
                   Everyone
                 </b-form-checkbox>
@@ -345,6 +368,7 @@
                   <b-form-checkbox
                     v-model="models.raffle.allowFollower"
                     switch
+                    :state="validateRaffleHasAllowedEntries()"
                   >
                     Followers, since
                   </b-form-checkbox>
@@ -359,6 +383,7 @@
                       type="number"
                       placeholder="min. Age"
                       min="0"
+                      :state="validateRaffleIsNumber(models.raffle.minFollowAge)"
                     />
                   </b-input-group>
                 </b-form>
@@ -367,6 +392,7 @@
                 <b-form-checkbox
                   v-model="models.raffle.allowSubscriber"
                   switch
+                  :state="validateRaffleHasAllowedEntries()"
                 >
                   Subscribers
                 </b-form-checkbox>
@@ -375,6 +401,7 @@
                 <b-form-checkbox
                   v-model="models.raffle.allowVIP"
                   switch
+                  :state="validateRaffleHasAllowedEntries()"
                 >
                   VIPs
                 </b-form-checkbox>
@@ -398,6 +425,7 @@
                     min="0"
                     step="0.1"
                     size="sm"
+                    :state="validateRaffleIsNumber(models.raffle.multiFollower)"
                   />
                 </b-form-group>
               </b-col>
@@ -414,6 +442,7 @@
                     min="0"
                     step="0.1"
                     size="sm"
+                    :state="validateRaffleIsNumber(models.raffle.multiSubscriber)"
                   />
                 </b-form-group>
               </b-col>
@@ -430,6 +459,7 @@
                     min="0"
                     step="0.1"
                     size="sm"
+                    :state="validateRaffleIsNumber(models.raffle.multiVIP)"
                   />
                 </b-form-group>
               </b-col>
@@ -477,6 +507,7 @@
                     step="1"
                     min="0"
                     class="text-right"
+                    :state="validateRaffleIsNumber(models.raffle.closeAfter)"
                   />
                 </b-input-group>
               </b-list-group-item>
@@ -505,6 +536,7 @@
                     step="1"
                     min="0"
                     class="text-right"
+                    :state="validateRaffleIsNumber(models.raffle.waitForResponse)"
                   />
                 </b-input-group>
               </b-list-group-item>
@@ -596,6 +628,7 @@
                       step="1"
                       min="0"
                       class="text-right"
+                      :state="validateRaffleIsNumber(models.raffle.textReminderInterval)"
                     />
                   </b-input-group>
                 </div>
@@ -670,7 +703,7 @@ export default {
           key: '_status',
           label: 'Status',
           tdClass: 'text-center',
-          thClass: 'align-middle',
+          thClass: 'align-middle text-center',
         },
         {
           class: 'col-1',
@@ -840,7 +873,7 @@ export default {
             },
           }),
         ]),
-        h('b-form-text', { domProps: { innerHTML: 'The raffle will be re-opened and the "Close At" attribute will be set from now plus the given duration.' } }),
+        h('b-form-text', { domProps: { innerHTML: 'The raffle will be re-opened and the "Close At" attribute will be set to the given duration from now.' } }),
       ])
 
 
@@ -947,17 +980,21 @@ export default {
       }
 
       for (const nf of [
-        'closeAfter', 'minFollowAge', 'textReminderInterval',
+        'closeAfter', 'minFollowAge', 'textReminderInterval', 'waitForResponse',
         'multiFollower', 'multiSubscriber', 'multiVIP',
       ]) {
         // You must not put text in numeric fields
-        if (isNaN(Number(this.models.raffle[nf]))) {
+        if (this.validateRaffleIsNumber(this.models.raffle[nf]) === false) {
           return false
         }
       }
 
-      for (const nef of ['channel', 'keyword', 'title']) {
-        if (this.models.raffle[nef] === '') {
+      if (this.validateRaffleChannel() === false) {
+        return false
+      }
+
+      for (const nef of ['keyword', 'title']) {
+        if (this.validateRaffleNonEmpty(this.models.raffle[nef]) === false) {
           // You must fill certain fields
           return false
         }
@@ -967,12 +1004,40 @@ export default {
         return false
       }
 
-      if (!this.models.raffle.allowEveryone && !this.models.raffle.allowFollower && !this.models.raffle.allowSubscriber && !this.models.raffle.allowVIP) {
-        // You must allow anyone to enter
+      if (this.validateRaffleHasAllowedEntries() === false) {
+        // You must allow someone to enter
         return false
       }
 
       return true
+    },
+
+    validateRaffleChannel() {
+      if (!/^[a-zA-Z0-9]{4,25}$/.test(this.models.raffle.channel)) {
+        return false
+      }
+      return null
+    },
+
+    validateRaffleHasAllowedEntries() {
+      if (this.models.raffle.allowEveryone || this.models.raffle.allowFollower || this.models.raffle.allowSubscriber || this.models.raffle.allowVIP) {
+        return null
+      }
+      return false
+    },
+
+    validateRaffleIsNumber(n) {
+      if (isNaN(Number(n))) {
+        return false
+      }
+      return null
+    },
+
+    validateRaffleNonEmpty(str) {
+      if (str.trim().length === 0) {
+        return false
+      }
+      return null
     },
   },
 
