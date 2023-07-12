@@ -30,6 +30,7 @@ import App from './app.vue'
 import Router from './router.js'
 
 Vue.config.devtools = process.env.NODE_ENV === 'dev'
+Vue.config.silent = process.env.NODE_ENV !== 'dev'
 
 Vue.prototype.$bus = new Vue()
 
