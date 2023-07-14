@@ -8,23 +8,23 @@ import (
 
 type (
 	hooker struct {
-		hooks map[string]func()
+		hooks map[string]func(any)
 		lock  sync.RWMutex
 	}
 )
 
-func newHooker() *hooker { return &hooker{hooks: map[string]func(){}} }
+func newHooker() *hooker { return &hooker{hooks: map[string]func(any){}} }
 
-func (h *hooker) Ping() {
+func (h *hooker) Ping(payload any) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 
 	for _, hf := range h.hooks {
-		hf()
+		hf(payload)
 	}
 }
 
-func (h *hooker) Register(hook func()) func() {
+func (h *hooker) Register(hook func(any)) func() {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 

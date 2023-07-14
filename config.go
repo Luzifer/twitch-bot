@@ -2,16 +2,21 @@ package main
 
 import (
 	_ "embed"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/go-irc/irc"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Luzifer/go_helpers/v2/str"
@@ -96,6 +101,9 @@ func loadConfig(filename string) error {
 	tmpConfig.updateAutoMessagesFromConfig(config)
 	tmpConfig.fixDurations()
 	tmpConfig.fixMissingUUIDs()
+	if err = tmpConfig.fixTokenHashStorage(); err != nil {
+		return errors.Wrap(err, "applying token hash fixes")
+	}
 
 	switch {
 	case config != nil && config.RawLog == tmpConfig.RawLog:
@@ -130,7 +138,7 @@ func loadConfig(filename string) error {
 	}).Info("Config file (re)loaded")
 
 	// Notify listener config has changed
-	frontendReloadHooks.Ping()
+	frontendNotifyHooks.Ping(frontendNotifyTypeReload)
 
 	return nil
 }
@@ -159,6 +167,9 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 	}
 
 	cfgFile.fixMissingUUIDs()
+	if err = cfgFile.fixTokenHashStorage(); err != nil {
+		return errors.Wrap(err, "applying token hash fixes")
+	}
 
 	err = patcher(cfgFile)
 	switch {
@@ -229,6 +240,41 @@ func writeDefaultConfigFile(filename string) error {
 	return errors.Wrap(err, "writing default config")
 }
 
+func (c configAuthToken) validate(token string) error {
+	switch {
+	case strings.HasPrefix(c.Hash, "$2a$"):
+		return errors.Wrap(
+			bcrypt.CompareHashAndPassword([]byte(c.Hash), []byte(token)),
+			"validating bcrypt",
+		)
+
+	case strings.HasPrefix(c.Hash, "$argon2id$"):
+		var (
+			flds = strings.Split(c.Hash, "$")
+			t, m uint32
+			p    uint8
+		)
+
+		if _, err := fmt.Sscanf(flds[3], "m=%d,t=%d,p=%d", &m, &t, &p); err != nil {
+			return errors.Wrap(err, "scanning argon2id hash params")
+		}
+
+		salt, err := base64.RawStdEncoding.DecodeString(flds[4])
+		if err != nil {
+			return errors.Wrap(err, "decoding salt")
+		}
+
+		if flds[5] == base64.RawStdEncoding.EncodeToString(argon2.IDKey([]byte(token), salt, t, m, p, argonHashLen)) {
+			return nil
+		}
+
+		return errors.New("hash does not match")
+
+	default:
+		return errors.New("unknown hash format found")
+	}
+}
+
 func (c *configFile) CloseRawMessageWriter() error {
 	if c == nil || c.rawLogWriter == nil {
 		return nil
@@ -297,6 +343,26 @@ func (c *configFile) fixMissingUUIDs() {
 		}
 		c.Rules[i].UUID = uuid.NewV5(hashstructUUIDNamespace, c.Rules[i].MatcherID()).String()
 	}
+}
+
+func (c *configFile) fixTokenHashStorage() (err error) {
+	for key := range c.AuthTokens {
+		auth := c.AuthTokens[key]
+
+		if strings.HasPrefix(auth.Hash, "$") {
+			continue
+		}
+
+		rawHash, err := hex.DecodeString(auth.Hash)
+		if err != nil {
+			return errors.Wrap(err, "reading hash")
+		}
+
+		auth.Hash = string(rawHash)
+		c.AuthTokens[key] = auth
+	}
+
+	return nil
 }
 
 func (c *configFile) runLoadChecks() (err error) {

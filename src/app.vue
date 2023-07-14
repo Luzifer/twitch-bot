@@ -52,6 +52,16 @@
             />
             Rules
           </b-nav-item>
+          <b-nav-item
+            :to="{ name: 'raffle' }"
+          >
+            <font-awesome-icon
+              fixed-width
+              class="mr-1"
+              :icon="['fas', 'dice']"
+            />
+            Raffle
+          </b-nav-item>
         </b-navbar-nav>
 
         <b-navbar-nav class="ml-auto">
@@ -295,8 +305,8 @@ export default {
         console.debug(`[notify] Socket message received type=${msg.msg_type}`)
         this.configNotifyBackoff = 100 // We've received a message, reset backoff
 
-        if (msg.msg_type === constants.NOTIFY_CONFIG_RELOAD) {
-          this.$bus.$emit(constants.NOTIFY_CONFIG_RELOAD)
+        if (msg.msg_type !== 'ping') {
+          this.$bus.$emit(msg.msg_type)
         }
       }
       this.configNotifySocket.onclose = evt => {

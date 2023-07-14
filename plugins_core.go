@@ -38,6 +38,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/customevent"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/overlays"
+	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/raffle"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/api"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/numeric"
@@ -91,6 +92,7 @@ var (
 		customevent.Register,
 		msgformat.Register,
 		overlays.Register,
+		raffle.Register,
 	}
 	knownModules []string
 )
@@ -117,7 +119,7 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	var hdl http.Handler = route.HandlerFunc
 	switch {
 	case route.RequiresEditorsAuth:
-		hdl = botEditorAuthMiddleware(hdl)
+		hdl = writeAuthMiddleware(hdl, moduleConfigEditor)
 	case route.RequiresWriteAuth:
 		hdl = writeAuthMiddleware(hdl, route.Module)
 	}
@@ -145,6 +147,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 			return nil
 		},
 		FormatMessage:              formatMessage,
+		FrontendNotify:             func(mt string) { frontendNotifyHooks.Ping(mt) },
 		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },

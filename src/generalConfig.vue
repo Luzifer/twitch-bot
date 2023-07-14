@@ -412,7 +412,6 @@
 import * as constants from './const.js'
 
 import axios from 'axios'
-import Vue from 'vue'
 
 export default {
   computed: {
@@ -645,7 +644,7 @@ export default {
       this.$bus.$emit(constants.NOTIFY_LOADING_DATA, true)
       return axios.get(`config-editor/user?user=${user}`, this.$root.axiosOptions)
         .then(resp => {
-          Vue.set(this.userProfiles, user, resp.data)
+          this.$set(this.userProfiles, user, resp.data)
           this.$bus.$emit(constants.NOTIFY_LOADING_DATA, false)
         })
         .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
@@ -682,7 +681,7 @@ export default {
     },
 
     newAPIToken() {
-      Vue.set(this.models, 'apiToken', {
+      this.$set(this.models, 'apiToken', {
         modules: [],
         name: '',
       })

@@ -144,7 +144,7 @@ func main() {
 		FallbackToken:      cfg.TwitchToken,
 		TokenUpdateHook: func() {
 			// make frontend reload its state as of token change
-			frontendReloadHooks.Ping()
+			frontendNotifyHooks.Ping(frontendNotifyTypeReload)
 		},
 	}); err != nil {
 		if !errors.Is(err, access.ErrChannelNotAuthorized) {

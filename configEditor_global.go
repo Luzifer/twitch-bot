@@ -11,7 +11,9 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-var frontendReloadHooks = newHooker()
+const frontendNotifyTypeReload = "configReload"
+
+var frontendNotifyHooks = newHooker()
 
 //nolint:funlen // Just contains a collection of objects
 func registerEditorGlobalMethods() {
@@ -20,7 +22,7 @@ func registerEditorGlobalMethods() {
 			Description:  "Returns the documentation for available actions",
 			HandlerFunc:  configEditorGlobalGetActions,
 			Method:       http.MethodGet,
-			Module:       "config-editor",
+			Module:       moduleConfigEditor,
 			Name:         "Get available actions",
 			Path:         "/actions",
 			ResponseType: plugins.HTTPRouteResponseTypeJSON,
@@ -29,7 +31,7 @@ func registerEditorGlobalMethods() {
 			Description:  "Returns all available modules for auth",
 			HandlerFunc:  configEditorGlobalGetModules,
 			Method:       http.MethodGet,
-			Module:       "config-editor",
+			Module:       moduleConfigEditor,
 			Name:         "Get available modules",
 			Path:         "/modules",
 			ResponseType: plugins.HTTPRouteResponseTypeJSON,
@@ -38,7 +40,7 @@ func registerEditorGlobalMethods() {
 			Description: "Returns information about a Twitch user to properly display bot editors",
 			HandlerFunc: configEditorGlobalGetUser,
 			Method:      http.MethodGet,
-			Module:      "config-editor",
+			Module:      moduleConfigEditor,
 			Name:        "Get user information",
 			Path:        "/user",
 			QueryParams: []plugins.HTTPRouteParamDocumentation{
@@ -56,7 +58,7 @@ func registerEditorGlobalMethods() {
 			Description:  "Subscribe for configuration changes",
 			HandlerFunc:  configEditorGlobalSubscribe,
 			Method:       http.MethodGet,
-			Module:       "config-editor",
+			Module:       moduleConfigEditor,
 			Name:         "Websocket: Subscribe config changes",
 			Path:         "/notify-config",
 			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
@@ -65,7 +67,7 @@ func registerEditorGlobalMethods() {
 			Description: "Validate a cron expression and return the next executions",
 			HandlerFunc: configEditorGlobalValidateCron,
 			Method:      http.MethodPut,
-			Module:      "config-editor",
+			Module:      moduleConfigEditor,
 			Name:        "Validate cron expression",
 			Path:        "/validate-cron",
 			QueryParams: []plugins.HTTPRouteParamDocumentation{
@@ -88,7 +90,7 @@ func registerEditorGlobalMethods() {
 			Description: "Validate a regular expression against the RE2 regex parser",
 			HandlerFunc: configEditorGlobalValidateRegex,
 			Method:      http.MethodPut,
-			Module:      "config-editor",
+			Module:      moduleConfigEditor,
 			Name:        "Validate regular expression",
 			Path:        "/validate-regex",
 			QueryParams: []plugins.HTTPRouteParamDocumentation{
@@ -105,7 +107,7 @@ func registerEditorGlobalMethods() {
 			Description: "Validate a template expression against the built in template function library",
 			HandlerFunc: configEditorGlobalValidateTemplate,
 			Method:      http.MethodPut,
-			Module:      "config-editor",
+			Module:      moduleConfigEditor,
 			Name:        "Validate template expression",
 			Path:        "/validate-template",
 			QueryParams: []plugins.HTTPRouteParamDocumentation{
@@ -161,9 +163,9 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	var (
-		configReloadNotify = make(chan struct{}, 1)
-		pingTimer          = time.NewTicker(websocketPingInterval)
-		unsubscribe        = frontendReloadHooks.Register(func() { configReloadNotify <- struct{}{} })
+		frontendNotify = make(chan string, 1)
+		pingTimer      = time.NewTicker(websocketPingInterval)
+		unsubscribe    = frontendNotifyHooks.Register(func(payload any) { frontendNotify <- payload.(string) })
 	)
 	defer unsubscribe()
 
@@ -173,9 +175,9 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		select {
-		case <-configReloadNotify:
+		case msgType := <-frontendNotify:
 			if err := conn.WriteJSON(socketMsg{
-				MsgType: "configReload",
+				MsgType: msgType,
 			}); err != nil {
 				log.WithError(err).Debug("Unable to send websocket notification")
 				return

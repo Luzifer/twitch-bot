@@ -3,7 +3,7 @@ default: lint frontend_lint test
 lint:
 	golangci-lint run
 
-publish: frontend
+publish: frontend_prod
 	curl -sSLo golang.sh https://raw.githubusercontent.com/Luzifer/github-publish/master/golang.sh
 	bash golang.sh
 
@@ -11,6 +11,9 @@ test:
 	go test -cover -v ./...
 
 # --- Editor frontend
+
+frontend_prod: export NODE_ENV=production
+frontend_prod: frontend
 
 frontend: node_modules
 	node ci/build.mjs

@@ -260,7 +260,6 @@ import * as constants from './const.js'
 
 import axios from 'axios'
 import TemplateEditor from './tplEditor.vue'
-import Vue from 'vue'
 
 export default {
   components: { TemplateEditor },
@@ -375,7 +374,7 @@ export default {
     },
 
     editAutoMessage(msg) {
-      Vue.set(this.models, 'autoMessage', {
+      this.$set(this.models, 'autoMessage', {
         ...msg,
         sendMode: msg.cron ? 'cron' : 'lines',
       })
@@ -395,7 +394,7 @@ export default {
     },
 
     newAutoMessage() {
-      Vue.set(this.models, 'autoMessage', {})
+      this.$set(this.models, 'autoMessage', {})
       this.templateValid = {}
       this.showAutoMessageEditModal = true
     },
@@ -429,7 +428,7 @@ export default {
     },
 
     updateTemplateValid(id, valid) {
-      Vue.set(this.templateValid, id, valid)
+      this.$set(this.templateValid, id, valid)
     },
   },
 
