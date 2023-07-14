@@ -14,7 +14,7 @@ RUN set -ex \
       make \
       nodejs-lts-hydrogen \
       npm \
- && make frontend_prod \
+ && make node_modules frontend_prod \
  && go install \
       -trimpath \
       -mod=readonly \
