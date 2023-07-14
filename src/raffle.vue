@@ -99,13 +99,16 @@
               :icon="['fas', 'pen-ruler']"
               title="Planned"
             />
-            <font-awesome-icon
-              v-else-if="data.item.status == 'active'"
-              fixed-width
-              :icon="['fas', 'spinner']"
-              spin-pulse
-              title="In Progress"
-            />
+            <span v-else-if="data.item.status == 'active'">
+              <font-awesome-icon
+                fixed-width
+                :icon="['fas', 'spinner']"
+                spin-pulse
+                title="In Progress"
+                class="mr-1"
+              />
+              <small class="text-muted">{{ raffleTimer(data.item) }}</small>
+            </span>
             <font-awesome-icon
               v-else-if="data.item.status == 'ended'"
               fixed-width
@@ -715,6 +718,7 @@ export default {
   data() {
     return {
       models: { raffle: {} },
+      now: new Date(),
       openedRaffle: {},
       openedRaffleReloading: false,
       raffleFields: [
@@ -722,31 +726,35 @@ export default {
           class: 'col-1',
           key: '_status',
           label: 'Status',
-          tdClass: 'text-center',
+          tdClass: 'text-center align-middle',
           thClass: 'align-middle text-center',
         },
         {
           class: 'col-1',
           key: 'channel',
           label: 'Channel',
+          tdClass: 'align-middle',
           thClass: 'align-middle',
         },
         {
           class: 'col-1',
           key: 'keyword',
           label: 'Keyword',
+          tdClass: 'align-middle',
           thClass: 'align-middle',
         },
         {
           class: 'col-7',
           key: 'title',
           label: 'Title',
+          tdClass: 'align-middle',
           thClass: 'align-middle',
         },
         {
           class: 'col-2 text-right',
           key: '_actions',
           label: '',
+          tdClass: 'align-middle',
           thClass: 'align-middle',
         },
       ],
@@ -857,7 +865,7 @@ export default {
         textWin: '{{ mention .user }} you won! Please speak up in chat to claim your price!',
         textWinPost: false,
 
-        textReminder: 'We are currently doing a raffle: "{{ .raffle.Title }}" - type "{{ .raffle.Keyword }}" to enter!',
+        textReminder: 'We are currently doing a raffle until {{ dateInZone "15:04" .raffle.CloseAt "Europe/Berlin" }}: "{{ .raffle.Title }}" - type "{{ .raffle.Keyword }}" to enter!',
         textReminderInterval: 15,
         textReminderPost: false,
         /* eslint-enable sort-keys */
@@ -870,6 +878,19 @@ export default {
       return axios.put(`raffle/${this.openedRaffle.id}/pick`, {}, this.$root.axiosOptions)
         .then(() => this.$root.toastSuccess('Winner picked!'))
         .catch(() => this.$root.toastError('Could not pick winner!'))
+    },
+
+    raffleTimer(raffle) {
+      const parts = []
+      let tte = new Date(raffle.closeAt) - this.now
+
+      for (const d of [3600000, 60000, 1000]) {
+        const pt = Math.floor(tte / d)
+        parts.push(String(pt).padStart(2, '0'))
+        tte -= pt * d
+      }
+
+      return parts.join(':')
     },
 
     refreshOpenendRaffle() {
@@ -1069,7 +1090,7 @@ export default {
     },
 
     validateRaffleNonEmpty(str) {
-      if (str.trim().length === 0) {
+      if (!str || str.trim().length === 0) {
         return false
       }
       return null
@@ -1095,6 +1116,10 @@ export default {
 
       this.refreshOpenendRaffle()
     })
+
+    window.setInterval(() => {
+      this.now = new Date()
+    }, 1000)
   },
 
   name: 'TwitchBotEditorAppRaffle',
