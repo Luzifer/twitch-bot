@@ -650,6 +650,22 @@
                   v-model="models.raffle.textReminder"
                 />
               </b-list-group-item>
+
+              <b-list-group-item class="">
+                <div class="d-flex align-items-center mb-1">
+                  <b-form-checkbox
+                    v-model="models.raffle.textClosePost"
+                    switch
+                    class="mr-n2"
+                  >
+                    Message on raffle close
+                  </b-form-checkbox>
+                </div>
+                <template-editor
+                  v-model="models.raffle.textClose"
+                />
+              </b-list-group-item>
+
               <b-list-group-item>
                 <b-form-text>
                   Available variables are <code>.user</code> and <code>.raffle</code> with
@@ -855,6 +871,9 @@ export default {
         closeAfter: 0,
         closeAt: null,
         waitForResponse: 30,
+
+        textClose: 'The raffle "{{ .raffle.Title }}" is closed now, you can no longer enter!',
+        textClosePost: false,
 
         textEntry: '{{ mention .user }} you are registered, good luck!',
         textEntryPost: true,

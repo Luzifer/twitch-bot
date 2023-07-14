@@ -48,16 +48,18 @@ type (
 		CloseAt         *time.Time    `json:"closeAt"`
 		WaitForResponse time.Duration `json:"waitForResponse"`
 
+		TextClose            string        `json:"textClose"`
+		TextClosePost        bool          `json:"textClosePost"`
 		TextEntry            string        `json:"textEntry"`
 		TextEntryPost        bool          `json:"textEntryPost"`
 		TextEntryFail        string        `json:"textEntryFail"`
 		TextEntryFailPost    bool          `json:"textEntryFailPost"`
-		TextWin              string        `json:"textWin"`
-		TextWinPost          bool          `json:"textWinPost"`
 		TextReminder         string        `json:"textReminder"`
 		TextReminderInterval time.Duration `json:"textReminderInterval"`
 		TextReminderNextSend time.Time     `json:"-"`
 		TextReminderPost     bool          `json:"textReminderPost"`
+		TextWin              string        `json:"textWin"`
+		TextWinPost          bool          `json:"textWinPost"`
 
 		Entries []raffleEntry `gorm:"foreignKey:RaffleID" json:"entries,omitempty"`
 	}
@@ -95,6 +97,7 @@ const (
 	raffleMessageEventEntry
 	raffleMessageEventReminder
 	raffleMessageEventWin
+	raffleMessageEventClose
 )
 
 const (
@@ -217,7 +220,11 @@ func (d *dbClient) Close(raffleID uint64) error {
 	delete(d.activeRaffles, strings.Join([]string{r.Channel, r.Keyword}, "::"))
 
 	frontendNotify(frontendNotifyEventRaffleChange)
-	return nil
+
+	return errors.Wrap(
+		r.SendEvent(raffleMessageEventClose, nil),
+		"sending close-message",
+	)
 }
 
 // Create creates a new raffle. The record will be written to
@@ -574,6 +581,12 @@ func (r raffle) SendEvent(evt raffleMessageEvent, fields *plugins.FieldCollectio
 	var sendTextTpl string
 
 	switch evt {
+	case raffleMessageEventClose:
+		if !r.TextClosePost {
+			return nil
+		}
+		sendTextTpl = r.TextClose
+
 	case raffleMessageEventEntryFailed:
 		if !r.TextEntryFailPost {
 			return nil
