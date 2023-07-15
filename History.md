@@ -1,3 +1,8 @@
+# 3.14.1 / 2023-07-16
+
+  * Bugfixes
+    * [raffle] Fix index initialization in MySQL v8
+
 # 3.14.0 / 2023-07-16
 
   * New Features
