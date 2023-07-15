@@ -389,6 +389,21 @@ Example:
 < luziferus
 ```
 
+#### `textAPI`
+
+Fetches remote URL and returns the result as string. (Remote API needs to return status 200 within 5 seconds.)
+
+Syntax: `textAPI "https://example.com/" ["fallback"]`
+
+Example:
+
+```
+! !weather (.*)
+> !weather Hamburg
+# {{ textAPI (printf "https://api.scorpstuff.com/weather.php?units=metric&city=%s" (urlquery (group 1))) }}
+< Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
+```
+
 #### `variable`
 
 Returns the variable value or default in case it is empty
