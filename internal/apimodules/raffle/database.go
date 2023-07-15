@@ -68,7 +68,7 @@ type (
 		ID       uint64 `gorm:"primaryKey" json:"id"`
 		RaffleID uint64 `gorm:"uniqueIndex:user_per_raffle" json:"-"`
 
-		UserID          string `gorm:"uniqueIndex:user_per_raffle" json:"userID"`
+		UserID          string `gorm:"size:128;uniqueIndex:user_per_raffle" json:"userID"`
 		UserLogin       string `json:"userLogin"`
 		UserDisplayName string `json:"userDisplayName"`
 
