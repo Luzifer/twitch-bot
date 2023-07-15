@@ -1,3 +1,16 @@
+# 3.14.0 / 2023-07-16
+
+  * New Features
+    * Implement Raffle module (#47)
+    * [template] Add `textAPI` function
+
+  * Improvements
+    * [ci] Update nodejs version for builds
+    * [eventsub] Replace `IsMature` tag in channel updates
+
+  * Bugfixes
+    * [wiki] Fix example broken since v3.x
+
 # 3.13.0 / 2023-06-25
 
   * New Features
