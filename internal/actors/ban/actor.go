@@ -140,7 +140,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("ban message does not match required format")
 	}
 
-	if err := botTwitchClient.BanUser(channel, matches[1], 0, matches[3]); err != nil {
+	if err := botTwitchClient.BanUser(channel, matches[1], 0, matches[2]); err != nil {
 		return errors.Wrap(err, "executing ban")
 	}
 
