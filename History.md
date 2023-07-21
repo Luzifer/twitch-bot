@@ -1,3 +1,8 @@
+# 3.14.2 / 2023-07-21
+
+  * Bugfixes
+    * [ban] Fix Chatcommand matching
+
 # 3.14.1 / 2023-07-16
 
   * Bugfixes
