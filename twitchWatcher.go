@@ -114,6 +114,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 	return []topicRegistration{
 		{
 			Topic:          twitch.EventSubEventTypeChannelUpdate,
+			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: nil,
 			Hook:           t.handleEventSubChannelUpdate,
