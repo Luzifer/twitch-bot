@@ -50,6 +50,12 @@ type (
 		apiCache *APICache
 	}
 
+	ErrorResponse struct {
+		Error   string `json:"error"`
+		Status  int    `json:"status"`
+		Message string `json:"message"`
+	}
+
 	OAuthTokenResponse struct {
 		AccessToken  string   `json:"access_token"`
 		RefreshToken string   `json:"refresh_token"`
@@ -78,8 +84,28 @@ type (
 		OKStatus        int
 		Out             interface{}
 		URL             string
+		ValidateFunc    func(ClientRequestOpts, *http.Response) error
 	}
 )
+
+// ValidateStatus is the default validation function used when no
+// ValidateFunc is given in the ClientRequestOpts and checks for the
+// returned HTTP status is equal to the OKStatus
+//
+// When wrapping this function the body should not have been read
+// before in order to have the response body available in the returned
+// HTTPError
+func ValidateStatus(opts ClientRequestOpts, resp *http.Response) error {
+	if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return newHTTPError(resp.StatusCode, nil, err)
+		}
+		return newHTTPError(resp.StatusCode, body, nil)
+	}
+
+	return nil
+}
 
 func New(clientID, clientSecret, accessToken, refreshToken string) *Client {
 	return &Client{
@@ -132,7 +158,7 @@ func (c *Client) RefreshToken() error {
 	case err == nil:
 		// That's fine, just continue
 
-	case errors.Is(err, errAnyHTTPError):
+	case errors.Is(err, ErrAnyHTTPError):
 		// Retried refresh failed, wipe tokens
 		log.WithError(err).Warning("resetting tokens after refresh-failure")
 		c.UpdateToken("", "")
@@ -249,7 +275,7 @@ func (c *Client) getTwitchAppAccessToken() (string, error) {
 	return rData.AccessToken, nil
 }
 
-//nolint:gocognit,gocyclo // Not gonna split to keep as a logical unit
+//nolint:gocyclo // Not gonna split to keep as a logical unit
 func (c *Client) Request(opts ClientRequestOpts) error {
 	log.WithFields(log.Fields{
 		"method": opts.Method,
@@ -260,6 +286,10 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 	if opts.Body != nil || opts.NoRetry {
 		// Body must be read only once, do not retry
 		retries = 1
+	}
+
+	if opts.ValidateFunc == nil {
+		opts.ValidateFunc = ValidateStatus
 	}
 
 	return backoff.NewBackoff().WithMaxIterations(retries).Retry(func() error {
@@ -313,12 +343,8 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 			return errors.New("app-access-token is invalid")
 		}
 
-		if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return newHTTPError(resp.StatusCode, nil, err)
-			}
-			return newHTTPError(resp.StatusCode, body, nil)
+		if err = opts.ValidateFunc(opts, resp); err != nil {
+			return err
 		}
 
 		if opts.Out == nil {

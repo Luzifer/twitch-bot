@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,7 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const maxTimeoutDuration = 1209600 * time.Second
+const (
+	errMessageAlreadyBanned = "The user specified in the user_id field is already banned."
+	maxTimeoutDuration      = 1209600 * time.Second
+)
 
 // BanUser bans or timeouts a user in the given channel. Setting the
 // duration to 0 will result in a ban, setting if greater than 0 will
@@ -65,6 +69,26 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 				"https://api.twitch.tv/helix/moderation/bans?broadcaster_id=%s&moderator_id=%s",
 				channelID, botID,
 			),
+			ValidateFunc: func(opts ClientRequestOpts, resp *http.Response) error {
+				if resp.StatusCode == http.StatusBadRequest {
+					// The user might already be banned, lets check the error in detail
+					body, err := io.ReadAll(resp.Body)
+					if err != nil {
+						return newHTTPError(resp.StatusCode, nil, err)
+					}
+
+					var payload ErrorResponse
+					if err = json.Unmarshal(body, &payload); err == nil && payload.Message == errMessageAlreadyBanned {
+						// The user is already banned, that's fine as that was
+						// our goal!
+						return nil
+					}
+
+					return newHTTPError(resp.StatusCode, body, nil)
+				}
+
+				return ValidateStatus(opts, resp)
+			},
 		}),
 		"executing ban request",
 	)
