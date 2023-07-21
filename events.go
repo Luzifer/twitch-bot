@@ -25,6 +25,7 @@ var (
 	eventTypeDelete             = ptrStr("delete")
 	eventTypeFollow             = ptrStr("follow")
 	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
+	eventTypeHypeChat           = ptrStr("hype_chat")
 	eventTypeJoin               = ptrStr("join")
 	eventTypeOutboundRaid       = ptrStr("outbound_raid")
 	eventTypePart               = ptrStr("part")
@@ -57,6 +58,7 @@ var (
 		eventTypeDelete,
 		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,
+		eventTypeHypeChat,
 		eventTypeJoin,
 		eventTypeOutboundRaid,
 		eventTypePart,

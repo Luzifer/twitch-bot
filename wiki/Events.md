@@ -89,6 +89,21 @@ Fields:
 - `gifter` - The login-name of the user who gifted the subscription
 - `username` - The login-name of the user who upgraded their subscription
 
+## `hype_chat`
+
+User used the Twitch "Hype Chat" to pin a message to the chat.
+
+Fields:
+
+- `amount` - Amount of money the user spent (float64, i.e. `1.2` when they used 1.20 EUR)
+- `channel` - The channel the event occurred in
+- `currency` - [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes) alphabetic currency code
+- `is_system_message` - Set to `true` if the user left no message and the message was system-generated
+- `level` - `ONE` to `TEN`, uppercase number-words
+- `messge` - The message the user sent (or the system generated)
+- `user_id` - ID of the user
+- `user` - The login-name of the user who sent the message
+
 ## `join`
 
 User joined the channel-chat. This is **NOT** an indicator they are viewing, the event is **NOT** reliably sent when the user really joined the chat. The event will be sent with some delay after they join the chat and is sometimes repeated multiple times during their stay. So **DO NOT** use this to greet users!
