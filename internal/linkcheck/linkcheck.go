@@ -55,22 +55,23 @@ func New() *Checker {
 	}
 }
 
-// ScanForLinks takes a message and tries to find links within that
-// message. Common methods like putting spaces into links are tried
-// to circumvent.
-func (c Checker) ScanForLinks(message string) (links []string) {
-	for _, scanner := range []func(string) []string{
+// HeuristicScanForLinks takes a message and tries to find links
+// within that message. Common methods like putting spaces into links
+// are tried to circumvent.
+func (c Checker) HeuristicScanForLinks(message string) []string {
+	return c.scan(message,
 		c.scanPlainNoObfuscate,
 		c.scanObfuscateSpace,
 		c.scanObfuscateSpecialCharsAndSpaces,
 		c.scanDotObfuscation,
-	} {
-		if links = scanner(message); links != nil {
-			return links
-		}
-	}
+	)
+}
 
-	return links
+// ScanForLinks takes a message and tries to find links within that
+// message. This only detects links without any means of obfuscation
+// like putting spaces into the link.
+func (c Checker) ScanForLinks(message string) (links []string) {
+	return c.scan(message, c.scanPlainNoObfuscate)
 }
 
 // resolveFinal takes a link and looks up the final destination of
@@ -184,6 +185,16 @@ func (Checker) getJar() *cookiejar.Jar {
 	return jar
 }
 
+func (c Checker) scan(message string, scanFns ...func(string) []string) (links []string) {
+	for _, scanner := range scanFns {
+		if links = scanner(message); links != nil {
+			return links
+		}
+	}
+
+	return links
+}
+
 func (c Checker) scanDotObfuscation(message string) (links []string) {
 	message = regexp.MustCompile(`(?i)\s*\(?dot\)?\s*`).ReplaceAllString(message, ".")
 	return c.scanPlainNoObfuscate(message)
@@ -193,9 +204,11 @@ func (c Checker) scanObfuscateSpace(message string) (links []string) {
 	// Spammers use spaces in their links to prevent link protection matches
 	parts := regexp.MustCompile(`\s+`).Split(message, -1)
 
-	for i := 0; i < len(parts)-1; i++ {
-		if link := c.resolveFinal(strings.Join(parts[i:i+2], ""), c.getJar(), nil, c.userAgent()); link != "" {
-			links = append(links, link)
+	for ptJoin := 2; ptJoin < len(parts); ptJoin++ {
+		for i := 0; i <= len(parts)-ptJoin; i++ {
+			if link := c.resolveFinal(strings.Join(parts[i:i+ptJoin], ""), c.getJar(), nil, c.userAgent()); link != "" {
+				links = append(links, link)
+			}
 		}
 	}
 

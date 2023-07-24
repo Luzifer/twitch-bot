@@ -54,6 +54,7 @@ func TestMaxRedirects(t *testing.T) {
 	assert.Equal(t, []string{fmt.Sprintf("%s/%d", ts.URL, maxRedirects)}, c.ScanForLinks(msg))
 }
 
+//nolint:funlen
 func TestScanForLinks(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
@@ -62,54 +63,64 @@ func TestScanForLinks(t *testing.T) {
 	c := New()
 
 	for _, testCase := range []struct {
+		Heuristic     bool
 		Message       string
 		ExpectedLinks []string
 	}{
 		// Case: full URL is present in the message
 		{
-			Message: "https://example.com",
+			Heuristic: false,
+			Message:   "https://example.com",
 			ExpectedLinks: []string{
 				"https://example.com",
 			},
 		},
 		// Case: full bitly link is present in the message
 		{
-			Message: "https://bit.ly/438obkJ",
+			Heuristic: false,
+			Message:   "https://bit.ly/438obkJ",
 			ExpectedLinks: []string{
 				"https://example.com/",
 			},
 		},
 		// Case: link is present just without the protocol
 		{
-			Message: "Here, take a look at this: bit.ly/438obkJ",
+			Heuristic: false,
+			Message:   "Here, take a look at this: bit.ly/438obkJ",
 			ExpectedLinks: []string{
 				"https://example.com/",
 			},
 		},
 		// Case: message with vk.cc shortener
 		{
-			Message: "See more here: vk.cc/ckGZN2",
+			Heuristic: false,
+			Message:   "See more here: vk.cc/ckGZN2",
 			ExpectedLinks: []string{
 				"https://vk.com/club206261664",
 			},
 		},
 		// Case: link is obfuscated using space
 		{
-			Message: "Take a look at example. com",
+			Heuristic: true,
+			Message:   "Take a look at example. com",
 			ExpectedLinks: []string{
 				"http://example.com",
+				"http://www.atexample.com/",
 			},
 		},
 		// Case: link is obfuscated using space and braces
 		{
-			Message: "Take a look at example. (com)",
+			Heuristic: true,
+			Message:   "Take a look at example. (com)",
 			ExpectedLinks: []string{
 				"http://example.com",
+				"http://www.atexample.com/",
 			},
 		},
 		// Case: multiple links in one message
 		{
-			Message: "https://clips.twitch.tv/WrongEnchantingMinkFutureMan-EKlDjYkvDeurO9XT https://bit.ly/438obkJ",
+			Heuristic: false,
+			Message:   "https://clips.twitch.tv/WrongEnchantingMinkFutureMan-EKlDjYkvDeurO9XT https://bit.ly/438obkJ",
 			ExpectedLinks: []string{
 				"https://clips.twitch.tv/WrongEnchantingMinkFutureMan-EKlDjYkvDeurO9XT",
 				"https://example.com/",
@@ -117,38 +128,62 @@ func TestScanForLinks(t *testing.T) {
 		},
 		// Case: obfuscation with "dot"
 		{
-			Message: "I'm live now on twitch dot tv/twitch",
+			Heuristic: true,
+			Message:   "I'm live now on twitch dot tv/twitch",
 			ExpectedLinks: []string{
 				"https://www.twitch.tv/twitch",
 			},
 		},
 		// Case: enhanced "dot" obfuscation
 		{
-			Message: "You can visit Archive(Dot) org in your browser",
+			Heuristic: true,
+			Message:   "You can visit Archive(Dot) org in your browser",
 			ExpectedLinks: []string{
 				"http://Archive.org",
 			},
 		},
 		// Case: Youtube does weird stuff
 		{
-			Message: "https://luziferus.tv/youtube",
+			Heuristic: false,
+			Message:   "https://luziferus.tv/youtube",
 			ExpectedLinks: []string{
 				"https://www.youtube.com/channel/UCjsRmaAQ0IHR2CNEBqfNOSQ",
 			},
 		},
 		// Case: Instagram also does weird things
 		{
-			Message: "https://bit.ly/3KHpJuy",
+			Heuristic: false,
+			Message:   "https://bit.ly/3KHpJuy",
 			ExpectedLinks: []string{
 				"https://www.instagram.com/instagram/",
 			},
 		},
+		// Case: Heuristic enabled with a German sentence accidentally
+		// forming a valid link to a spanish site (btw.es) - known and
+		// valid false-positive
+		{
+			Heuristic:     true,
+			Message:       "Hey btw. es kann sein, dass",
+			ExpectedLinks: []string{"https://trusted.evo-media.eu/btw.es"},
+		},
+		// Case: Multiple spaces in the link
+		{
+			Heuristic:     true,
+			Message:       "Hey there, see my new project on exa mpl e. com! Get it fast now!",
+			ExpectedLinks: []string{"http://example.com"},
+		},
 		// Case: false positives
-		{Message: "game dot exe has stopped working", ExpectedLinks: nil},
-		{Message: "You're following since 12.12.2020 DogChamp", ExpectedLinks: nil},
+		{Heuristic: true, Message: "game dot exe has stopped working", ExpectedLinks: nil},
+		{Heuristic: true, Message: "You're following since 12.12.2020 DogChamp", ExpectedLinks: nil},
+		{Heuristic: false, Message: "Hey btw. es kann sein, dass", ExpectedLinks: nil},
 	} {
-		t.Run(testCase.Message, func(t *testing.T) {
-			linksFound := c.ScanForLinks(testCase.Message)
+		t.Run(fmt.Sprintf("h:%v lc:%d m:%s", testCase.Heuristic, len(testCase.ExpectedLinks), testCase.Message), func(t *testing.T) {
+			var linksFound []string
+			if testCase.Heuristic {
+				linksFound = c.HeuristicScanForLinks(testCase.Message)
+			} else {
+				linksFound = c.ScanForLinks(testCase.Message)
+			}
 			sort.Strings(linksFound)
 
 			assert.Equal(t, testCase.ExpectedLinks, linksFound, "links from message %q", testCase.Message)
