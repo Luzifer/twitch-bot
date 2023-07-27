@@ -44,7 +44,7 @@ func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	}
 
 	if err := c.Request(ClientRequestOpts{
-		AuthType: AuthTypeBearerToken,
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -85,7 +85,7 @@ func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
 	}
 
 	if err := c.Request(ClientRequestOpts{
-		AuthType: AuthTypeBearerToken,
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
@@ -120,7 +120,7 @@ func (c *Client) HasLiveStream(username string) (bool, error) {
 	}
 
 	if err := c.Request(ClientRequestOpts{
-		AuthType: AuthTypeBearerToken,
+		AuthType: AuthTypeAppAccessToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
