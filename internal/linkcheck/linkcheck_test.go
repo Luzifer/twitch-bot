@@ -145,7 +145,7 @@ func TestScanForLinks(t *testing.T) {
 		// Case: Youtube does weird stuff
 		{
 			Heuristic: false,
-			Message:   "https://luziferus.tv/youtube",
+			Message:   "https://knut.in/youtube",
 			ExpectedLinks: []string{
 				"https://www.youtube.com/channel/UCjsRmaAQ0IHR2CNEBqfNOSQ",
 			},
