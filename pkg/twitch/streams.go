@@ -28,6 +28,10 @@ type (
 	}
 )
 
+// ErrNoStreamsFound allows to differntiate between an HTTP error and
+// the fact there just is no stream found
+var ErrNoStreamsFound = errors.New("no streams found")
+
 func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	cacheKey := []string{"currentStreamInfo", username}
 	if si := c.apiCache.Get(cacheKey); si != nil {
@@ -54,8 +58,15 @@ func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 		return nil, errors.Wrap(err, "request channel info")
 	}
 
-	if l := len(payload.Data); l != 1 {
-		return nil, errors.Errorf("unexpected number of users returned: %d", l)
+	switch l := len(payload.Data); l {
+	case 0:
+		return nil, ErrNoStreamsFound
+
+	case 1:
+		// That's expected
+
+	default:
+		return nil, errors.Errorf("unexpected number of streams returned: %d", l)
 	}
 
 	// Stream-info can be changed at any moment, cache for a short period of time
