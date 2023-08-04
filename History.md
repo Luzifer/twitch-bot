@@ -1,3 +1,13 @@
+# 3.15.0 / 2023-08-04
+
+  * New Features
+    * [core] Add support for `hype_chat` event
+
+  * Improvements
+    * [eventsub] Switch to `channel.update/2`
+    * [linkdetector] Add new option to enable heuristic scan
+    * [twitchclient] Reduce retries and errors when banning banned user
+
 # 3.14.2 / 2023-07-21
 
   * Bugfixes
