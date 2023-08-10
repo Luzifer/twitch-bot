@@ -33,6 +33,8 @@ jobs:
             tar
 
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
