@@ -2,6 +2,12 @@ HUGO_VERSION:=0.117.0
 
 default: lint frontend_lint test
 
+build_prod: frontend_prod
+	go build \
+		-trimpath \
+		-mod=readonly \
+		-ldflags "-X main.version=$(shell git describe --tags --always || echo dev)"
+
 lint:
 	golangci-lint run
 
