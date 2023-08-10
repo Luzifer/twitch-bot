@@ -29,17 +29,6 @@ frontend_lint: node_modules
 node_modules:
 	npm ci
 
-# --- Wiki Updates
-
-actor_docs:
-	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
-
-pull_wiki:
-	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
-
-push_wiki:
-	git subtree push --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master
-
 # --- Tools
 
 update_ua_list:
@@ -61,8 +50,8 @@ trivy:
 
 # -- Documentation Site --
 
-bundle_docs: render_docs
-	tar -C .rendered-docs -czf docs.tgz .
+actor_docs:
+	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
 
 render_docs: hugo_$(HUGO_VERSION)
 	./hugo_$(HUGO_VERSION) --cleanDestinationDir --gc --source docs
