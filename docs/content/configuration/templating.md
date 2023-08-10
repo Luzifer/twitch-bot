@@ -1,8 +1,12 @@
-## Templating
++++
+title = "Templating"
++++
 
+{{< lead >}}
 Generally speaking the templating uses [Golang `text/template`](https://pkg.go.dev/text/template) template syntax. All fields with templating enabled do support the full synax from the `text/template` package.
+{{< /lead >}}
 
-### Variables
+## Variables
 
 There are certain variables available in the strings with templating enabled:
 
@@ -12,7 +16,7 @@ There are certain variables available in the strings with templating enabled:
 - `username` - The username of the message author
 
 
-### Functions
+## Functions
 
 Within templates following functions can be used:
 
@@ -29,7 +33,7 @@ Examples below are using this syntax in the code block:
 < Output from the template
 ```
 
-#### `arg`
+### `arg`
 
 Takes the message sent to the channel, splits by space and returns the Nth element
 
@@ -43,7 +47,7 @@ Example:
 < @tester please refrain from BSG
 ```
 
-#### `botHasBadge`
+### `botHasBadge`
 
 Checks whether bot has the given badge in the current channel
 
@@ -56,7 +60,7 @@ Example:
 < true
 ```
 
-#### `channelCounter`
+### `channelCounter`
 
 Wraps the counter name into a channel specific counter name including the channel name
 
@@ -69,7 +73,7 @@ Example:
 < 5
 ```
 
-#### `counterValue`
+### `counterValue`
 
 Returns the current value of the counter which identifier was supplied
 
@@ -82,7 +86,7 @@ Example:
 < 5
 ```
 
-#### `counterValueAdd`
+### `counterValueAdd`
 
 Adds the given value (or 1 if no value) to the counter and returns its new value
 
@@ -94,7 +98,7 @@ Example:
 < 1 6
 ```
 
-#### `displayName`
+### `displayName`
 
 Returns the display name the specified user set for themselves
 
@@ -107,7 +111,7 @@ Example:
 < Luziferus - foobar
 ```
 
-#### `doesFollow`
+### `doesFollow`
 
 Returns whether `from` follows `to`
 
@@ -120,7 +124,7 @@ Example:
 < true
 ```
 
-#### `doesFollowLongerThan`
+### `doesFollowLongerThan`
 
 Returns whether `from` follows `to` for more than `duration`
 
@@ -133,7 +137,7 @@ Example:
 < true
 ```
 
-#### `fixUsername`
+### `fixUsername`
 
 Ensures the username no longer contains the `@` or `#` prefix
 
@@ -146,7 +150,7 @@ Example:
 < luziferus - luziferus
 ```
 
-#### `formatDuration`
+### `formatDuration`
 
 Returns a formated duration. Pass empty strings to leave out the specific duration part.
 
@@ -159,7 +163,7 @@ Example:
 < 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
 ```
 
-#### `followAge`
+### `followAge`
 
 Looks up when `from` followed `to` and returns the duration between then and now
 
@@ -172,7 +176,7 @@ Example:
 < 15004h14m59.116620989s
 ```
 
-#### `followDate`
+### `followDate`
 
 Looks up when `from` followed `to`
 
@@ -185,7 +189,7 @@ Example:
 < 2021-04-10 16:07:07 +0000 UTC
 ```
 
-#### `group`
+### `group`
 
 Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
 
@@ -200,7 +204,7 @@ Example:
 < test - oops
 ```
 
-#### `inList`
+### `inList`
 
 Tests whether a string is in a given list of strings (for conditional templates).
 
@@ -215,7 +219,7 @@ Example:
 < true
 ```
 
-#### `jsonAPI`
+### `jsonAPI`
 
 Fetches remote URL and applies jq-like query to it returning the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
@@ -230,7 +234,7 @@ Example:
 < example string
 ```
 
-#### `lastPoll`
+### `lastPoll`
 
 Gets the last (currently running or archived) poll for the given channel (the channel must have given extended permission for poll access!)
 
@@ -245,7 +249,7 @@ Example:
 
 See schema of returned object in [`pkg/twitch/polls.go#L13`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/polls.go#L13)
 
-#### `lastQuoteIndex`
+### `lastQuoteIndex`
 
 Gets the last quote index in the quote database for the current channel
 
@@ -258,7 +262,7 @@ Example:
 < Last Quote: #32
 ```
 
-#### `mention`
+### `mention`
 
 Strips username and converts into a mention
 
@@ -271,7 +275,7 @@ Example:
 < @user @user @user
 ```
 
-#### `pow`
+### `pow`
 
 Returns float from calculation: `float1 ** float2`
 
@@ -284,7 +288,7 @@ Example:
 < 10000
 ```
 
-#### `randomString`
+### `randomString`
 
 Randomly picks a string from a list of strings
 
@@ -297,7 +301,7 @@ Example:
 < a
 ```
 
-#### `recentGame`
+### `recentGame`
 
 Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.
 
@@ -311,7 +315,7 @@ Example:
 ```
 
 
-#### `recentTitle`
+### `recentTitle`
 
 Returns the last stream title of the specified user or the `fallback` if the title could not be fetched. If no fallback was supplied the message will fail and not be sent.
 
@@ -324,7 +328,7 @@ Example:
 < Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
-#### `seededRandom`
+### `seededRandom`
 
 Returns a float value stable for the given seed
 
@@ -337,7 +341,7 @@ Example:
 < Your int this hour: 17%
 ```
 
-#### `streamUptime`
+### `streamUptime`
 
 Returns the duration the stream is online (causes an error if no current stream is found)
 
@@ -350,7 +354,7 @@ Example:
 < 3 hours, 56 minutes
 ```
 
-#### `subCount`
+### `subCount`
 
 Returns the number of subscribers (accounts) currently subscribed to the given channel
 
@@ -363,7 +367,7 @@ Example:
 < 26
 ```
 
-#### `subPoints`
+### `subPoints`
 
 Returns the number of sub-points currently given through the T1 / T2 / T3 subscriptions to the given channel
 
@@ -376,7 +380,7 @@ Example:
 < 26
 ```
 
-#### `tag`
+### `tag`
 
 Takes the message sent to the channel, returns the value of the tag specified
 
@@ -389,7 +393,7 @@ Example:
 < luziferus
 ```
 
-#### `textAPI`
+### `textAPI`
 
 Fetches remote URL and returns the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
@@ -404,7 +408,7 @@ Example:
 < Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
 ```
 
-#### `variable`
+### `variable`
 
 Returns the variable value or default in case it is empty
 
@@ -417,7 +421,7 @@ Example:
 < test - fallback
 ```
 
-###  Upgrade from `v2.x` to `v3.x`
+##  Upgrade from `v2.x` to `v3.x`
 
 When adding [sprig](https://masterminds.github.io/sprig/) function collection some functions collided and needed replacement. You need to adapt your templates accordingly:
 
