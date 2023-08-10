@@ -11,6 +11,7 @@ defaultContentLanguageInSubdir= false
 enableMissingTranslationPlaceholders = false
 
 cleanDestinationDir = true
+disableKinds = ["RSS"]
 publishDir = "../.rendered-docs"
 
 [params]
