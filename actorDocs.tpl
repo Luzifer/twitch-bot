@@ -1,4 +1,6 @@
-# Available Actions
++++
+title = "Available Actions"
++++
 
 {{ range .Actors }}
 ## {{ .Name }}

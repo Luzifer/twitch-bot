@@ -1,4 +1,6 @@
-# Available Actions
++++
+title = "Available Actions"
++++
 
 
 ## Add Fields to Event
@@ -396,7 +398,11 @@ Scans for links in the message and adds the "links" field to the event data
 
 ```yaml
 - type: linkdetector
-  # Does not have configuration attributes
+  attributes:
+    # Enable heuristic scans to find links with spaces or other means of obfuscation in them
+    # Optional: true
+    # Type:     bool
+    heuristic: false
 ```
 
 ## Send RAW Message

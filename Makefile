@@ -32,7 +32,7 @@ node_modules:
 # --- Wiki Updates
 
 actor_docs:
-	go run . --storage-conn-string $(shell mktemp).db actor-docs >wiki/Actors.md
+	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
 
 pull_wiki:
 	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
