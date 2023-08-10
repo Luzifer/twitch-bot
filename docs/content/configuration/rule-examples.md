@@ -1,4 +1,6 @@
-# Rule examples
++++
+title = "Rule Examples"
++++
 
 ## Chat-addable generic text-respond-commands
 
@@ -55,24 +57,6 @@
     enable_on: [broadcaster, moderator]
     match_channels: ['#mychannel']
     match_message: '^!death'
-```
-
-## Link-protection while allowing Twitch clips
-
-```yaml
-  - actions:
-    - type: timeout
-      attributes:
-        duration: 1s
-    - type: respond
-      attributes:
-        message: '@{{ .username }}, please ask for permission before posting links.'
-    disable_on: [broadcaster, moderator, subscriber, vip]
-    disable_on_match_messages:
-      - '^(?:https?://)?clips\.twitch\.tv/[a-zA-Z0-9-]+$'
-    disable_on_permit: true
-    match_channels: ['#mychannel']
-    match_message: '(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]'
 ```
 
 ## Post follow date for an user
