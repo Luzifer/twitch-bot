@@ -29,11 +29,13 @@ jobs:
           pacman -Syy --noconfirm \
             curl \
             git \
+            git-lfs \
             make \
             tar
 
       - uses: actions/checkout@v3
         with:
+          lfs: true
           submodules: true
 
       - name: Marking workdir safe
