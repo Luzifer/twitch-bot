@@ -1,8 +1,7 @@
 ---
 
 name: doc-generator
-on:
-  push: [branches]
+on: push
 
 jobs:
   doc-generator:
