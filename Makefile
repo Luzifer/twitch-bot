@@ -1,3 +1,5 @@
+HUGO_VERSION:=0.117.0
+
 default: lint frontend_lint test
 
 lint:
@@ -56,3 +58,15 @@ trivy:
 		--scanners config,license,secret,vuln \
 		--severity HIGH,CRITICAL \
 		--skip-dirs docs
+
+# -- Documentation Site --
+
+bundle_docs: render_docs
+	tar -C .rendered-docs -czf docs.tgz .
+
+render_docs: hugo_$(HUGO_VERSION)
+	./hugo_$(HUGO_VERSION) --cleanDestinationDir --gc --source docs
+
+hugo_$(HUGO_VERSION):
+	curl -sSfL https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_linux-amd64.tar.gz | tar -xz hugo
+	mv hugo $@

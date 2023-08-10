@@ -1,11 +1,16 @@
 config
 config.hcl
 config.yaml
+docs/resources/_gen
+docs.tgz
 editor/app.css
 editor/app.js
 editor/bundle.*
 .env
+hugo_*
+.hugo_build.lock
 node_modules
+.rendered-docs
 storage.db
 storage.db-journal
 storage.json.gz
