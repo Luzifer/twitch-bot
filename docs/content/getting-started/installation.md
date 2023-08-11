@@ -1,7 +1,7 @@
-+++
-title = "Installation"
-weight = 1
-+++
+---
+title: "Installation"
+weight: 1
+---
 
 {{< lead >}}
 Installation is the first step you need to take, therefore choose how you want to proceed:

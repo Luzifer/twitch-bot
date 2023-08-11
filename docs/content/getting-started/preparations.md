@@ -1,7 +1,7 @@
-+++
-title = "Preparations"
-weight = 2
-+++
+---
+title: "Preparations"
+weight: 2
+---
 
 {{< lead >}}
 In order to communicate with Twitch you need to set up an application in the Twitch developers console.

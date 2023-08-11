@@ -1,7 +1,7 @@
-+++
-title = "External Access"
-weight = 4
-+++
+---
+title: "External Access"
+weight: 4
+---
 
 {{< lead >}}
 In order to be able to access the bot through a web-browser and make configuration changes using the web-interface we need to securely expose the interface to the internet.

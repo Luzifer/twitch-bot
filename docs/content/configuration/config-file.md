@@ -1,6 +1,6 @@
-+++
-title = "Config-File Syntax"
-+++
+---
+title: "Config-File Syntax"
+---
 
 {{< lead >}}
 The YAML configuration file is the heart of the bot configuration. You can configure every aspect of the bot using the configuration file. The web-interface afterwards allows to modify the configuration file to assist you with the configuration.

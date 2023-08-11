@@ -1,7 +1,7 @@
-+++
-title = "Service Setup"
-weight = 3
-+++
+---
+title: "Service Setup"
+weight: 3
+---
 
 {{< lead >}}
 In order to have your bot started automatically on system start we should set it up as a service.

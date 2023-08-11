@@ -1,6 +1,6 @@
-+++
-title = "Templating"
-+++
+---
+title: "Templating"
+---
 
 {{< lead >}}
 Generally speaking the templating uses [Golang `text/template`](https://pkg.go.dev/text/template) template syntax. All fields with templating enabled do support the full synax from the `text/template` package.

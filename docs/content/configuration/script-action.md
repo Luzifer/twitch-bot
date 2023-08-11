@@ -1,6 +1,6 @@
-+++
-title = "Script Actions"
-+++
+---
+title: "Script Actions"
+---
 
 {{< lead >}}
 In order to maximize the flexibility of the bot you can trigger external scripts / commands in rules. These scripts are provided with extensive data to act on.

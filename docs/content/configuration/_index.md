@@ -1,7 +1,7 @@
-+++
-title = "Configuration"
-weight = 2
-+++
+---
+title: "Configuration"
+weight: 2
+---
 
 {{< lead >}}
 As the bot is capable of doing a lot of things, the configuration needs to cover all of this and therefore isn't simple to master. This section is to help you mastering your configuration and to help you to get your bot to speed.

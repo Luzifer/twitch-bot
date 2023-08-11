@@ -1,7 +1,7 @@
-+++
-title = "Configuration"
-weight = 5
-+++
+---
+title: "Configuration"
+weight: 5
+---
 
 {{< lead >}}
 After you finally can access your bot through the [External Access]({{< ref "external-access.md" >}}) you can start to configure it!

@@ -1,6 +1,6 @@
-+++
-title = "Rule Examples"
-+++
+---
+title: "Rule Examples"
+---
 
 ## Chat-addable generic text-respond-commands
 

@@ -1,7 +1,7 @@
-+++
-title = "Getting started"
-weight = 1
-+++
+---
+title: "Getting started"
+weight: 1
+---
 
 {{< lead >}}
 Get started with the installation of the Twitch-Bot and get to the point you do have a working bot inside your channel.

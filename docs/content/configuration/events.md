@@ -1,6 +1,6 @@
-+++
-title = "Available Events"
-+++
+---
+title: "Available Events"
+---
 
 ## `ban`
 
