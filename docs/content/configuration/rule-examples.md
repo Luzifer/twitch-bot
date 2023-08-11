@@ -106,9 +106,7 @@ title: "Rule Examples"
   - actions:
     - type: respond
       attributes:
-        message: >-
-          @{{ fixUsername (arg 1) }}, you will not get timed out
-          for the next {{ .permitTimeout }} seconds.
+        message: '{{ mention .to }}, you will not get timed out for the next {{ .permitTimeout }} seconds.'
     match_channels: ['#mychannel']
     match_event: 'permit'
 ```
