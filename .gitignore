@@ -2,7 +2,6 @@ config
 config.hcl
 config.yaml
 docs/resources/_gen
-docs.tgz
 editor/app.css
 editor/app.js
 editor/bundle.*
