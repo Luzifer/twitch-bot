@@ -36,6 +36,7 @@ BASE_URL=http://localhost:3000/
 
 CONFIG=/var/lib/twitch-bot/config.yaml
 LOG_LEVEL=info
+OVERLAYS_DIR=/var/lib/twitch-bot/overlays
 
 STORAGE_CONN_STRING=/var/lib/twitch-bot/storage.db
 STORAGE_CONN_TYPE=sqlite

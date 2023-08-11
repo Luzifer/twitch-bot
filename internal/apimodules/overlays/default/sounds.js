@@ -1,6 +1,6 @@
 /* global Vue */
 
-import EventClient from './eventclient.mjs'
+import EventClient from './eventclient.js'
 
 new Vue({
   created() {

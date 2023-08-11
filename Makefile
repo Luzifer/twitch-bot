@@ -59,6 +59,10 @@ trivy:
 actor_docs:
 	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
 
+eventclient_docs:
+	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md
+	docker run --rm -i -v $(CURDIR):$(CURDIR) -w $(CURDIR) node:18-alpine sh -ec 'npx --yes jsdoc-to-markdown --files ./internal/apimodules/overlays/default/eventclient.js' >>docs/content/overlays/eventclient.md
+
 render_docs: hugo_$(HUGO_VERSION)
 	./hugo_$(HUGO_VERSION) --cleanDestinationDir --gc --source docs
 
