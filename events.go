@@ -68,6 +68,7 @@ var (
 		eventTypePollProgress,
 		eventTypeRaid,
 		eventTypeResub,
+		eventTypeShoutoutCreated,
 		eventTypeShoutoutReceived,
 		eventTypeSub,
 		eventTypeSubgift,
