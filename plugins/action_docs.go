@@ -11,6 +11,7 @@ type (
 
 	ActionDocumentationField struct {
 		Default         string                       `json:"default"`
+		DefaultComment  string                       `json:"default_comment"`
 		Description     string                       `json:"description"`
 		Key             string                       `json:"key"`
 		Long            bool                         `json:"long"`
