@@ -63,6 +63,27 @@ Start Commercial
     duration: ""
 ```
 
+## Create Clip
+
+Triggers the creation of a Clip from the given channel owned by the creator (subsequent actions can use variables `create_clip_slug` and `create_clip_edit_url`)
+
+```yaml
+- type: clip
+  attributes:
+    # Channel to create the clip from, defaults to the channel of the event / message
+    # Optional: true
+    # Type:     string (Supports Templating)
+    channel: ""
+    # User which should trigger and therefore own the clip (must have given clips:edit permission to the bot in extended permissions!), defaults to the value of `channel`
+    # Optional: true
+    # Type:     string (Supports Templating)
+    creator: ""
+    # Whether to add an artificial delay before creating the clip
+    # Optional: true
+    # Type:     bool
+    add_delay: false
+```
+
 ## Custom Event
 
 Create a custom event

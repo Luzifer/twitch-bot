@@ -12,6 +12,7 @@ var (
 		twitch.ScopeChannelManageVIPS:        "manage VIPs",
 		twitch.ScopeChannelReadRedemptions:   "see channel-point redemptions",
 		twitch.ScopeChannelReadSubscriptions: "see subscribed users / sub count / points",
+		twitch.ScopeClipsEdit:                "create clips on behalf of this user",
 		twitch.ScopeModeratorReadFollowers:   "see who follows this channel",
 		twitch.ScopeModeratorReadShoutouts:   "see shoutouts created / received",
 	}

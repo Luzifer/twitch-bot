@@ -30,7 +30,44 @@ type (
 		Duration        float64   `json:"duration"`
 		VodOffset       int64     `json:"vod_offset"`
 	}
+
+	CreateClipResponse struct {
+		ID      string `json:"id"`
+		EditURL string `json:"edit_url"`
+	}
 )
+
+// CreateClip triggers the creation of a clip in the given channel.
+// If addDelay is true an artificial delay will be added (for
+// broadcasters who trigger this function already knowing something
+// will happen but not yet visible in stream).
+func (c *Client) CreateClip(ctx context.Context, channel string, addDelay bool) (ccr CreateClipResponse, err error) {
+	id, err := c.GetIDForUsername(channel)
+	if err != nil {
+		return ccr, errors.Wrap(err, "getting ID for channel")
+	}
+
+	var payload struct {
+		Data []CreateClipResponse
+	}
+
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Context:  ctx,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusAccepted,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/clips?broadcaster_id=%s&has_delay=%v", id, addDelay),
+	}); err != nil {
+		return ccr, errors.Wrap(err, "triggering clip create")
+	}
+
+	if l := len(payload.Data); l != 1 {
+		return ccr, errors.Errorf("unexpected number of results returned: %d", l)
+	}
+
+	return payload.Data[0], nil
+}
 
 // GetClipByID gets a video clip that were captured from streams by
 // its ID (slug in the URL)

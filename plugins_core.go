@@ -12,6 +12,7 @@ import (
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/ban"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/clip"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clipdetector"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/commercial"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/counter"
@@ -57,6 +58,7 @@ var (
 		// Actors
 		announce.Register,
 		ban.Register,
+		clip.Register,
 		clipdetector.Register,
 		commercial.Register,
 		counter.Register,
