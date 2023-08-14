@@ -42,7 +42,7 @@ jobs:
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
 
       - name: Generate documentation
-        run: make render_docs
+        run: make render_docs DOCS_BASE_URL=https://luzifer.github.io/twitch-bot/
 
       - name: Upload GitHub Pages artifact
         if: github.ref == 'refs/heads/master'

@@ -1,3 +1,4 @@
+DOCS_BASE_URL:=/
 HUGO_VERSION:=0.117.0
 
 default: lint frontend_lint test
@@ -64,7 +65,11 @@ eventclient_docs:
 	docker run --rm -i -v $(CURDIR):$(CURDIR) -w $(CURDIR) node:18-alpine sh -ec 'npx --yes jsdoc-to-markdown --files ./internal/apimodules/overlays/default/eventclient.js' >>docs/content/overlays/eventclient.md
 
 render_docs: hugo_$(HUGO_VERSION)
-	./hugo_$(HUGO_VERSION) --cleanDestinationDir --gc --source docs
+	./hugo_$(HUGO_VERSION) \
+		--baseURL "$(DOCS_BASE_URL)" \
+		--cleanDestinationDir \
+		--gc \
+		--source docs
 
 hugo_$(HUGO_VERSION):
 	curl -sSfL https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_linux-amd64.tar.gz | tar -xz hugo
