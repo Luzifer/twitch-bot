@@ -127,6 +127,71 @@ Delete message which caused the rule to be executed
   # Does not have configuration attributes
 ```
 
+## Discord Message-Webhook
+
+Sends a message to a Discord Web-hook
+
+```yaml
+- type: discordhook
+  attributes:
+    # URL to send the POST request to
+    # Optional: false
+    # Type:     string
+    hook_url: ""
+    # Overwrites the username set in the webhook configuration
+    # Optional: true
+    # Type:     string (Supports Templating)
+    username: ""
+    # Overwrites the avatar set in the webhook configuration
+    # Optional: true
+    # Type:     string (Supports Templating)
+    avatar_url: ""
+    # Message content to send to the web-hook (this must be set if embed is disabled)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    content: ""
+    # Whether to include the embed in the post
+    # Optional: true
+    # Type:     bool
+    add_embed: false
+    # Title of the embed
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_title: ""
+    # Description of the embed
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_description: ""
+    # URL the title should link to
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_url: ""
+    # URL of the big image displayed in the embed
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_image: ""
+    # URL of the small image displayed in the embed
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_thumbnail: ""
+    # Name of the post author (if empty all other author-fields are ignored)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_author_name: ""
+    # URL the author name should link to
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_author_url: ""
+    # URL of the author avatar
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_author_icon_url: ""
+    # Fields to display in the embed (must yield valid JSON: `[{"name": "", "value": "", "inline": false}]`)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    embed_fields: ""
+```
+
 ## Enforce Link-Protection
 
 Uses link- and clip-scanner to detect links / clips and applies link protection as defined
@@ -471,6 +536,23 @@ Perform a Twitch-native shoutout
     # Optional: false
     # Type:     string (Supports Templating)
     user: ""
+```
+
+## Slack Message-Webhook
+
+Sends a message to a Slack(-compatible) Web-hook
+
+```yaml
+- type: slackhook
+  attributes:
+    # URL to send the POST request to
+    # Optional: false
+    # Type:     string
+    hook_url: ""
+    # Text to send to the web-hook
+    # Optional: false
+    # Type:     string (Supports Templating)
+    text: ""
 ```
 
 ## Stop Execution
