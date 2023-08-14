@@ -1,42 +1,58 @@
-# Rule examples
+---
+title: "Rule Examples"
+---
 
 ## Chat-addable generic text-respond-commands
 
 ```yaml
-  # Respond with variable content if set
-  - actions:
+- uuid: 688e631f-08a8-5544-b4b2-1737ea71ce00
+  description: Trigger Generic Command
+  actions:
     - type: respond
       attributes:
         message: '{{ variable (list "genericcmd" .channel (group 1) | join ":") }}'
-    disable_on_template: '{{ eq (variable (list "genericcmd" .channel (group 1) | joih ":")) "" }}'
-    match_channels: ['#mychannel']
-    match_message: '^!([^\s]+)(?: |$)'
+  cooldown: 1m0s
+  match_channels:
+    - '#luziferus'
+    - '#tezrian'
+  match_message: '^!([^\s]+)(?: |$)'
+  disable_on_template: '{{ eq (variable (list "genericcmd" .channel (group 1) | join ":")) "" }}'
 
-  # Set variable content to content of chat command
-  - actions:
+- uuid: ba4f7bb3-af39-5c57-bb97-216a8af69246
+  description: Set Generic Command
+  actions:
     - type: setvariable
       attributes:
-        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
         set: '{{ group 2 }}'
+        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
     - type: respond
       attributes:
         message: '[Admin] Set command !{{ group 1 }} to "{{ group 2 }}"'
-    enable_on: [broadcaster, moderator]
-    match_channels: ['#mychannel']
-    match_message: '^!setcmd ([^\s]+) (.*)'
+  match_channels:
+    - '#luziferus'
+    - '#tezrian'
+  match_message: ^!setcmd ([^\s]+) (.*)
+  enable_on:
+    - broadcaster
+    - moderator
 
-  # Remove variable and therefore delete command
-  - actions:
+- uuid: 21619e80-2c6a-536e-8b83-e5fe6c580356
+  description: Clear Generic Command
+  actions:
     - type: setvariable
       attributes:
-        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
         clear: true
+        variable: '{{ list "genericcmd" .channel (group 1) | join ":" }}'
     - type: respond
       attributes:
         message: '[Admin] Deleted command !{{ group 1 }}'
-    enable_on: [broadcaster, moderator]
-    match_channels: ['#mychannel']
-    match_message: '^!clearcmd ([^\s]+)'
+  match_channels:
+    - '#luziferus'
+    - '#tezrian'
+  match_message: ^!clearcmd ([^\s]+)
+  enable_on:
+    - broadcaster
+    - moderator
 ```
 
 ## Game death counter with dynamic name
@@ -55,24 +71,6 @@
     enable_on: [broadcaster, moderator]
     match_channels: ['#mychannel']
     match_message: '^!death'
-```
-
-## Link-protection while allowing Twitch clips
-
-```yaml
-  - actions:
-    - type: timeout
-      attributes:
-        duration: 1s
-    - type: respond
-      attributes:
-        message: '@{{ .username }}, please ask for permission before posting links.'
-    disable_on: [broadcaster, moderator, subscriber, vip]
-    disable_on_match_messages:
-      - '^(?:https?://)?clips\.twitch\.tv/[a-zA-Z0-9-]+$'
-    disable_on_permit: true
-    match_channels: ['#mychannel']
-    match_message: '(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]'
 ```
 
 ## Post follow date for an user
@@ -108,9 +106,7 @@
   - actions:
     - type: respond
       attributes:
-        message: >-
-          @{{ fixUsername (arg 1) }}, you will not get timed out
-          for the next {{ .permitTimeout }} seconds.
+        message: '{{ mention .to }}, you will not get timed out for the next {{ .permitTimeout }} seconds.'
     match_channels: ['#mychannel']
     match_event: 'permit'
 ```

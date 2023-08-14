@@ -1,4 +1,12 @@
+HUGO_VERSION:=0.117.0
+
 default: lint frontend_lint test
+
+build_prod: frontend_prod
+	go build \
+		-trimpath \
+		-mod=readonly \
+		-ldflags "-X main.version=$(shell git describe --tags --always || echo dev)"
 
 lint:
 	golangci-lint run
@@ -27,17 +35,6 @@ frontend_lint: node_modules
 node_modules:
 	npm ci
 
-# --- Wiki Updates
-
-actor_docs:
-	go run . --storage-conn-string $(shell mktemp).db actor-docs >wiki/Actors.md
-
-pull_wiki:
-	git subtree pull --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master --squash
-
-push_wiki:
-	git subtree push --prefix=wiki https://github.com/Luzifer/twitch-bot.wiki.git master
-
 # --- Tools
 
 update_ua_list:
@@ -56,3 +53,19 @@ trivy:
 		--scanners config,license,secret,vuln \
 		--severity HIGH,CRITICAL \
 		--skip-dirs docs
+
+# -- Documentation Site --
+
+actor_docs:
+	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
+
+eventclient_docs:
+	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md
+	docker run --rm -i -v $(CURDIR):$(CURDIR) -w $(CURDIR) node:18-alpine sh -ec 'npx --yes jsdoc-to-markdown --files ./internal/apimodules/overlays/default/eventclient.js' >>docs/content/overlays/eventclient.md
+
+render_docs: hugo_$(HUGO_VERSION)
+	./hugo_$(HUGO_VERSION) --cleanDestinationDir --gc --source docs
+
+hugo_$(HUGO_VERSION):
+	curl -sSfL https://github.com/gohugoio/hugo/releases/download/v$(HUGO_VERSION)/hugo_extended_$(HUGO_VERSION)_linux-amd64.tar.gz | tar -xz hugo
+	mv hugo $@

@@ -1,0 +1,35 @@
+baseURL = '/'
+
+languageCode = 'en-us'
+pygmentsCodeFences = true
+pygmentsStyle = "monokailight"
+theme = "ace-documentation"
+title = 'Twitch-Bot Documentation'
+
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir= false
+enableMissingTranslationPlaceholders = false
+
+cleanDestinationDir = true
+disableKinds = ["RSS"]
+publishDir = "../.rendered-docs"
+
+[params]
+disableReadmoreNav = true # set true to hide prev/next navigation, default is false
+disableSearch = false # default is false
+highlightClientSide = false # set true to use highlight.pack.js instead of the default hugo chroma highlighter
+menushortcutsnewtab = true # set true to open shortcuts links to a new tab/window
+ordersectionsby = "weight" # ordersectionsby = "title"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[outputs]
+home = [ "HTML", "JSON"]
+
+[[menu.shortcuts]]
+name = "<i class='fab fa-github'></i>"
+url = "https://github.com/Luzifer/twitch-bot"
+weight = 2

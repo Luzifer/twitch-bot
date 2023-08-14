@@ -1,4 +1,10 @@
-# Available Actions
+---
+title: "Available Actions"
+---
+
+{{ "{{< lead >}}" }}
+All these actions can be executed by your bot as soon as you add them to rules. Read their documentation to learn how to master them.
+{{ "{{< /lead >}}" }}
 
 {{ range .Actors }}
 ## {{ .Name }}
