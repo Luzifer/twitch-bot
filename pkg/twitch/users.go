@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -45,6 +46,8 @@ func (c *Client) GetAuthorizedUser() (userID string, userName string, err error)
 }
 
 func (c *Client) GetDisplayNameForUser(username string) (string, error) {
+	username = strings.TrimLeft(username, "#@")
+
 	cacheKey := []string{"displayNameForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -124,6 +127,8 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 }
 
 func (c *Client) GetIDForUsername(username string) (string, error) {
+	username = strings.TrimLeft(username, "#@")
+
 	cacheKey := []string{"idForUsername", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(string), nil
@@ -155,6 +160,8 @@ func (c *Client) GetIDForUsername(username string) (string, error) {
 }
 
 func (c *Client) GetUserInformation(user string) (*User, error) {
+	user = strings.TrimLeft(user, "#@")
+
 	var (
 		out     User
 		param   = "login"
