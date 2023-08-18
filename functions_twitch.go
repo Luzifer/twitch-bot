@@ -19,6 +19,7 @@ func init() {
 	tplFuncs.Register("followDate", plugins.GenericTemplateFunctionGetter(tplTwitchFollowDate))
 	tplFuncs.Register("doesFollowLongerThan", plugins.GenericTemplateFunctionGetter(tplTwitchDoesFollowLongerThan))
 	tplFuncs.Register("lastPoll", plugins.GenericTemplateFunctionGetter(tplTwitchLastPoll))
+	tplFuncs.Register("profileImage", plugins.GenericTemplateFunctionGetter(tplTwitchProfileImage))
 	tplFuncs.Register("recentGame", plugins.GenericTemplateFunctionGetter(tplTwitchRecentGame))
 	tplFuncs.Register("recentTitle", plugins.GenericTemplateFunctionGetter(tplTwitchRecentTitle))
 	tplFuncs.Register("streamUptime", plugins.GenericTemplateFunctionGetter(tplTwitchStreamUptime))
@@ -108,6 +109,15 @@ func tplTwitchLastPoll(username string) (*twitch.PollInfo, error) {
 
 	poll, err := tc.GetLatestPoll(context.Background(), strings.TrimLeft(username, "#"))
 	return poll, errors.Wrap(err, "getting last poll")
+}
+
+func tplTwitchProfileImage(username string) (string, error) {
+	user, err := twitchClient.GetUserInformation(strings.TrimLeft(username, "#@"))
+	if err != nil {
+		return "", errors.Wrap(err, "getting user info")
+	}
+
+	return user.ProfileImageURL, nil
 }
 
 func tplTwitchRecentGame(username string, v ...string) (string, error) {

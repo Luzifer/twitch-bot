@@ -288,6 +288,19 @@ Example:
 < 10000
 ```
 
+###  `profileImage`
+
+Gets the URL of the given users profile image
+
+Syntax: `profileImage <username>`
+
+Example:
+
+```
+# {{ profileImage .username }}
+< https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png
+```
+
 ### `randomString`
 
 Randomly picks a string from a list of strings
