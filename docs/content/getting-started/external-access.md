@@ -11,6 +11,8 @@ In order to be able to access the bot through a web-browser and make configurati
 In case you did the installation of the bot on your **local machine**, skip this part. You can access the web-interface at `http://localhost:3000/` after you've continued with the [Configuration]({{< ref "configuration.md" >}}).
 {{< /alert >}}
 
+## Using nginx
+
 In order not to make this a quite long and extensive tutorial we'll use two tutorials of DigitalOcean to aid us:
 
 - [DigitalOcean: How To Install Nginx on Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04)
@@ -53,4 +55,55 @@ $ sudo nginx -t
 
 # If there were no errors, restart the nginx service
 $ sudo systemctl restart nginx
+```
+
+## Using Apache2
+
+```console
+# Install Apache2
+$ sudo apt update
+$ sudo apt install apache2
+
+# Enable required modules
+$ sudo a2enmod proxy proxy_wstunnel proxy_http
+```
+
+Next create a configuration file (`/etc/apache2/sites-available/twitch-bot.conf`) for proxying to the bot:
+
+```apacheconf
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+
+    ServerName twitch-bot.mydomain.com
+
+    Options Indexes FollowSymLinks
+
+    SSLProxyEngine on
+    SSLProxyVerify none
+    SSLProxyCheckPeerCN off
+    SSLProxyCheckPeerName off
+    SSLProxyCheckPeerExpire off
+    ProxyPreserveHost On
+
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/?(.*) "ws://127.0.0.1:3000/$1" [P,L]
+
+    ProxyAddHeaders On
+    RequestHeader set X-Forwarded-Proto "https"
+
+    # SSL Certificates goes here ... 
+</VirtualHost>
+</IfModule>
+```
+
+Finally enable the new site and restart Apache2 to enable the new configuration:
+
+```console
+$ sudo a2ensite twitch-bot
+$ sudo systemctl restart apache2
 ```
