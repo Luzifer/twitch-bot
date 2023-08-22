@@ -1,3 +1,20 @@
+# 3.16.0 / 2023-08-22
+
+  * New Features
+    * [clip] Add `clip` actor
+    * [messagehook] Add actor for Discord / Slack hook posts
+    * [overlays] Add `sounds` overlay as default
+    * [templating] Add `profileImage` function
+
+  * Improvements
+    * [docs] Move documentation from Wiki to docs-site (#49)
+    * [docs] Add Apache2 config sample (thanks to @Breitling1992)
+    * [docs] Add "VIP of the Month" example rule (thanks to @Breitling1992)
+
+  * Bugfixes
+    * [core] Fix: Clean usernames when querying user information
+    * [editor] Add `shoutout_created` to frontend-known events
+
 # 3.15.0 / 2023-08-04
 
   * New Features
