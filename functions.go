@@ -23,6 +23,7 @@ var (
 )
 
 type templateFuncProvider struct {
+	docs  []plugins.TemplateFuncDocumentation
 	funcs map[string]plugins.TemplateFuncGetter
 	lock  *sync.RWMutex
 }
@@ -72,7 +73,7 @@ func (t *templateFuncProvider) GetFuncNames() []string {
 	return out
 }
 
-func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter) {
+func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter, doc ...plugins.TemplateFuncDocumentation) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -81,6 +82,11 @@ func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGett
 	}
 
 	t.funcs[name] = fg
+
+	if len(doc) > 0 {
+		doc[0].Name = name
+		t.docs = append(t.docs, doc[0])
+	}
 }
 
 func init() {
@@ -112,5 +118,12 @@ func init() {
 		}
 
 		return strings.Join(parts, ", ")
-	}))
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns a formated duration. Pass empty strings to leave out the specific duration part.",
+		Syntax:      "formatDuration <duration> <hours> <minutes> <seconds>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:       `{{ formatDuration .testDuration "hours" "minutes" "seconds" }} - {{ formatDuration .testDuration "hours" "minutes" "" }}`,
+			ExpectedOutput: "5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes",
+		},
+	})
 }

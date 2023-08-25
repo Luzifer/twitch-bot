@@ -20,6 +20,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+//nolint:funlen // Function contains only documentation registration
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&variable{}); err != nil {
@@ -116,7 +117,14 @@ func Register(args plugins.RegistrationArguments) error {
 			return defVal[0], nil
 		}
 		return value, nil
-	}))
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns the variable value or default in case it is empty",
+		Syntax:      "variable <name> [default]",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ variable "foo" "fallback" }} - {{ variable "unsetvar" "fallback" }}`,
+			FakedOutput: "test - fallback",
+		},
+	})
 
 	return nil
 }

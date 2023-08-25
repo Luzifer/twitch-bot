@@ -112,7 +112,7 @@ type (
 	}
 
 	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
-	TemplateFuncRegister func(name string, fg TemplateFuncGetter)
+	TemplateFuncRegister func(name string, fg TemplateFuncGetter, doc ...TemplateFuncDocumentation)
 
 	TemplateValidatorFunc func(raw string) error
 

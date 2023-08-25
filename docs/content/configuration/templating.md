@@ -30,7 +30,8 @@ Examples below are using this syntax in the code block:
 ! Message matcher used for the input message
 > Input message if used in the example
 # Template used in the fields
-< Output from the template
+< Output from the template (Rendered during docs generation)
+* Output from the template (Static output, template not rendered)
 ```
 
 ### `arg`
@@ -96,7 +97,7 @@ Example:
 
 ```
 # {{ channelCounter "test" }}
-< 5
+< #example:test
 ```
 
 ### `counterValue`
@@ -109,7 +110,7 @@ Example:
 
 ```
 # {{ counterValue (list .channel "test" | join ":") }}
-< 5
+* 5
 ```
 
 ### `counterValueAdd`
@@ -119,9 +120,10 @@ Adds the given value (or 1 if no value) to the counter and returns its new value
 Syntax: `counterValueAdd <counter name> [increase=1]`
 
 Example:
+
 ```
 # {{ counterValueAdd "myCounter" }} {{ counterValueAdd "myCounter" 5 }}
-< 1 6
+* 1 6
 ```
 
 ### `displayName`
@@ -134,7 +136,7 @@ Example:
 
 ```
 # {{ displayName "luziferus" }} - {{ displayName "notexistinguser" "foobar" }}
-< Luziferus - foobar
+* Luziferus - foobar
 ```
 
 ### `doesFollow`
@@ -147,7 +149,7 @@ Example:
 
 ```
 # {{ doesFollow "tezrian" "luziferus" }}
-< true
+* true
 ```
 
 ### `doesFollowLongerThan`
@@ -160,7 +162,7 @@ Example:
 
 ```
 # {{ doesFollowLongerThan "tezrian" "luziferus" "168h" }}
-< true
+* true
 ```
 
 ### `fixUsername`
@@ -173,20 +175,7 @@ Example:
 
 ```
 # {{ fixUsername .channel }} - {{ fixUsername "@luziferus" }}
-< luziferus - luziferus
-```
-
-### `formatDuration`
-
-Returns a formated duration. Pass empty strings to leave out the specific duration part.
-
-Syntax: `formatDuration <duration> <hours> <minutes> <seconds>`
-
-Example:
-
-```
-# {{ formatDuration (streamUptime .channel) "hours" "minutes" "seconds" }} - {{ formatDuration (streamUptime .channel) "hours" "minutes" "" }}
-< 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
+< example - luziferus
 ```
 
 ### `followAge`
@@ -199,7 +188,7 @@ Example:
 
 ```
 # {{ followAge "tezrian" "luziferus" }}
-< 15004h14m59.116620989s
+* 15004h14m59.116620989s
 ```
 
 ### `followDate`
@@ -212,7 +201,20 @@ Example:
 
 ```
 # {{ followDate "tezrian" "luziferus" }}
-< 2021-04-10 16:07:07 +0000 UTC
+* 2021-04-10 16:07:07 +0000 UTC
+```
+
+### `formatDuration`
+
+Returns a formated duration. Pass empty strings to leave out the specific duration part.
+
+Syntax: `formatDuration <duration> <hours> <minutes> <seconds>`
+
+Example:
+
+```
+# {{ formatDuration .testDuration "hours" "minutes" "seconds" }} - {{ formatDuration .testDuration "hours" "minutes" "" }}
+< 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
 ```
 
 ### `group`
@@ -224,7 +226,7 @@ Syntax: `group <idx> [fallback]`
 Example:
 
 ```
-! !command ([0-9]+) ([a-z]+) ([a-z]*)
+! !command ([0-9]+) ([a-z]+) ?([a-z]*)
 > !command 12 test
 # {{ group 2 "oops" }} - {{ group 3 "oops" }}
 < test - oops
@@ -234,7 +236,7 @@ Example:
 
 Tests whether a string is in a given list of strings (for conditional templates).
 
-Syntax: `inList "search" "item1" "item2" [...]`
+Syntax: `inList <search> <...string>`
 
 Example:
 
@@ -249,15 +251,13 @@ Example:
 
 Fetches remote URL and applies jq-like query to it returning the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
-Syntax: `jsonAPI "https://example.com/doc.json" ".data.exampleString" ["fallback"]`
+Syntax: `jsonAPI <url> <jq-like path> [fallback]`
 
 Example:
 
 ```
-! !mycmd
-> !mycmd
-# {{ jsonAPI "https://example.com/doc.json" ".data.exampleString" }}
-< example string
+# {{ jsonAPI "https://api.github.com/repos/Luzifer/twitch-bot" ".owner.login" }}
+* Luzifer
 ```
 
 ### `lastPoll`
@@ -270,7 +270,7 @@ Example:
 
 ```
 # Last Poll: {{ (lastPoll .channel).Title }}
-< Last Poll: Und wie siehts im Template aus?
+* Last Poll: Und wie siehts im Template aus?
 ```
 
 See schema of returned object in [`pkg/twitch/polls.go#L13`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/polls.go#L13)
@@ -285,7 +285,7 @@ Example:
 
 ```
 # Last Quote: #{{ lastQuoteIndex }}
-< Last Quote: #32
+* Last Quote: #32
 ```
 
 ### `mention`
@@ -310,11 +310,11 @@ Syntax: `pow <float1> <float2>`
 Example:
 
 ```
-# {{ printf "%.0f" (pow 10 4) }}%
+# {{ printf "%.0f" (pow 10 4) }}
 < 10000
 ```
 
-###  `profileImage`
+### `profileImage`
 
 Gets the URL of the given users profile image
 
@@ -324,20 +324,20 @@ Example:
 
 ```
 # {{ profileImage .username }}
-< https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png
+* https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png
 ```
 
 ### `randomString`
 
 Randomly picks a string from a list of strings
 
-Syntax: `randomString "a" [...]`
+Syntax: `randomString <string> [...string]`
 
 Example:
 
 ```
 # {{ randomString "a" "b" "c" "d" }}
-< a
+* a
 ```
 
 ### `recentGame`
@@ -350,9 +350,8 @@ Example:
 
 ```
 # {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
-< Metro Exodus - none
+* Metro Exodus - none
 ```
-
 
 ### `recentTitle`
 
@@ -364,7 +363,7 @@ Example:
 
 ```
 # {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
-< Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
+* Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
 ### `seededRandom`
@@ -376,8 +375,8 @@ Syntax: `seededRandom <string-seed>`
 Example:
 
 ```
-# Your int this hour: {{ printf "%.0f" (mul (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 17%
+# Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
+< Your int this hour: 84%
 ```
 
 ### `streamUptime`
@@ -390,7 +389,7 @@ Example:
 
 ```
 # {{ formatDuration (streamUptime "luziferus") "hours" "minutes" "" }}
-< 3 hours, 56 minutes
+* 3 hours, 56 minutes
 ```
 
 ### `subCount`
@@ -403,7 +402,7 @@ Example:
 
 ```
 # {{ subCount "luziferus" }}
-< 26
+* 26
 ```
 
 ### `subPoints`
@@ -416,7 +415,7 @@ Example:
 
 ```
 # {{ subPoints "luziferus" }}
-< 26
+* 26
 ```
 
 ### `tag`
@@ -428,15 +427,15 @@ Syntax: `tag <tagname>`
 Example:
 
 ```
-# {{ tag "login" }}
-< luziferus
+# {{ tag "display-name" }}
+< ExampleUser
 ```
 
 ### `textAPI`
 
 Fetches remote URL and returns the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
-Syntax: `textAPI "https://example.com/" ["fallback"]`
+Syntax: `textAPI <url> [fallback]`
 
 Example:
 
@@ -444,7 +443,7 @@ Example:
 ! !weather (.*)
 > !weather Hamburg
 # {{ textAPI (printf "https://api.scorpstuff.com/weather.php?units=metric&city=%s" (urlquery (group 1))) }}
-< Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
+* Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
 ```
 
 ### `variable`
@@ -457,7 +456,7 @@ Example:
 
 ```
 # {{ variable "foo" "fallback" }} - {{ variable "unsetvar" "fallback" }}
-< test - fallback
+* test - fallback
 ```
 
 ##  Upgrade from `v2.x` to `v3.x`

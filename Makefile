@@ -57,8 +57,13 @@ trivy:
 
 # -- Documentation Site --
 
+docs: actor_docs template_docs
+
 actor_docs:
 	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
+
+template_docs:
+	go run . --storage-conn-string $(shell mktemp).db tpl-docs >docs/content/configuration/templating.md
 
 eventclient_docs:
 	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md

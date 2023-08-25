@@ -87,6 +87,13 @@ func Register(args plugins.RegistrationArguments) error {
 		return func() (int, error) {
 			return GetMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}
+	}, plugins.TemplateFuncDocumentation{
+		Description: "Gets the last quote index in the quote database for the current channel",
+		Syntax:      "lastQuoteIndex",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `Last Quote: #{{ lastQuoteIndex }}`,
+			FakedOutput: "Last Quote: #32",
+		},
 	})
 
 	return nil

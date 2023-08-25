@@ -12,8 +12,23 @@ import (
 )
 
 func Register(args plugins.RegistrationArguments) error {
-	args.RegisterTemplateFunction("randomString", plugins.GenericTemplateFunctionGetter(randomString))
-	args.RegisterTemplateFunction("seededRandom", plugins.GenericTemplateFunctionGetter(stableRandomFromSeed))
+	args.RegisterTemplateFunction("randomString", plugins.GenericTemplateFunctionGetter(randomString), plugins.TemplateFuncDocumentation{
+		Description: "Randomly picks a string from a list of strings",
+		Syntax:      "randomString <string> [...string]",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ randomString "a" "b" "c" "d" }}`,
+			FakedOutput: "a",
+		},
+	})
+
+	args.RegisterTemplateFunction("seededRandom", plugins.GenericTemplateFunctionGetter(stableRandomFromSeed), plugins.TemplateFuncDocumentation{
+		Description: "Returns a float value stable for the given seed",
+		Syntax:      "seededRandom <string-seed>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template: `Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%`,
+		},
+	})
+
 	return nil
 }
 
