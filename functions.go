@@ -23,6 +23,7 @@ var (
 )
 
 type templateFuncProvider struct {
+	docs  []plugins.TemplateFuncDocumentation
 	funcs map[string]plugins.TemplateFuncGetter
 	lock  *sync.RWMutex
 }
@@ -72,7 +73,7 @@ func (t *templateFuncProvider) GetFuncNames() []string {
 	return out
 }
 
-func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter) {
+func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGetter, doc ...plugins.TemplateFuncDocumentation) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -81,6 +82,11 @@ func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGett
 	}
 
 	t.funcs[name] = fg
+
+	if len(doc) > 0 {
+		doc[0].Name = name
+		t.docs = append(t.docs, doc[0])
+	}
 }
 
 func init() {

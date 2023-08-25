@@ -60,6 +60,9 @@ trivy:
 actor_docs:
 	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
 
+template_docs:
+	go run . --storage-conn-string $(shell mktemp).db tpl-docs >docs/content/configuration/templating.md
+
 eventclient_docs:
 	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md
 	docker run --rm -i -v $(CURDIR):$(CURDIR) -w $(CURDIR) node:18-alpine sh -ec 'npx --yes jsdoc-to-markdown --files ./internal/apimodules/overlays/default/eventclient.js' >>docs/content/overlays/eventclient.md
