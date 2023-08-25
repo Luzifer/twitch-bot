@@ -47,6 +47,32 @@ Example:
 < @tester please refrain from BSG
 ```
 
+### `b64urldec`
+
+Decodes the input using base64 URL-encoding (like `b64dec` but using `URLEncoding` instead of `StdEncoding`)
+
+Syntax: `b64urldec <input>`
+
+Example:
+
+```
+# {{ b64urldec "bXlzdHJpbmc=" }}
+< mystring
+```
+
+### `b64urlenc`
+
+Encodes the input using base64 URL-encoding (like `b64enc` but using `URLEncoding` instead of `StdEncoding`)
+
+Syntax: `b64urlenc <input>`
+
+Example:
+
+```
+# {{ b64urlenc "mystring" }}
+< bXlzdHJpbmc=
+```
+
 ### `botHasBadge`
 
 Checks whether bot has the given badge in the current channel

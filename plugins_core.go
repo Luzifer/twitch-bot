@@ -46,6 +46,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/random"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/slice"
+	"github.com/Luzifer/twitch-bot/v3/internal/template/strings"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/subscriber"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -90,6 +91,7 @@ var (
 		numeric.Register,
 		random.Register,
 		slice.Register,
+		strings.Register,
 		subscriber.Register,
 
 		// API-only modules
