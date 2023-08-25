@@ -1,3 +1,17 @@
+# 3.17.0 / 2023-08-25
+
+  * New Features
+    * [templating] Add `b64urldec` and `b64urlenc` functions
+
+  * Improvements
+    * [docs] Add auto-generated template documentation (#50)
+
+  * Bugfixes
+    * [ci] Remove flaky test
+
+> [!WARNING]  
+> This marks the last release to contain code to migrate from v2.x to v3.x releases. If you are migration from an old v2 instance at a later point in time you need to migrate to this version before continuing your journey to the latest v3 release.
+
 # 3.16.0 / 2023-08-22
 
   * New Features
