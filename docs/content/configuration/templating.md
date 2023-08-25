@@ -376,7 +376,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 84%
+< Your int this hour: 9%
 ```
 
 ### `streamUptime`
@@ -458,12 +458,3 @@ Example:
 # {{ variable "foo" "fallback" }} - {{ variable "unsetvar" "fallback" }}
 * test - fallback
 ```
-
-##  Upgrade from `v2.x` to `v3.x`
-
-When adding [sprig](https://masterminds.github.io/sprig/) function collection some functions collided and needed replacement. You need to adapt your templates accordingly:
-
-- Math functions (`add`, `div`, `mod`, `mul`, `multiply`, `sub`) were replaced with their sprig-equivalent and are now working with integers instead of floats. If you need them to continue to work with floats you need to use their [float-variants](https://masterminds.github.io/sprig/mathf.html).
-- `now` does no longer format the current date as a string but return the current date. You need to replace this: `now "2006-01-02"` becomes `now | date "2006-01-02"`.
-- `concat` is now used to concat arrays. To join strings you will need to modify your code: `concat ":" "string1" "string2"` becomes `lists "string1" "string2" | join ":"`.
-- `toLower` / `toUpper` need to be replaced with their sprig equivalent `lower` and `upper`.

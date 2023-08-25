@@ -16,7 +16,6 @@ import (
 const (
 	actorNamePunish      = "punish"
 	actorNameResetPunish = "reset-punish"
-	moduleUUID           = "44ab4646-ce50-4e16-9353-c1f0eb68962b"
 
 	oneWeek = 168 * time.Hour
 )

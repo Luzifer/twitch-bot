@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	actorName  = "quotedb"
-	moduleUUID = "917c83ee-ed40-41e4-a558-1c2e59fdf1f5"
+	actorName = "quotedb"
 )
 
 var (

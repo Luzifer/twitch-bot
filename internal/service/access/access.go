@@ -228,20 +228,6 @@ func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	)
 }
 
-// Deprecated: Use SetBotUsername and SetExtendedTwitchCredentials
-// instead. This function is only required for the v2 migration tool.
-func (s Service) SetBotTwitchCredentials(accessToken, refreshToken string) (err error) {
-	if err = s.db.StoreEncryptedCoreMeta(coreMetaKeyBotToken, accessToken); err != nil {
-		return errors.Wrap(err, "storing bot access token")
-	}
-
-	if err = s.db.StoreEncryptedCoreMeta(coreMetaKeyBotRefreshToken, refreshToken); err != nil {
-		return errors.Wrap(err, "storing bot refresh token")
-	}
-
-	return nil
-}
-
 func (s Service) SetBotUsername(channel string) (err error) {
 	return errors.Wrap(
 		s.db.StoreCoreMeta(coreMetaKeyBotUsername, strings.TrimLeft(channel, "#")),

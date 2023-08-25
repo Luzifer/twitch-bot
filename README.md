@@ -38,8 +38,8 @@ Usage of twitch-bot:
 Supported sub-commands are:
   actor-docs                                 Generate markdown documentation for available actors
   api-token <token-name> <scope> [...scope]  Generate an api-token to be entered into the config
-  migrate-v2 <old-file>                      Migrate old (*.json.gz) storage file into new database
   reset-secrets                              Remove encrypted data to reset encryption passphrase
+  tpl-docs                                   Generate markdown documentation for available template functions
   validate-config                            Try to load configuration file and report errors if any
 ```
 
@@ -93,54 +93,3 @@ Just pass the filename you want to use.
       --storage-conn-string 'storage.db' \
       ...
   ```
-
-
-## Upgrade from `v2.x` to `v3.x`
-
-With the release of `v3.0.0` the bot changed a lot introducing a new storage format. As that storage backend is not compatible with the `v2.x` storage you need to migrate it manually before starting a `v3.x` bot version the first time.
-
-**Before starting the migration make sure to fully stop the bot!**
-
-This section assumes you were starting your `v2.x` bot the following way:
-
-```console
-# twitch-bot \
-  --storage-file storage.json.gz
-  --twitch-client <clientid> \
-  --twitch-client-secret <secret>
-```
-
-To execute the migration we need to provide the same `storage-encryption-pass` or `twitch-client` / `twitch-client-secret` combination if no `storage-encryption-pass` was used.
-
-```console
-# twitch-bot \
-  --storage-conn-type <database type> \
-  --storage-conn-string <database connection string> \
-  --twitch-client <clientid> \
-  --twitch-client-secret <secret> \
-  migrate-v2 storage.json.gz
-WARN[0000] No storage encryption passphrase was set, falling back to client-id:client-secret
-WARN[0000] Module registered unhandled query-param type  module=status type=integer
-WARN[0000] Overlays dir not specified, no dir or non existent  dir=
-INFO[0000] Starting migration...                         module=variables
-INFO[0000] Starting migration...                         module=mod_punish
-INFO[0000] Starting migration...                         module=mod_overlays
-INFO[0000] Starting migration...                         module=mod_quotedb
-INFO[0000] Starting migration...                         module=core
-INFO[0000] Starting migration...                         module=counter
-INFO[0000] Starting migration...                         module=permissions
-INFO[0000] Starting migration...                         module=timers
-INFO[0000] v2 storage file was migrated
-```
-
-If you see the `v2 storage file was migrated` message the contents of your old storage file were migrated to the new database. The old file is not modified in this step.
-
-Afterwards your need to adjust the start parameters of the bot:
-
-```console
-# twitch-bot \
-  --storage-conn-type <database type> \
-  --storage-conn-string <database connection string> \
-  --twitch-client <clientid> \
-  --twitch-client-secret <secret> \
-```
