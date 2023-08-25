@@ -30,7 +30,8 @@ Examples below are using this syntax in the code block:
 ! Message matcher used for the input message
 > Input message if used in the example
 # Template used in the fields
-< Output from the template
+< Output from the template (Rendered during docs generation)
+* Output from the template (Static output, template not rendered)
 ```
 
 {{ range .Funcs -}}
@@ -53,7 +54,7 @@ Example:
 {{- end }}
 # {{ .Example.Template }}
 {{- if .Example.FakedOutput }}
-< {{ .Example.FakedOutput }}
+* {{ .Example.FakedOutput }}
 {{- else }}
 < {{ renderExample .Example }}
 {{- end }}

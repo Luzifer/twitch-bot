@@ -30,7 +30,8 @@ Examples below are using this syntax in the code block:
 ! Message matcher used for the input message
 > Input message if used in the example
 # Template used in the fields
-< Output from the template
+< Output from the template (Rendered during docs generation)
+* Output from the template (Static output, template not rendered)
 ```
 
 ### `arg`
@@ -109,7 +110,7 @@ Example:
 
 ```
 # {{ counterValue (list .channel "test" | join ":") }}
-< 5
+* 5
 ```
 
 ### `counterValueAdd`
@@ -122,7 +123,7 @@ Example:
 
 ```
 # {{ counterValueAdd "myCounter" }} {{ counterValueAdd "myCounter" 5 }}
-< 1 6
+* 1 6
 ```
 
 ### `displayName`
@@ -135,7 +136,7 @@ Example:
 
 ```
 # {{ displayName "luziferus" }} - {{ displayName "notexistinguser" "foobar" }}
-< Luziferus - foobar
+* Luziferus - foobar
 ```
 
 ### `doesFollow`
@@ -148,7 +149,7 @@ Example:
 
 ```
 # {{ doesFollow "tezrian" "luziferus" }}
-< true
+* true
 ```
 
 ### `doesFollowLongerThan`
@@ -161,7 +162,7 @@ Example:
 
 ```
 # {{ doesFollowLongerThan "tezrian" "luziferus" "168h" }}
-< true
+* true
 ```
 
 ### `fixUsername`
@@ -187,7 +188,7 @@ Example:
 
 ```
 # {{ followAge "tezrian" "luziferus" }}
-< 15004h14m59.116620989s
+* 15004h14m59.116620989s
 ```
 
 ### `followDate`
@@ -200,7 +201,7 @@ Example:
 
 ```
 # {{ followDate "tezrian" "luziferus" }}
-< 2021-04-10 16:07:07 +0000 UTC
+* 2021-04-10 16:07:07 +0000 UTC
 ```
 
 ### `formatDuration`
@@ -256,7 +257,7 @@ Example:
 
 ```
 # {{ jsonAPI "https://api.github.com/repos/Luzifer/twitch-bot" ".owner.login" }}
-< Luzifer
+* Luzifer
 ```
 
 ### `lastPoll`
@@ -269,7 +270,7 @@ Example:
 
 ```
 # Last Poll: {{ (lastPoll .channel).Title }}
-< Last Poll: Und wie siehts im Template aus?
+* Last Poll: Und wie siehts im Template aus?
 ```
 
 See schema of returned object in [`pkg/twitch/polls.go#L13`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/polls.go#L13)
@@ -284,7 +285,7 @@ Example:
 
 ```
 # Last Quote: #{{ lastQuoteIndex }}
-< Last Quote: #32
+* Last Quote: #32
 ```
 
 ### `mention`
@@ -323,7 +324,7 @@ Example:
 
 ```
 # {{ profileImage .username }}
-< https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png
+* https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png
 ```
 
 ### `randomString`
@@ -336,7 +337,7 @@ Example:
 
 ```
 # {{ randomString "a" "b" "c" "d" }}
-< a
+* a
 ```
 
 ### `recentGame`
@@ -349,7 +350,7 @@ Example:
 
 ```
 # {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
-< Metro Exodus - none
+* Metro Exodus - none
 ```
 
 ### `recentTitle`
@@ -362,7 +363,7 @@ Example:
 
 ```
 # {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
-< Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
+* Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
 ### `seededRandom`
@@ -388,7 +389,7 @@ Example:
 
 ```
 # {{ formatDuration (streamUptime "luziferus") "hours" "minutes" "" }}
-< 3 hours, 56 minutes
+* 3 hours, 56 minutes
 ```
 
 ### `subCount`
@@ -401,7 +402,7 @@ Example:
 
 ```
 # {{ subCount "luziferus" }}
-< 26
+* 26
 ```
 
 ### `subPoints`
@@ -414,7 +415,7 @@ Example:
 
 ```
 # {{ subPoints "luziferus" }}
-< 26
+* 26
 ```
 
 ### `tag`
@@ -442,7 +443,7 @@ Example:
 ! !weather (.*)
 > !weather Hamburg
 # {{ textAPI (printf "https://api.scorpstuff.com/weather.php?units=metric&city=%s" (urlquery (group 1))) }}
-< Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
+* Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
 ```
 
 ### `variable`
@@ -455,7 +456,7 @@ Example:
 
 ```
 # {{ variable "foo" "fallback" }} - {{ variable "unsetvar" "fallback" }}
-< test - fallback
+* test - fallback
 ```
 
 ##  Upgrade from `v2.x` to `v3.x`
