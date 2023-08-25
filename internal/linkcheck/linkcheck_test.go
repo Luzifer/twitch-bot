@@ -102,19 +102,17 @@ func TestScanForLinks(t *testing.T) {
 		// Case: link is obfuscated using space
 		{
 			Heuristic: true,
-			Message:   "Take a look at example. com",
+			Message:   "Take a look on example. com",
 			ExpectedLinks: []string{
 				"http://example.com",
-				"http://www.atexample.com/",
 			},
 		},
 		// Case: link is obfuscated using space and braces
 		{
 			Heuristic: true,
-			Message:   "Take a look at example. (com)",
+			Message:   "Take a look on example. (com)",
 			ExpectedLinks: []string{
 				"http://example.com",
-				"http://www.atexample.com/",
 			},
 		},
 		// Case: multiple links in one message
