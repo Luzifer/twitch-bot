@@ -20,6 +20,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+//nolint:funlen // Function contains only documentation registration
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&variable{}); err != nil {
