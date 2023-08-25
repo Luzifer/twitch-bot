@@ -118,5 +118,12 @@ func init() {
 		}
 
 		return strings.Join(parts, ", ")
-	}))
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns a formated duration. Pass empty strings to leave out the specific duration part.",
+		Syntax:      "formatDuration <duration> <hours> <minutes> <seconds>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:       `{{ formatDuration .testDuration "hours" "minutes" "seconds" }} - {{ formatDuration .testDuration "hours" "minutes" "" }}`,
+			ExpectedOutput: "5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes",
+		},
+	})
 }

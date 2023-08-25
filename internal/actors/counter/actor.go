@@ -131,11 +131,25 @@ func Register(args plugins.RegistrationArguments) error {
 
 			return strings.Join([]string{channel, name}, ":"), nil
 		}
+	}, plugins.TemplateFuncDocumentation{
+		Description: "Wraps the counter name into a channel specific counter name including the channel name",
+		Syntax:      "channelCounter <counter name>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:       `{{ channelCounter "test" }}`,
+			ExpectedOutput: "#example:test",
+		},
 	})
 
 	args.RegisterTemplateFunction("counterValue", plugins.GenericTemplateFunctionGetter(func(name string, _ ...string) (int64, error) {
 		return GetCounterValue(db, name)
-	}))
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns the current value of the counter which identifier was supplied",
+		Syntax:      "counterValue <counter name>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ counterValue (list .channel "test" | join ":") }}`,
+			FakedOutput: "5",
+		},
+	})
 
 	args.RegisterTemplateFunction("counterValueAdd", plugins.GenericTemplateFunctionGetter(func(name string, val ...int64) (int64, error) {
 		var mod int64 = 1
@@ -148,7 +162,14 @@ func Register(args plugins.RegistrationArguments) error {
 		}
 
 		return GetCounterValue(db, name)
-	}))
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Adds the given value (or 1 if no value) to the counter and returns its new value",
+		Syntax:      "counterValueAdd <counter name> [increase=1]",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ counterValueAdd "myCounter" }} {{ counterValueAdd "myCounter" 5 }}`,
+			FakedOutput: "1 6",
+		},
+	})
 
 	return nil
 }

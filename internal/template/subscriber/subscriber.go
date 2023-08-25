@@ -19,8 +19,24 @@ func Register(args plugins.RegistrationArguments) error {
 	permCheckFn = args.HasPermissionForChannel
 	tcGetter = args.GetTwitchClientForChannel
 
-	args.RegisterTemplateFunction("subCount", plugins.GenericTemplateFunctionGetter(subCount))
-	args.RegisterTemplateFunction("subPoints", plugins.GenericTemplateFunctionGetter(subPoints))
+	args.RegisterTemplateFunction("subCount", plugins.GenericTemplateFunctionGetter(subCount), plugins.TemplateFuncDocumentation{
+		Description: "Returns the number of subscribers (accounts) currently subscribed to the given channel",
+		Syntax:      "subCount <channel>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ subCount "luziferus" }}`,
+			FakedOutput: "26",
+		},
+	})
+
+	args.RegisterTemplateFunction("subPoints", plugins.GenericTemplateFunctionGetter(subPoints), plugins.TemplateFuncDocumentation{
+		Description: "Returns the number of sub-points currently given through the T1 / T2 / T3 subscriptions to the given channel",
+		Syntax:      "subPoints <channel>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ subPoints "luziferus" }}`,
+			FakedOutput: "26",
+		},
+	})
+
 	return nil
 }
 

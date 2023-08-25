@@ -96,7 +96,7 @@ Example:
 
 ```
 # {{ channelCounter "test" }}
-< 5
+< #example:test
 ```
 
 ### `counterValue`
@@ -119,6 +119,7 @@ Adds the given value (or 1 if no value) to the counter and returns its new value
 Syntax: `counterValueAdd <counter name> [increase=1]`
 
 Example:
+
 ```
 # {{ counterValueAdd "myCounter" }} {{ counterValueAdd "myCounter" 5 }}
 < 1 6
@@ -173,20 +174,7 @@ Example:
 
 ```
 # {{ fixUsername .channel }} - {{ fixUsername "@luziferus" }}
-< luziferus - luziferus
-```
-
-### `formatDuration`
-
-Returns a formated duration. Pass empty strings to leave out the specific duration part.
-
-Syntax: `formatDuration <duration> <hours> <minutes> <seconds>`
-
-Example:
-
-```
-# {{ formatDuration (streamUptime .channel) "hours" "minutes" "seconds" }} - {{ formatDuration (streamUptime .channel) "hours" "minutes" "" }}
-< 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
+< example - luziferus
 ```
 
 ### `followAge`
@@ -215,6 +203,19 @@ Example:
 < 2021-04-10 16:07:07 +0000 UTC
 ```
 
+### `formatDuration`
+
+Returns a formated duration. Pass empty strings to leave out the specific duration part.
+
+Syntax: `formatDuration <duration> <hours> <minutes> <seconds>`
+
+Example:
+
+```
+# {{ formatDuration .testDuration "hours" "minutes" "seconds" }} - {{ formatDuration .testDuration "hours" "minutes" "" }}
+< 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
+```
+
 ### `group`
 
 Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
@@ -224,7 +225,7 @@ Syntax: `group <idx> [fallback]`
 Example:
 
 ```
-! !command ([0-9]+) ([a-z]+) ([a-z]*)
+! !command ([0-9]+) ([a-z]+) ?([a-z]*)
 > !command 12 test
 # {{ group 2 "oops" }} - {{ group 3 "oops" }}
 < test - oops
@@ -234,7 +235,7 @@ Example:
 
 Tests whether a string is in a given list of strings (for conditional templates).
 
-Syntax: `inList "search" "item1" "item2" [...]`
+Syntax: `inList <search> <...string>`
 
 Example:
 
@@ -249,15 +250,13 @@ Example:
 
 Fetches remote URL and applies jq-like query to it returning the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
-Syntax: `jsonAPI "https://example.com/doc.json" ".data.exampleString" ["fallback"]`
+Syntax: `jsonAPI <url> <jq-like path> [fallback]`
 
 Example:
 
 ```
-! !mycmd
-> !mycmd
-# {{ jsonAPI "https://example.com/doc.json" ".data.exampleString" }}
-< example string
+# {{ jsonAPI "https://api.github.com/repos/Luzifer/twitch-bot" ".owner.login" }}
+< Luzifer
 ```
 
 ### `lastPoll`
@@ -310,11 +309,11 @@ Syntax: `pow <float1> <float2>`
 Example:
 
 ```
-# {{ printf "%.0f" (pow 10 4) }}%
+# {{ printf "%.0f" (pow 10 4) }}
 < 10000
 ```
 
-###  `profileImage`
+### `profileImage`
 
 Gets the URL of the given users profile image
 
@@ -331,7 +330,7 @@ Example:
 
 Randomly picks a string from a list of strings
 
-Syntax: `randomString "a" [...]`
+Syntax: `randomString <string> [...string]`
 
 Example:
 
@@ -352,7 +351,6 @@ Example:
 # {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
 < Metro Exodus - none
 ```
-
 
 ### `recentTitle`
 
@@ -376,8 +374,8 @@ Syntax: `seededRandom <string-seed>`
 Example:
 
 ```
-# Your int this hour: {{ printf "%.0f" (mul (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 17%
+# Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
+< Your int this hour: 84%
 ```
 
 ### `streamUptime`
@@ -428,15 +426,15 @@ Syntax: `tag <tagname>`
 Example:
 
 ```
-# {{ tag "login" }}
-< luziferus
+# {{ tag "display-name" }}
+< ExampleUser
 ```
 
 ### `textAPI`
 
 Fetches remote URL and returns the result as string. (Remote API needs to return status 200 within 5 seconds.)
 
-Syntax: `textAPI "https://example.com/" ["fallback"]`
+Syntax: `textAPI <url> [fallback]`
 
 Example:
 
