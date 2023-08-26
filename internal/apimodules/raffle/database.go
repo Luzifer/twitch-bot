@@ -56,7 +56,7 @@ type (
 		TextEntryFailPost    bool          `json:"textEntryFailPost"`
 		TextReminder         string        `json:"textReminder"`
 		TextReminderInterval time.Duration `json:"textReminderInterval"`
-		TextReminderNextSend time.Time     `json:"-"`
+		TextReminderNextSend *time.Time    `json:"-"`
 		TextReminderPost     bool          `json:"textReminderPost"`
 		TextWin              string        `json:"textWin"`
 		TextWinPost          bool          `json:"textWinPost"`
@@ -143,7 +143,7 @@ func (d *dbClient) AutoSendReminders() (err error) {
 	var rr []raffle
 
 	if err = d.db.DB().
-		Where("status = ? AND text_reminder_post = ? AND text_reminder_next_send < ?", raffleStatusActive, true, time.Now().UTC()).
+		Where("status = ? AND text_reminder_post = ? AND (text_reminder_next_send IS NULL OR text_reminder_next_send < ?)", raffleStatusActive, true, time.Now().UTC()).
 		Find(&rr).
 		Error; err != nil {
 		return errors.Wrap(err, "fetching raffles to send reminders")
