@@ -85,4 +85,106 @@ jobs:
           draft: false
           generateReleaseNotes: false
 
+  database-integration:
+    # Only execute db-server integration tests when sqlite based tests did run successfully
+    needs: [test-and-build]
+
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: luzifer/archlinux
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [mariadb, mysql, postgres]
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MYSQL_PASSWORD: twitch-bot-pass
+          MYSQL_ROOT_PASSWORD: root-pass
+          MYSQL_USER: twitch-bot
+
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_PASSWORD: twitch-bot-pass
+          MYSQL_ROOT_PASSWORD: root-pass
+          MYSQL_USER: twitch-bot
+
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: twitch-bot-pass
+
+    steps:
+      - name: Enable custom AUR package repo
+        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
+
+      - name: Install required packages
+        run: |
+          pacman -Syy --noconfirm \
+            docker \
+            git \
+            go \
+            make \
+            mariadb-clients
+
+      - uses: actions/checkout@v3
+
+      - name: Marking workdir safe
+        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
+      # --- MySQL
+
+      - name: Set up MySQL service
+        if: matrix.database == 'mysql'
+        run: |
+          mariadb -h mysql -u root --password=root-pass <<EOF
+          CREATE DATABASE integration DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
+          GRANT ALL ON integration.* TO 'twitch-bot'@'%';
+          EOF
+
+      - name: Run tests against MySQL
+        if: matrix.database == 'mysql'
+        env:
+          GO_TEST_DB_ENGINE: mysql
+          GO_TEST_DB_DSN: twitch-bot:twitch-bot-pass@tcp(mysql:3306)/integration?charset=utf8mb4&parseTime=True
+        run: make test
+
+      # --- MariaDB
+
+      - name: Set up MariaDB service
+        if: matrix.database == 'mariadb'
+        run: |
+          mariadb -h mariadb -u root --password=root-pass <<EOF
+          CREATE DATABASE integration DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
+          GRANT ALL ON integration.* TO 'twitch-bot'@'%';
+          EOF
+
+      - name: Run tests against MariaDB
+        if: matrix.database == 'mariadb'
+        env:
+          GO_TEST_DB_ENGINE: mysql
+          GO_TEST_DB_DSN: twitch-bot:twitch-bot-pass@tcp(mariadb:3306)/integration?charset=utf8mb4&parseTime=True
+        run: make test
+
+      # --- PostgreSQL
+
+      - name: Run tests against PostgreSQL
+        if: matrix.database == 'postgres'
+        env:
+          GO_TEST_DB_ENGINE: postgres
+          GO_TEST_DB_DSN: host=postgres user=postgres password=twitch-bot-pass dbname=postgres port=5432 sslmode=disable timezone=UTC
+        run: make test
+
 ...

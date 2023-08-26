@@ -13,9 +13,22 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	var err error
+	var (
+		dbEngine = "sqlite"
+		dbDSN    = "file::memory:?cache=shared"
 
-	if db, err = database.New("sqlite", "file::memory:?cache=shared", "encpass"); err != nil {
+		err error
+	)
+
+	if v := os.Getenv("GO_TEST_DB_ENGINE"); v != "" {
+		dbEngine = v
+	}
+
+	if v := os.Getenv("GO_TEST_DB_DSN"); v != "" {
+		dbDSN = v
+	}
+
+	if db, err = database.New(dbEngine, dbDSN, "go-test-static-encryption"); err != nil {
 		log.WithError(err).Fatal("opening storage backend")
 	}
 
