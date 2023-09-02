@@ -56,6 +56,7 @@ type (
 		PermitAllowModerator bool                       `yaml:"permit_allow_moderator"`
 		PermitTimeout        time.Duration              `yaml:"permit_timeout"`
 		RawLog               string                     `yaml:"raw_log"`
+		ModuleConfig         plugins.ModuleConfig       `yaml:"module_config"`
 		Rules                []*plugins.Rule            `yaml:"rules"`
 		Variables            map[string]interface{}     `yaml:"variables"`
 

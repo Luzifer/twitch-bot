@@ -77,6 +77,17 @@ auto_messages:
     # Disable message using templating, must yield string `true` to disable the automated message
     disable_on_template: '{{ ne .myvariable true }}'
 
+# Module configuration by channel or defining bot-wide defaults. See
+# module specific documentation for options to configure in this
+# section. All modules come with internal defaults so there is no
+# need to configure this but you can overwrite the internal defaults.
+module_config:
+  some-module:  # Name of the module to configure
+    default:    # Bot-wide, fallback for all channels
+      some_option: true
+    mychannel:  # Channel-specific, only valid for this channel
+      some_option: false
+
 # List of rules. See documentation for details or use web-interface
 # to configure.
 rules: # See below for examples

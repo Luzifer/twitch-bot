@@ -148,10 +148,6 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 
 func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
-		CreateEvent: func(evt string, eventData *plugins.FieldCollection) error {
-			handleMessage(ircHdl.Client(), nil, &evt, eventData)
-			return nil
-		},
 		FormatMessage:              formatMessage,
 		FrontendNotify:             func(mt string) { frontendNotifyHooks.Ping(mt) },
 		GetDatabaseConnector:       func() database.Connector { return db },
@@ -169,6 +165,15 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
 		ValidateToken:              validateAuthToken,
+
+		CreateEvent: func(evt string, eventData *plugins.FieldCollection) error {
+			handleMessage(ircHdl.Client(), nil, &evt, eventData)
+			return nil
+		},
+
+		GetModuleConfigForChannel: func(module, channel string) *plugins.FieldCollection {
+			return config.ModuleConfig.GetChannelConfig(module, channel)
+		},
 
 		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
 			return accessService.GetTwitchClientForChannel(channel, access.ClientConfig{

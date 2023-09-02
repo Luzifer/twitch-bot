@@ -43,6 +43,8 @@ type (
 
 	LoggerCreationFunc func(moduleName string) *log.Entry
 
+	ModuleConfigGetterFunc func(module, channel string) *FieldCollection
+
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
 
 	MsgModificationFunc             func(*irc.Message) error
@@ -65,6 +67,8 @@ type (
 		GetDatabaseConnector func() database.Connector
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name
 		GetLogger LoggerCreationFunc
+		// GetModuleConfigForChannel returns the module configuration for the given channel if available
+		GetModuleConfigForChannel ModuleConfigGetterFunc
 		// GetTwitchClient retrieves a fully configured Twitch client with initialized cache
 		GetTwitchClient func() *twitch.Client
 		// GetTwitchClientForChannel retrieves a fully configured Twitch client with initialized cache for extended permission channels
