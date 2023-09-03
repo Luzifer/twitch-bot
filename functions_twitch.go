@@ -103,6 +103,15 @@ func init() {
 			FakedOutput: "3 hours, 56 minutes",
 		},
 	})
+
+	tplFuncs.Register("usernameForID", plugins.GenericTemplateFunctionGetter(tplTwitchUsernameForID), plugins.TemplateFuncDocumentation{
+		Description: "Returns the currente login name of an user-id",
+		Syntax:      "usernameForID <user-id>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ usernameForID "12826" }}`,
+			FakedOutput: "twitch",
+		},
+	})
 }
 
 func tplTwitchDisplayName(username string, v ...string) (string, error) {
@@ -224,4 +233,8 @@ func tplTwitchStreamUptime(username string) (time.Duration, error) {
 		return 0, err
 	}
 	return time.Since(si.StartedAt), nil
+}
+
+func tplTwitchUsernameForID(id string) (string, error) {
+	return twitchClient.GetUsernameForID(context.Background(), id)
 }

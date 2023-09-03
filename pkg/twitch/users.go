@@ -159,6 +159,39 @@ func (c *Client) GetIDForUsername(username string) (string, error) {
 	return payload.Data[0].ID, nil
 }
 
+// GetUsernameForID retrieves the login name (not the display name)
+// for the given user ID
+func (c *Client) GetUsernameForID(ctx context.Context, id string) (string, error) {
+	cacheKey := []string{"usernameForID", id}
+	if d := c.apiCache.Get(cacheKey); d != nil {
+		return d.(string), nil
+	}
+
+	var payload struct {
+		Data []User `json:"data"`
+	}
+
+	if err := c.Request(ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
+		Context:  ctx,
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?id=%s", id),
+	}); err != nil {
+		return "", errors.Wrap(err, "request channel info")
+	}
+
+	if l := len(payload.Data); l != 1 {
+		return "", errors.Errorf("unexpected number of users returned: %d", l)
+	}
+
+	// The username for an ID will not change (often), cache for a long time
+	c.apiCache.Set(cacheKey, timeDay, payload.Data[0].Login)
+
+	return payload.Data[0].Login, nil
+}
+
 func (c *Client) GetUserInformation(user string) (*User, error) {
 	user = strings.TrimLeft(user, "#@")
 
