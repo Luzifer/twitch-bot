@@ -232,6 +232,19 @@ Example:
 < test - oops
 ```
 
+### `idForUsername`
+
+Returns the user-id for the given username
+
+Syntax: `idForUsername <username>`
+
+Example:
+
+```
+# {{ idForUsername "twitch" }}
+* 12826
+```
+
 ### `inList`
 
 Tests whether a string is in a given list of strings (for conditional templates).
@@ -376,7 +389,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 9%
+< Your int this hour: 77%
 ```
 
 ### `streamUptime`
@@ -444,6 +457,19 @@ Example:
 > !weather Hamburg
 # {{ textAPI (printf "https://api.scorpstuff.com/weather.php?units=metric&city=%s" (urlquery (group 1))) }}
 * Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
+```
+
+### `usernameForID`
+
+Returns the current login name of an user-id
+
+Syntax: `usernameForID <user-id>`
+
+Example:
+
+```
+# {{ usernameForID "12826" }}
+* twitch
 ```
 
 ### `variable`

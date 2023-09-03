@@ -12,6 +12,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+//nolint:funlen
 func init() {
 	tplFuncs.Register("displayName", plugins.GenericTemplateFunctionGetter(tplTwitchDisplayName), plugins.TemplateFuncDocumentation{
 		Description: "Returns the display name the specified user set for themselves",
@@ -55,6 +56,15 @@ func init() {
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ followDate "tezrian" "luziferus" }}`,
 			FakedOutput: "2021-04-10 16:07:07 +0000 UTC",
+		},
+	})
+
+	tplFuncs.Register("idForUsername", plugins.GenericTemplateFunctionGetter(tplTwitchIDForUsername), plugins.TemplateFuncDocumentation{
+		Description: "Returns the user-id for the given username",
+		Syntax:      "idForUsername <username>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ idForUsername "twitch" }}`,
+			FakedOutput: "12826",
 		},
 	})
 
@@ -105,7 +115,7 @@ func init() {
 	})
 
 	tplFuncs.Register("usernameForID", plugins.GenericTemplateFunctionGetter(tplTwitchUsernameForID), plugins.TemplateFuncDocumentation{
-		Description: "Returns the currente login name of an user-id",
+		Description: "Returns the current login name of an user-id",
 		Syntax:      "usernameForID <user-id>",
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ usernameForID "12826" }}`,
@@ -176,6 +186,10 @@ func tplTwitchDoesFollowLongerThan(from, to string, t any) (bool, error) {
 	default:
 		return false, errors.Wrap(err, "getting follow date")
 	}
+}
+
+func tplTwitchIDForUsername(username string) (string, error) {
+	return twitchClient.GetIDForUsername(username)
 }
 
 func tplTwitchLastPoll(username string) (*twitch.PollInfo, error) {
