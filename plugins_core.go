@@ -48,6 +48,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/template/slice"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/strings"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/subscriber"
+	twitchFns "github.com/Luzifer/twitch-bot/v3/internal/template/twitch"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -93,6 +94,7 @@ var (
 		slice.Register,
 		strings.Register,
 		subscriber.Register,
+		twitchFns.Register,
 
 		// API-only modules
 		customevent.Register,
