@@ -23,7 +23,7 @@ type (
 		TwitchClient       string
 		TwitchClientSecret string
 
-		FallbackToken string
+		FallbackToken string // DEPRECATED
 
 		TokenUpdateHook func()
 	}

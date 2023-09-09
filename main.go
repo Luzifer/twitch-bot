@@ -51,7 +51,7 @@ var (
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
 		TwitchClient          string        `flag:"twitch-client" default:"" description:"Client ID to act as"`
 		TwitchClientSecret    string        `flag:"twitch-client-secret" default:"" description:"Secret for the Client ID"`
-		TwitchToken           string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface)"`
+		TwitchToken           string        `flag:"twitch-token" default:"" description:"OAuth token valid for client (fallback if no token was set in interface) -- DEPRECATED"`
 		ValidateConfig        bool          `flag:"validate-config,v" default:"false" description:"Loads the config, logs any errors and quits with status 0 on success"`
 		VersionAndExit        bool          `flag:"version" default:"false" description:"Prints current version and exits"`
 		WaitForSelfcheck      time.Duration `flag:"wait-for-selfcheck" default:"60s" description:"Maximum time to wait for the self-check to respond when behind load-balancers"`
@@ -111,6 +111,10 @@ func initApp() error {
 			cfg.TwitchClient,
 			cfg.TwitchClientSecret,
 		}, ":")
+	}
+
+	if cfg.TwitchToken != "" {
+		log.Warn("You are using the DEPRECATED --twitch-token flag / TWITCH_TOKEN env variable, please switch to web-based auth! - This flag will be removed in a later release!")
 	}
 
 	return nil
