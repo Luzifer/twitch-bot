@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-irc/irc"
+	"gopkg.in/irc.v4"
 )
 
 func DeriveChannel(m *irc.Message, evtData *FieldCollection) string {

@@ -1,7 +1,7 @@
 package linkdetector
 
 import (
-	"github.com/go-irc/irc"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/linkcheck"
 	"github.com/Luzifer/twitch-bot/v3/plugins"

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/go-irc/irc"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	korvike "github.com/Luzifer/korvike/functions"

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-irc/irc"
+	"gopkg.in/irc.v4"
 )
 
 const (
@@ -32,7 +32,7 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 		return out
 	}
 
-	badgeString, ok := m.GetTag("badges")
+	badgeString, ok := m.Tags["badges"]
 	if !ok || len(badgeString) == 0 {
 		return out
 	}

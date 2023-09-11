@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-irc/irc"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
@@ -31,10 +31,10 @@ func newTwitchUserStateStore() *twitchUserStateStore {
 
 func parseTwitchUserState(m *irc.Message) (*twitchUserState, error) {
 	var (
-		color, _       = m.GetTag("color")
-		displayName, _ = m.GetTag("display-name")
+		color, _       = m.Tags["color"]
+		displayName, _ = m.Tags["display-name"]
 		emoteSets      []string
-		rawSets, _     = m.GetTag("emote-sets")
+		rawSets, _     = m.Tags["emote-sets"]
 	)
 
 	if rawSets != "" {

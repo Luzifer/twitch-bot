@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clipdetector"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -172,7 +172,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 	case "delete":
-		msgID, ok := m.Tags.GetTag("id")
+		msgID, ok := m.Tags["id"]
 		if !ok || msgID == "" {
 			return false, errors.New("found no mesage id")
 		}

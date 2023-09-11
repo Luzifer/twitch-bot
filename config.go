@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
 	"github.com/Luzifer/go_helpers/v2/str"

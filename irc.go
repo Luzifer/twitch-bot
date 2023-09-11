@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -209,8 +209,8 @@ func (ircHandler) getChannel(m *irc.Message) string {
 }
 
 func (i ircHandler) handleClearChat(m *irc.Message) {
-	seconds, secondsErr := strconv.Atoi(string(m.Tags["ban-duration"]))
-	targetUserID, hasTargetUserID := m.Tags.GetTag("target-user-id")
+	seconds, secondsErr := strconv.Atoi(m.Tags["ban-duration"])
+	targetUserID, hasTargetUserID := m.Tags["target-user-id"]
 
 	var (
 		evt    *string
@@ -493,7 +493,7 @@ func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
 }
 
 func (ircHandler) tagToNumeric(m *irc.Message, tag string, fallback int64) int64 {
-	tv := string(m.Tags[tag])
+	tv := m.Tags[tag]
 	if tv == "" {
 		return fallback
 	}

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -84,9 +84,9 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 
 	re := raffleEntry{
 		RaffleID:        r.ID,
-		UserID:          string(m.Tags["user-id"]),
+		UserID:          m.Tags["user-id"],
 		UserLogin:       user,
-		UserDisplayName: string(m.Tags["display-name"]),
+		UserDisplayName: m.Tags["display-name"],
 		EnteredAt:       time.Now().UTC(),
 	}
 
@@ -95,7 +95,7 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 	}
 
 	raffleEventFields := plugins.FieldCollectionFromData(map[string]any{
-		"user_id": string(m.Tags["user-id"]),
+		"user_id": m.Tags["user-id"],
 		"user":    user,
 	})
 

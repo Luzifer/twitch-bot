@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -95,10 +95,7 @@ func init() {
 	)
 
 	tplFuncs.Register("tag", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
-		return func(tag string) string {
-			s, _ := m.GetTag(tag)
-			return s
-		}
+		return func(tag string) string { return m.Tags[tag] }
 	}, plugins.TemplateFuncDocumentation{
 		Description: "Takes the message sent to the channel, returns the value of the tag specified",
 		Syntax:      "tag <tagname>",

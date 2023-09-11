@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"

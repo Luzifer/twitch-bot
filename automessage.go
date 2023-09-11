@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/plugins"

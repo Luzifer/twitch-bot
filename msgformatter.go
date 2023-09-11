@@ -7,8 +7,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )

@@ -1,8 +1,8 @@
 package deleteactor
 
 import (
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -29,7 +29,7 @@ func Register(args plugins.RegistrationArguments) error {
 type actor struct{}
 
 func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, _ *plugins.FieldCollection) (preventCooldown bool, err error) {
-	msgID, ok := m.Tags.GetTag("id")
+	msgID, ok := m.Tags["id"]
 	if !ok || msgID == "" {
 		return false, nil
 	}

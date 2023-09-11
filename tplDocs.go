@@ -8,9 +8,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -63,7 +63,7 @@ func generateTplDocsRender(e *plugins.TemplateFuncDocumentationExample) (string,
 			User: "exampleuser",
 			Host: "exampleuser.tmi.twitch.tv",
 		},
-		Tags: map[string]irc.TagValue{
+		Tags: map[string]string{
 			"badge-info":        "subscriber/26",
 			"badges":            "moderator/1,subscriber/24",
 			"color":             "#8A2BE2",

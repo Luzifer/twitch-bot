@@ -1,8 +1,8 @@
 package log
 
 import (
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/sirupsen/logrus"
 

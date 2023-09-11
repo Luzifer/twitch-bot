@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -124,12 +124,12 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	if attrs.MustBool("as_reply", ptrBoolFalse) {
-		id, ok := m.GetTag("id")
+		id, ok := m.Tags["id"]
 		if ok {
 			if ircMessage.Tags == nil {
 				ircMessage.Tags = make(irc.Tags)
 			}
-			ircMessage.Tags["reply-parent-msg-id"] = irc.TagValue(id)
+			ircMessage.Tags["reply-parent-msg-id"] = id
 		}
 	}
 

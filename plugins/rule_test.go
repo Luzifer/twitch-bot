@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )

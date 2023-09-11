@@ -1,10 +1,10 @@
 package plugins
 
 import (
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"

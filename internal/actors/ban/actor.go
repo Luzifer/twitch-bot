@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/go-irc/irc"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"

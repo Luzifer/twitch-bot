@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/go-irc/irc"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )

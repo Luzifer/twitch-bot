@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-irc/irc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -210,7 +210,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		enforcement := strings.NewReplacer(
-			"$msgid", string(stMsg.Msg.Tags["id"]),
+			"$msgid", stMsg.Msg.Tags["id"],
 			"$user", plugins.DeriveUser(stMsg.Msg, nil),
 		).Replace(actionName)
 
@@ -218,7 +218,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			continue
 		}
 
-		if err = action(channel, rawMatch, string(stMsg.Msg.Tags["id"]), plugins.DeriveUser(stMsg.Msg, nil)); err != nil {
+		if err = action(channel, rawMatch, stMsg.Msg.Tags["id"], plugins.DeriveUser(stMsg.Msg, nil)); err != nil {
 			return false, errors.Wrap(err, "executing action")
 		}
 

@@ -11,7 +11,6 @@ require (
 	github.com/getsentry/sentry-go v0.23.0
 	github.com/glebarez/sqlite v1.9.0
 	github.com/go-git/go-git/v5 v5.8.1
-	github.com/go-irc/irc v2.1.0+incompatible
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gofrs/uuid/v3 v3.1.2
@@ -26,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
 	golang.org/x/crypto v0.12.0
+	gopkg.in/irc.v4 v4.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/driver/postgres v1.5.2
