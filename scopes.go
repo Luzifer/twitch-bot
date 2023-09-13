@@ -15,6 +15,7 @@ var (
 		twitch.ScopeClipsEdit:                "create clips on behalf of this user",
 		twitch.ScopeModeratorReadFollowers:   "see who follows this channel",
 		twitch.ScopeModeratorReadShoutouts:   "see shoutouts created / received",
+		twitch.ScopeUserManageWhispers:       "send whispers on behalf of this user",
 	}
 
 	botDefaultScopes = []string{

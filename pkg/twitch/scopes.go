@@ -24,6 +24,7 @@ const (
 	ScopeModeratorReadFollowers      = "moderator:read:followers"
 	ScopeModeratorReadShoutouts      = "moderator:read:shoutouts"
 	ScopeUserManageChatColor         = "user:manage:chat_color"
+	ScopeUserManageWhispers          = "user:manage:whispers"
 
 	// Deprecated v5 scope but used in chat
 	ScopeV5ChannelEditor = "channel_editor"
