@@ -1,3 +1,27 @@
+# 3.18.0 / 2023-09-21
+
+  * New Features
+    * [core] Add channel specific module configuration interface
+    * [templating] Add `idForUsername` function
+    * [templating] Add `usernameForID` function
+
+  * Improvements
+    * [core] Add `user:manage:whispers` extended scope
+    * [core] Update go-irc to v4.0.0
+
+  * Bugfixes
+    * [ci] Update dependencies
+    * [raffle] Insert newly created raffles with `NULL` reminder time
+
+  * Documentation
+    * [docs] Add raffle documentation
+    * [docs] Add raffle module as feature to start page
+    * [docs] Fix broken preparations image
+
+  * Deprecations
+    * [core] Mark twitch-token flag / envvar deprecated
+    * [core] Remove v2 migration
+
 # 3.17.0 / 2023-08-25
 
   * New Features
