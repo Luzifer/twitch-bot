@@ -141,7 +141,7 @@ Example:
 
 ### `doesFollow`
 
-Returns whether `from` follows `to`
+Returns whether `from` follows `to` (the bot must be moderator of `to` to read this)
 
 Syntax: `doesFollow <from> <to>`
 
@@ -154,7 +154,7 @@ Example:
 
 ### `doesFollowLongerThan`
 
-Returns whether `from` follows `to` for more than `duration`
+Returns whether `from` follows `to` for more than `duration` (the bot must be moderator of `to` to read this)
 
 Syntax: `doesFollowLongerThan <from> <to> <duration>`
 
@@ -180,7 +180,7 @@ Example:
 
 ### `followAge`
 
-Looks up when `from` followed `to` and returns the duration between then and now
+Looks up when `from` followed `to` and returns the duration between then and now (the bot must be moderator of `to` to read this)
 
 Syntax: `followAge <from> <to>`
 
@@ -193,7 +193,7 @@ Example:
 
 ### `followDate`
 
-Looks up when `from` followed `to`
+Looks up when `from` followed `to` (the bot must be moderator of `to` to read this)
 
 Syntax: `followDate <from> <to>`
 
@@ -389,7 +389,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 46%
+< Your int this hour: 11%
 ```
 
 ### `streamUptime`

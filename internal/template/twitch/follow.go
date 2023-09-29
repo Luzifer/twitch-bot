@@ -50,7 +50,7 @@ func tplTwitchDoesFollowLongerThan(args plugins.RegistrationArguments) {
 			return false, errors.Wrap(err, "getting follow date")
 		}
 	}), plugins.TemplateFuncDocumentation{
-		Description: "Returns whether `from` follows `to` for more than `duration`",
+		Description: "Returns whether `from` follows `to` for more than `duration` (the bot must be moderator of `to` to read this)",
 		Syntax:      "doesFollowLongerThan <from> <to> <duration>",
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ doesFollowLongerThan "tezrian" "luziferus" "168h" }}`,
@@ -73,7 +73,7 @@ func tplTwitchDoesFollow(args plugins.RegistrationArguments) {
 			return false, errors.Wrap(err, "getting follow date")
 		}
 	}), plugins.TemplateFuncDocumentation{
-		Description: "Returns whether `from` follows `to`",
+		Description: "Returns whether `from` follows `to` (the bot must be moderator of `to` to read this)",
 		Syntax:      "doesFollow <from> <to>",
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ doesFollow "tezrian" "luziferus" }}`,
@@ -87,7 +87,7 @@ func tplTwitchFollowAge(args plugins.RegistrationArguments) {
 		since, err := args.GetTwitchClient().GetFollowDate(from, to)
 		return time.Since(since), errors.Wrap(err, "getting follow date")
 	}), plugins.TemplateFuncDocumentation{
-		Description: "Looks up when `from` followed `to` and returns the duration between then and now",
+		Description: "Looks up when `from` followed `to` and returns the duration between then and now (the bot must be moderator of `to` to read this)",
 		Syntax:      "followAge <from> <to>",
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ followAge "tezrian" "luziferus" }}`,
@@ -100,7 +100,7 @@ func tplTwitchFollowDate(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("followDate", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Time, error) {
 		return args.GetTwitchClient().GetFollowDate(from, to)
 	}), plugins.TemplateFuncDocumentation{
-		Description: "Looks up when `from` followed `to`",
+		Description: "Looks up when `from` followed `to` (the bot must be moderator of `to` to read this)",
 		Syntax:      "followDate <from> <to>",
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ followDate "tezrian" "luziferus" }}`,

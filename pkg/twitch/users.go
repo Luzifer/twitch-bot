@@ -104,7 +104,7 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
-		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users/follows?to_id=%s&from_id=%s", toID, fromID),
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/followers?broadcaster_id=%s&user_id=%s", toID, fromID),
 	}); err != nil {
 		return time.Time{}, errors.Wrap(err, "request follow info")
 	}
@@ -228,7 +228,7 @@ func (c *Client) GetUserInformation(user string) (*User, error) {
 		return nil, errors.Errorf("unexpected number of records returned: %d", l)
 	}
 
-	// Follow date will not change that often, cache for a long time
+	// User info will not change that often, cache for a long time
 	c.apiCache.Set(cacheKey, timeDay, payload.Data[0])
 	out = payload.Data[0]
 

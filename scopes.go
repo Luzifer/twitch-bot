@@ -26,6 +26,7 @@ var (
 		twitch.ScopeModeratorManageChatSettings,
 		twitch.ScopeModeratorManageShieldMode,
 		twitch.ScopeModeratorManageShoutouts,
+		twitch.ScopeModeratorReadFollowers,
 
 		// Chat Scopes
 		twitch.ScopeChatEdit,
