@@ -1,3 +1,8 @@
+# 3.18.1 / 2023-10-05
+
+  * Bugfixes
+    * [core] Fix: Replace deprecated follow API
+
 # 3.18.0 / 2023-09-21
 
   * New Features
