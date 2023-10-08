@@ -99,7 +99,7 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	}
 
 	if err := c.Request(ClientRequestOpts{
-		AuthType: AuthTypeAppAccessToken,
+		AuthType: AuthTypeBearerToken,
 		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
