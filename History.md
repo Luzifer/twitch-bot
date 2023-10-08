@@ -1,3 +1,8 @@
+# 3.18.2 / 2023-10-08
+
+  * Bugfixes
+    * [core] Fix: New followers endpoint requires user-token
+
 # 3.18.1 / 2023-10-05
 
   * Bugfixes
