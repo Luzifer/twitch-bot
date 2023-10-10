@@ -236,7 +236,7 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	return nil
 }
 
-func (c *Client) getTwitchAppAccessToken() (string, error) {
+func (c *Client) GetTwitchAppAccessToken() (string, error) {
 	if c.appAccessToken != "" {
 		return c.appAccessToken, nil
 	}
@@ -307,7 +307,7 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 			// Nothing to do
 
 		case AuthTypeAppAccessToken:
-			accessToken, err := c.getTwitchAppAccessToken()
+			accessToken, err := c.GetTwitchAppAccessToken()
 			if err != nil {
 				return errors.Wrap(err, "getting app-access-token")
 			}
