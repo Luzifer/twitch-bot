@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	EventSubEventTypeChannelAdBreakBegin                   = "channel.ad_break.begin"
 	EventSubEventTypeChannelFollow                         = "channel.follow"
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
 	EventSubEventTypeChannelRaid                           = "channel.raid"
@@ -47,6 +48,16 @@ type (
 		ToBroadcasterUserID   string `json:"to_broadcaster_user_id,omitempty"`
 		UserID                string `json:"user_id,omitempty"`
 		ModeratorUserID       string `json:"moderator_user_id,omitempty"`
+	}
+
+	EventSubEventAdBreakBegin struct {
+		Duration             int64     `json:"duration"`
+		Timestamp            time.Time `json:"timestamp"`
+		IsAutomatic          bool      `json:"is_automatic"`
+		BroadcasterUserID    string    `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
+		BroadcasterUserName  string    `json:"broadcaster_user_name"`
+		RequesterUserID      string    `json:"requester_user_id"`
 	}
 
 	EventSubEventChannelPointCustomRewardRedemptionAdd struct {

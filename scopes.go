@@ -10,6 +10,7 @@ var (
 		twitch.ScopeChannelManagePredictions: "manage predictions",
 		twitch.ScopeChannelManageRaids:       "start raids",
 		twitch.ScopeChannelManageVIPS:        "manage VIPs",
+		twitch.ScopeChannelReadAds:           "see when an ad-break starts",
 		twitch.ScopeChannelReadRedemptions:   "see channel-point redemptions",
 		twitch.ScopeChannelReadSubscriptions: "see subscribed users / sub count / points",
 		twitch.ScopeClipsEdit:                "create clips on behalf of this user",

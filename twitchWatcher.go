@@ -113,23 +113,11 @@ func (t *twitchWatcher) RemoveChannel(channel string) error {
 func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration {
 	return []topicRegistration{
 		{
-			Topic:          twitch.EventSubEventTypeChannelUpdate,
-			Version:        twitch.EventSubTopicVersion2,
+			Topic:          twitch.EventSubEventTypeChannelAdBreakBegin,
+			Version:        twitch.EventSubTopicVersionBeta,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-			RequiredScopes: nil,
-			Hook:           t.handleEventSubChannelUpdate,
-		},
-		{
-			Topic:          twitch.EventSubEventTypeStreamOffline,
-			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-			RequiredScopes: nil,
-			Hook:           t.handleEventSubStreamOnOff(false),
-		},
-		{
-			Topic:          twitch.EventSubEventTypeStreamOnline,
-			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
-			RequiredScopes: nil,
-			Hook:           t.handleEventSubStreamOnOff(true),
+			RequiredScopes: []string{twitch.ScopeChannelReadAds},
+			Hook:           t.handleEventSubChannelAdBreakBegin,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelFollow,
@@ -137,12 +125,6 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorReadFollowers},
 			Hook:           t.handleEventSubChannelFollow,
-		},
-		{
-			Topic:          twitch.EventSubEventTypeChannelRaid,
-			Condition:      twitch.EventSubCondition{FromBroadcasterUserID: userID},
-			RequiredScopes: nil,
-			Hook:           t.handleEventSubChannelOutboundRaid,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
@@ -173,6 +155,12 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Hook:           t.handleEventSubChannelPollChange(eventTypePollProgress),
 		},
 		{
+			Topic:          twitch.EventSubEventTypeChannelRaid,
+			Condition:      twitch.EventSubCondition{FromBroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubChannelOutboundRaid,
+		},
+		{
 			Topic:          twitch.EventSubEventTypeChannelShoutoutCreate,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
@@ -186,7 +174,45 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			AnyScope:       true,
 			Hook:           t.handleEventSubShoutoutReceived,
 		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelUpdate,
+			Version:        twitch.EventSubTopicVersion2,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubChannelUpdate,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeStreamOffline,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubStreamOnOff(false),
+		},
+		{
+			Topic:          twitch.EventSubEventTypeStreamOnline,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: nil,
+			Hook:           t.handleEventSubStreamOnOff(true),
+		},
 	}
+}
+
+func (t *twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error {
+	var payload twitch.EventSubEventAdBreakBegin
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := plugins.FieldCollectionFromData(map[string]any{
+		"channel":      "#" + payload.BroadcasterUserLogin,
+		"duration":     payload.Duration,
+		"is_automatic": payload.IsAutomatic,
+		"timestamp":    payload.Timestamp,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Ad-Break started")
+	go handleMessage(ircHdl.Client(), nil, eventTypeAdBreakBegin, fields)
+
+	return nil
 }
 
 func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
