@@ -9,14 +9,14 @@ import (
 )
 
 type (
-	counter struct {
+	Counter struct {
 		Name  string `gorm:"primaryKey"`
 		Value int64
 	}
 )
 
 func GetCounterValue(db database.Connector, counterName string) (int64, error) {
-	var c counter
+	var c Counter
 
 	err := db.DB().First(&c, "name = ?", counterName).Error
 	switch {
@@ -45,7 +45,40 @@ func UpdateCounter(db database.Connector, counterName string, value int64, absol
 		db.DB().Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "name"}},
 			DoUpdates: clause.AssignmentColumns([]string{"value"}),
-		}).Create(counter{Name: counterName, Value: value}).Error,
+		}).Create(Counter{Name: counterName, Value: value}).Error,
 		"storing counter value",
 	)
+}
+
+func getCounterRank(db database.Connector, prefix, name string) (rank, count int64, err error) {
+	var cc []Counter
+
+	err = db.DB().
+		Order("value DESC").
+		Find(&cc, "name LIKE ?", prefix+"%").
+		Error
+	if err != nil {
+		return 0, 0, errors.Wrap(err, "querying counters")
+	}
+
+	for i, c := range cc {
+		count++
+		if c.Name == name {
+			rank = int64(i + 1)
+		}
+	}
+
+	return rank, count, nil
+}
+
+func getCounterTopList(db database.Connector, prefix string, n int) ([]Counter, error) {
+	var cc []Counter
+
+	err := db.DB().
+		Order("value DESC").
+		Limit(n).
+		Find(&cc, "name LIKE ?", prefix+"%").
+		Error
+
+	return cc, errors.Wrap(err, "querying counters")
 }

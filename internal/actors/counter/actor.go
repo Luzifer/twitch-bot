@@ -24,7 +24,7 @@ var (
 //nolint:funlen // This function is a few lines too long but only contains definitions
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&counter{}); err != nil {
+	if err := db.DB().AutoMigrate(&Counter{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
@@ -137,6 +137,29 @@ func Register(args plugins.RegistrationArguments) error {
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:       `{{ channelCounter "test" }}`,
 			ExpectedOutput: "#example:test",
+		},
+	})
+
+	args.RegisterTemplateFunction("counterRank", plugins.GenericTemplateFunctionGetter(func(prefix, name string) (res struct{ Rank, Count int64 }, err error) {
+		res.Rank, res.Count, err = getCounterRank(db, prefix, name)
+		return res, errors.Wrap(err, "getting counter rank")
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns the rank of the given counter and the total number of counters in given counter prefix",
+		Syntax:      `counterRank <prefix> <name>`,
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ $cr := counterRank (list .channel "test" "" | join ":") (list .channel "test" "foo" | join ":") }}{{ $cr.Rank }}/{{ $cr.Count }}`,
+			FakedOutput: "2/6",
+		},
+	})
+
+	args.RegisterTemplateFunction("counterTopList", plugins.GenericTemplateFunctionGetter(func(prefix string, n int) ([]Counter, error) {
+		return getCounterTopList(db, prefix, n)
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Returns the top n counters for the given prefix as objects with Name and Value fields",
+		Syntax:      `counterTopList <prefix> <n>`,
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ range (counterTopList (list .channel "test" "" | join ":") 3) }}{{ .Name }}: {{ .Value }} - {{ end }}`,
+			FakedOutput: "#example:test:foo: 5 - #example:test:bar: 4 - ",
 		},
 	})
 

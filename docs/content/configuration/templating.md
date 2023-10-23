@@ -100,6 +100,32 @@ Example:
 < #example:test
 ```
 
+### `counterRank`
+
+Returns the rank of the given counter and the total number of counters in given counter prefix
+
+Syntax: `counterRank <prefix> <name>`
+
+Example:
+
+```
+# {{ $cr := counterRank (list .channel "test" "" | join ":") (list .channel "test" "foo" | join ":") }}{{ $cr.Rank }}/{{ $cr.Count }}
+* 2/6
+```
+
+### `counterTopList`
+
+Returns the top n counters for the given prefix as objects with Name and Value fields
+
+Syntax: `counterTopList <prefix> <n>`
+
+Example:
+
+```
+# {{ range (counterTopList (list .channel "test" "" | join ":") 3) }}{{ .Name }}: {{ .Value }} - {{ end }}
+* #example:test:foo: 5 - #example:test:bar: 4 - 
+```
+
 ### `counterValue`
 
 Returns the current value of the counter which identifier was supplied
@@ -389,7 +415,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 11%
+< Your int this hour: 43%
 ```
 
 ### `streamUptime`
