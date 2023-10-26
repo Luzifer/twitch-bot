@@ -60,10 +60,9 @@ var (
 	config     *configFile
 	configLock = new(sync.RWMutex)
 
-	botUserstate = newTwitchUserStateStore()
-	cronService  *cron.Cron
-	ircHdl       *ircHandler
-	router       = mux.NewRouter()
+	cronService *cron.Cron
+	ircHdl      *ircHandler
+	router      = mux.NewRouter()
 
 	runID = uuid.Must(uuid.NewV4()).String()
 

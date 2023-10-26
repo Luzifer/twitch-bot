@@ -30,16 +30,16 @@ func init() {
 		},
 	})
 
-	tplFuncs.Register("botHasBadge", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+	tplFuncs.Register("chatterHasBadge", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(badge string) bool {
 			badges := twitch.ParseBadgeLevels(m)
 			return badges.Has(badge)
 		}
 	}, plugins.TemplateFuncDocumentation{
-		Description: "Checks whether bot has the given badge in the current channel",
-		Syntax:      "botHasBadge <badge>",
+		Description: "Checks whether chatter writing the current line has the given badge in the current channel",
+		Syntax:      "chatterHasBadge <badge>",
 		Example: &plugins.TemplateFuncDocumentationExample{
-			Template:       `{{ botHasBadge "moderator" }}`,
+			Template:       `{{ chatterHasBadge "moderator" }}`,
 			ExpectedOutput: "true",
 		},
 	})

@@ -84,7 +84,7 @@ Example:
 
 ```
 # {{ botHasBadge "moderator" }}
-< true
+< false
 ```
 
 ### `channelCounter`
@@ -98,6 +98,19 @@ Example:
 ```
 # {{ channelCounter "test" }}
 < #example:test
+```
+
+### `chatterHasBadge`
+
+Checks whether chatter writing the current line has the given badge in the current channel
+
+Syntax: `chatterHasBadge <badge>`
+
+Example:
+
+```
+# {{ chatterHasBadge "moderator" }}
+< true
 ```
 
 ### `counterRank`
@@ -415,7 +428,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 43%
+< Your int this hour: 37%
 ```
 
 ### `streamUptime`

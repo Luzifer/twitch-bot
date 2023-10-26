@@ -181,11 +181,6 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 		// Announces Twitch-specific events to the channel (for example, a user’s subscription notification).
 		i.handleTwitchUsernotice(m)
 
-	case "USERSTATE":
-		// USERSTATE (Twitch Tags)
-		// Sends user-state data when a user joins a channel or sends a PRIVMSG to a channel.
-		i.handleTwitchUserstate(m)
-
 	case "WHISPER":
 		// WHISPER (Twitch Commands)
 		// Delivers whisper-messages received
@@ -484,16 +479,6 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeSubmysterygift, evtData)
 
 	}
-}
-
-func (i ircHandler) handleTwitchUserstate(m *irc.Message) {
-	state, err := parseTwitchUserState(m)
-	if err != nil {
-		log.WithError(err).Error("Unable to parse bot user-state")
-		return
-	}
-
-	botUserstate.Set(plugins.DeriveChannel(m, nil), state)
 }
 
 func (i ircHandler) handleTwitchWhisper(m *irc.Message) {

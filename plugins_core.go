@@ -49,6 +49,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/template/strings"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/subscriber"
 	twitchFns "github.com/Luzifer/twitch-bot/v3/internal/template/twitch"
+	"github.com/Luzifer/twitch-bot/v3/internal/template/userstate"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -95,6 +96,7 @@ var (
 		strings.Register,
 		subscriber.Register,
 		twitchFns.Register,
+		userstate.Register,
 
 		// API-only modules
 		customevent.Register,
