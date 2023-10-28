@@ -1,3 +1,19 @@
+# 3.19.0 / 2023-10-28
+
+> [!IMPORTANT]
+> This release fixes a long-standing bug in `botHasBadge` introduced in `v1.1.0` causing the function to yield a broken result. Update is therefore strongly advised!
+
+  * New Features
+    * [templating] Add function `chatterHasBadge`
+    * [templating] Add `counterRank` and `counterTopList` functions
+    * [core] Add support for **beta** Ad-Break event
+
+  * Improvements
+    * [core] Expose method to retrieve AppAccessToken
+
+  * Bugfixes
+    * Update dependencies
+
 # 3.18.2 / 2023-10-08
 
   * Bugfixes
