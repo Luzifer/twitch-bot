@@ -166,7 +166,8 @@ func (e *EventSubSocketClient) Run() error {
 		errC             = make(chan error, 1)
 		keepaliveTimeout = socketInitialTimeout
 		msgC             = make(chan eventSubSocketMessage, 1)
-		socketTimeout    = time.NewTimer(keepaliveTimeout)
+		timeoutC         = make(chan struct{}, 1)
+		socketTimeout    = newKeepaliveTracker(timeoutC, keepaliveTimeout)
 	)
 
 	if err := e.connect(e.socketDest, msgC, errC, "client init"); err != nil {
@@ -187,9 +188,14 @@ func (e *EventSubSocketClient) Run() error {
 				return err
 			}
 
-		case <-socketTimeout.C:
+		case <-timeoutC:
 			// No message received, deeming connection dead
-			socketTimeout.Reset(socketInitialTimeout)
+			e.logger.WithFields(logrus.Fields{
+				"expired":    socketTimeout.ExpiresAt(),
+				"last_event": socketTimeout.LastRenew(),
+			}).Warn("eventsub socket missed keepalive")
+
+			socketTimeout = newKeepaliveTracker(timeoutC, socketInitialTimeout)
 			if err := e.connect(e.socketDest, msgC, errC, "socket timeout"); err != nil {
 				errC <- errors.Wrap(err, "re-connecting after timeout")
 				continue
@@ -198,7 +204,7 @@ func (e *EventSubSocketClient) Run() error {
 		case msg := <-msgC:
 			// The keepalive timer is reset with each notification or
 			// keepalive message.
-			socketTimeout.Reset(keepaliveTimeout)
+			socketTimeout.Renew(keepaliveTimeout)
 
 			switch msg.Metadata.MessageType {
 			case eventsubSocketMessageTypeKeepalive:
