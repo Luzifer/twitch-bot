@@ -191,7 +191,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 				Description: "Number of seconds to leave the raffle open",
 				Name:        "duration",
 				Required:    true,
-				Type:        "integer",
+				Type:        "int",
 			},
 		},
 		RequiresWriteAuth: true,
