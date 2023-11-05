@@ -18,6 +18,7 @@ import (
 
 const (
 	eventsubLiveSocketDest       = "wss://eventsub.wss.twitch.tv/ws"
+	socketConnectTimeout         = 15 * time.Second
 	socketInitialTimeout         = 30 * time.Second
 	socketTimeoutGraceMultiplier = 1.5
 )
@@ -242,7 +243,10 @@ func (e *EventSubSocketClient) Run() error {
 func (e *EventSubSocketClient) connect(url string, msgC chan eventSubSocketMessage, errC chan error, reason string) error {
 	e.logger.WithField("reason", reason).Debug("(re-)connecting websocket")
 
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil) //nolint:bodyclose // Close is implemented at other place
+	ctx, cancel := context.WithTimeout(context.Background(), socketConnectTimeout)
+	defer cancel()
+
+	conn, _, err := websocket.DefaultDialer.DialContext(ctx, url, nil) //nolint:bodyclose // Close is implemented at other place
 	if err != nil {
 		return errors.Wrap(err, "dialing websocket")
 	}
@@ -403,7 +407,7 @@ func (e *EventSubSocketClient) subscribe() error {
 			return errors.Wrapf(err, "subscribing to %s/%s", st.Event, st.Version)
 		}
 
-		e.logger.WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).Debug("subscripted to topic")
+		e.logger.WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).Debug("subscribed to topic")
 	}
 
 	return nil
