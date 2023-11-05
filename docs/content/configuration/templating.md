@@ -418,6 +418,19 @@ Example:
 * Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
+### `scheduleSegments`
+
+Returns the next n segments in the channels schedule. If n is not given, returns all known segments.
+
+Syntax: `scheduleSegments <channel> [n]`
+
+Example:
+
+```
+# {{ $seg := scheduleSegments "luziferus" 1 | first }}Next Stream: {{ $seg.Title }} @	{{ dateInZone "2006-01-02 15:04" $seg.StartTime "Europe/Berlin" }}
+* Next Stream: Little Nightmares @ 2023-11-05 18:00
+```
+
 ### `seededRandom`
 
 Returns a float value stable for the given seed
@@ -428,7 +441,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 37%
+< Your int this hour: 73%
 ```
 
 ### `streamUptime`
