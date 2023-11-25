@@ -8,18 +8,18 @@ import (
 )
 
 type (
-	logWriter struct{ io.Writer }
+	LogWriter struct{ io.Writer }
 )
 
-func newLogrusLogWriterWithLevel(level logrus.Level, dbDriver string) logWriter {
-	writer := logrus.WithField("database", dbDriver).WriterLevel(level)
-	return logWriter{writer}
+func NewLogrusLogWriterWithLevel(logger *logrus.Logger, level logrus.Level, dbDriver string) LogWriter {
+	writer := logger.WithField("database", dbDriver).WriterLevel(level)
+	return LogWriter{writer}
 }
 
-func (l logWriter) Print(a ...any) {
+func (l LogWriter) Print(a ...any) {
 	fmt.Fprint(l.Writer, a...)
 }
 
-func (l logWriter) Printf(format string, a ...any) {
+func (l LogWriter) Printf(format string, a ...any) {
 	fmt.Fprintf(l.Writer, format, a...)
 }

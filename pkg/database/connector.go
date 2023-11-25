@@ -42,7 +42,7 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 
 	switch driverName {
 	case "mysql":
-		mysqlDriver.SetLogger(newLogrusLogWriterWithLevel(logrus.ErrorLevel, driverName))
+		mysqlDriver.SetLogger(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.ErrorLevel, driverName))
 		innerDB = mysql.Open(connString)
 		dbTuner = tuneMySQLDatabase
 
@@ -63,7 +63,13 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 
 	db, err := gorm.Open(innerDB, &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
-		Logger:                                   logger.New(newLogrusLogWriterWithLevel(logrus.TraceLevel, driverName), logger.Config{}),
+		Logger: logger.New(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.TraceLevel, driverName), logger.Config{
+			SlowThreshold:             time.Second,
+			Colorful:                  false,
+			IgnoreRecordNotFoundError: false,
+			ParameterizedQueries:      false,
+			LogLevel:                  logger.Info,
+		}),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "connecting database")
@@ -85,6 +91,10 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 func (c connector) Close() error {
 	// return errors.Wrap(c.db.Close(), "closing database")
 	return nil
+}
+
+func (c connector) CopyDatabase(src, target *gorm.DB) error {
+	return CopyObjects(src, target, &coreKV{})
 }
 
 func (c connector) DB() *gorm.DB {

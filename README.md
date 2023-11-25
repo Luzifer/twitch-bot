@@ -36,11 +36,12 @@ Usage of twitch-bot:
 
 # twitch-bot help
 Supported sub-commands are:
-  actor-docs                                 Generate markdown documentation for available actors
-  api-token <token-name> <scope> [...scope]  Generate an api-token to be entered into the config
-  reset-secrets                              Remove encrypted data to reset encryption passphrase
-  tpl-docs                                   Generate markdown documentation for available template functions
-  validate-config                            Try to load configuration file and report errors if any
+  actor-docs                                        Generate markdown documentation for available actors
+  api-token <token-name> <scope> [...scope]         Generate an api-token to be entered into the config
+  copy-database <target storage-type> <target DSN>  Copies database contents to a new storage DSN i.e. for migrating to a new DBMS
+  reset-secrets                                     Remove encrypted data to reset encryption passphrase
+  tpl-docs                                          Generate markdown documentation for available template functions
+  validate-config                                   Try to load configuration file and report errors if any
 ```
 
 ### Database Connection Strings

@@ -14,6 +14,7 @@ import (
 
 type (
 	overlaysEvent struct {
+		ID        uint64    `gorm:"primaryKey"`
 		Channel   string    `gorm:"not null;index:overlays_events_sort_idx"`
 		CreatedAt time.Time `gorm:"index:overlays_events_sort_idx"`
 		EventType string
@@ -28,7 +29,7 @@ func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) e
 	}
 
 	return errors.Wrap(
-		db.DB().Create(overlaysEvent{
+		db.DB().Create(&overlaysEvent{
 			Channel:   channel,
 			CreatedAt: evt.Time.UTC(),
 			EventType: evt.Type,

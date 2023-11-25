@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
@@ -68,6 +69,10 @@ func Register(args plugins.RegistrationArguments) error {
 	if err := db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
+
+	args.RegisterCopyDatabaseFunc("overlay_events", func(src, target *gorm.DB) error {
+		return database.CopyObjects(src, target, &overlaysEvent{})
+	})
 
 	validateToken = args.ValidateToken
 

@@ -5,6 +5,7 @@ package raffle
 import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -27,6 +28,10 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	if err := db.DB().AutoMigrate(&raffle{}, &raffleEntry{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
+
+	args.RegisterCopyDatabaseFunc("raffle", func(src, target *gorm.DB) error {
+		return database.CopyObjects(src, target, &raffle{}, &raffleEntry{})
+	})
 
 	dbc = newDBClient(db)
 	if err = dbc.RefreshActiveRaffles(); err != nil {

@@ -44,6 +44,10 @@ func New(db database.Connector, cronService *cron.Cron) (*Service, error) {
 	return s, errors.Wrap(s.db.DB().AutoMigrate(&timer{}), "applying migrations")
 }
 
+func (s *Service) CopyDatabase(src, target *gorm.DB) error {
+	return database.CopyObjects(src, target, &timer{})
+}
+
 func (s *Service) UpdatePermitTimeout(d time.Duration) {
 	s.permitTimeout = d
 }

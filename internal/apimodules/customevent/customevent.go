@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -31,6 +32,10 @@ func Register(args plugins.RegistrationArguments) error {
 	if err := db.DB().AutoMigrate(&storedCustomEvent{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
+
+	args.RegisterCopyDatabaseFunc("custom_event", func(src, target *gorm.DB) error {
+		return database.CopyObjects(src, target, &storedCustomEvent{})
+	})
 
 	mc = &memoryCache{dbc: db}
 

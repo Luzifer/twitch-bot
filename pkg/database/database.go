@@ -11,6 +11,7 @@ type (
 	// convenience methods
 	Connector interface {
 		Close() error
+		CopyDatabase(src, target *gorm.DB) error
 		DB() *gorm.DB
 		DeleteCoreMeta(key string) error
 		ReadCoreMeta(key string, value any) error

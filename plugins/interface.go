@@ -5,6 +5,7 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
+	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -37,6 +38,8 @@ type (
 	ChannelAnyPermissionCheckFunc func(channel string, scopes ...string) (bool, error)
 
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
+
+	DatabaseCopyFunc func(src, target *gorm.DB) error
 
 	EventHandlerFunc         func(evt string, eventData *FieldCollection) error
 	EventHandlerRegisterFunc func(EventHandlerFunc) error
@@ -83,6 +86,10 @@ type (
 		RegisterActorDocumentation ActorDocumentationRegistrationFunc
 		// RegisterAPIRoute registers a new HTTP handler function including documentation
 		RegisterAPIRoute HTTPRouteRegistrationFunc
+		// RegisterCopyDatabaseFunc registers a DatabaseCopyFunc for the
+		// database migration tool. Modules not registering such a func
+		// will not be copied over when migrating to another database.
+		RegisterCopyDatabaseFunc func(name string, fn DatabaseCopyFunc)
 		// RegisterCron is a method to register cron functions in the global cron instance
 		RegisterCron CronRegistrationFunc
 		// RegisterEventHandler is a method to register a handler function receiving ALL events

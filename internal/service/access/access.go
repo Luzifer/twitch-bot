@@ -47,6 +47,10 @@ func New(db database.Connector) (*Service, error) {
 	)
 }
 
+func (s *Service) CopyDatabase(src, target *gorm.DB) error {
+	return database.CopyObjects(src, target, &extendedPermission{})
+}
+
 func (s Service) GetBotUsername() (string, error) {
 	var botUsername string
 	err := s.db.ReadCoreMeta(coreMetaKeyBotUsername, &botUsername)

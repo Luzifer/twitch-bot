@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
+	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -29,6 +30,10 @@ func Register(args plugins.RegistrationArguments) error {
 	if err := db.DB().AutoMigrate(&quote{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
+
+	args.RegisterCopyDatabaseFunc("quote", func(src, target *gorm.DB) error {
+		return database.CopyObjects(src, target, &quote{})
+	})
 
 	formatMessage = args.FormatMessage
 	send = args.SendMessage

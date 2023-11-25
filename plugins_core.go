@@ -163,6 +163,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterActorDocumentation: registerActorDocumentation,
 		RegisterAPIRoute:           registerRoute,
 		RegisterCron:               cronService.AddFunc,
+		RegisterCopyDatabaseFunc:   registerDatabaseCopyFunc,
 		RegisterEventHandler:       registerEventHandlers,
 		RegisterMessageModFunc:     registerChatcommand,
 		RegisterRawMessageHandler:  registerRawMessageHandler,
