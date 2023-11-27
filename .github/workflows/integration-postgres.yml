@@ -1,0 +1,54 @@
+---
+
+name: integration-postgres
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: luzifer/archlinux
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: twitch-bot-pass
+
+    steps:
+      - name: Enable custom AUR package repo
+        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
+
+      - name: Install required packages
+        run: |
+          pacman -Syy --noconfirm \
+            git \
+            go \
+            make
+
+      - uses: actions/checkout@v3
+
+      - name: Marking workdir safe
+        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
+      - name: Run tests against PostgreSQL
+        env:
+          GO_TEST_DB_ENGINE: postgres
+          GO_TEST_DB_DSN: host=postgres user=postgres password=twitch-bot-pass dbname=postgres port=5432 sslmode=disable timezone=UTC
+        run: make test
+
+...

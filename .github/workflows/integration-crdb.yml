@@ -1,0 +1,61 @@
+---
+
+name: integration-crdb
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: luzifer/archlinux
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
+
+    runs-on: ubuntu-latest
+
+    services:
+      crdb:
+        image: luzifer/crdb-gh-service
+
+    steps:
+      - name: Enable custom AUR package repo
+        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
+
+      - name: Install required packages
+        run: |
+          pacman -Syy --noconfirm \
+            cockroachdb-bin \
+            git \
+            go \
+            make
+
+      - uses: actions/checkout@v3
+
+      - name: Marking workdir safe
+        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
+      - name: Set up CRDB service
+        run: |
+          cockroach sql --host crdb --insecure <<EOF
+          CREATE DATABASE integration;
+          CREATE USER "twitch_bot" WITH PASSWORD NULL;
+          ALTER DATABASE integration OWNER to "twitch_bot";
+          EOF
+
+      - name: Run tests against CRDB
+        env:
+          GO_TEST_DB_ENGINE: postgres
+          GO_TEST_DB_DSN: host=crdb user=twitch_bot dbname=integration port=26257 sslmode=disable timezone=UTC
+        run: make test
+
+...
