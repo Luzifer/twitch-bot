@@ -6,6 +6,8 @@ github.com/Luzifer/go-openssl/v4 v4.2.1 h1:0+/gaQ5TcBhGmVqGrfyA21eujlbbaNwj0VlOA
 github.com/Luzifer/go-openssl/v4 v4.2.1/go.mod h1:CZZZWY0buCtkxrkqDPQYigC4Kn55UuO97TEoV+hwz2s=
 github.com/Luzifer/go_helpers/v2 v2.20.1 h1:VAp2J8g31X30Xr8/eVV1Xx993MO0tQx9YwNwab6ouB4=
 github.com/Luzifer/go_helpers/v2 v2.20.1/go.mod h1:cIIqMPu3NT8/6kHke+03hVznNDLLKVGA74Lz47CWJyA=
+github.com/Luzifer/go_helpers/v2 v2.22.0 h1:rJrZkJDzAiq4J0RUbwPI7kQ5rUy7BYQ/GUpo3fSM0y0=
+github.com/Luzifer/go_helpers/v2 v2.22.0/go.mod h1:cIIqMPu3NT8/6kHke+03hVznNDLLKVGA74Lz47CWJyA=
 github.com/Luzifer/korvike/functions v0.11.0 h1:2hr3nnt9hy8Esu1W3h50+RggcLRXvrw92kVQLvxzd2Q=
 github.com/Luzifer/korvike/functions v0.11.0/go.mod h1:osumwH64mWgbwZIfE7rE0BB7Y5HXxrzyO4JfO7fhduU=
 github.com/Luzifer/rconfig/v2 v2.4.0 h1:MAdymTlExAZ8mx5VG8xOFAtFQSpWBipKYQHPOmYTn9o=

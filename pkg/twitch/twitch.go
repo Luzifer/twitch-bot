@@ -90,12 +90,22 @@ type (
 
 // ValidateStatus is the default validation function used when no
 // ValidateFunc is given in the ClientRequestOpts and checks for the
-// returned HTTP status is equal to the OKStatus
+// returned HTTP status is equal to the OKStatus.
+//
+// When the status is http.StatusTooManyRequests the function will
+// return an error terminating any retries as retrying would not make
+// sense (the error returned from Request will still be an HTTPError
+// with status 429).
 //
 // When wrapping this function the body should not have been read
 // before in order to have the response body available in the returned
 // HTTPError
 func ValidateStatus(opts ClientRequestOpts, resp *http.Response) error {
+	if resp.StatusCode == http.StatusTooManyRequests {
+		// Twitch doesn't want to hear any more of this
+		return backoff.NewErrCannotRetry(newHTTPError(resp.StatusCode, nil, nil))
+	}
+
 	if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {

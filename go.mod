@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.1
-	github.com/Luzifer/go_helpers/v2 v2.20.1
+	github.com/Luzifer/go_helpers/v2 v2.22.0
 	github.com/Luzifer/korvike/functions v0.11.0
 	github.com/Luzifer/rconfig/v2 v2.4.0
 	github.com/Masterminds/sprig/v3 v3.2.3
