@@ -7,7 +7,9 @@ import (
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -25,20 +27,23 @@ type (
 
 func cleanupStoredEvents(db database.Connector) error {
 	return errors.Wrap(
-		db.DB().
-			Where("scheduled_at < ?", time.Now().Add(cleanupTimeout*-1).UTC()).
-			Delete(&storedCustomEvent{}).
-			Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Where("scheduled_at < ?", time.Now().Add(cleanupTimeout*-1).UTC()).
+				Delete(&storedCustomEvent{}).
+				Error
+		}),
 		"deleting past events",
 	)
 }
 
 func getFutureEvents(db database.Connector) (out []storedCustomEvent, err error) {
 	return out, errors.Wrap(
-		db.DB().
-			Where("scheduled_at >= ?", time.Now().UTC()).
-			Find(&out).
-			Error,
+		helpers.Retry(func() error {
+			return db.DB().
+				Where("scheduled_at >= ?", time.Now().UTC()).
+				Find(&out).
+				Error
+		}),
 		"getting events from database",
 	)
 }
@@ -50,12 +55,14 @@ func storeEvent(db database.Connector, scheduleAt time.Time, channel string, fie
 	}
 
 	return errors.Wrap(
-		db.DB().Create(storedCustomEvent{
-			ID:          uuid.Must(uuid.NewV4()).String(),
-			Channel:     channel,
-			Fields:      fieldBuf.String(),
-			ScheduledAt: scheduleAt,
-		}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Create(storedCustomEvent{
+				ID:          uuid.Must(uuid.NewV4()).String(),
+				Channel:     channel,
+				Fields:      fieldBuf.String(),
+				ScheduledAt: scheduleAt,
+			}).Error
+		}),
 		"storing event",
 	)
 }

@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 )
 
 const (
@@ -31,7 +32,9 @@ type (
 // DeleteCoreMeta removes a core_kv table entry
 func (c connector) DeleteCoreMeta(key string) error {
 	return errors.Wrap(
-		c.db.Delete(&coreKV{}, "name = ?", key).Error,
+		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+			return tx.Delete(&coreKV{}, "name = ?", key).Error
+		}),
 		"deleting key from database",
 	)
 }
@@ -61,7 +64,9 @@ func (c connector) ReadEncryptedCoreMeta(key string, value any) error {
 // ResetEncryptedCoreMeta removes all CoreKV entries from the database
 func (c connector) ResetEncryptedCoreMeta() error {
 	return errors.Wrap(
-		c.db.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error,
+		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+			return tx.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error
+		}),
 		"removing encrypted meta entries",
 	)
 }
@@ -110,11 +115,14 @@ func (c connector) ValidateEncryption() error {
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	var data coreKV
 
-	if err = c.db.First(&data, "name = ?", key).Error; err != nil {
+	if err = helpers.Retry(func() error {
+		err = c.db.First(&data, "name = ?", key).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrCoreMetaNotFound
 		}
 		return errors.Wrap(err, "querying core meta table")
+	}); err != nil {
+		return err
 	}
 
 	if data.Value == "" {
@@ -149,10 +157,12 @@ func (c connector) storeCoreMeta(key string, value any, processor func(string) (
 
 	data := coreKV{Name: key, Value: encValue}
 	return errors.Wrap(
-		c.db.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "name"}},
-			DoUpdates: clause.AssignmentColumns([]string{"value"}),
-		}).Create(data).Error,
+		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "name"}},
+				DoUpdates: clause.AssignmentColumns([]string{"value"}),
+			}).Create(data).Error
+		}),
 		"upserting core meta value",
 	)
 }

@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
@@ -18,17 +19,16 @@ type (
 func GetCounterValue(db database.Connector, counterName string) (int64, error) {
 	var c Counter
 
-	err := db.DB().First(&c, "name = ?", counterName).Error
-	switch {
-	case err == nil:
-		return c.Value, nil
+	err := helpers.Retry(func() error {
+		err := db.DB().First(&c, "name = ?", counterName).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
 
-	case errors.Is(err, gorm.ErrRecordNotFound):
-		return 0, nil
+		return err
+	})
 
-	default:
-		return 0, errors.Wrap(err, "querying counter")
-	}
+	return c.Value, errors.Wrap(err, "querying counter")
 }
 
 func UpdateCounter(db database.Connector, counterName string, value int64, absolute bool) error {
@@ -42,10 +42,12 @@ func UpdateCounter(db database.Connector, counterName string, value int64, absol
 	}
 
 	return errors.Wrap(
-		db.DB().Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "name"}},
-			DoUpdates: clause.AssignmentColumns([]string{"value"}),
-		}).Create(Counter{Name: counterName, Value: value}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "name"}},
+				DoUpdates: clause.AssignmentColumns([]string{"value"}),
+			}).Create(Counter{Name: counterName, Value: value}).Error
+		}),
 		"storing counter value",
 	)
 }
@@ -53,11 +55,12 @@ func UpdateCounter(db database.Connector, counterName string, value int64, absol
 func getCounterRank(db database.Connector, prefix, name string) (rank, count int64, err error) {
 	var cc []Counter
 
-	err = db.DB().
-		Order("value DESC").
-		Find(&cc, "name LIKE ?", prefix+"%").
-		Error
-	if err != nil {
+	if err = helpers.Retry(func() error {
+		return db.DB().
+			Order("value DESC").
+			Find(&cc, "name LIKE ?", prefix+"%").
+			Error
+	}); err != nil {
 		return 0, 0, errors.Wrap(err, "querying counters")
 	}
 
@@ -74,11 +77,13 @@ func getCounterRank(db database.Connector, prefix, name string) (rank, count int
 func getCounterTopList(db database.Connector, prefix string, n int) ([]Counter, error) {
 	var cc []Counter
 
-	err := db.DB().
-		Order("value DESC").
-		Limit(n).
-		Find(&cc, "name LIKE ?", prefix+"%").
-		Error
+	err := helpers.Retry(func() error {
+		return db.DB().
+			Order("value DESC").
+			Limit(n).
+			Find(&cc, "name LIKE ?", prefix+"%").
+			Error
+	})
 
 	return cc, errors.Wrap(err, "querying counters")
 }

@@ -7,7 +7,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
@@ -51,9 +53,8 @@ func (s *Service) CopyDatabase(src, target *gorm.DB) error {
 	return database.CopyObjects(src, target, &extendedPermission{})
 }
 
-func (s Service) GetBotUsername() (string, error) {
-	var botUsername string
-	err := s.db.ReadCoreMeta(coreMetaKeyBotUsername, &botUsername)
+func (s Service) GetBotUsername() (botUsername string, err error) {
+	err = s.db.ReadCoreMeta(coreMetaKeyBotUsername, &botUsername)
 	return botUsername, errors.Wrap(err, "reading bot username")
 }
 
@@ -63,11 +64,15 @@ func (s Service) GetChannelPermissions(channel string) ([]string, error) {
 		perm extendedPermission
 	)
 
-	if err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error; err != nil {
+	if err = helpers.Retry(func() error {
+		err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil
 		}
-		return nil, errors.Wrap(err, "getting twitch credential from database")
+
+		return errors.Wrap(err, "getting twitch credential from database")
+	}); err != nil {
+		return nil, err
 	}
 
 	return strings.Split(perm.Scopes, " "), nil
@@ -149,11 +154,14 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 		perm extendedPermission
 	)
 
-	if err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error; err != nil {
+	if err = helpers.Retry(func() error {
+		err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrChannelNotAuthorized
+			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized)
 		}
-		return nil, errors.Wrap(err, "getting twitch credential from database")
+		return errors.Wrap(err, "getting twitch credential from database")
+	}); err != nil {
+		return nil, err
 	}
 
 	if perm.AccessToken, err = s.db.DecryptField(perm.AccessToken); err != nil {
@@ -204,13 +212,14 @@ func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (boo
 	return true, nil
 }
 
-func (s Service) ListPermittedChannels() ([]string, error) {
+func (s Service) ListPermittedChannels() (out []string, err error) {
 	var perms []extendedPermission
-	if err := s.db.DB().Find(&perms).Error; err != nil {
-		return nil, errors.Wrap(err, "listing permissions")
+	if err = helpers.Retry(func() error {
+		return errors.Wrap(s.db.DB().Find(&perms).Error, "listing permissions")
+	}); err != nil {
+		return nil, err
 	}
 
-	var out []string
 	for _, perm := range perms {
 		out = append(out, perm.Channel)
 	}
@@ -220,14 +229,18 @@ func (s Service) ListPermittedChannels() ([]string, error) {
 
 func (s Service) RemoveAllExtendedTwitchCredentials() error {
 	return errors.Wrap(
-		s.db.DB().Delete(&extendedPermission{}, "1 = 1").Error,
+		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+			return tx.Delete(&extendedPermission{}, "1 = 1").Error
+		}),
 		"deleting data from table",
 	)
 }
 
 func (s Service) RemoveExendedTwitchCredentials(channel string) error {
 	return errors.Wrap(
-		s.db.DB().Delete(&extendedPermission{}, "channel = ?", strings.TrimLeft(channel, "#")).Error,
+		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+			return tx.Delete(&extendedPermission{}, "channel = ?", strings.TrimLeft(channel, "#")).Error
+		}),
 		"deleting data from table",
 	)
 }
@@ -249,15 +262,17 @@ func (s Service) SetExtendedTwitchCredentials(channel, accessToken, refreshToken
 	}
 
 	return errors.Wrap(
-		s.db.DB().Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "channel"}},
-			DoUpdates: clause.AssignmentColumns([]string{"access_token", "refresh_token", "scopes"}),
-		}).Create(extendedPermission{
-			Channel:      strings.TrimLeft(channel, "#"),
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-			Scopes:       strings.Join(scope, " "),
-		}).Error,
+		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "channel"}},
+				DoUpdates: clause.AssignmentColumns([]string{"access_token", "refresh_token", "scopes"}),
+			}).Create(extendedPermission{
+				Channel:      strings.TrimLeft(channel, "#"),
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+				Scopes:       strings.Join(scope, " "),
+			}).Error
+		}),
 		"inserting data into table",
 	)
 }

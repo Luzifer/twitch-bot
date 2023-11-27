@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -29,12 +31,14 @@ func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) e
 	}
 
 	return errors.Wrap(
-		db.DB().Create(&overlaysEvent{
-			Channel:   channel,
-			CreatedAt: evt.Time.UTC(),
-			EventType: evt.Type,
-			Fields:    strings.TrimSpace(buf.String()),
-		}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Create(&overlaysEvent{
+				Channel:   channel,
+				CreatedAt: evt.Time.UTC(),
+				EventType: evt.Type,
+				Fields:    strings.TrimSpace(buf.String()),
+			}).Error
+		}),
 		"storing event to database",
 	)
 }
@@ -42,7 +46,9 @@ func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) e
 func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, error) {
 	var evts []overlaysEvent
 
-	if err := db.DB().Where("channel = ?", channel).Order("created_at").Find(&evts).Error; err != nil {
+	if err := helpers.Retry(func() error {
+		return db.DB().Where("channel = ?", channel).Order("created_at").Find(&evts).Error
+	}); err != nil {
 		return nil, errors.Wrap(err, "querying channel events")
 	}
 

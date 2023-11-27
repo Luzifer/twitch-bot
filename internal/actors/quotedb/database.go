@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
@@ -20,11 +21,13 @@ type (
 
 func AddQuote(db database.Connector, channel, quoteStr string) error {
 	return errors.Wrap(
-		db.DB().Create(quote{
-			Channel:   channel,
-			CreatedAt: time.Now().UnixNano(),
-			Quote:     quoteStr,
-		}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Create(quote{
+				Channel:   channel,
+				CreatedAt: time.Now().UnixNano(),
+				Quote:     quoteStr,
+			}).Error
+		}),
 		"adding quote to database",
 	)
 }
@@ -36,14 +39,18 @@ func DelQuote(db database.Connector, channel string, quoteIdx int) error {
 	}
 
 	return errors.Wrap(
-		db.DB().Delete(&quote{}, "channel = ? AND created_at = ?", channel, createdAt).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Delete(&quote{}, "channel = ? AND created_at = ?", channel, createdAt).Error
+		}),
 		"deleting quote",
 	)
 }
 
 func GetChannelQuotes(db database.Connector, channel string) ([]string, error) {
 	var qs []quote
-	if err := db.DB().Where("channel = ?", channel).Order("created_at").Find(&qs).Error; err != nil {
+	if err := helpers.Retry(func() error {
+		return db.DB().Where("channel = ?", channel).Order("created_at").Find(&qs).Error
+	}); err != nil {
 		return nil, errors.Wrap(err, "querying quotes")
 	}
 
@@ -57,11 +64,13 @@ func GetChannelQuotes(db database.Connector, channel string) ([]string, error) {
 
 func GetMaxQuoteIdx(db database.Connector, channel string) (int, error) {
 	var count int64
-	if err := db.DB().
-		Model(&quote{}).
-		Where("channel = ?", channel).
-		Count(&count).
-		Error; err != nil {
+	if err := helpers.Retry(func() error {
+		return db.DB().
+			Model(&quote{}).
+			Where("channel = ?", channel).
+			Count(&count).
+			Error
+	}); err != nil {
 		return 0, errors.Wrap(err, "getting quote count")
 	}
 
@@ -83,11 +92,13 @@ func GetQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int6
 	}
 
 	var q quote
-	err := db.DB().
-		Where("channel = ?", channel).
-		Limit(1).
-		Offset(quoteIdx - 1).
-		First(&q).Error
+	err := helpers.Retry(func() error {
+		return db.DB().
+			Where("channel = ?", channel).
+			Limit(1).
+			Offset(quoteIdx - 1).
+			First(&q).Error
+	})
 
 	switch {
 	case err == nil:
@@ -103,7 +114,7 @@ func GetQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int6
 
 func SetQuotes(db database.Connector, channel string, quotes []string) error {
 	return errors.Wrap(
-		db.DB().Transaction(func(tx *gorm.DB) error {
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			if err := tx.Where("channel = ?", channel).Delete(&quote{}).Error; err != nil {
 				return errors.Wrap(err, "deleting quotes for channel")
 			}
@@ -134,10 +145,11 @@ func UpdateQuote(db database.Connector, channel string, idx int, quoteStr string
 	}
 
 	return errors.Wrap(
-		db.DB().
-			Where("channel = ? AND created_at = ?", channel, createdAt).
-			Update("quote", quoteStr).
-			Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Where("channel = ? AND created_at = ?", channel, createdAt).
+				Update("quote", quoteStr).
+				Error
+		}),
 		"updating quote",
 	)
 }

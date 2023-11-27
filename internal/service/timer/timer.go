@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -88,7 +90,13 @@ func (Service) getPermitTimerKey(channel, username string) string {
 
 func (s Service) HasTimer(id string) (bool, error) {
 	var t timer
-	err := s.db.DB().First(&t, "id = ? AND expires_at >= ?", id, time.Now().UTC()).Error
+	err := helpers.Retry(func() error {
+		err := s.db.DB().First(&t, "id = ? AND expires_at >= ?", id, time.Now().UTC()).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return backoff.NewErrCannotRetry(err)
+		}
+		return err
+	})
 	switch {
 	case err == nil:
 		return true, nil
@@ -103,19 +111,23 @@ func (s Service) HasTimer(id string) (bool, error) {
 
 func (s Service) SetTimer(id string, expiry time.Time) error {
 	return errors.Wrap(
-		s.db.DB().Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"expires_at"}),
-		}).Create(timer{
-			ID:        id,
-			ExpiresAt: expiry.UTC(),
-		}).Error,
+		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "id"}},
+				DoUpdates: clause.AssignmentColumns([]string{"expires_at"}),
+			}).Create(timer{
+				ID:        id,
+				ExpiresAt: expiry.UTC(),
+			}).Error
+		}),
 		"storing counter in database",
 	)
 }
 
 func (s Service) cleanupTimers() {
-	if err := s.db.DB().Delete(&timer{}, "expires_at < ?", time.Now().UTC()).Error; err != nil {
+	if err := helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+		return tx.Delete(&timer{}, "expires_at < ?", time.Now().UTC()).Error
+	}); err != nil {
 		logrus.WithError(err).Error("cleaning up expired timers")
 	}
 }

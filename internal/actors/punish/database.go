@@ -8,6 +8,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
@@ -23,7 +25,7 @@ type (
 
 func calculateCurrentPunishments(db database.Connector) (err error) {
 	var ps []punishLevel
-	if err = db.DB().Find(&ps).Error; err != nil {
+	if err = helpers.Retry(func() error { return db.DB().Find(&ps).Error }); err != nil {
 		return errors.Wrap(err, "querying punish_levels")
 	}
 
@@ -72,7 +74,9 @@ func deletePunishment(db database.Connector, channel, user, uuid string) error {
 
 func deletePunishmentForKey(db database.Connector, key string) error {
 	return errors.Wrap(
-		db.DB().Delete(&punishLevel{}, "key = ?", key).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Delete(&punishLevel{}, "key = ?", key).Error
+		}),
 		"deleting punishment info",
 	)
 }
@@ -87,7 +91,13 @@ func getPunishment(db database.Connector, channel, user, uuid string) (*levelCon
 		p  punishLevel
 	)
 
-	err := db.DB().First(&p, "key = ?", getDBKey(channel, user, uuid)).Error
+	err := helpers.Retry(func() error {
+		err := db.DB().First(&p, "key = ?", getDBKey(channel, user, uuid)).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return backoff.NewErrCannotRetry(err)
+		}
+		return err
+	})
 	switch {
 	case err == nil:
 		return &levelConfig{
@@ -114,15 +124,17 @@ func setPunishmentForKey(db database.Connector, key string, lc *levelConfig) err
 	}
 
 	return errors.Wrap(
-		db.DB().Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "key"}},
-			UpdateAll: true,
-		}).Create(punishLevel{
-			Key:       key,
-			LastLevel: lc.LastLevel,
-			Executed:  lc.Executed,
-			Cooldown:  lc.Cooldown,
-		}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "key"}},
+				UpdateAll: true,
+			}).Create(punishLevel{
+				Key:       key,
+				LastLevel: lc.LastLevel,
+				Executed:  lc.Executed,
+				Cooldown:  lc.Cooldown,
+			}).Error
+		}),
 		"updating punishment info",
 	)
 }

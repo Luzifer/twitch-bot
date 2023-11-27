@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
@@ -17,7 +19,13 @@ type (
 
 func GetVariable(db database.Connector, key string) (string, error) {
 	var v variable
-	err := db.DB().First(&v, "name = ?", key).Error
+	err := helpers.Retry(func() error {
+		err := db.DB().First(&v, "name = ?", key).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return backoff.NewErrCannotRetry(err)
+		}
+		return err
+	})
 	switch {
 	case err == nil:
 		return v.Value, nil
@@ -32,17 +40,21 @@ func GetVariable(db database.Connector, key string) (string, error) {
 
 func SetVariable(db database.Connector, key, value string) error {
 	return errors.Wrap(
-		db.DB().Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "name"}},
-			DoUpdates: clause.AssignmentColumns([]string{"value"}),
-		}).Create(variable{Name: key, Value: value}).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "name"}},
+				DoUpdates: clause.AssignmentColumns([]string{"value"}),
+			}).Create(variable{Name: key, Value: value}).Error
+		}),
 		"updating value in database",
 	)
 }
 
 func RemoveVariable(db database.Connector, key string) error {
 	return errors.Wrap(
-		db.DB().Delete(&variable{}, "name = ?", key).Error,
+		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+			return tx.Delete(&variable{}, "name = ?", key).Error
+		}),
 		"deleting value in database",
 	)
 }

@@ -7,7 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
+	"gorm.io/gorm"
 
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -121,10 +123,12 @@ func newDBClient(db database.Connector) *dbClient {
 func (d *dbClient) AutoCloseExpired() (err error) {
 	var rr []raffle
 
-	if err = d.db.DB().
-		Where("status = ? AND close_at IS NOT NULL AND close_at < ?", raffleStatusActive, time.Now().UTC()).
-		Find(&rr).
-		Error; err != nil {
+	if err = helpers.Retry(func() error {
+		return d.db.DB().
+			Where("status = ? AND close_at IS NOT NULL AND close_at < ?", raffleStatusActive, time.Now().UTC()).
+			Find(&rr).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "fetching raffles to close")
 	}
 
@@ -142,10 +146,12 @@ func (d *dbClient) AutoCloseExpired() (err error) {
 func (d *dbClient) AutoSendReminders() (err error) {
 	var rr []raffle
 
-	if err = d.db.DB().
-		Where("status = ? AND text_reminder_post = ? AND (text_reminder_next_send IS NULL OR text_reminder_next_send < ?)", raffleStatusActive, true, time.Now().UTC()).
-		Find(&rr).
-		Error; err != nil {
+	if err = helpers.Retry(func() error {
+		return d.db.DB().
+			Where("status = ? AND text_reminder_post = ? AND (text_reminder_next_send IS NULL OR text_reminder_next_send < ?)", raffleStatusActive, true, time.Now().UTC()).
+			Find(&rr).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "fetching raffles to send reminders")
 	}
 
@@ -162,10 +168,12 @@ func (d *dbClient) AutoSendReminders() (err error) {
 func (d *dbClient) AutoStart() (err error) {
 	var rr []raffle
 
-	if err = d.db.DB().
-		Where("status = ? AND auto_start_at IS NOT NULL AND auto_start_at < ?", raffleStatusPlanned, time.Now().UTC()).
-		Find(&rr).
-		Error; err != nil {
+	if err = helpers.Retry(func() error {
+		return d.db.DB().
+			Where("status = ? AND auto_start_at IS NOT NULL AND auto_start_at < ?", raffleStatusPlanned, time.Now().UTC()).
+			Find(&rr).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "fetching raffles to start")
 	}
 
@@ -208,10 +216,12 @@ func (d *dbClient) Close(raffleID uint64) error {
 		return errors.Wrap(err, "getting raffle")
 	}
 
-	if err = d.db.DB().Model(&raffle{}).
-		Where("id = ?", raffleID).
-		Update("status", raffleStatusEnded).
-		Error; err != nil {
+	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffle{}).
+			Where("id = ?", raffleID).
+			Update("status", raffleStatusEnded).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "setting status closed")
 	}
 
@@ -231,7 +241,9 @@ func (d *dbClient) Close(raffleID uint64) error {
 // the database without modification and therefore need to be filled
 // before calling this function
 func (d *dbClient) Create(r raffle) error {
-	if err := d.db.DB().Create(&r).Error; err != nil {
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Create(&r).Error
+	}); err != nil {
 		return errors.Wrap(err, "creating database record")
 	}
 
@@ -242,17 +254,23 @@ func (d *dbClient) Create(r raffle) error {
 // Delete removes all entries for the given raffle and afterwards
 // deletes the raffle itself
 func (d *dbClient) Delete(raffleID uint64) (err error) {
-	if err = d.db.DB().
-		Where("raffle_id = ?", raffleID).
-		Delete(&raffleEntry{}).
-		Error; err != nil {
-		return errors.Wrap(err, "deleting raffle entries")
-	}
+	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		if err = tx.
+			Where("raffle_id = ?", raffleID).
+			Delete(&raffleEntry{}).
+			Error; err != nil {
+			return errors.Wrap(err, "deleting raffle entries")
+		}
 
-	if err = d.db.DB().
-		Where("id = ?", raffleID).
-		Delete(&raffle{}).Error; err != nil {
-		return errors.Wrap(err, "creating database record")
+		if err = tx.
+			Where("id = ?", raffleID).
+			Delete(&raffle{}).Error; err != nil {
+			return errors.Wrap(err, "creating database record")
+		}
+
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "deleting raffle")
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -263,7 +281,7 @@ func (d *dbClient) Delete(raffleID uint64) (err error) {
 // the database without modification and therefore need to be filled
 // before calling this function
 func (d *dbClient) Enter(re raffleEntry) error {
-	if err := d.db.DB().Create(&re).Error; err != nil {
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error { return tx.Create(&re).Error }); err != nil {
 		return errors.Wrap(err, "creating database record")
 	}
 
@@ -274,11 +292,13 @@ func (d *dbClient) Enter(re raffleEntry) error {
 // Get retrieves a raffle from the database
 func (d *dbClient) Get(raffleID uint64) (out raffle, err error) {
 	return out, errors.Wrap(
-		d.db.DB().
-			Where("raffles.id = ?", raffleID).
-			Preload("Entries").
-			First(&out).
-			Error,
+		helpers.Retry(func() error {
+			return d.db.DB().
+				Where("raffles.id = ?", raffleID).
+				Preload("Entries").
+				First(&out).
+				Error
+		}),
 		"getting raffle from database",
 	)
 }
@@ -302,10 +322,12 @@ func (d *dbClient) GetByChannelAndKeyword(channel, keyword string) (raffle, erro
 // List returns a list of all known raffles
 func (d *dbClient) List() (raffles []raffle, _ error) {
 	return raffles, errors.Wrap(
-		d.db.DB().Model(&raffle{}).
-			Order("id DESC").
-			Find(&raffles).
-			Error,
+		helpers.Retry(func() error {
+			return d.db.DB().Model(&raffle{}).
+				Order("id DESC").
+				Find(&raffles).
+				Error
+		}),
 		"updating column",
 	)
 }
@@ -314,10 +336,12 @@ func (d *dbClient) List() (raffles []raffle, _ error) {
 // sent for the given raffle ID. No other fields are modified
 func (d *dbClient) PatchNextReminderSend(raffleID uint64, next time.Time) error {
 	return errors.Wrap(
-		d.db.DB().Model(&raffle{}).
-			Where("id = ?", raffleID).
-			Update("text_reminder_next_send", next).
-			Error,
+		helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+			return tx.Model(&raffle{}).
+				Where("id = ?", raffleID).
+				Update("text_reminder_next_send", next).
+				Error
+		}),
 		"updating column",
 	)
 }
@@ -336,10 +360,12 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 	}
 
 	speakUpUntil := time.Now().UTC().Add(r.WaitForResponse)
-	if err = d.db.DB().Model(&raffleEntry{}).
-		Where("id = ?", winner.ID).
-		Updates(map[string]any{"was_picked": true, "speak_up_until": speakUpUntil}).
-		Error; err != nil {
+	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffleEntry{}).
+			Where("id = ?", winner.ID).
+			Updates(map[string]any{"was_picked": true, "speak_up_until": speakUpUntil}).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "updating winner")
 	}
 
@@ -364,10 +390,12 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 // RedrawWinner marks the previous winner as redrawn (and therefore
 // crossed out as winner in the interface) and picks a new one
 func (d *dbClient) RedrawWinner(raffleID, winnerID uint64) error {
-	if err := d.db.DB().Model(&raffleEntry{}).
-		Where("id = ?", winnerID).
-		Update("was_redrawn", true).
-		Error; err != nil {
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffleEntry{}).
+			Where("id = ?", winnerID).
+			Update("was_redrawn", true).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "updating previous winner")
 	}
 
@@ -385,10 +413,12 @@ func (d *dbClient) RefreshActiveRaffles() error {
 		tmp     = map[string]uint64{}
 	)
 
-	if err := d.db.DB().
-		Where("status = ?", raffleStatusActive).
-		Find(&actives).
-		Error; err != nil {
+	if err := helpers.Retry(func() error {
+		return d.db.DB().
+			Where("status = ?", raffleStatusActive).
+			Find(&actives).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "fetching active raffles")
 	}
 
@@ -411,19 +441,23 @@ func (d *dbClient) RefreshSpeakUp() error {
 		tmp = map[string]*speakUpWait{}
 	)
 
-	if err := d.db.DB().Debug().
-		Where("speak_up_until IS NOT NULL AND speak_up_until > ?", time.Now().UTC()).
-		Find(&res).
-		Error; err != nil {
+	if err := helpers.Retry(func() error {
+		return d.db.DB().Debug().
+			Where("speak_up_until IS NOT NULL AND speak_up_until > ?", time.Now().UTC()).
+			Find(&res).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "querying active entries")
 	}
 
 	for _, e := range res {
 		var r raffle
-		if err := d.db.DB().
-			Where("id = ?", e.RaffleID).
-			First(&r).
-			Error; err != nil {
+		if err := helpers.Retry(func() error {
+			return d.db.DB().
+				Where("id = ?", e.RaffleID).
+				First(&r).
+				Error
+		}); err != nil {
 			return errors.Wrap(err, "fetching raffle for entry")
 		}
 		tmp[strings.Join([]string{r.Channel, e.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: e.ID, Until: *e.SpeakUpUntil}
@@ -445,14 +479,15 @@ func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
 		return nil
 	}
 
-	if err := d.db.DB().
-		Model(&raffleEntry{}).
-		Where("id = ?", w.RaffleEntryID).
-		Updates(map[string]any{
-			"DrawResponse": message,
-			"SpeakUpUntil": nil,
-		}).
-		Error; err != nil {
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffleEntry{}).
+			Where("id = ?", w.RaffleEntryID).
+			Updates(map[string]any{
+				"DrawResponse": message,
+				"SpeakUpUntil": nil,
+			}).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "registering speak-up")
 	}
 
@@ -472,14 +507,15 @@ func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 		return errors.Wrap(err, "getting specified raffle")
 	}
 
-	if err = d.db.DB().
-		Model(&raffle{}).
-		Where("id = ?", raffleID).
-		Updates(map[string]any{
-			"CloseAt": time.Now().UTC().Add(duration),
-			"status":  raffleStatusActive,
-		}).
-		Error; err != nil {
+	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffle{}).
+			Where("id = ?", raffleID).
+			Updates(map[string]any{
+				"CloseAt": time.Now().UTC().Add(duration),
+				"status":  raffleStatusActive,
+			}).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "updating raffle")
 	}
 
@@ -557,11 +593,12 @@ func (d *dbClient) Update(r raffle) error {
 	r.Entries = nil
 	r.TextReminderNextSend = old.TextReminderNextSend
 
-	if err := d.db.DB().
-		Model(&raffle{}).
-		Where("id = ?", r.ID).
-		Updates(&r).
-		Error; err != nil {
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffle{}).
+			Where("id = ?", r.ID).
+			Updates(&r).
+			Error
+	}); err != nil {
 		return errors.Wrap(err, "updating raffle")
 	}
 

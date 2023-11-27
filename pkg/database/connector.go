@@ -89,7 +89,6 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 }
 
 func (c connector) Close() error {
-	// return errors.Wrap(c.db.Close(), "closing database")
 	return nil
 }
 
