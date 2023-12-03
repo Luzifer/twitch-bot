@@ -233,6 +233,19 @@ Uses link- and clip-scanner to detect links / clips and applies link protection 
     stop_on_no_action: false
 ```
 
+## Enter User to Raffle
+
+Enter user to raffle through channelpoints
+
+```yaml
+- type: enter-raffle
+  attributes:
+    # The keyword for the active raffle to enter the user into
+    # Optional: false
+    # Type:     string
+    keyword: ""
+```
+
 ## Execute Script / Command
 
 Execute external script / command

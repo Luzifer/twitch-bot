@@ -228,6 +228,12 @@
               title="Follower"
             />
             <font-awesome-icon
+              v-else-if="entry.enteredAs === 'reward'"
+              fixed-width
+              :icon="['fas', 'coins']"
+              title="Subscriber"
+            />
+            <font-awesome-icon
               v-else-if="entry.enteredAs === 'subscriber'"
               fixed-width
               :icon="['fas', 'star']"

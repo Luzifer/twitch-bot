@@ -18,7 +18,7 @@ The screenshot above shows one draft of a raffle together with one currently act
 
 You can access the entrants list through the "group of people" button in the raffle overview. This becomes available as soon as the raffle has started.
 
-In this list you can see the status, the nickname and the time of entry for each entrant. The status will be a person (<i class="fas fa-user"></i>) for someone joined through the **Everyone** allowance, a heart (<i class="fas fa-heart"></i>) for a follower, a star (<i class="fas fa-star"></i>) for a subscriber and a diamond (<i class="fas fa-gem"></i>) for a VIP. The list will update itself when there are changes in the entree-list.
+In this list you can see the status, the nickname and the time of entry for each entrant. The status will be a person (<i class="fas fa-user"></i>) for someone joined through the **Everyone** allowance, a heart (<i class="fas fa-heart"></i>) for a follower, a star (<i class="fas fa-star"></i>) for a subscriber, a diamond (<i class="fas fa-gem"></i>) for a VIP and a coin (<i class="fas fa-coins"></i>) for someone who joined through a channel-point redeem. The list will update itself when there are changes in the entree-list.
 
 ![]({{< static "raffle-entrants-closed.png" >}})
 
@@ -64,3 +64,23 @@ The texts do support templating and do have the same format like other templates
 - **Message on raffle close** will be posted when the raffle closes (either you closed it manually or the **Close At** time is reached).
 
 Within the templates you do have access to the variables `.user` and `.raffle` (which represents the raffle object). Have a look at the default templates for examples what you can do with them.
+
+## Using Channel-Point Rewards to join
+
+To create a raffle to be entered through channel-point rewards you'll do the basic setup of your raffle as usual but you'll do some special adjustments:
+
+- Set the raffle **Keyword** to something no user will ever use in chat (must be one word, can be a bunch of random characters), if a user can guess this, they can enter without using the channel points
+- Doesn't matter what you select for **Allowed Entries** (the channel-point actor will ignore that setting)
+- Ensure no text contains the `{{ .raffle.Keyword }}` template directive (you don't want to "leak" your keyword)
+- Create a Channel-Point reward:
+  - Name it as you like (but make the name unique among all your rewards as we will use that to determine whether to trigger the rule), set the points to the amount of channel points you like, put limits on it as you like
+  - You can enable "Skip Queue" but in that case points will be lost when no raffle is active or if any user redeems it more than once per raffle, if you don't set this you can refund the points manually but also you need to mark all raffle entries completed manually.
+- Create a new rule:
+  - Channel: Limit to your channel
+  - Event: `channelpoint_redeem`
+  - Disable on template: `{{ ne .reward_title "<the name you chose for the reward>" }}`
+  - Action: **Enter User to Raffle**, for the keyword enter the same as in the raffle
+
+When an user redeems that reward, the rule will be triggered and if a raffle is active with that keyword, the user will be entered into that raffle as if they triggered the keyword themselves.
+
+**Tip:** If no raffle is active disable / pause the reward to prevent users to waste points on it while there is no raffle active.

@@ -12,8 +12,6 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-const actorName = "raffle"
-
 var (
 	db             database.Connector
 	dbc            *dbClient
@@ -58,7 +56,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		} {
 			if err := fn(); err != nil {
 				logrus.WithFields(logrus.Fields{
-					"actor": actorName,
+					"actor": moduleName,
 					"cron":  name,
 				}).WithError(err).Error("executing cron action")
 			}
@@ -70,6 +68,25 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	if err := args.RegisterRawMessageHandler(rawMessageHandler); err != nil {
 		return errors.Wrap(err, "registering raw message handler")
 	}
+
+	args.RegisterActor(enterRaffleActor{}.Name(), func() plugins.Actor { return &enterRaffleActor{} })
+	args.RegisterActorDocumentation(plugins.ActionDocumentation{
+		Description: "Enter user to raffle through channelpoints",
+		Name:        "Enter User to Raffle",
+		Type:        enterRaffleActor{}.Name(),
+
+		Fields: []plugins.ActionDocumentationField{
+			{
+				Default:         "",
+				Description:     "The keyword for the active raffle to enter the user into",
+				Key:             "keyword",
+				Name:            "Keyword",
+				Optional:        false,
+				SupportTemplate: false,
+				Type:            plugins.ActionDocumentationFieldTypeString,
+			},
+		},
+	})
 
 	return nil
 }

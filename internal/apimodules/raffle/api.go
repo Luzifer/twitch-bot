@@ -15,6 +15,8 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+const moduleName = "raffle"
+
 var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Lists all raffles known to the bot",
@@ -23,7 +25,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return ras, errors.Wrap(err, "fetching raffles from database")
 		}, nil),
 		Method:            http.MethodGet,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "List Raffles",
 		Path:              "/",
 		RequiresWriteAuth: true,
@@ -41,7 +43,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Create(ra), "creating raffle")
 		}, nil),
 		Method:            http.MethodPost,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Create Raffle",
 		Path:              "/",
 		RequiresWriteAuth: true,
@@ -54,7 +56,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Delete(ids["id"]), "fetching raffle from database")
 		}, []string{"id"}),
 		Method:            http.MethodDelete,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Delete Raffle",
 		Path:              "/{id}",
 		RequiresWriteAuth: true,
@@ -74,7 +76,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return ra, errors.Wrap(err, "fetching raffle from database")
 		}, []string{"id"}),
 		Method:            http.MethodGet,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Get Raffle",
 		Path:              "/{id}",
 		RequiresWriteAuth: true,
@@ -102,7 +104,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Update(ra), "updating raffle")
 		}, []string{"id"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Update Raffle",
 		Path:              "/{id}",
 		RequiresWriteAuth: true,
@@ -121,7 +123,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Clone(ids["id"]), "cloning raffle")
 		}, []string{"id"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Clone Raffle",
 		Path:              "/{id}/clone",
 		RequiresWriteAuth: true,
@@ -140,7 +142,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Close(ids["id"]), "closing raffle")
 		}, []string{"id"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Close Raffle",
 		Path:              "/{id}/close",
 		RequiresWriteAuth: true,
@@ -159,7 +161,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.PickWinner(ids["id"]), "picking winner")
 		}, []string{"id"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Pick Raffle Winner",
 		Path:              "/{id}/pick",
 		RequiresWriteAuth: true,
@@ -183,7 +185,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Reopen(ids["id"], time.Duration(dur)*time.Second), "reopening raffle")
 		}, []string{"id"}),
 		Method: http.MethodPut,
-		Module: actorName,
+		Module: moduleName,
 		Name:   "Reopen Raffle",
 		Path:   "/{id}/reopen",
 		QueryParams: []plugins.HTTPRouteParamDocumentation{
@@ -210,7 +212,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.Start(ids["id"]), "starting raffle")
 		}, []string{"id"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Start Raffle",
 		Path:              "/{id}/start",
 		RequiresWriteAuth: true,
@@ -229,7 +231,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 			return nil, errors.Wrap(dbc.RedrawWinner(ids["id"], ids["winner"]), "re-picking winner")
 		}, []string{"id", "winner"}),
 		Method:            http.MethodPut,
-		Module:            actorName,
+		Module:            moduleName,
 		Name:              "Re-Pick Raffle Winner",
 		Path:              "/{id}/repick/{winner}",
 		RequiresWriteAuth: true,
