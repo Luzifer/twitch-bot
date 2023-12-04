@@ -71,44 +71,53 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 		go notifyEventHandlers(*event, eventData)
 	}
 
-	for _, r := range config.GetMatchingRules(m, event, eventData) {
-		var (
-			ruleEventData   = plugins.NewFieldCollection()
-			preventCooldown bool
-		)
+	matchingRules := config.GetMatchingRules(m, event, eventData)
+	for i := range matchingRules {
+		go handleMessageRuleExecution(c, m, matchingRules[i], eventData)
+	}
+}
 
-		if eventData != nil {
-			ruleEventData.SetFromData(eventData.Data())
+func handleMessageRuleExecution(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection) {
+	var (
+		ruleEventData   = plugins.NewFieldCollection()
+		preventCooldown bool
+	)
+
+	if eventData != nil {
+		ruleEventData.SetFromData(eventData.Data())
+	}
+
+ActionsLoop:
+	for _, a := range r.Actions {
+		apc, err := triggerAction(c, m, r, a, ruleEventData)
+		switch {
+		case err == nil:
+			// Rule execution did not cause an error, we store the
+			// cooldown modifier and continue
+
+			preventCooldown = preventCooldown || apc
+			continue ActionsLoop
+
+		case errors.Is(err, plugins.ErrStopRuleExecution):
+			// Action has asked to stop executing this rule so we store
+			// the cooldown modifier and stop executing the actions stack
+			// Action experienced an error: We don't store the cooldown
+			// state of this action and stop executing the actions stack
+			// for this rule
+
+			preventCooldown = preventCooldown || apc
+			break ActionsLoop
+
+		default:
+			// Break execution for this rule when one action fails
+			// Lock command
+
+			log.WithError(err).Error("Unable to trigger action")
+			break ActionsLoop
 		}
+	}
 
-	ActionsLoop:
-		for _, a := range r.Actions {
-			apc, err := triggerAction(c, m, r, a, ruleEventData)
-			switch {
-			case err == nil:
-				// Rule execution did not cause an error, we store the
-				// cooldown modifier and continue
-				preventCooldown = preventCooldown || apc
-				continue ActionsLoop
-
-			case errors.Is(err, plugins.ErrStopRuleExecution):
-				// Action has asked to stop executing this rule so we store
-				// the cooldown modifier and stop executing the actions stack
-				preventCooldown = preventCooldown || apc
-				break ActionsLoop
-
-			default:
-				// Action experienced an error: We don't store the cooldown
-				// state of this action and stop executing the actions stack
-				// for this rule
-				log.WithError(err).Error("Unable to trigger action")
-				break ActionsLoop // Break execution for this rule when one action fails
-			}
-		}
-
-		// Lock command
-		if !preventCooldown {
-			r.SetCooldown(timerService, m, eventData)
-		}
+	if !preventCooldown {
+		r.SetCooldown(timerService, m, eventData)
 	}
 }
