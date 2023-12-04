@@ -5,6 +5,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"strings"
 	"sync"
@@ -173,6 +174,20 @@ func main() {
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
 	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
+
+	if os.Getenv("ENABLE_PROFILING") == "true" {
+		router.HandleFunc("/debug/pprof/", pprof.Index)
+		router.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
+		router.Handle("/debug/pprof/block", pprof.Handler("block"))
+		router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+		router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+		router.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
+		router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		router.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+		router.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	}
 
 	router.MethodNotAllowedHandler = corsMiddleware(http.HandlerFunc(func(res http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
