@@ -23,6 +23,7 @@ import (
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
+	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -69,6 +70,7 @@ var (
 
 	db            database.Connector
 	accessService *access.Service
+	authService   *authcache.Service
 	timerService  *timer.Service
 
 	twitchClient *twitch.Client
@@ -135,6 +137,11 @@ func main() {
 	if accessService, err = access.New(db); err != nil {
 		log.WithError(err).Fatal("applying access migration")
 	}
+
+	authService = authcache.New(
+		authBackendInternalToken,
+		authBackendTwitchToken,
+	)
 
 	cronService = cron.New(cron.WithSeconds())
 

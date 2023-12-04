@@ -169,7 +169,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		RegisterRawMessageHandler:  registerRawMessageHandler,
 		RegisterTemplateFunction:   tplFuncs.Register,
 		SendMessage:                sendMessage,
-		ValidateToken:              validateAuthToken,
+		ValidateToken:              authService.ValidateTokenFor,
 
 		CreateEvent: func(evt string, eventData *plugins.FieldCollection) error {
 			handleMessage(ircHdl.Client(), nil, &evt, eventData)
