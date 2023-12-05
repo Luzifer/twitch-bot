@@ -22,7 +22,7 @@ func Register(args plugins.RegistrationArguments) error {
 		Fields: []plugins.ActionDocumentationField{
 			{
 				Default:         "false",
-				Description:     "Enable heuristic scans to find links with spaces or other means of obfuscation in them",
+				Description:     "Enable heuristic scans to find links with spaces or other means of obfuscation in them (quite slow and will detect MANY false-positive links, only use for blacklisting links!)",
 				Key:             "heuristic",
 				Name:            "Heuristic Scan",
 				Optional:        true,

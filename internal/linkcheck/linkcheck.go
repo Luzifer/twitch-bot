@@ -35,7 +35,6 @@ type (
 
 var (
 	defaultUserAgents = []string{}
-	dropSet           = regexp.MustCompile(`[^a-zA-Z0-9.:/\s_-]`)
 	linkTest          = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
 	numericHost       = regexp.MustCompile(`^(?:[0-9]+\.)*[0-9]+(?::[0-9]+)?$`)
 
@@ -61,9 +60,10 @@ func New() *Checker {
 func (c Checker) HeuristicScanForLinks(message string) []string {
 	return c.scan(message,
 		c.scanPlainNoObfuscate,
-		c.scanObfuscateSpace,
-		c.scanObfuscateSpecialCharsAndSpaces,
 		c.scanDotObfuscation,
+		c.scanObfuscateSpace,
+		c.scanObfuscateSpecialCharsAndSpaces(regexp.MustCompile(`[^a-zA-Z0-9.:/\s_-]`), ""), // Leave dots intact and just join parts
+		c.scanObfuscateSpecialCharsAndSpaces(regexp.MustCompile(`[^a-zA-Z0-9:/\s_-]`), "."), // Remove dots also and connect by them
 	)
 }
 
@@ -115,6 +115,9 @@ func (c Checker) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack [
 		// Host is fully numeric: We don't support scanning that
 		return ""
 	}
+
+	// Sanitize host: Trailing dots are valid but not required
+	u.Host = strings.TrimRight(u.Host, ".")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -203,10 +206,22 @@ func (c Checker) scanDotObfuscation(message string) (links []string) {
 func (c Checker) scanObfuscateSpace(message string) (links []string) {
 	// Spammers use spaces in their links to prevent link protection matches
 	parts := regexp.MustCompile(`\s+`).Split(message, -1)
+	return c.scanPartsConnected(parts, "")
+}
 
+func (c Checker) scanObfuscateSpecialCharsAndSpaces(set *regexp.Regexp, connector string) func(string) []string {
+	return func(message string) (links []string) {
+		// First clean URL from all characters not acceptable in Domains (plus some extra chars)
+		message = set.ReplaceAllString(message, " ")
+		parts := regexp.MustCompile(`\s+`).Split(message, -1)
+		return c.scanPartsConnected(parts, connector)
+	}
+}
+
+func (c Checker) scanPartsConnected(parts []string, connector string) (links []string) {
 	for ptJoin := 2; ptJoin < len(parts); ptJoin++ {
 		for i := 0; i <= len(parts)-ptJoin; i++ {
-			if link := c.resolveFinal(strings.Join(parts[i:i+ptJoin], ""), c.getJar(), nil, c.userAgent()); link != "" {
+			if link := c.resolveFinal(strings.Join(parts[i:i+ptJoin], connector), c.getJar(), nil, c.userAgent()); link != "" && !str.StringInSlice(link, links) {
 				links = append(links, link)
 			}
 		}
@@ -215,17 +230,11 @@ func (c Checker) scanObfuscateSpace(message string) (links []string) {
 	return links
 }
 
-func (c Checker) scanObfuscateSpecialCharsAndSpaces(message string) (links []string) {
-	// First clean URL from all characters not acceptable in Domains (plus some extra chars)
-	message = dropSet.ReplaceAllString(message, "")
-	return c.scanObfuscateSpace(message)
-}
-
 func (c Checker) scanPlainNoObfuscate(message string) (links []string) {
 	parts := regexp.MustCompile(`\s+`).Split(message, -1)
 
 	for _, part := range parts {
-		if link := c.resolveFinal(part, c.getJar(), nil, c.userAgent()); link != "" {
+		if link := c.resolveFinal(part, c.getJar(), nil, c.userAgent()); link != "" && !str.StringInSlice(link, links) {
 			links = append(links, link)
 		}
 	}
