@@ -18,12 +18,10 @@ func TestInfiniteRedirect(t *testing.T) {
 	hdl.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/", http.StatusFound) })
 
 	var (
-		c  = New()
+		c  = New(withResolver(newResolver(1, withSkipVerify())))
 		ts = httptest.NewServer(hdl)
 	)
 	t.Cleanup(ts.Close)
-
-	c.skipValidation = true
 
 	msg := fmt.Sprintf("Here have a redirect loop: %s", ts.URL)
 
@@ -41,12 +39,10 @@ func TestMaxRedirects(t *testing.T) {
 	})
 
 	var (
-		c  = New()
+		c  = New(withResolver(newResolver(1, withSkipVerify())))
 		ts = httptest.NewServer(hdl)
 	)
 	t.Cleanup(ts.Close)
-
-	c.skipValidation = true
 
 	msg := fmt.Sprintf("Here have a redirect loop: %s", ts.URL)
 
@@ -203,13 +199,10 @@ func TestUserAgentListNotEmpty(t *testing.T) {
 }
 
 func TestUserAgentRandomizer(t *testing.T) {
-	var (
-		c   = New()
-		uas = map[string]int{}
-	)
+	uas := map[string]int{}
 
 	for i := 0; i < 10; i++ {
-		uas[c.userAgent()]++
+		uas[defaultResolver.userAgent()]++
 	}
 
 	for _, c := range uas {
