@@ -1,3 +1,24 @@
+# 3.20.0 / 2023-12-08
+
+  * New Features
+    * [cli] Add database migration tooling
+    * [raffle] Add Actor to enter user into raffle using channel-points
+    * [templating] Add `scheduleSegments` function
+
+  * Improvements
+    * [core] Add auth-cache for token auth
+    * [core] Parallelize rule execution
+    * [linkdetector] Add more ways of link detection in heuristic mode
+    * [linkdetector] Use resolver pool to speed up detection
+
+  * Bugfixes
+    * [core] Add retries for database access methods
+    * [core] Add timeout to eventsub connection dialer
+    * [core] Fix: Do not retry requests with status 429
+    * [core] Update dependencies
+    * [eventsub] Replace keepalive timer
+    * [raffle] Fix datatype in API documentation
+
 # 3.19.0 / 2023-10-28
 
 > [!IMPORTANT]
