@@ -80,6 +80,18 @@
               </b-button>
 
               <b-button
+                variant="warning"
+                :disabled="data.item.status !== 'ended'"
+                title="Reset Raffle"
+                @click="resetRaffle(data.item.id)"
+              >
+                <font-awesome-icon
+                  fixed-width
+                  :icon="['fas', 'recycle']"
+                />
+              </b-button>
+
+              <b-button
                 variant="danger"
                 title="Delete Raffle"
                 @click="deleteRaffle(data.item.id)"
@@ -975,6 +987,27 @@ export default {
       return axios.put(`raffle/${this.openedRaffle.id}/repick/${winnerId}`, {}, this.$root.axiosOptions)
         .then(() => this.$root.toastSuccess('Winner re-picked!'))
         .catch(() => this.$root.toastError('Could not re-pick winner!'))
+    },
+
+    resetRaffle(id) {
+      this.$bvModal.msgBoxConfirm('Do you really want to reset this raffle?', {
+        buttonSize: 'sm',
+        cancelTitle: 'NO',
+        centered: true,
+        okTitle: 'YES',
+        okVariant: 'danger',
+        size: 'sm',
+        title: 'Please Confirm',
+      })
+        .then(val => {
+          if (!val) {
+            return
+          }
+
+          return axios.put(`raffle/${id}/reset`, {}, this.$root.axiosOptions)
+            .then(() => this.$root.toastSuccess('Raffle reset'))
+            .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+        })
     },
 
     saveRaffle() {

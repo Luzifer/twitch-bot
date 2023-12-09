@@ -194,6 +194,7 @@ func (d *dbClient) Clone(raffleID uint64) error {
 		return errors.Wrap(err, "getting raffle")
 	}
 
+	raffle.AutoStartAt = nil
 	raffle.CloseAt = nil
 	raffle.Entries = nil
 	raffle.ID = 0
@@ -523,6 +524,33 @@ func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	d.activeRaffles[strings.Join([]string{r.Channel, r.Keyword}, "::")] = r.ID
+
+	frontendNotify(frontendNotifyEventRaffleChange)
+	return nil
+}
+
+// Reset resets the raffle participants, the status, start / close
+// times while preserving the rest of the settings
+func (d *dbClient) Reset(raffleID uint64) error {
+	raffle, err := d.Get(raffleID)
+	if err != nil {
+		return errors.Wrap(err, "getting raffle")
+	}
+
+	raffle.AutoStartAt = nil
+	raffle.CloseAt = nil
+	raffle.Entries = nil
+	raffle.Status = raffleStatusPlanned
+
+	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		if err = tx.Delete(&raffleEntry{}, "raffle_id = ?", raffleID).Error; err != nil {
+			return errors.Wrap(err, "deleting raffle entries")
+		}
+
+		return tx.Save(raffle).Error
+	}); err != nil {
+		return errors.Wrap(err, "saving cleaned raffle")
+	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
 	return nil

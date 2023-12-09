@@ -118,6 +118,25 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	},
 
 	{
+		Description: "Resets the raffle (remove entries, reset status & start/close time) given by its ID",
+		HandlerFunc: handleWrap(func(w http.ResponseWriter, r *http.Request, ids map[string]uint64) (any, error) {
+			return nil, errors.Wrap(dbc.Reset(ids["id"]), "resetting raffle")
+		}, []string{"id"}),
+		Method:            http.MethodPut,
+		Module:            moduleName,
+		Name:              "Reset Raffle",
+		Path:              "/{id}/reset",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeNo200,
+		RouteParams: []plugins.HTTPRouteParamDocumentation{
+			{
+				Description: "ID of the raffle to reset",
+				Name:        "id",
+			},
+		},
+	},
+
+	{
 		Description: "Duplicates the raffle given by its ID",
 		HandlerFunc: handleWrap(func(w http.ResponseWriter, r *http.Request, ids map[string]uint64) (any, error) {
 			return nil, errors.Wrap(dbc.Clone(ids["id"]), "cloning raffle")
