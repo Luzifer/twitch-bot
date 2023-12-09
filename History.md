@@ -1,3 +1,8 @@
+# 3.21.0 / 2023-12-09
+
+  * Improvements
+    * [raffle] Add functionality to reset a raffle
+
 # 3.20.0 / 2023-12-08
 
   * New Features
