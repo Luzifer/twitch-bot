@@ -114,7 +114,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 	return []topicRegistration{
 		{
 			Topic:          twitch.EventSubEventTypeChannelAdBreakBegin,
-			Version:        twitch.EventSubTopicVersionBeta,
+			Version:        twitch.EventSubTopicVersion1,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadAds},
 			Hook:           t.handleEventSubChannelAdBreakBegin,

@@ -51,13 +51,15 @@ type (
 	}
 
 	EventSubEventAdBreakBegin struct {
-		Duration             int64     `json:"duration"`
+		Duration             int64     `json:"duration_seconds"`
 		Timestamp            time.Time `json:"timestamp"`
 		IsAutomatic          bool      `json:"is_automatic"`
 		BroadcasterUserID    string    `json:"broadcaster_user_id"`
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		RequesterUserID      string    `json:"requester_user_id"`
+		RequesterUserLogin   string    `json:"requester_user_login"`
+		RequesterUserName    string    `json:"requester_user_name"`
 	}
 
 	EventSubEventChannelPointCustomRewardRedemptionAdd struct {
