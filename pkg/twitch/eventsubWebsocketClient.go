@@ -199,7 +199,7 @@ func (e *EventSubSocketClient) Run() error {
 
 	defer func() {
 		if err := e.conn.Close(); err != nil {
-			e.logger.WithError(helpers.CleanOpError(err)).Error("finally closing socket")
+			e.logger.WithError(helpers.CleanNetworkAddressFromError(err)).Error("finally closing socket")
 		}
 	}()
 

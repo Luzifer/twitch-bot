@@ -307,7 +307,7 @@ func main() {
 			go func() {
 				log.Info("(re-)connecting IRC client")
 				if err := ircHdl.Run(); err != nil {
-					log.WithError(helpers.CleanOpError(err)).Error("IRC run exited unexpectedly")
+					log.WithError(helpers.CleanNetworkAddressFromError(err)).Error("IRC run exited unexpectedly")
 				}
 				time.Sleep(ircReconnectDelay)
 				ircDisconnected <- struct{}{}

@@ -433,7 +433,7 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 		log.WithField("channel", channel).Info("watching for eventsub events")
 		go func(storedStatus *twitchChannelState) {
 			if err := storedStatus.esc.Run(); err != nil {
-				log.WithField("channel", channel).WithError(helpers.CleanOpError(err)).Error("eventsub client caused error")
+				log.WithField("channel", channel).WithError(helpers.CleanNetworkAddressFromError(err)).Error("eventsub client caused error")
 			}
 			storedStatus.CloseESC()
 		}(storedStatus)
