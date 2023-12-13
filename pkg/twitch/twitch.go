@@ -101,17 +101,22 @@ type (
 // before in order to have the response body available in the returned
 // HTTPError
 func ValidateStatus(opts ClientRequestOpts, resp *http.Response) error {
-	if resp.StatusCode == http.StatusTooManyRequests {
-		// Twitch doesn't want to hear any more of this
-		return backoff.NewErrCannotRetry(newHTTPError(resp.StatusCode, nil, nil))
-	}
-
 	if opts.OKStatus != 0 && resp.StatusCode != opts.OKStatus {
+		// We shall not accept this!
+		var ret error
+
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return newHTTPError(resp.StatusCode, nil, err)
+			ret = newHTTPError(resp.StatusCode, nil, err)
+		} else {
+			ret = newHTTPError(resp.StatusCode, body, nil)
 		}
-		return newHTTPError(resp.StatusCode, body, nil)
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			// Twitch doesn't want to hear any more of this
+			return backoff.NewErrCannotRetry(ret)
+		}
+		return ret
 	}
 
 	return nil

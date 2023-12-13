@@ -21,6 +21,7 @@ type (
 		AnyScope       bool
 		Hook           func(json.RawMessage) error
 		Version        string
+		Optional       bool
 	}
 
 	twitchChannelState struct {
@@ -118,6 +119,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadAds},
 			Hook:           t.handleEventSubChannelAdBreakBegin,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelFollow,
@@ -125,6 +127,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorReadFollowers},
 			Hook:           t.handleEventSubChannelFollow,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
@@ -132,6 +135,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeChannelReadRedemptions, twitch.ScopeChannelManageRedemptions},
 			AnyScope:       true,
 			Hook:           t.handleEventSubChannelPointCustomRewardRedemptionAdd,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelPollBegin,
@@ -139,6 +143,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
 			Hook:           t.handleEventSubChannelPollChange(eventTypePollBegin),
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelPollEnd,
@@ -146,6 +151,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
 			Hook:           t.handleEventSubChannelPollChange(eventTypePollEnd),
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelPollProgress,
@@ -153,12 +159,14 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
 			Hook:           t.handleEventSubChannelPollChange(eventTypePollProgress),
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelRaid,
 			Condition:      twitch.EventSubCondition{FromBroadcasterUserID: userID},
 			RequiredScopes: nil,
 			Hook:           t.handleEventSubChannelOutboundRaid,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelShoutoutCreate,
@@ -166,6 +174,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
 			AnyScope:       true,
 			Hook:           t.handleEventSubShoutoutCreated,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelShoutoutReceive,
@@ -173,6 +182,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			RequiredScopes: []string{twitch.ScopeModeratorManageShoutouts, twitch.ScopeModeratorReadShoutouts},
 			AnyScope:       true,
 			Hook:           t.handleEventSubShoutoutReceived,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelUpdate,
@@ -180,18 +190,21 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: nil,
 			Hook:           t.handleEventSubChannelUpdate,
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeStreamOffline,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: nil,
 			Hook:           t.handleEventSubStreamOnOff(false),
+			Optional:       true,
 		},
 		{
 			Topic:          twitch.EventSubEventTypeStreamOnline,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: nil,
 			Hook:           t.handleEventSubStreamOnOff(true),
+			Optional:       true,
 		},
 	}
 }
@@ -477,7 +490,14 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 			}
 		}
 
-		topicOpts = append(topicOpts, twitch.WithSubscription(tr.Topic, tr.Version, tr.Condition, tr.Hook))
+		var opt twitch.EventSubSocketClientOpt
+		if tr.Optional {
+			opt = twitch.WithRetryBackgroundSubscribe(tr.Topic, tr.Version, tr.Condition, tr.Hook)
+		} else {
+			opt = twitch.WithMustSubscribe(tr.Topic, tr.Version, tr.Condition, tr.Hook)
+		}
+
+		topicOpts = append(topicOpts, opt)
 	}
 
 	esClient, err := twitch.NewEventSubSocketClient(append(

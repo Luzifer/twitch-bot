@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 )
 
@@ -21,6 +22,10 @@ const (
 	socketConnectTimeout         = 15 * time.Second
 	socketInitialTimeout         = 30 * time.Second
 	socketTimeoutGraceMultiplier = 1.5
+
+	retrySubscribeMaxTotal = 30 * time.Minute
+	retrySubscribeMaxWait  = 5 * time.Minute
+	retrySubscribeMinWait  = 30 * time.Second
 )
 
 const (
@@ -70,9 +75,10 @@ type (
 	}
 
 	eventSubSocketSubscriptionType struct {
-		Event, Version string
-		Condition      EventSubCondition
-		Callback       func(json.RawMessage) error
+		Event, Version  string
+		Condition       EventSubCondition
+		Callback        func(json.RawMessage) error
+		BackgroundRetry bool
 	}
 
 	eventSubSocketPayloadNotification struct {
@@ -136,11 +142,7 @@ func WithLogger(logger *logrus.Entry) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.logger = logger }
 }
 
-func WithSocketURL(url string) EventSubSocketClientOpt {
-	return func(e *EventSubSocketClient) { e.socketDest = url }
-}
-
-func WithSubscription(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) EventSubSocketClientOpt {
+func WithMustSubscribe(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) EventSubSocketClientOpt {
 	if version == "" {
 		version = EventSubTopicVersion1
 	}
@@ -153,6 +155,26 @@ func WithSubscription(event, version string, condition EventSubCondition, callba
 			Callback:  callback,
 		})
 	}
+}
+
+func WithRetryBackgroundSubscribe(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) EventSubSocketClientOpt {
+	if version == "" {
+		version = EventSubTopicVersion1
+	}
+
+	return func(e *EventSubSocketClient) {
+		e.subscriptionTypes = append(e.subscriptionTypes, eventSubSocketSubscriptionType{
+			Event:           event,
+			Version:         version,
+			Condition:       condition,
+			Callback:        callback,
+			BackgroundRetry: true,
+		})
+	}
+}
+
+func WithSocketURL(url string) EventSubSocketClientOpt {
+	return func(e *EventSubSocketClient) { e.socketDest = url }
 }
 
 func WithTwitchClient(c *Client) EventSubSocketClientOpt {
@@ -382,7 +404,7 @@ func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (
 	// connection after something broke)
 	if e.socketID != payload.Session.ID {
 		e.socketID = payload.Session.ID
-		if err := e.subscribe(); err != nil {
+		if err := e.subscribeAll(); err != nil {
 			return socketInitialTimeout, errors.Wrap(err, "subscribing to topics")
 		}
 	}
@@ -393,21 +415,56 @@ func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (
 	return time.Duration(float64(payload.Session.KeepaliveTimeoutSeconds)*socketTimeoutGraceMultiplier) * time.Second, nil
 }
 
-func (e *EventSubSocketClient) subscribe() error {
-	for _, st := range e.subscriptionTypes {
-		if _, err := e.twitch.createEventSubSubscriptionWebsocket(context.Background(), eventSubSubscription{
-			Type:      st.Event,
-			Version:   st.Version,
-			Condition: st.Condition,
-			Transport: eventSubTransport{
-				Method:    "websocket",
-				SessionID: e.socketID,
-			},
-		}); err != nil {
-			return errors.Wrapf(err, "subscribing to %s/%s", st.Event, st.Version)
+func (e *EventSubSocketClient) retryBackgroundSubscribe(st eventSubSocketSubscriptionType) {
+	err := backoff.NewBackoff().
+		WithMaxIterationTime(retrySubscribeMaxWait).
+		WithMaxTotalTime(retrySubscribeMaxTotal).
+		WithMinIterationTime(retrySubscribeMinWait).
+		Retry(func() error {
+			return e.subscribe(st)
+		})
+	if err != nil {
+		e.logger.
+			WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).
+			Error("gave up retrying to subscribe")
+	}
+}
+
+func (e *EventSubSocketClient) subscribe(st eventSubSocketSubscriptionType) error {
+	logger := e.logger.
+		WithField("topic", strings.Join([]string{st.Event, st.Version}, "/"))
+
+	if _, err := e.twitch.createEventSubSubscriptionWebsocket(context.Background(), eventSubSubscription{
+		Type:      st.Event,
+		Version:   st.Version,
+		Condition: st.Condition,
+		Transport: eventSubTransport{
+			Method:    "websocket",
+			SessionID: e.socketID,
+		},
+	}); err != nil {
+		logger.WithError(err).Debug("subscribing to topic")
+		return errors.Wrapf(err, "subscribing to %s/%s", st.Event, st.Version)
+	}
+
+	logger.
+		WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).
+		Debug("subscribed to topic")
+	return nil
+}
+
+func (e *EventSubSocketClient) subscribeAll() (err error) {
+	for i := range e.subscriptionTypes {
+		st := e.subscriptionTypes[i]
+
+		if st.BackgroundRetry {
+			go e.retryBackgroundSubscribe(st)
+			continue
 		}
 
-		e.logger.WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).Debug("subscribed to topic")
+		if err = e.subscribe(st); err != nil {
+			return err
+		}
 	}
 
 	return nil
