@@ -179,7 +179,7 @@ func (c *Client) RefreshToken() error {
 		c.UpdateToken("", "")
 		if c.tokenUpdateHook != nil {
 			if herr := c.tokenUpdateHook("", ""); herr != nil {
-				log.WithError(err).Error("Unable to store token wipe after refresh failure")
+				log.WithError(herr).Error("Unable to store token wipe after refresh failure")
 			}
 		}
 		return errors.Wrap(err, "executing request")
