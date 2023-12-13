@@ -17,10 +17,11 @@ import (
 
 type (
 	configEditorGeneralConfig struct {
-		BotEditors    []string            `json:"bot_editors"`
-		BotName       *string             `json:"bot_name,omitempty"`
-		Channels      []string            `json:"channels"`
-		ChannelScopes map[string][]string `json:"channel_scopes"`
+		BotEditors      []string            `json:"bot_editors"`
+		BotName         *string             `json:"bot_name,omitempty"`
+		Channels        []string            `json:"channels"`
+		ChannelScopes   map[string][]string `json:"channel_scopes"`
+		ChannelHasToken map[string]bool     `json:"channel_has_token"`
 	}
 )
 
@@ -186,7 +187,12 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 }
 
 func configEditorHandleGeneralGet(w http.ResponseWriter, _ *http.Request) {
-	channelScopes := make(map[string][]string)
+	resp := configEditorGeneralConfig{
+		BotEditors:      config.BotEditors,
+		Channels:        config.Channels,
+		ChannelHasToken: make(map[string]bool),
+		ChannelScopes:   make(map[string][]string),
+	}
 
 	channels, err := accessService.ListPermittedChannels()
 	if err != nil {
@@ -195,7 +201,12 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	for _, ch := range channels {
-		if channelScopes[ch], err = accessService.GetChannelPermissions(ch); err != nil {
+		if resp.ChannelScopes[ch], err = accessService.GetChannelPermissions(ch); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if resp.ChannelHasToken[ch], err = accessService.HasTokensForChannel(ch); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -206,13 +217,9 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	resp.BotName = &uName
 
-	if err = json.NewEncoder(w).Encode(configEditorGeneralConfig{
-		BotEditors:    config.BotEditors,
-		BotName:       &uName,
-		Channels:      config.Channels,
-		ChannelScopes: channelScopes,
-	}); err != nil {
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

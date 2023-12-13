@@ -25,7 +25,14 @@
               {{ channel }}
               <span class="ml-auto mr-2">
                 <font-awesome-icon
-                  v-if="!hasAllExtendedScopes(channel)"
+                  v-if="!generalConfig.channel_has_token[channel]"
+                  :id="`channelPublicWarn${channel}`"
+                  fixed-width
+                  class="ml-1 text-danger"
+                  :icon="['fas', 'exclamation-triangle']"
+                />
+                <font-awesome-icon
+                  v-else-if="!hasAllExtendedScopes(channel)"
                   :id="`channelPublicWarn${channel}`"
                   fixed-width
                   class="ml-1 text-warning"
@@ -35,8 +42,14 @@
                   :target="`channelPublicWarn${channel}`"
                   triggers="hover"
                 >
-                  Channel is missing {{ missingExtendedScopes(channel).length }} extended permissions.
-                  Click pencil to change granted permissions.
+                  <template v-if="!generalConfig.channel_has_token[channel]">
+                    Bot is not authorized to access Twitch on behalf of this channels owner (tokens are missing).
+                    Click pencil to grant permissions.
+                  </template>
+                  <template v-else>
+                    Channel is missing {{ missingExtendedScopes(channel).length }} extended permissions.
+                    Click pencil to change granted permissions.
+                  </template>
                 </b-tooltip>
               </span>
               <b-button-group size="sm">

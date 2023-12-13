@@ -212,6 +212,40 @@ func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (boo
 	return true, nil
 }
 
+// HasTokensForChannel retrieves and decrypts stored access- and
+// refresh-tokens to evaluate whether tokens are available. Those
+// tokens are NOT validated in this request, it's just checked whether
+// they are present
+func (s Service) HasTokensForChannel(channel string) (bool, error) {
+	var (
+		err  error
+		perm extendedPermission
+	)
+
+	if err = helpers.Retry(func() error {
+		err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized)
+		}
+		return errors.Wrap(err, "getting twitch credential from database")
+	}); err != nil {
+		if errors.Is(err, ErrChannelNotAuthorized) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if perm.AccessToken, err = s.db.DecryptField(perm.AccessToken); err != nil {
+		return false, errors.Wrap(err, "decrypting access token")
+	}
+
+	if perm.RefreshToken, err = s.db.DecryptField(perm.RefreshToken); err != nil {
+		return false, errors.Wrap(err, "decrypting refresh token")
+	}
+
+	return perm.AccessToken != "" && perm.RefreshToken != "", nil
+}
+
 func (s Service) ListPermittedChannels() (out []string, err error) {
 	var perms []extendedPermission
 	if err = helpers.Retry(func() error {
