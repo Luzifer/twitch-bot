@@ -1,3 +1,15 @@
+# 3.22.0 / 2023-12-14
+
+  * Improvements
+    * [editor] Display clear warning when ext perms are missing
+    * [eventsub] Make topic subscriptions more dynamic
+
+  * Bugfixes
+    * [core] Fix: Properly handle channels without credentials
+    * [eventsub] Fix: Clean IPs from eventsub-socket read errors
+    * [eventsub] Update field naming for ad-break, use V1 event
+    * [twitch] Fix: Log correct error when wiping token fails
+
 # 3.21.0 / 2023-12-09
 
   * Improvements
