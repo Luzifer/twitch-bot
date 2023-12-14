@@ -172,6 +172,13 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 		return nil, errors.Wrap(err, "decrypting refresh token")
 	}
 
+	if perm.AccessToken == "" && perm.RefreshToken == "" {
+		// We have no tokens but an entry in the permission table: Means
+		// we still can't do stuff on behalf of that channel so we treat
+		// that as an unauthorized channel
+		return nil, ErrChannelNotAuthorized
+	}
+
 	scopes := strings.Split(perm.Scopes, " ")
 
 	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, perm.AccessToken, perm.RefreshToken)
