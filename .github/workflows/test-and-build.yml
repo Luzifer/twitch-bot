@@ -36,6 +36,7 @@ jobs:
             curl \
             diffutils \
             git \
+            git-lfs \
             go \
             golangci-lint-bin \
             make \
@@ -47,10 +48,15 @@ jobs:
             which \
             zip
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          show-progress: false
 
-      - name: Marking workdir safe
-        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+      - name: Marking workdir safe and fetch tags
+        run: |
+          git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+          git fetch --tags
 
       - name: Lint and test code
         run: make lint test frontend_lint
