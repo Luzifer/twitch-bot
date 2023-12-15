@@ -57,12 +57,6 @@ jobs:
 
       - name: Build release
         run: make publish
-        env:
-          FORCE_SKIP_UPLOAD: 'true'
-          MOD_MODE: readonly
-          NODE_ENV: production
-          NO_TESTS: 'true'
-          PACKAGES: '.'
 
       - name: Execute Trivy scan
         run: make trivy
