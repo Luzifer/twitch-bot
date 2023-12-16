@@ -421,6 +421,12 @@ func (e *EventSubSocketClient) retryBackgroundSubscribe(st eventSubSocketSubscri
 		WithMaxTotalTime(retrySubscribeMaxTotal).
 		WithMinIterationTime(retrySubscribeMinWait).
 		Retry(func() error {
+			if err := e.runCtx.Err(); err != nil {
+				// Our run-context was cancelled, stop retrying to subscribe
+				// to topics as this client was closed
+				return backoff.NewErrCannotRetry(err)
+			}
+
 			return e.subscribe(st)
 		})
 	if err != nil {
