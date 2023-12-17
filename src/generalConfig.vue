@@ -273,24 +273,24 @@
 
           <b-card-body>
             <p>
-              Here you can manage your bots auth-token: it's required to communicate with Twitch Chat and APIs. This will override the token you might have provided when starting the bot and will be automatically renewed as long as you don't change your password or revoke the apps permission on your bot account.
+              Here you can manage your bots auth-token: it's required to communicate with Twitch Chat and APIs. The access will be valid as long as you don't change the password or revoke the apps permission in your bot account.
             </p>
             <ul>
               <li>Copy the URL provided below</li>
-              <li>Open an inkognito tab or different browser you are not logged into Twitch or are logged in with your bot account</li>
+              <li><strong>Open an inkognito tab or different browser you are not logged into Twitch or are logged in with your bot account</strong></li>
               <li>Open the copied URL, sign in with the bot account and accept the permissions</li>
-              <li>The bot will display a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten.</li>
+              <li>You will see a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten.</li>
             </ul>
             <p
               v-if="botMissingScopes > 0"
-              class="text-warning"
+              class="alert alert-warning"
             >
               <font-awesome-icon
                 fixed-width
                 class="mr-1"
                 :icon="['fas', 'exclamation-triangle']"
               />
-              Bot is missing {{ botMissingScopes }} of its default scopes, please re-authorize the bot.
+              Bot is missing {{ botMissingScopes }} of its required scopes which will cause features not to work properly. Please re-authorize the bot using the URL below.
             </p>
             <b-input-group>
               <b-form-input
