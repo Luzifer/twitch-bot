@@ -13,6 +13,7 @@ import (
 
 type (
 	quote struct {
+		ID        uint64 `gorm:"primaryKey"`
 		Channel   string `gorm:"not null;uniqueIndex:ensure_sort_idx;size:32"`
 		CreatedAt int64  `gorm:"uniqueIndex:ensure_sort_idx"`
 		Quote     string
@@ -22,7 +23,7 @@ type (
 func AddQuote(db database.Connector, channel, quoteStr string) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Create(quote{
+			return tx.Create(&quote{
 				Channel:   channel,
 				CreatedAt: time.Now().UnixNano(),
 				Quote:     quoteStr,
@@ -121,7 +122,7 @@ func SetQuotes(db database.Connector, channel string, quotes []string) error {
 
 			t := time.Now()
 			for _, quoteStr := range quotes {
-				if err := tx.Create(quote{
+				if err := tx.Create(&quote{
 					Channel:   channel,
 					CreatedAt: t.UnixNano(),
 					Quote:     quoteStr,
