@@ -1,3 +1,15 @@
+# 3.23.0 / 2023-12-20
+
+> [!NOTE]
+> This release slightly changes the way release binaries are packaged: The binary is now named `twitch-bot` instead of i.e. `twitch-bot_linux_amd64` within the archives.
+
+  * Improvements
+    * [editor] Improve wording and visibility for bot connection
+
+  * Bugfixes
+    * [quote] Fix: Add primary key to quote table
+    * [eventsub] Fix: Stop subscription-retries when client is closed
+
 # 3.22.0 / 2023-12-14
 
   * Improvements
