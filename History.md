@@ -1,3 +1,8 @@
+# 3.23.1 / 2023-12-20
+
+  * Bugfixes
+    * [CI] Fix: Prevent tag collision in CI
+
 # 3.23.0 / 2023-12-20
 
 > [!NOTE]
