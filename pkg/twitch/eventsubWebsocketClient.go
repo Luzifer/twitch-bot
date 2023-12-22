@@ -431,6 +431,7 @@ func (e *EventSubSocketClient) retryBackgroundSubscribe(st eventSubSocketSubscri
 		})
 	if err != nil {
 		e.logger.
+			WithError(err).
 			WithField("topic", strings.Join([]string{st.Event, st.Version}, "/")).
 			Error("gave up retrying to subscribe")
 	}
