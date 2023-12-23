@@ -74,6 +74,7 @@ func withSkipVerify() func(*resolver) {
 }
 
 func (r resolver) Resolve(qe resolverQueueEntry) {
+	qe.WaitGroup.Add(1)
 	r.resolverC <- qe
 }
 

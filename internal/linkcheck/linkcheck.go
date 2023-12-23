@@ -87,7 +87,6 @@ func (c Checker) scanPartsConnected(parts []string, connector string) (links []s
 
 	for ptJoin := 2; ptJoin < len(parts); ptJoin++ {
 		for i := 0; i <= len(parts)-ptJoin; i++ {
-			wg.Add(1)
 			c.res.Resolve(resolverQueueEntry{
 				Link:      strings.Join(parts[i:i+ptJoin], connector),
 				Callback:  func(link string) { links = str.AppendIfMissing(links, link) },
@@ -108,7 +107,6 @@ func (c Checker) scanPlainNoObfuscate(message string) (links []string) {
 	)
 
 	for _, part := range parts {
-		wg.Add(1)
 		c.res.Resolve(resolverQueueEntry{
 			Link:      part,
 			Callback:  func(link string) { links = str.AppendIfMissing(links, link) },

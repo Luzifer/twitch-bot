@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
@@ -59,9 +60,10 @@ func TestScanForLinks(t *testing.T) {
 	c := New()
 
 	for _, testCase := range []struct {
-		Heuristic     bool
-		Message       string
-		ExpectedLinks []string
+		Heuristic        bool
+		Message          string
+		ExpectedLinks    []string
+		ExpectedContains bool
 	}{
 		// Case: full URL is present in the message
 		{
@@ -187,7 +189,21 @@ func TestScanForLinks(t *testing.T) {
 			}
 			sort.Strings(linksFound)
 
-			assert.Equal(t, testCase.ExpectedLinks, linksFound, "links from message %q", testCase.Message)
+			if testCase.ExpectedContains {
+				for _, expLnk := range testCase.ExpectedLinks {
+					assert.Contains(t, linksFound, expLnk)
+				}
+
+				var extraLinks []string
+				for _, link := range linksFound {
+					if !str.StringInSlice(link, testCase.ExpectedLinks) {
+						extraLinks = append(extraLinks, link)
+					}
+				}
+				t.Logf("extra links found: %v", extraLinks)
+			} else {
+				assert.Equal(t, testCase.ExpectedLinks, linksFound)
+			}
 		})
 	}
 }
