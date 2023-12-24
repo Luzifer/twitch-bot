@@ -315,10 +315,18 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case err := <-errC:
-			if err != nil {
-				logger.WithError(err).Error("Message processing caused error")
+			var cErr *websocket.CloseError
+			switch {
+			case err == nil:
+				// We use nil-error to close the connection
+
+			case errors.As(err, &cErr) && websocket.IsCloseError(cErr, websocket.CloseNormalClosure, websocket.CloseGoingAway):
+				// We don't need to log when the remote closes the websocket gracefully
+
+			default:
+				logger.WithError(err).Error("message processing caused error")
 			}
-			return // We use nil-error to close the connection
+			return // All errors need to quit this function
 
 		case msg := <-sendMsgC:
 			if !isAuthorized {
