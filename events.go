@@ -42,6 +42,7 @@ var (
 	eventTypeSubmysterygift     = ptrStr("submysterygift")
 	eventTypeSub                = ptrStr("sub")
 	eventTypeTimeout            = ptrStr("timeout")
+	eventTypeWatchStreak        = ptrStr("watch_streak")
 	eventTypeWhisper            = ptrStr("whisper")
 
 	eventTypeTwitchCategoryUpdate = ptrStr("category_update")
@@ -76,6 +77,7 @@ var (
 		eventTypeSubgift,
 		eventTypeSubmysterygift,
 		eventTypeTimeout,
+		eventTypeWatchStreak,
 		eventTypeWhisper,
 
 		eventTypeTwitchCategoryUpdate,

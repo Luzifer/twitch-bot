@@ -378,6 +378,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	go handleMessage(i.c, m, nil, nil)
 }
 
+//nolint:funlen
 func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	log.WithFields(log.Fields{
 		eventFieldChannel: i.getChannel(m),
@@ -390,6 +391,12 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		eventFieldUserName: m.Tags["login"], // Compatibility to plugins.DeriveUser
 		eventFieldUserID:   m.Tags["user-id"],
 	})
+
+	message := m.Trailing()
+	if message == i.getChannel(m) {
+		// If no message is given, Trailing yields the channel name
+		message = ""
+	}
 
 	switch m.Tags["msg-id"] {
 	case "":
@@ -423,12 +430,6 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeRaid, evtData)
 
 	case "resub":
-		message := m.Trailing()
-		if message == i.getChannel(m) {
-			// If no message is given, Trailing yields the channel name
-			message = ""
-		}
-
 		evtData.SetFromData(map[string]interface{}{
 			"from":              m.Tags["login"],
 			"message":           message,
@@ -477,6 +478,21 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		log.WithFields(log.Fields(evtData.Data())).Info("User gifted subs to the community")
 
 		go handleMessage(i.c, m, eventTypeSubmysterygift, evtData)
+
+	case "viewermilestone":
+		switch m.Tags["msg-param-category"] {
+		case "watch-streak":
+			evtData.SetFromData(map[string]any{
+				"message": message,
+				"streak":  i.tagToNumeric(m, "msg-param-value", 0),
+			})
+			log.WithFields(log.Fields(evtData.Data())).Info("User shared a watch-streak")
+
+			go handleMessage(i.c, m, eventTypeWatchStreak, evtData)
+
+		default:
+			log.WithField("category", m.Tags["msg-param-category"]).Debug("found unhandled viewermilestone category")
+		}
 
 	}
 }
