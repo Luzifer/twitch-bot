@@ -502,7 +502,7 @@ Scans for links in the message and adds the "links" field to the event data
 ```yaml
 - type: linkdetector
   attributes:
-    # Enable heuristic scans to find links with spaces or other means of obfuscation in them
+    # Enable heuristic scans to find links with spaces or other means of obfuscation in them (quite slow and will detect MANY false-positive links, only use for blacklisting links!)
     # Optional: true
     # Type:     bool
     heuristic: false

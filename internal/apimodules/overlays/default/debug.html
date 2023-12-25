@@ -30,9 +30,10 @@
 
   <div id="app" v-cloak>
     <table>
-      <tr><th>Time</th><th>Event</th><th>Fields</th></tr>
+      <tr><th>Time</th><th>Reason</th><th>Event</th><th>Fields</th></tr>
       <tr v-for="event in events">
         <td>{{ moment(event.time).format('YYYY-MM-DD HH:mm:ss') }}</td>
+        <td>{{ event.reason }}</td>
         <td>{{ event.event }}</td>
         <td>
           <span
@@ -73,13 +74,13 @@
       mounted() {
         window.botClient = new EventClient({
           handlers: {
-            _: (evt, data, time, live) => {
-              if (window.botClient.paramOptionFallback('hide', '').split(',').includes(evt)) {
+            _: ({ fields, reason, time, type }) => {
+              if (window.botClient.paramOptionFallback('hide', '').split(',').includes(type)) {
                 return
               }
 
               this.events = [
-                { event: evt, fields: data, time },
+                { event: type, fields, reason, time },
                 ...this.events,
               ]
             },

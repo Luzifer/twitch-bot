@@ -8,11 +8,8 @@ new Vue({
 
     new EventClient({
       handlers: {
-        custom: (evt, data, time, live) => this.handleCustom(evt, data, time, live),
+        custom: ({ fields }) => this.handleCustom(fields),
       },
-
-      maxReplayAge: 720,
-      replay: true,
     })
   },
 
@@ -64,14 +61,9 @@ new Vue({
       source.connect(preGainNode)
     },
 
-    handleCustom(evt, data, time, live) {
+    handleCustom(data) {
       switch (data.type) {
       case 'soundalert':
-        if (!live) {
-          // Not a live event, do not issue alerts
-          return
-        }
-
         this.queueAlert({
           soundUrl: data.soundUrl,
         })

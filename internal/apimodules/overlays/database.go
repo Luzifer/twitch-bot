@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -24,23 +25,26 @@ type (
 	}
 )
 
-func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) error {
+func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) (evtID uint64, err error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(evt.Fields); err != nil {
-		return errors.Wrap(err, "encoding fields")
+		return 0, errors.Wrap(err, "encoding fields")
 	}
 
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Create(&overlaysEvent{
-				Channel:   channel,
-				CreatedAt: evt.Time.UTC(),
-				EventType: evt.Type,
-				Fields:    strings.TrimSpace(buf.String()),
-			}).Error
-		}),
-		"storing event to database",
-	)
+	storEvt := &overlaysEvent{
+		Channel:   channel,
+		CreatedAt: evt.Time.UTC(),
+		EventType: evt.Type,
+		Fields:    strings.TrimSpace(buf.String()),
+	}
+
+	if err = helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Create(storEvt).Error
+	}); err != nil {
+		return 0, errors.Wrap(err, "storing event to database")
+	}
+
+	return storEvt.ID, nil
 }
 
 func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, error) {
@@ -54,18 +58,44 @@ func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, e
 
 	var out []SocketMessage
 	for _, e := range evts {
-		fields := new(plugins.FieldCollection)
-		if err := json.NewDecoder(strings.NewReader(e.Fields)).Decode(fields); err != nil {
-			return nil, errors.Wrap(err, "decoding fields")
+		sm, err := e.ToSocketMessage()
+		if err != nil {
+			return nil, errors.Wrap(err, "transforming event")
 		}
 
-		out = append(out, SocketMessage{
-			IsLive: false,
-			Time:   e.CreatedAt,
-			Type:   e.EventType,
-			Fields: fields,
-		})
+		out = append(out, sm)
 	}
 
 	return out, nil
+}
+
+func GetEventByID(db database.Connector, eventID uint64) (SocketMessage, error) {
+	var evt overlaysEvent
+
+	if err := helpers.Retry(func() (err error) {
+		err = db.DB().Where("id = ?", eventID).First(&evt).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return backoff.NewErrCannotRetry(err)
+		}
+		return err
+	}); err != nil {
+		return SocketMessage{}, errors.Wrap(err, "fetching event")
+	}
+
+	return evt.ToSocketMessage()
+}
+
+func (o overlaysEvent) ToSocketMessage() (SocketMessage, error) {
+	fields := new(plugins.FieldCollection)
+	if err := json.NewDecoder(strings.NewReader(o.Fields)).Decode(fields); err != nil {
+		return SocketMessage{}, errors.Wrap(err, "decoding fields")
+	}
+
+	return SocketMessage{
+		EventID: o.ID,
+		IsLive:  false,
+		Time:    o.CreatedAt,
+		Type:    o.EventType,
+		Fields:  fields,
+	}, nil
 }

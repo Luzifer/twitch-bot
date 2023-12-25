@@ -56,7 +56,7 @@ trivy:
 
 # -- Documentation Site --
 
-docs: actor_docs template_docs
+docs: actor_docs eventclient_docs template_docs
 
 actor_docs:
 	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md

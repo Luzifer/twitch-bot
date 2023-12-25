@@ -1,11 +1,22 @@
 /**
  * Options to pass to the EventClient constructor
  * @typedef {Object} Options
- * @prop {string} [channel] - Filter for specific channel events (format: `#channel`)
- * @prop {Object} [handlers={}] - Map event types to callback functions `(event, fields, time, live) => {...}`
- * @prop {number} [maxReplayAge=-1] - Number of hours to replay the events for (-1 = infinite)
- * @prop {boolean} [replay=false] - Request a replay at connect (requires channel to be set to a channel name)
- * @prop {string} [token] - API access token to use to connect to the WebSocket (if not set, must be provided through URL hash)
+ * @prop {String} [channel] - Filter for specific channel events (format: `#channel`)
+ * @prop {Object} [handlers={}] - Map event types to callback functions `(eventObj) => { ... }` (new) or `(event, fields, time, live) => {...}` (old)
+ * @prop {Number} [maxReplayAge=-1] - Number of hours to replay the events for (-1 = infinite)
+ * @prop {Boolean} [replay=false] - Request a replay at connect (requires channel to be set to a channel name)
+ * @prop {String} [token] - API access token to use to connect to the WebSocket (if not set, must be provided through URL hash)
+ */
+
+/**
+ * SocketMessage received for every event and passed to the new `(eventObj) => { ... }` handlers
+ * @typedef {Object} SocketMessage
+ * @prop {Number} [event_id] - UID of the event used to re-trigger an event
+ * @prop {Boolean} [is_live] - Whether the event was sent through a replay (false) or occurred live (true)
+ * @prop {String} [reason] - Reason of this message (one of `bulk-replay`, `live-event`, `single-replay`)
+ * @prop {String} [time] - RFC3339 timestamp of the event
+ * @prop {String} [type] - Event type (i.e. `raid`, `sub`, ...)
+ * @prop {Object} [fields] - string->any mapping of fields available for the event
  */
 
 const HOUR = 3600 * 1000
@@ -24,7 +35,7 @@ class EventClient {
    * @param {Options} opts Options for the EventClient
    */
   constructor(opts) {
-    this.params = new URLSearchParams(window.location.hash.substr(1))
+    this.params = new URLSearchParams(window.location.hash.substring(1))
     this.handlers = { ...opts.handlers || {} }
     this.options = { ...opts }
 
@@ -52,7 +63,7 @@ class EventClient {
    * @returns {string} API base URL
    */
   apiBase() {
-    return window.location.href.substr(0, window.location.href.indexOf('/overlays/'))
+    return window.location.href.substring(0, window.location.href.indexOf('/overlays/'))
   }
 
   /**
@@ -88,7 +99,7 @@ class EventClient {
       }
 
       for (const fn of [this.handlers[data.type], this.handlers._].filter(fn => fn)) {
-        fn(data.type, data.fields, new Date(data.time), data.is_live)
+        fn.length === 1 ? fn({ ...data, time: new Date(data.time) }) : fn(data.type, data.fields, new Date(data.time), data.is_live)
       }
     }
 
@@ -125,7 +136,7 @@ class EventClient {
 
         for (const msg of data) {
           for (const fn of [this.handlers[msg.type], this.handlers._].filter(fn => fn)) {
-            handlers.push(fn(msg.type, msg.fields, new Date(msg.time), msg.is_live))
+            handlers.push(fn.length === 1 ? fn({ ...msg, time: new Date(msg.time) }) : fn(msg.type, msg.fields, new Date(msg.time), msg.is_live))
           }
         }
 
@@ -157,6 +168,21 @@ class EventClient {
       },
     })
       .then(resp => resp.text())
+  }
+
+  /**
+   * Triggers a replay of the given event to all overlays currently listening for events. This event will have the `is_live` flag set to `false`.
+   *
+   * @param {Number} eventId The ID of the event received through the SocketMessage object
+   * @returns {Promise} Promise of the fetch request
+   */
+  replayEvent(eventId) {
+    return fetch(`${this.apiBase()}/overlays/event/${eventId}/replay`, {
+      headers: {
+        authorization: this.paramOptionFallback('token'),
+      },
+      method: 'PUT',
+    })
   }
 
   /**
