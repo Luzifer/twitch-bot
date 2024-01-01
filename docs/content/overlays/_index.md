@@ -40,3 +40,25 @@ Here you can see the Debug Overlay configured with:
 As those parameters are configured through the URL hash (`#...`) they are never sent to the server, therefore are not logged in any access-logs and exist only in the local URL. So with a custom overlay you would put `https://your-bot.example.com/overlays/myoverlay.html#token=55cdb1e4-c776-4467-8560-a47a4abc55de` into your OBS browser source and your overlay would be able to communicate with the bot.
 
 The debug-overlay can be used to view all events received within the bot you can react on in overlays and bot rules.
+
+## Remote editing Overlays with local Editor
+
+In order to enable you to edit the overlays remotely when hosting the bot on a server the bot exposes a WebDAV interface you can locally mount and work on using your favorite editor. To mount the WebDAV I recommend [rclone](https://rclone.org/). You will need the URL your bot is available at and a token with `overlays` permission:
+
+```
+# rclone obscure 55cdb1e4-c776-4467-8560-a47a4abc55de
+MqO0FLdbg3txom2IpUMsVVIqnHwYDefms4EKRqoV1MGhCFkBmWnhvVRdqTyCSFtmvP-AYg
+
+# cat /tmp/rclone.conf
+[bot]
+type = webdav
+url = https://your-bot.example.com/overlays/dav/
+user = dav
+pass = MqO0FLdbg3txom2IpUMsVVIqnHwYDefms4EKRqoV1MGhCFkBmWnhvVRdqTyCSFtmvP-AYg
+
+# rclone --config /tmp/rclone.conf mount bot:/ /tmp/bot-overlays
+
+# code /tmp/bot-overlays
+```
+
+What I've done here is to obscure the token (`rclone` wants the token to be in an obscured format), create a config containing the WebDAV remote, mount the WebDAV remote to a local directory and open it with VSCode to edit the overlays. When saving the files locally `rclone` will upload them to the bot and refreshing the overlay in your browser / OBS will give you the new version.

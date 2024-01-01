@@ -155,6 +155,20 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+		Description:       "Shares the overlays folder as WebDAV filesystem",
+		HandlerFunc:       getDAVHandler(),
+		IsPrefix:          true,
+		Module:            "overlays",
+		Name:              "WebDAV Overlays",
+		Path:              "/dav/",
+		RequiresWriteAuth: true,
+		ResponseType:      plugins.HTTPRouteResponseTypeMultiple,
+		SkipDocumentation: true,
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
+
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc:       handleServeOverlayAsset,
 		IsPrefix:          true,
 		Method:            http.MethodGet,

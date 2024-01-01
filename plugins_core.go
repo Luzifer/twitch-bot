@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
@@ -134,13 +135,15 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		hdl = writeAuthMiddleware(hdl, route.Module)
 	}
 
+	var muxRoute *mux.Route
 	if route.IsPrefix {
-		r.PathPrefix(route.Path).
-			Handler(hdl).
-			Methods(route.Method)
+		muxRoute = r.PathPrefix(route.Path).Handler(hdl)
 	} else {
-		r.Handle(route.Path, hdl).
-			Methods(route.Method)
+		muxRoute = r.Handle(route.Path, hdl)
+	}
+
+	if route.Method != "" {
+		muxRoute.Methods(route.Method)
 	}
 
 	if !route.SkipDocumentation {

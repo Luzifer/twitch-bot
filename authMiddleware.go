@@ -43,8 +43,17 @@ func fillAuthToken(token *configAuthToken) error {
 
 func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		if token == "" {
+		_, pass, hasBasicAuth := r.BasicAuth()
+
+		var token string
+		switch {
+		case hasBasicAuth && pass != "":
+			token = pass
+
+		case r.Header.Get("Authorization") != "":
+			token = r.Header.Get("Authorization")
+
+		default:
 			http.Error(w, "auth not successful", http.StatusForbidden)
 			return
 		}
