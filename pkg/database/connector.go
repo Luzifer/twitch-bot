@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ type (
 var ErrCoreMetaNotFound = errors.New("core meta entry not found")
 
 // New creates a new Connector with the given driver and database
-func New(driverName, connString, encryptionSecret string) (Connector, error) {
+func New(driverName, connString, encryptionSecret string) (c Connector, err error) {
 	var (
 		dbTuner func(*sql.DB, error) error
 		innerDB gorm.Dialector
@@ -42,7 +43,9 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 
 	switch driverName {
 	case "mysql":
-		mysqlDriver.SetLogger(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.ErrorLevel, driverName))
+		if err = mysqlDriver.SetLogger(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.ErrorLevel, driverName)); err != nil {
+			return nil, fmt.Errorf("setting logger on mysql driver: %w", err)
+		}
 		innerDB = mysql.Open(connString)
 		dbTuner = tuneMySQLDatabase
 
@@ -88,11 +91,11 @@ func New(driverName, connString, encryptionSecret string) (Connector, error) {
 	return conn, errors.Wrap(conn.applyCoreSchema(), "applying core schema")
 }
 
-func (c connector) Close() error {
+func (connector) Close() error {
 	return nil
 }
 
-func (c connector) CopyDatabase(src, target *gorm.DB) error {
+func (connector) CopyDatabase(src, target *gorm.DB) error {
 	return CopyObjects(src, target, &coreKV{})
 }
 

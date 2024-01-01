@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig/v3"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/str"
@@ -78,7 +78,7 @@ func (t *templateFuncProvider) Register(name string, fg plugins.TemplateFuncGett
 	defer t.lock.Unlock()
 
 	if _, ok := t.funcs[name]; ok {
-		log.Fatalf("Duplicate registration of %q template function", name) //nolint:gocritic // Yeah, the unlock will not run but the process will end
+		logrus.Fatalf("Duplicate registration of %q template function", name)
 	}
 
 	t.funcs[name] = fg
@@ -108,7 +108,7 @@ func init() {
 		var parts []string
 		for idx, div := range []time.Duration{time.Hour, time.Minute, time.Second} {
 			part := dLeft / div
-			dLeft -= part * div
+			dLeft -= part * div //nolint:durationcheck // One is static, this is fine
 
 			if len(units) <= idx || units[idx] == "" {
 				continue

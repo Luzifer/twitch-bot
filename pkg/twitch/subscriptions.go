@@ -26,16 +26,15 @@ func (c *Client) GetBroadcasterSubscriptionCount(ctx context.Context, broadcaste
 		return data.Total, data.Points, nil
 	}
 
-	broadcaster, err := c.GetIDForUsername(broadcasterName)
+	broadcaster, err := c.GetIDForUsername(ctx, broadcasterName)
 	if err != nil {
 		return 0, 0, errors.Wrap(err, "getting ID for broadcaster name")
 	}
 
 	var data subInfo
 
-	if err = c.Request(ClientRequestOpts{
+	if err = c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &data,

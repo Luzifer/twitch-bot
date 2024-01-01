@@ -21,6 +21,7 @@ var (
 	tcGetter       func(string) (*twitch.Client, error)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&raffle{}, &raffleEntry{}); err != nil {
@@ -28,7 +29,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	args.RegisterCopyDatabaseFunc("raffle", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &raffle{}, &raffleEntry{})
+		return database.CopyObjects(src, target, &raffle{}, &raffleEntry{}) //nolint:wrapcheck // internal helper
 	})
 
 	dbc = newDBClient(db)

@@ -12,6 +12,7 @@ import (
 )
 
 type (
+	// User represents the data known about an user
 	User struct {
 		DisplayName     string `json:"display_name"`
 		ID              string `json:"id"`
@@ -20,16 +21,18 @@ type (
 	}
 )
 
+// ErrUserDoesNotFollow states the user does not follow the given channel
 var ErrUserDoesNotFollow = errors.New("no follow-relation found")
 
-func (c *Client) GetAuthorizedUser() (userID string, userName string, err error) {
+// GetAuthorizedUser returns the userID / userName of the user the
+// client is authorized for
+func (c *Client) GetAuthorizedUser(ctx context.Context) (userID string, userName string, err error) {
 	var payload struct {
 		Data []User `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -45,7 +48,9 @@ func (c *Client) GetAuthorizedUser() (userID string, userName string, err error)
 	return payload.Data[0].ID, payload.Data[0].Login, nil
 }
 
-func (c *Client) GetDisplayNameForUser(username string) (string, error) {
+// GetDisplayNameForUser returns the display name for a login name set
+// by the user themselves
+func (c *Client) GetDisplayNameForUser(ctx context.Context, username string) (string, error) {
 	username = strings.TrimLeft(username, "#@")
 
 	cacheKey := []string{"displayNameForUsername", username}
@@ -57,9 +62,8 @@ func (c *Client) GetDisplayNameForUser(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
@@ -77,17 +81,19 @@ func (c *Client) GetDisplayNameForUser(username string) (string, error) {
 	return payload.Data[0].DisplayName, nil
 }
 
-func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
+// GetFollowDate returns the point-in-time the {from} followed the {to}
+// or an ErrUserDoesNotFollow in case they do not follow
+func (c *Client) GetFollowDate(ctx context.Context, from, to string) (time.Time, error) {
 	cacheKey := []string{"followDate", from, to}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(time.Time), nil
 	}
 
-	fromID, err := c.GetIDForUsername(from)
+	fromID, err := c.GetIDForUsername(ctx, from)
 	if err != nil {
 		return time.Time{}, errors.Wrap(err, "getting id for 'from' user")
 	}
-	toID, err := c.GetIDForUsername(to)
+	toID, err := c.GetIDForUsername(ctx, to)
 	if err != nil {
 		return time.Time{}, errors.Wrap(err, "getting id for 'to' user")
 	}
@@ -98,9 +104,8 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 		} `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -126,7 +131,9 @@ func (c *Client) GetFollowDate(from, to string) (time.Time, error) {
 	return payload.Data[0].FollowedAt, nil
 }
 
-func (c *Client) GetIDForUsername(username string) (string, error) {
+// GetIDForUsername takes a login name and returns the userID for that
+// username
+func (c *Client) GetIDForUsername(ctx context.Context, username string) (string, error) {
 	username = strings.TrimLeft(username, "#@")
 
 	cacheKey := []string{"idForUsername", username}
@@ -138,9 +145,8 @@ func (c *Client) GetIDForUsername(username string) (string, error) {
 		Data []User `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -171,9 +177,8 @@ func (c *Client) GetUsernameForID(ctx context.Context, id string) (string, error
 		Data []User `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -192,7 +197,9 @@ func (c *Client) GetUsernameForID(ctx context.Context, id string) (string, error
 	return payload.Data[0].Login, nil
 }
 
-func (c *Client) GetUserInformation(user string) (*User, error) {
+// GetUserInformation takes an userID or an userName and returns the
+// User information for them
+func (c *Client) GetUserInformation(ctx context.Context, user string) (*User, error) {
 	user = strings.TrimLeft(user, "#@")
 
 	var (
@@ -213,9 +220,8 @@ func (c *Client) GetUserInformation(user string) (*User, error) {
 		param = "id"
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,

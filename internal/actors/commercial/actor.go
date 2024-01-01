@@ -1,3 +1,4 @@
+// Package commercial contains an actor to run commercials in a channel
 package commercial
 
 import (
@@ -27,6 +28,7 @@ var (
 	commercialChatcommandRegex = regexp.MustCompile(`^/commercial ([0-9]+)$`)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	permCheckFn = args.HasPermissionForChannel
@@ -70,10 +72,10 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	return false, startCommercial(strings.TrimLeft(plugins.DeriveChannel(m, eventData), "#"), durationStr)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	durationTemplate, err := attrs.String("duration")
 	if err != nil || durationTemplate == "" {
 		return errors.New("duration must be non-empty string")

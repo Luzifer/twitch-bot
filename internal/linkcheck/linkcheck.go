@@ -1,3 +1,5 @@
+// Package linkcheck implements a helper library to search for links
+// in a message text and validate them by trying to call them
 package linkcheck
 
 import (
@@ -52,7 +54,7 @@ func (c Checker) ScanForLinks(message string) (links []string) {
 	return c.scan(message, c.scanPlainNoObfuscate)
 }
 
-func (c Checker) scan(message string, scanFns ...func(string) []string) (links []string) {
+func (Checker) scan(message string, scanFns ...func(string) []string) (links []string) {
 	for _, scanner := range scanFns {
 		if links = scanner(message); links != nil {
 			return links

@@ -12,6 +12,7 @@ import (
 const clipCacheTimeout = 10 * time.Minute // Clips do not change that fast
 
 type (
+	// ClipInfo contains the information about a clip
 	ClipInfo struct {
 		ID              string    `json:"id"`
 		URL             string    `json:"url"`
@@ -31,6 +32,7 @@ type (
 		VodOffset       int64     `json:"vod_offset"`
 	}
 
+	// CreateClipResponse contains the API response to a create clip call
 	CreateClipResponse struct {
 		ID      string `json:"id"`
 		EditURL string `json:"edit_url"`
@@ -42,7 +44,7 @@ type (
 // broadcasters who trigger this function already knowing something
 // will happen but not yet visible in stream).
 func (c *Client) CreateClip(ctx context.Context, channel string, addDelay bool) (ccr CreateClipResponse, err error) {
-	id, err := c.GetIDForUsername(channel)
+	id, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
 		return ccr, errors.Wrap(err, "getting ID for channel")
 	}
@@ -51,9 +53,8 @@ func (c *Client) CreateClip(ctx context.Context, channel string, addDelay bool) 
 		Data []CreateClipResponse
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  ctx,
 		Method:   http.MethodPost,
 		OKStatus: http.StatusAccepted,
 		Out:      &payload,
@@ -81,9 +82,8 @@ func (c *Client) GetClipByID(ctx context.Context, clipID string) (ClipInfo, erro
 		Data []ClipInfo
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,

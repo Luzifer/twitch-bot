@@ -85,8 +85,8 @@ func initApp() error {
 	}
 
 	if cfg.VersionAndExit {
-		fmt.Printf("twitch-bot %s\n", version)
-		os.Exit(0)
+		fmt.Printf("twitch-bot %s\n", version) //nolint:forbidigo // Fine here
+		os.Exit(0)                             //revive:disable-line:deep-exit
 	}
 
 	l, err := log.ParseLevel(cfg.LogLevel)
@@ -168,7 +168,9 @@ func main() {
 	// Query may run that often as the twitchClient has an internal
 	// cache but shouldn't run more often as EventSub subscriptions
 	// are retried on error each time
-	cronService.AddFunc("@every 30s", twitchWatch.Check)
+	if _, err = cronService.AddFunc("@every 30s", twitchWatch.Check); err != nil {
+		log.WithError(err).Fatal("registering twitchWatch cron")
+	}
 
 	// Allow config to subscribe to external rules
 	updCron := updateConfigCron()
@@ -180,7 +182,9 @@ func main() {
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
-	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(runID)) })
+	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, runID, http.StatusOK)
+	})
 
 	if os.Getenv("ENABLE_PROFILING") == "true" {
 		router.HandleFunc("/debug/pprof/", pprof.Index)
@@ -237,7 +241,9 @@ func main() {
 
 		log.WithError(err).Fatal("Initial config load failed")
 	}
-	defer func() { config.CloseRawMessageWriter() }()
+	defer func() {
+		config.CloseRawMessageWriter() //nolint:errcheck,gosec,revive // That close is enforced by process exit
+	}()
 
 	if cfg.ValidateConfig {
 		// We were asked to only validate the config, this was successful
@@ -272,7 +278,11 @@ func main() {
 			Handler:           router,
 		}
 
-		go server.Serve(listener)
+		go func() {
+			if err := server.Serve(listener); err != nil {
+				log.WithError(err).Fatal("running HTTP server")
+			}
+		}()
 		log.WithField("address", listener.Addr().String()).Info("HTTP server started")
 	}
 
@@ -286,10 +296,11 @@ func main() {
 
 	for {
 		select {
-
 		case <-ircDisconnected:
 			if ircHdl != nil {
-				ircHdl.Close()
+				if err = ircHdl.Close(); err != nil {
+					log.WithError(err).Error("closing IRC handle")
+				}
 			}
 
 			if ircHdl, err = newIRCHandler(); err != nil {
@@ -363,7 +374,6 @@ func main() {
 				}
 			}
 			configLock.RUnlock()
-
 		}
 	}
 }
@@ -380,19 +390,6 @@ func startCheck() error {
 	}
 
 	if len(errs) > 0 {
-		fmt.Println(`
-You've not provided a Twitch-ClientId and/or a Twitch-ClientSecret.
-
-These parameters are required and you need to provide them.
-
-The Twitch Token can be set through the web-interface. In case you
-want to set it through parameters and need help with obtaining it,
-please visit the following website:
-
-         https://luzifer.github.io/twitch-bot/
-
-You will be guided through the token generation and can afterwards
-provide the required configuration parameters.`)
 		return errors.New(strings.Join(errs, ", "))
 	}
 

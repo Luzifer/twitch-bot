@@ -12,34 +12,34 @@ import (
 
 func TestCounterStoreLoop(t *testing.T) {
 	dbc := database.GetTestDatabase(t)
-	dbc.DB().AutoMigrate(&Counter{})
+	require.NoError(t, dbc.DB().AutoMigrate(&counter{}))
 
 	counterName := "mytestcounter"
 
-	v, err := GetCounterValue(dbc, counterName)
+	v, err := getCounterValue(dbc, counterName)
 	assert.NoError(t, err, "reading non-existent counter")
 	assert.Equal(t, int64(0), v, "expecting 0 counter value on non-existent counter")
 
-	err = UpdateCounter(dbc, counterName, 5, true)
+	err = updateCounter(dbc, counterName, 5, true)
 	assert.NoError(t, err, "inserting counter")
 
-	err = UpdateCounter(dbc, counterName, 1, false)
+	err = updateCounter(dbc, counterName, 1, false)
 	assert.NoError(t, err, "updating counter")
 
-	v, err = GetCounterValue(dbc, counterName)
+	v, err = getCounterValue(dbc, counterName)
 	assert.NoError(t, err, "reading existent counter")
 	assert.Equal(t, int64(6), v, "expecting counter value on existing counter")
 }
 
 func TestCounterTopListAndRank(t *testing.T) {
 	dbc := database.GetTestDatabase(t)
-	dbc.DB().AutoMigrate(&Counter{})
+	require.NoError(t, dbc.DB().AutoMigrate(&counter{}))
 
 	counterTemplate := `#example:test:%v`
 	for i := 0; i < 6; i++ {
 		require.NoError(
 			t,
-			UpdateCounter(dbc, fmt.Sprintf(counterTemplate, i), int64(i), true),
+			updateCounter(dbc, fmt.Sprintf(counterTemplate, i), int64(i), true),
 			"inserting counter %d", i,
 		)
 	}
@@ -48,7 +48,7 @@ func TestCounterTopListAndRank(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, cc, 3)
 
-	assert.Equal(t, []Counter{
+	assert.Equal(t, []counter{
 		{Name: "#example:test:5", Value: 5},
 		{Name: "#example:test:4", Value: 4},
 		{Name: "#example:test:3", Value: 3},

@@ -1,3 +1,4 @@
+// Package random contains helpers to aid with randomness
 package random
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterTemplateFunction("randomString", plugins.GenericTemplateFunctionGetter(randomString), plugins.TemplateFuncDocumentation{
 		Description: "Randomly picks a string from a list of strings",

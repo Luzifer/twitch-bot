@@ -1,3 +1,6 @@
+// Package nuke contains a hateraid protection actor recording messages
+// in all channels for a certain period of time being able to "nuke"
+// their authors by regular expression based on past messages
 package nuke
 
 import (
@@ -32,6 +35,7 @@ var (
 	ptrString10m    = func(v string) *string { return &v }("10m")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
@@ -146,7 +150,7 @@ type (
 	}
 )
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	rawMatch, err := formatMessage(attrs.MustString("match", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting match")
@@ -228,10 +232,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("match"); err != nil || v == "" {
 		return errors.New("match must be non-empty string")
 	}

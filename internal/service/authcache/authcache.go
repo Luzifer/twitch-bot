@@ -13,15 +13,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-const NegativeCacheTime = 5 * time.Minute
+const negativeCacheTime = 5 * time.Minute
 
 type (
+	// Service manages the cached auth results
 	Service struct {
 		backends []AuthFunc
 		cache    map[string]*CacheEntry
 		lock     sync.RWMutex
 	}
 
+	// CacheEntry represents an entry in the cache Service
 	CacheEntry struct {
 		AuthResult error // Allows for negative caching
 		ExpiresAt  time.Time
@@ -40,6 +42,8 @@ type (
 // auth method and therefore is not an user
 var ErrUnauthorized = errors.New("unauthorized")
 
+// New creates a new Service with the given backend methods to
+// authenticate users
 func New(backends ...AuthFunc) *Service {
 	s := &Service{
 		backends: backends,
@@ -50,6 +54,8 @@ func New(backends ...AuthFunc) *Service {
 	return s
 }
 
+// ValidateTokenFor checks backends whether the given token has access
+// to the given modules and caches the result
 func (s *Service) ValidateTokenFor(token string, modules ...string) error {
 	s.lock.RLock()
 	cached := s.cache[s.cacheKey(token)]
@@ -84,7 +90,7 @@ backendLoop:
 	// user. Both should be cached. The error for a static time, the
 	// valid result for the time given by the backend.
 	if errors.Is(ce.AuthResult, ErrUnauthorized) {
-		ce.ExpiresAt = time.Now().Add(NegativeCacheTime)
+		ce.ExpiresAt = time.Now().Add(negativeCacheTime)
 	}
 
 	s.lock.Lock()

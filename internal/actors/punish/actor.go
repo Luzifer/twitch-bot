@@ -1,6 +1,9 @@
+// Package punish contains an actor to punish behaviour in a channel
+// with rising punishments
 package punish
 
 import (
+	"context"
 	"math"
 	"strings"
 	"time"
@@ -29,6 +32,7 @@ var (
 	ptrStringEmpty     = func(v string) *string { return &v }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&punishLevel{}); err != nil {
@@ -36,7 +40,7 @@ func Register(args plugins.RegistrationArguments) error {
 	}
 
 	args.RegisterCopyDatabaseFunc("punish", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &punishLevel{})
+		return database.CopyObjects(src, target, &punishLevel{}) //nolint:wrapcheck // internal helper
 	})
 
 	botTwitchClient = args.GetTwitchClient()
@@ -142,7 +146,7 @@ type (
 
 // Punish
 
-func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		cooldown = attrs.MustDuration("cooldown", ptrDefaultCooldown)
 		reason   = attrs.MustString("reason", ptrStringEmpty)
@@ -168,6 +172,7 @@ func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	switch lt := levels[nLvl]; lt {
 	case "ban":
 		if err = botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(user, "@"),
 			0,
@@ -183,6 +188,7 @@ func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eve
 		}
 
 		if err = botTwitchClient.DeleteMessage(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,
 		); err != nil {
@@ -196,6 +202,7 @@ func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eve
 		}
 
 		if err = botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(user, "@"),
 			to,
@@ -215,10 +222,10 @@ func (a actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eve
 	)
 }
 
-func (a actorPunish) IsAsync() bool { return false }
-func (a actorPunish) Name() string  { return actorNamePunish }
+func (actorPunish) IsAsync() bool { return false }
+func (actorPunish) Name() string  { return actorNamePunish }
 
-func (a actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}
@@ -236,7 +243,7 @@ func (a actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs 
 
 // Reset
 
-func (a actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		user = attrs.MustString("user", nil)
 		uuid = attrs.MustString("uuid", ptrStringEmpty)
@@ -252,10 +259,10 @@ func (a actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule
 	)
 }
 
-func (a actorResetPunish) IsAsync() bool { return false }
-func (a actorResetPunish) Name() string  { return actorNameResetPunish }
+func (actorResetPunish) IsAsync() bool { return false }
+func (actorResetPunish) Name() string  { return actorNameResetPunish }
 
-func (a actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}

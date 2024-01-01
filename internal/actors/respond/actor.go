@@ -1,3 +1,4 @@
+// Package respond contains an actor to send a message
 package respond
 
 import (
@@ -24,7 +25,8 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
-func Register(args plugins.RegistrationArguments) error {
+// Register provides the plugins.RegisterFunc
+func Register(args plugins.RegistrationArguments) (err error) {
 	formatMessage = args.FormatMessage
 	send = args.SendMessage
 
@@ -76,7 +78,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Send a message on behalf of the bot (send JSON object with `message` key)",
 		HandlerFunc:       handleAPISend,
 		Method:            http.MethodPost,
@@ -91,14 +93,16 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
 	return nil
 }
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		if !attrs.CanString("fallback") || attrs.MustString("fallback", nil) == "" {
@@ -139,10 +143,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
 	}

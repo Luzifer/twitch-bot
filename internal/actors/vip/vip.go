@@ -1,3 +1,4 @@
+// Package vip contains actors to modify VIPs of a channel
 package vip
 
 import (
@@ -19,6 +20,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	permCheckFn = args.HasPermissionForChannel
@@ -96,7 +98,7 @@ type (
 )
 
 func (actor) IsAsync() bool { return false }
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	for _, field := range []string{"channel", "user"} {
 		if v, err := attrs.String(field); err != nil || v == "" {
 			return errors.Errorf("%s must be non-empty string", field)
@@ -110,7 +112,7 @@ func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugi
 	return nil
 }
 
-func (a actor) getParams(m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (channel, user string, err error) {
+func (actor) getParams(m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (channel, user string, err error) {
 	if channel, err = formatMessage(attrs.MustString("channel", nil), m, r, eventData); err != nil {
 		return "", "", errors.Wrap(err, "parsing channel")
 	}
@@ -129,7 +131,9 @@ func (u unvipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 	}
 
 	return false, errors.Wrap(
-		executeModVIP(channel, func(tc *twitch.Client) error { return tc.RemoveChannelVIP(context.Background(), channel, user) }),
+		executeModVIP(channel, func(tc *twitch.Client) error {
+			return errors.Wrap(tc.RemoveChannelVIP(context.Background(), channel, user), "removing VIP")
+		}),
 		"removing VIP",
 	)
 }
@@ -143,7 +147,9 @@ func (v vipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventD
 	}
 
 	return false, errors.Wrap(
-		executeModVIP(channel, func(tc *twitch.Client) error { return tc.AddChannelVIP(context.Background(), channel, user) }),
+		executeModVIP(channel, func(tc *twitch.Client) error {
+			return errors.Wrap(tc.AddChannelVIP(context.Background(), channel, user), "adding VIP")
+		}),
 		"adding VIP",
 	)
 }

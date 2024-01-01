@@ -1,10 +1,13 @@
 package twitch
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -18,12 +21,12 @@ func init() {
 
 func tplTwitchRecentGame(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("recentGame", plugins.GenericTemplateFunctionGetter(func(username string, v ...string) (string, error) {
-		game, _, err := args.GetTwitchClient().GetRecentStreamInfo(strings.TrimLeft(username, "#"))
+		game, _, err := args.GetTwitchClient().GetRecentStreamInfo(context.Background(), strings.TrimLeft(username, "#"))
 		if len(v) > 0 && (err != nil || game == "") {
-			return v[0], nil
+			return v[0], nil //nolint:nilerr // This is a default fallback
 		}
 
-		return game, err
+		return game, errors.Wrap(err, "getting stream info")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.",
 		Syntax:      "recentGame <username> [fallback]",
@@ -36,12 +39,12 @@ func tplTwitchRecentGame(args plugins.RegistrationArguments) {
 
 func tplTwitchRecentTitle(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("recentTitle", plugins.GenericTemplateFunctionGetter(func(username string, v ...string) (string, error) {
-		_, title, err := args.GetTwitchClient().GetRecentStreamInfo(strings.TrimLeft(username, "#"))
+		_, title, err := args.GetTwitchClient().GetRecentStreamInfo(context.Background(), strings.TrimLeft(username, "#"))
 		if len(v) > 0 && (err != nil || title == "") {
-			return v[0], nil
+			return v[0], nil //nolint:nilerr // This is a default fallback
 		}
 
-		return title, err
+		return title, errors.Wrap(err, "getting stream info")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the last stream title of the specified user or the `fallback` if the title could not be fetched. If no fallback was supplied the message will fail and not be sent.",
 		Syntax:      "recentTitle <username> [fallback]",
@@ -54,9 +57,9 @@ func tplTwitchRecentTitle(args plugins.RegistrationArguments) {
 
 func tplTwitchStreamUptime(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("streamUptime", plugins.GenericTemplateFunctionGetter(func(username string) (time.Duration, error) {
-		si, err := args.GetTwitchClient().GetCurrentStreamInfo(strings.TrimLeft(username, "#"))
+		si, err := args.GetTwitchClient().GetCurrentStreamInfo(context.Background(), strings.TrimLeft(username, "#"))
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("getting stream info: %w", err)
 		}
 		return time.Since(si.StartedAt), nil
 	}), plugins.TemplateFuncDocumentation{

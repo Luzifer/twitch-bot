@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// Category represents information about a category
 	Category struct {
 		BoxArtURL string `json:"box_art_url"`
 		ID        string `json:"id"`
@@ -17,6 +18,8 @@ type (
 	}
 )
 
+// SearchCategories returns a list of categories matching the given
+// search. The result is not exact but contains Twitchs fuzzy-results.
 func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category, error) {
 	var out []Category
 
@@ -32,9 +35,8 @@ func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category,
 	}
 
 	for {
-		if err := c.Request(ClientRequestOpts{
+		if err := c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  ctx,
 			Method:   http.MethodGet,
 			OKStatus: http.StatusOK,
 			Out:      &resp,

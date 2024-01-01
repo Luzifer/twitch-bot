@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -85,6 +86,8 @@ func (resolver) getJar() *cookiejar.Jar {
 
 // resolveFinal takes a link and looks up the final destination of
 // that link after all redirects were followed
+//
+//nolint:gocyclo
 func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack []string, userAgent string) string {
 	if !linkTest.MatchString(link) && !r.skipValidation {
 		return ""
@@ -139,7 +142,11 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 	if err != nil {
 		return ""
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	if resp.StatusCode > 299 && resp.StatusCode < 400 {
 		// We got a redirect

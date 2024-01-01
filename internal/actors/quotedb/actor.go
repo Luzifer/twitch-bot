@@ -1,6 +1,9 @@
+// Package quotedb contains a quote database and actor / api methods
+// to manage it
 package quotedb
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -25,14 +28,15 @@ var (
 	ptrStringZero      = func(v string) *string { return &v }("0")
 )
 
-func Register(args plugins.RegistrationArguments) error {
+// Register provides the plugins.RegisterFunc
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&quote{}); err != nil {
+	if err = db.DB().AutoMigrate(&quote{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	args.RegisterCopyDatabaseFunc("quote", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &quote{})
+		return database.CopyObjects(src, target, &quote{}) //nolint:wrapcheck // internal helper
 	})
 
 	formatMessage = args.FormatMessage
@@ -85,11 +89,13 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	registerAPI(args.RegisterAPIRoute)
+	if err = registerAPI(args.RegisterAPIRoute); err != nil {
+		return fmt.Errorf("registering API: %w", err)
+	}
 
 	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func() (int, error) {
-			return GetMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
+			return getMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}
 	}, plugins.TemplateFuncDocumentation{
 		Description: "Gets the last quote index in the quote database for the current channel",
@@ -107,7 +113,7 @@ type (
 	actor struct{}
 )
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		action   = attrs.MustString("action", ptrStringEmpty)
 		indexStr = attrs.MustString("index", ptrStringZero)
@@ -135,18 +141,18 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		return false, errors.Wrap(
-			AddQuote(db, plugins.DeriveChannel(m, eventData), quote),
+			addQuote(db, plugins.DeriveChannel(m, eventData), quote),
 			"adding quote",
 		)
 
 	case "del":
 		return false, errors.Wrap(
-			DelQuote(db, plugins.DeriveChannel(m, eventData), index),
+			delQuote(db, plugins.DeriveChannel(m, eventData), index),
 			"storing quote database",
 		)
 
 	case "get":
-		idx, quote, err := GetQuote(db, plugins.DeriveChannel(m, eventData), index)
+		idx, quote, err := getQuote(db, plugins.DeriveChannel(m, eventData), index)
 		if err != nil {
 			return false, errors.Wrap(err, "getting quote")
 		}
@@ -181,10 +187,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	action := attrs.MustString("action", ptrStringEmpty)
 
 	switch action {

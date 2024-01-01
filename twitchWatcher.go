@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 
@@ -209,7 +210,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 	}
 }
 
-func (t *twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error {
 	var payload twitch.EventSubEventAdBreakBegin
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -228,7 +229,7 @@ func (t *twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) err
 	return nil
 }
 
-func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	var payload twitch.EventSubEventFollow
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -247,7 +248,7 @@ func (t *twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	return nil
 }
 
-func (t *twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json.RawMessage) error {
 	var payload twitch.EventSubEventChannelPointCustomRewardRedemptionAdd
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -270,7 +271,7 @@ func (t *twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m js
 	return nil
 }
 
-func (t *twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error {
 	var payload twitch.EventSubEventRaid
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -300,7 +301,7 @@ func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
 	return nil
 }
 
-func (t *twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.RawMessage) error {
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventPoll
 		if err := json.Unmarshal(m, &payload); err != nil {
@@ -337,7 +338,7 @@ func (t *twitchWatcher) handleEventSubChannelPollChange(event *string) func(json
 	}
 }
 
-func (t *twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 	var payload twitch.EventSubEventShoutoutCreated
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -356,7 +357,7 @@ func (t *twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 	return nil
 }
 
-func (t *twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
+func (*twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
 	var payload twitch.EventSubEventShoutoutReceived
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return errors.Wrap(err, "unmarshalling event")
@@ -397,12 +398,12 @@ func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
 		storedStatus = t.ChannelStatus[channel]
 	)
 
-	status.IsLive, err = twitchClient.HasLiveStream(channel)
+	status.IsLive, err = twitchClient.HasLiveStream(context.Background(), channel)
 	if err != nil {
 		return errors.Wrap(err, "getting live status")
 	}
 
-	status.Category, status.Title, err = twitchClient.GetRecentStreamInfo(channel)
+	status.Category, status.Title, err = twitchClient.GetRecentStreamInfo(context.Background(), channel)
 	if err != nil {
 		return errors.Wrap(err, "getting stream info")
 	}
@@ -449,13 +450,13 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 	})
 	if err != nil {
 		if errors.Is(err, access.ErrChannelNotAuthorized) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // This is fine - not authorized cannot register callbacks
 		}
 
 		return nil, errors.Wrap(err, "getting twitch client for channel")
 	}
 
-	userID, err := twitchClient.GetIDForUsername(channel)
+	userID, err := twitchClient.GetIDForUsername(context.Background(), channel)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolving channel to user-id")
 	}

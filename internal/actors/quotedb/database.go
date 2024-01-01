@@ -20,7 +20,7 @@ type (
 	}
 )
 
-func AddQuote(db database.Connector, channel, quoteStr string) error {
+func addQuote(db database.Connector, channel, quoteStr string) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			return tx.Create(&quote{
@@ -33,8 +33,8 @@ func AddQuote(db database.Connector, channel, quoteStr string) error {
 	)
 }
 
-func DelQuote(db database.Connector, channel string, quoteIdx int) error {
-	_, createdAt, _, err := GetQuoteRaw(db, channel, quoteIdx)
+func delQuote(db database.Connector, channel string, quoteIdx int) error {
+	_, createdAt, _, err := getQuoteRaw(db, channel, quoteIdx)
 	if err != nil {
 		return errors.Wrap(err, "fetching specified quote")
 	}
@@ -47,7 +47,7 @@ func DelQuote(db database.Connector, channel string, quoteIdx int) error {
 	)
 }
 
-func GetChannelQuotes(db database.Connector, channel string) ([]string, error) {
+func getChannelQuotes(db database.Connector, channel string) ([]string, error) {
 	var qs []quote
 	if err := helpers.Retry(func() error {
 		return db.DB().Where("channel = ?", channel).Order("created_at").Find(&qs).Error
@@ -63,7 +63,7 @@ func GetChannelQuotes(db database.Connector, channel string) ([]string, error) {
 	return quotes, nil
 }
 
-func GetMaxQuoteIdx(db database.Connector, channel string) (int, error) {
+func getMaxQuoteIdx(db database.Connector, channel string) (int, error) {
 	var count int64
 	if err := helpers.Retry(func() error {
 		return db.DB().
@@ -78,14 +78,14 @@ func GetMaxQuoteIdx(db database.Connector, channel string) (int, error) {
 	return int(count), nil
 }
 
-func GetQuote(db database.Connector, channel string, quote int) (int, string, error) {
-	quoteIdx, _, quoteText, err := GetQuoteRaw(db, channel, quote)
+func getQuote(db database.Connector, channel string, quote int) (int, string, error) {
+	quoteIdx, _, quoteText, err := getQuoteRaw(db, channel, quote)
 	return quoteIdx, quoteText, err
 }
 
-func GetQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int64, string, error) {
+func getQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int64, string, error) {
 	if quoteIdx == 0 {
-		max, err := GetMaxQuoteIdx(db, channel)
+		max, err := getMaxQuoteIdx(db, channel)
 		if err != nil {
 			return 0, 0, "", errors.Wrap(err, "getting max quote idx")
 		}
@@ -113,7 +113,7 @@ func GetQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int6
 	}
 }
 
-func SetQuotes(db database.Connector, channel string, quotes []string) error {
+func setQuotes(db database.Connector, channel string, quotes []string) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			if err := tx.Where("channel = ?", channel).Delete(&quote{}).Error; err != nil {
@@ -139,8 +139,8 @@ func SetQuotes(db database.Connector, channel string, quotes []string) error {
 	)
 }
 
-func UpdateQuote(db database.Connector, channel string, idx int, quoteStr string) error {
-	_, createdAt, _, err := GetQuoteRaw(db, channel, idx)
+func updateQuote(db database.Connector, channel string, idx int, quoteStr string) error {
+	_, createdAt, _, err := getQuoteRaw(db, channel, idx)
 	if err != nil {
 		return errors.Wrap(err, "fetching specified quote")
 	}

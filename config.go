@@ -13,7 +13,7 @@ import (
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/irc.v4"
@@ -23,7 +23,11 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-const expectedMinConfigVersion = 2
+const (
+	expectedMinConfigVersion = 2
+	rawLogDirPerm            = 0o755
+	rawLogFilePerm           = 0o644
+)
 
 var (
 	//go:embed default_config.yaml
@@ -121,10 +125,10 @@ func loadConfig(filename string) error {
 		if err = config.CloseRawMessageWriter(); err != nil {
 			return errors.Wrap(err, "closing old raw log writer")
 		}
-		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), 0o755); err != nil { //nolint:gomnd // This is a common directory permission
+		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), rawLogDirPerm); err != nil {
 			return errors.Wrap(err, "creating directories for raw log")
 		}
-		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err != nil { //nolint:gomnd // This is a common file permission
+		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, rawLogFilePerm); err != nil {
 			return errors.Wrap(err, "opening raw log for appending")
 		}
 	}
@@ -132,7 +136,7 @@ func loadConfig(filename string) error {
 	config = tmpConfig
 	timerService.UpdatePermitTimeout(tmpConfig.PermitTimeout)
 
-	log.WithFields(log.Fields{
+	logrus.WithFields(logrus.Fields{
 		"auto_messages": len(config.AutoMessages),
 		"rules":         len(config.Rules),
 		"channels":      len(config.Channels),
@@ -145,11 +149,15 @@ func loadConfig(filename string) error {
 }
 
 func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
-	f, err := os.Open(filename)
+	f, err := os.Open(filename) //#nosec:G304 // This is intended to open a variable file
 	if err != nil {
 		return errors.Wrap(err, "open config file")
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logrus.WithError(err).Error("closing config file (leaked fd)")
+		}
+	}()
 
 	decoder := yaml.NewDecoder(f)
 	decoder.KnownFields(strict)
@@ -205,10 +213,13 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 	fmt.Fprintf(tmpFile, "# Automatically updated by %s using Config-Editor frontend, last update: %s\n", authorName, time.Now().Format(time.RFC3339))
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
-		tmpFile.Close()
+		tmpFile.Close() //nolint:errcheck,gosec,revive
 		return errors.Wrap(err, "encoding config")
 	}
-	tmpFile.Close()
+
+	if err = tmpFile.Close(); err != nil {
+		return fmt.Errorf("closing temp config: %w", err)
+	}
 
 	if err = os.Rename(tmpFileName, filename); err != nil {
 		return errors.Wrap(err, "moving config to location")
@@ -220,7 +231,7 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 
 	git := newGitHelper(path.Dir(filename))
 	if !git.HasRepo() {
-		log.Error("Instructed to track changes using Git, but config not in repo")
+		logrus.Error("Instructed to track changes using Git, but config not in repo")
 		return nil
 	}
 
@@ -231,11 +242,15 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 }
 
 func writeDefaultConfigFile(filename string) error {
-	f, err := os.Create(filename)
+	f, err := os.Create(filename) //#nosec:G304 // This is intended to open a variable file
 	if err != nil {
 		return errors.Wrap(err, "creating config file")
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logrus.WithError(err).Error("closing config file (leaked fd)")
+		}
+	}()
 
 	_, err = f.Write(defaultConfigurationYAML)
 	return errors.Wrap(err, "writing default config")
@@ -276,11 +291,16 @@ func (c configAuthToken) validate(token string) error {
 	}
 }
 
-func (c *configFile) CloseRawMessageWriter() error {
+func (c *configFile) CloseRawMessageWriter() (err error) {
 	if c == nil || c.rawLogWriter == nil {
 		return nil
 	}
-	return c.rawLogWriter.Close()
+
+	if err = c.rawLogWriter.Close(); err != nil {
+		return fmt.Errorf("closing raw-log writer: %w", err)
+	}
+
+	return nil
 }
 
 func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *plugins.FieldCollection) []*plugins.Rule {
@@ -319,14 +339,14 @@ func (configFile) fixedDuration(d time.Duration) time.Duration {
 	if d > time.Second {
 		return d
 	}
-	return d * time.Second
+	return d * time.Second //nolint:durationcheck // Error is handled before
 }
 
 func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
 	if d == nil || *d >= time.Second {
 		return d
 	}
-	fd := *d * time.Second
+	fd := *d * time.Second //nolint:durationcheck // Error is handled before
 	return &fd
 }
 
@@ -368,11 +388,11 @@ func (c *configFile) fixTokenHashStorage() (err error) {
 
 func (c *configFile) runLoadChecks() (err error) {
 	if len(c.Channels) == 0 {
-		log.Warn("Loaded config with empty channel list")
+		logrus.Warn("Loaded config with empty channel list")
 	}
 
 	if len(c.Rules) == 0 {
-		log.Warn("Loaded config with empty ruleset")
+		logrus.Warn("Loaded config with empty ruleset")
 	}
 
 	var seen []string
@@ -397,7 +417,7 @@ func (c *configFile) updateAutoMessagesFromConfig(old *configFile) {
 		nam.lastMessageSent = time.Now()
 
 		if !nam.IsValid() {
-			log.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
+			logrus.WithField("index", idx).Warn("Auto-Message configuration is invalid and therefore disabled")
 		}
 
 		if old == nil {
@@ -426,7 +446,7 @@ func (c configFile) validateRuleActions() error {
 	var hasError bool
 
 	for _, r := range c.Rules {
-		logger := log.WithField("rule", r.MatcherID())
+		logger := logrus.WithField("rule", r.MatcherID())
 
 		if err := r.Validate(validateTemplate); err != nil {
 			logger.WithError(err).Error("Rule reported invalid config")

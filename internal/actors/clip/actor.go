@@ -1,3 +1,5 @@
+// Package clip contains an actor to create clips on behalf of a
+// channels owner
 package clip
 
 import (
@@ -22,6 +24,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	hasPerm = args.HasPermissionForChannel

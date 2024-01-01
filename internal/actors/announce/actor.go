@@ -1,6 +1,9 @@
+// Package announce contains a chat essage handler to create
+// announcements from the bot
 package announce
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/pkg/errors"
@@ -16,6 +19,7 @@ var (
 	announceChatcommandRegex = regexp.MustCompile(`^/announce(|blue|green|orange|purple) +(.+)$`)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 
@@ -32,7 +36,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("announce message does not match required format")
 	}
 
-	if err := botTwitchClient.SendChatAnnouncement(channel, matches[1], matches[2]); err != nil {
+	if err := botTwitchClient.SendChatAnnouncement(context.Background(), channel, matches[1], matches[2]); err != nil {
 		return errors.Wrap(err, "sending announcement")
 	}
 

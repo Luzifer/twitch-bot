@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// StreamInfo contains all the information known about a stream
 	StreamInfo struct {
 		ID           string    `json:"id"`
 		UserID       string    `json:"user_id"`
@@ -32,13 +33,15 @@ type (
 // the fact there just is no stream found
 var ErrNoStreamsFound = errors.New("no streams found")
 
-func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
+// GetCurrentStreamInfo returns the StreamInfo of the currently running
+// stream of the given username
+func (c *Client) GetCurrentStreamInfo(ctx context.Context, username string) (*StreamInfo, error) {
 	cacheKey := []string{"currentStreamInfo", username}
 	if si := c.apiCache.Get(cacheKey); si != nil {
 		return si.(*StreamInfo), nil
 	}
 
-	id, err := c.GetIDForUsername(username)
+	id, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting ID for username")
 	}
@@ -47,9 +50,8 @@ func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 		Data []*StreamInfo `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -75,13 +77,15 @@ func (c *Client) GetCurrentStreamInfo(username string) (*StreamInfo, error) {
 	return payload.Data[0], nil
 }
 
-func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
+// GetRecentStreamInfo returns the category and the title the given
+// username has configured for their recent (or next) stream
+func (c *Client) GetRecentStreamInfo(ctx context.Context, username string) (category string, title string, err error) {
 	cacheKey := []string{"recentStreamInfo", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.([2]string)[0], d.([2]string)[1], nil
 	}
 
-	id, err := c.GetIDForUsername(username)
+	id, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
 		return "", "", errors.Wrap(err, "getting ID for username")
 	}
@@ -95,9 +99,8 @@ func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
 		} `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,
@@ -116,7 +119,8 @@ func (c *Client) GetRecentStreamInfo(username string) (string, string, error) {
 	return payload.Data[0].GameName, payload.Data[0].Title, nil
 }
 
-func (c *Client) HasLiveStream(username string) (bool, error) {
+// HasLiveStream checks whether the given user is currently streaming
+func (c *Client) HasLiveStream(ctx context.Context, username string) (bool, error) {
 	cacheKey := []string{"hasLiveStream", username}
 	if d := c.apiCache.Get(cacheKey); d != nil {
 		return d.(bool), nil
@@ -130,9 +134,8 @@ func (c *Client) HasLiveStream(username string) (bool, error) {
 		} `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeAppAccessToken,
-		Context:  context.Background(),
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,

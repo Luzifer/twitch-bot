@@ -78,23 +78,24 @@ func (discordActor) Name() string { return "discordhook" }
 
 func (d discordActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if err = d.ValidateRequireNonEmpty(attrs, "hook_url"); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	if err = d.ValidateRequireValidTemplate(tplValidator, attrs, "content"); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	if err = d.ValidateRequireValidTemplateIfSet(tplValidator, attrs, "avatar_url", "username"); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	if !attrs.MustBool("add_embed", ptrBoolFalse) {
 		// We're not validating the rest if embeds are disabled but in
 		// this case the content is mandatory
-		return d.ValidateRequireNonEmpty(attrs, "content")
+		return d.ValidateRequireNonEmpty(attrs, "content") //nolint:wrapcheck
 	}
 
+	//nolint:wrapcheck
 	return d.ValidateRequireValidTemplateIfSet(
 		tplValidator, attrs,
 		"embed_title",

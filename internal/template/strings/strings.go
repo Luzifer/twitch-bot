@@ -1,3 +1,4 @@
+// Package strings contains string manipulation helpers
 package strings
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterTemplateFunction("b64urlenc", plugins.GenericTemplateFunctionGetter(base64URLEncode), plugins.TemplateFuncDocumentation{
 		Description: "Encodes the input using base64 URL-encoding (like `b64enc` but using `URLEncoding` instead of `StdEncoding`)",

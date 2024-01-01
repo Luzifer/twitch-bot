@@ -1,3 +1,4 @@
+// Package raw contains an actor to send raw IRC messages
 package raw
 
 import (
@@ -16,6 +17,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	send = args.SendMessage
@@ -45,7 +47,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	rawMsg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing raw message")
@@ -62,10 +64,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
 	}

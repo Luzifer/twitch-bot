@@ -1,3 +1,5 @@
+// Package messagehook contains actors to send discord / slack webhook
+// requests
 package messagehook
 
 import (
@@ -25,6 +27,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
@@ -55,7 +58,11 @@ func sendPayload(hookURL string, payload any, expRespCode int) (preventCooldown 
 	if err != nil {
 		return false, errors.Wrap(err, "executing request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	if resp.StatusCode != expRespCode {
 		body, err := io.ReadAll(resp.Body)

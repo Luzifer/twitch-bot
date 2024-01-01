@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -101,7 +102,7 @@ func TestAllowExecuteChannelCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	r.timerStore.AddCooldown(TimerTypeCooldown, c1.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown))
+	require.NoError(t, r.timerStore.AddCooldown(TimerTypeCooldown, c1.Params[0], r.MatcherID(), time.Now().Add(*r.ChannelCooldown)))
 
 	if r.allowExecuteChannelCooldown(testLogger, c1, nil, twitch.BadgeCollection{}, nil) {
 		t.Error("Call after cooldown added was allowed")
@@ -125,7 +126,7 @@ func TestAllowExecuteDisableOnPermit(t *testing.T) {
 		t.Error("Execution was not allowed without permit")
 	}
 
-	r.timerStore.AddPermit(m.Params[0], m.User)
+	require.NoError(t, r.timerStore.AddPermit(m.Params[0], m.User))
 	if r.allowExecuteDisableOnPermit(testLogger, m, nil, twitch.BadgeCollection{}, nil) {
 		t.Error("Execution was allowed with permit")
 	}
@@ -198,7 +199,7 @@ func TestAllowExecuteRuleCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	r.timerStore.AddCooldown(TimerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown))
+	require.NoError(t, r.timerStore.AddCooldown(TimerTypeCooldown, "", r.MatcherID(), time.Now().Add(*r.Cooldown)))
 
 	if r.allowExecuteRuleCooldown(testLogger, nil, nil, twitch.BadgeCollection{}, nil) {
 		t.Error("Call after cooldown added was allowed")
@@ -221,7 +222,7 @@ func TestAllowExecuteUserCooldown(t *testing.T) {
 	}
 
 	// Add cooldown
-	r.timerStore.AddCooldown(TimerTypeCooldown, c1.User, r.MatcherID(), time.Now().Add(*r.UserCooldown))
+	require.NoError(t, r.timerStore.AddCooldown(TimerTypeCooldown, c1.User, r.MatcherID(), time.Now().Add(*r.UserCooldown)))
 
 	if r.allowExecuteUserCooldown(testLogger, c1, nil, twitch.BadgeCollection{}, nil) {
 		t.Error("Call after cooldown added was allowed")

@@ -1,6 +1,7 @@
 package raffle
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -70,7 +71,7 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 		return errors.Wrap(err, "getting twitch client for raffle")
 	}
 
-	since, err := raffleChan.GetFollowDate(user, strings.TrimLeft(channel, "#"))
+	since, err := raffleChan.GetFollowDate(context.Background(), user, strings.TrimLeft(channel, "#"))
 	switch {
 	case err == nil:
 		doesFollow = since.Before(time.Now().Add(-r.MinFollowAge))

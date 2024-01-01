@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func textAPI(uri string, fallback ...string) (string, error) {
@@ -29,7 +30,11 @@ func textAPI(uri string, fallback ...string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "executing request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK:

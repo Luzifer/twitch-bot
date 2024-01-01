@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,7 +58,9 @@ func loadPlugins(pluginDir string) error {
 			return nil
 		}
 
-		f.(func(plugins.RegistrationArguments) error)(args)
+		if err = f.(func(plugins.RegistrationArguments) error)(args); err != nil {
+			return fmt.Errorf("registering plugin: %w", err)
+		}
 
 		return nil
 	}), "loading plugins")

@@ -31,7 +31,7 @@ func authBackendTwitchToken(token string) (modules []string, expiresAt time.Time
 
 	var httpError twitch.HTTPError
 
-	id, user, err := tc.GetAuthorizedUser()
+	id, user, err := tc.GetAuthorizedUser(context.Background())
 	switch {
 	case err == nil:
 		// We got a valid user, continue check below

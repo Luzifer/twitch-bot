@@ -3,7 +3,7 @@ package plugins
 import (
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
@@ -12,6 +12,7 @@ import (
 )
 
 type (
+	// Actor defines an interface to implement in the plugin for actors
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
 		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData *FieldCollection, attrs *FieldCollection) (preventCooldown bool, err error)
@@ -28,37 +29,82 @@ type (
 		Validate(TemplateValidatorFunc, *FieldCollection) error
 	}
 
+	// ActorCreationFunc is a function to return a new instance of the
+	// plugins actor
 	ActorCreationFunc func() Actor
 
+	// ActorRegistrationFunc is passed from the bot to the plugins
+	// RegisterFunc to register a new actor in the bot
 	ActorRegistrationFunc func(name string, acf ActorCreationFunc)
 
+	// ActorDocumentationRegistrationFunc is passed from the bot to the
+	// plugins RegisterFunc to register a new actor documentation
 	ActorDocumentationRegistrationFunc func(ActionDocumentation)
 
-	ChannelPermissionCheckFunc    func(channel string, scopes ...string) (bool, error)
+	// ChannelPermissionCheckFunc is available to check whether the bot
+	// has stored scopes / permissions for the given channel. All given
+	// scopes need to be available to return true.
+	ChannelPermissionCheckFunc func(channel string, scopes ...string) (bool, error)
+	// ChannelAnyPermissionCheckFunc is available to check whether the bot
+	// has stored scopes / permissions for the given channel. Any of the
+	// given scopes need to be available to return true.
 	ChannelAnyPermissionCheckFunc func(channel string, scopes ...string) (bool, error)
 
+	// CronRegistrationFunc is passed from the bot to the
+	// plugins RegisterFunc to register a new cron function in the
+	// internal cron scheduler
 	CronRegistrationFunc func(spec string, cmd func()) (cron.EntryID, error)
 
+	// DatabaseCopyFunc defines the function type the plugin must
+	// implement and register to enable the bot to replicate its database
+	// stored content into a new database
 	DatabaseCopyFunc func(src, target *gorm.DB) error
 
-	EventHandlerFunc         func(evt string, eventData *FieldCollection) error
+	// EventHandlerFunc defines the type of function required to listen
+	// for events
+	EventHandlerFunc func(evt string, eventData *FieldCollection) error
+	// EventHandlerRegisterFunc is passed from the bot to the
+	// plugins RegisterFunc to register a new event handler function
+	// which is then fed with all events occurring in the bot
 	EventHandlerRegisterFunc func(EventHandlerFunc) error
 
-	LoggerCreationFunc func(moduleName string) *log.Entry
+	// LoggerCreationFunc is passed from the bot to the
+	// plugins RegisterFunc to retrieve a pre-configured logrus.Entry
+	// scoped for the given module name
+	LoggerCreationFunc func(moduleName string) *logrus.Entry
 
+	// ModuleConfigGetterFunc is passed from the bot to the
+	// plugins RegisterFunc to fetch module generic or channel specific
+	// configuration from the module configuration
 	ModuleConfigGetterFunc func(module, channel string) *FieldCollection
 
+	// MsgFormatter is passed from the bot to the
+	// plugins RegisterFunc to format messages using all registered and
+	// available template functions
 	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
 
-	MsgModificationFunc             func(*irc.Message) error
+	// MsgModificationFunc can be used to modify messages between the
+	// plugins generating them and the bot sending them to the Twitch
+	// servers
+	MsgModificationFunc func(*irc.Message) error
+	// MsgModificationRegistrationFunc is passed from the bot to the
+	// plugins RegisterFunc to register a new MsgModificationFunc for
+	// the given prefix
 	MsgModificationRegistrationFunc func(linePrefix string, modFn MsgModificationFunc)
 
-	RawMessageHandlerFunc         func(m *irc.Message) error
+	// RawMessageHandlerFunc is the type of function to implement in
+	// your plugin in order to process raw-messages from the IRC
+	// connection
+	RawMessageHandlerFunc func(m *irc.Message) error
+	// RawMessageHandlerRegisterFunc is passed from the bot to the
+	// plugins RegisterFunc to register a new RawMessageHandlerFunc
 	RawMessageHandlerRegisterFunc func(RawMessageHandlerFunc) error
 
 	// RegisterFunc is the type of function your plugin must expose with the name Register
 	RegisterFunc func(RegistrationArguments) error
 
+	// RegistrationArguments is the object your RegisterFunc will receive
+	// and can use to interact with the bot instance
 	RegistrationArguments struct {
 		// CreateEvent allows to create an event handed out to all modules to handle
 		CreateEvent EventHandlerFunc
@@ -106,32 +152,35 @@ type (
 		ValidateToken ValidateTokenFunc
 	}
 
+	// SendMessageFunc is available through the RegistrationArguments
+	// and MUST be used to send messages to the Twitch servers
 	SendMessageFunc func(*irc.Message) error
 
-	StorageManager interface {
-		DeleteModuleStore(moduleUUID string) error
-		GetModuleStore(moduleUUID string, storedObject StorageUnmarshaller) error
-		SetModuleStore(moduleUUID string, storedObject StorageMarshaller) error
-	}
-
-	StorageMarshaller interface {
-		MarshalStoredObject() ([]byte, error)
-	}
-
-	StorageUnmarshaller interface {
-		UnmarshalStoredObject([]byte) error
-	}
-
-	TemplateFuncGetter   func(*irc.Message, *Rule, *FieldCollection) interface{}
+	// TemplateFuncGetter is the type of function to implement in the
+	// plugin to create a new template function on request of the bot
+	TemplateFuncGetter func(*irc.Message, *Rule, *FieldCollection) any
+	// TemplateFuncRegister is passed from the bot to the
+	// plugins RegisterFunc to register a new TemplateFuncGetter
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter, doc ...TemplateFuncDocumentation)
 
+	// TemplateValidatorFunc is passed from the bot to the
+	// plugins RegisterFunc to validate templates considering all
+	// registered template functions
 	TemplateValidatorFunc func(raw string) error
 
+	// ValidateTokenFunc is passed from the bot to the
+	// plugins RegisterFunc to validate tokens and their access
+	// permissions
 	ValidateTokenFunc func(token string, modules ...string) error
 )
 
+// ErrSkipSendingMessage should be returned by a MsgModificationFunc
+// to prevent the message to be sent to the Twitch servers
 var ErrSkipSendingMessage = errors.New("skip sending message")
 
-func GenericTemplateFunctionGetter(f interface{}) TemplateFuncGetter {
-	return func(*irc.Message, *Rule, *FieldCollection) interface{} { return f }
+// GenericTemplateFunctionGetter wraps a generic template function not
+// requiring access to the irc.Message, Rule or FieldCollection to
+// satisfy the TemplateFuncGetter interface
+func GenericTemplateFunctionGetter(f any) TemplateFuncGetter {
+	return func(*irc.Message, *Rule, *FieldCollection) any { return f }
 }

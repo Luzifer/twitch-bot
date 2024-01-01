@@ -1,6 +1,7 @@
 package twitch
 
 import (
+	"context"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -38,7 +39,7 @@ func tplTwitchDoesFollowLongerThan(args plugins.RegistrationArguments) {
 			return false, errors.Errorf("unexpected input for duration %t", t)
 		}
 
-		fd, err := args.GetTwitchClient().GetFollowDate(from, to)
+		fd, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
 		switch {
 		case err == nil:
 			return time.Since(fd) > age, nil
@@ -61,7 +62,7 @@ func tplTwitchDoesFollowLongerThan(args plugins.RegistrationArguments) {
 
 func tplTwitchDoesFollow(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("doesFollow", plugins.GenericTemplateFunctionGetter(func(from, to string) (bool, error) {
-		_, err := args.GetTwitchClient().GetFollowDate(from, to)
+		_, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
 		switch {
 		case err == nil:
 			return true, nil
@@ -84,7 +85,7 @@ func tplTwitchDoesFollow(args plugins.RegistrationArguments) {
 
 func tplTwitchFollowAge(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("followAge", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Duration, error) {
-		since, err := args.GetTwitchClient().GetFollowDate(from, to)
+		since, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
 		return time.Since(since), errors.Wrap(err, "getting follow date")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Looks up when `from` followed `to` and returns the duration between then and now (the bot must be moderator of `to` to read this)",
@@ -98,7 +99,8 @@ func tplTwitchFollowAge(args plugins.RegistrationArguments) {
 
 func tplTwitchFollowDate(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("followDate", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Time, error) {
-		return args.GetTwitchClient().GetFollowDate(from, to)
+		fd, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
+		return fd, errors.Wrap(err, "getting follow date")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Looks up when `from` followed `to` (the bot must be moderator of `to` to read this)",
 		Syntax:      "followDate <from> <to>",

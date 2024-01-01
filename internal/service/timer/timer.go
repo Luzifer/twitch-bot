@@ -1,3 +1,4 @@
+// Package timer contains a service to store and manage timers in a database
 package timer
 
 import (
@@ -19,6 +20,7 @@ import (
 )
 
 type (
+	// Service implements a timer service
 	Service struct {
 		db            database.Connector
 		permitTimeout time.Duration
@@ -32,6 +34,7 @@ type (
 
 var _ plugins.TimerStore = (*Service)(nil)
 
+// New creates a new Service
 func New(db database.Connector, cronService *cron.Cron) (*Service, error) {
 	s := &Service{
 		db: db,
@@ -46,20 +49,24 @@ func New(db database.Connector, cronService *cron.Cron) (*Service, error) {
 	return s, errors.Wrap(s.db.DB().AutoMigrate(&timer{}), "applying migrations")
 }
 
-func (s *Service) CopyDatabase(src, target *gorm.DB) error {
-	return database.CopyObjects(src, target, &timer{})
+// CopyDatabase enables the service to migrate to a new database
+func (*Service) CopyDatabase(src, target *gorm.DB) error {
+	return database.CopyObjects(src, target, &timer{}) //nolint:wrapcheck // Helper in own package
 }
 
+// UpdatePermitTimeout sets a new permit timeout for future permits
 func (s *Service) UpdatePermitTimeout(d time.Duration) {
 	s.permitTimeout = d
 }
 
 // Cooldown timer
 
+// AddCooldown adds a new cooldown timer
 func (s Service) AddCooldown(tt plugins.TimerType, limiter, ruleID string, expiry time.Time) error {
 	return s.SetTimer(s.getCooldownTimerKey(tt, limiter, ruleID), expiry)
 }
 
+// InCooldown checks whether the cooldown has expired
 func (s Service) InCooldown(tt plugins.TimerType, limiter, ruleID string) (bool, error) {
 	return s.HasTimer(s.getCooldownTimerKey(tt, limiter, ruleID))
 }
@@ -72,10 +79,12 @@ func (Service) getCooldownTimerKey(tt plugins.TimerType, limiter, ruleID string)
 
 // Permit timer
 
+// AddPermit adds a new permit timer
 func (s Service) AddPermit(channel, username string) error {
 	return s.SetTimer(s.getPermitTimerKey(channel, username), time.Now().Add(s.permitTimeout))
 }
 
+// HasPermit checks whether a valid permit is present
 func (s Service) HasPermit(channel, username string) (bool, error) {
 	return s.HasTimer(s.getPermitTimerKey(channel, username))
 }
@@ -88,12 +97,13 @@ func (Service) getPermitTimerKey(channel, username string) string {
 
 // Generic timer
 
+// HasTimer checks whether a timer with given ID is present
 func (s Service) HasTimer(id string) (bool, error) {
 	var t timer
 	err := helpers.Retry(func() error {
 		err := s.db.DB().First(&t, "id = ? AND expires_at >= ?", id, time.Now().UTC()).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err)
+			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // We'll get our own error
 		}
 		return err
 	})
@@ -109,6 +119,7 @@ func (s Service) HasTimer(id string) (bool, error) {
 	}
 }
 
+// SetTimer sets a timer with given ID and expiry
 func (s Service) SetTimer(id string, expiry time.Time) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {

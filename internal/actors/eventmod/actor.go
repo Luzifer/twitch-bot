@@ -1,3 +1,5 @@
+// Package eventmod contains an actor to modify event data during rule
+// execution by adding fields (template variables)
 package eventmod
 
 import (
@@ -13,6 +15,7 @@ const actorName = "eventmod"
 
 var formatMessage plugins.MsgFormatter
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
@@ -41,7 +44,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	fd, err := formatMessage(attrs.MustString("fields", ptrStringEmpty), m, r, eventData)
@@ -63,10 +66,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	fieldsTemplate, err := attrs.String("fields")
 	if err != nil || fieldsTemplate == "" {
 		return errors.New("fields must be non-empty string")

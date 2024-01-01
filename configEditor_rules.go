@@ -90,7 +90,7 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if msg.SubscribeFrom != nil {
-		if _, err = msg.UpdateFromSubscription(); err != nil {
+		if _, err = msg.UpdateFromSubscription(r.Context()); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

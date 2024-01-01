@@ -1,3 +1,5 @@
+// Package filesay contains an actor to paste a remote URL as chat
+// commands i.e. for bulk banning users
 package filesay
 
 import (
@@ -8,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -24,6 +27,7 @@ var (
 	send          plugins.SendMessageFunc
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	send = args.SendMessage
@@ -53,7 +57,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	source, err := formatMessage(attrs.MustString("source", ptrStringEmpty), m, r, eventData)
@@ -81,7 +85,11 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	if err != nil {
 		return false, errors.Wrap(err, "executing HTTP request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return false, errors.Errorf("http status %d", resp.StatusCode)
@@ -103,10 +111,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return true }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return true }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) error {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) error {
 	sourceTpl, err := attrs.String("source")
 	if err != nil || sourceTpl == "" {
 		return errors.New("source is expected to be non-empty string")

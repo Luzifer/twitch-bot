@@ -10,14 +10,14 @@ import (
 )
 
 type (
-	Counter struct {
+	counter struct {
 		Name  string `gorm:"primaryKey"`
 		Value int64
 	}
 )
 
-func GetCounterValue(db database.Connector, counterName string) (int64, error) {
-	var c Counter
+func getCounterValue(db database.Connector, counterName string) (int64, error) {
+	var c counter
 
 	err := helpers.Retry(func() error {
 		err := db.DB().First(&c, "name = ?", counterName).Error
@@ -31,9 +31,10 @@ func GetCounterValue(db database.Connector, counterName string) (int64, error) {
 	return c.Value, errors.Wrap(err, "querying counter")
 }
 
-func UpdateCounter(db database.Connector, counterName string, value int64, absolute bool) error {
+//revive:disable-next-line:flag-parameter
+func updateCounter(db database.Connector, counterName string, value int64, absolute bool) error {
 	if !absolute {
-		cv, err := GetCounterValue(db, counterName)
+		cv, err := getCounterValue(db, counterName)
 		if err != nil {
 			return errors.Wrap(err, "getting previous value")
 		}
@@ -46,14 +47,14 @@ func UpdateCounter(db database.Connector, counterName string, value int64, absol
 			return tx.Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "name"}},
 				DoUpdates: clause.AssignmentColumns([]string{"value"}),
-			}).Create(Counter{Name: counterName, Value: value}).Error
+			}).Create(counter{Name: counterName, Value: value}).Error
 		}),
 		"storing counter value",
 	)
 }
 
 func getCounterRank(db database.Connector, prefix, name string) (rank, count int64, err error) {
-	var cc []Counter
+	var cc []counter
 
 	if err = helpers.Retry(func() error {
 		return db.DB().
@@ -74,8 +75,8 @@ func getCounterRank(db database.Connector, prefix, name string) (rank, count int
 	return rank, count, nil
 }
 
-func getCounterTopList(db database.Connector, prefix string, n int) ([]Counter, error) {
-	var cc []Counter
+func getCounterTopList(db database.Connector, prefix string, n int) ([]counter, error) {
+	var cc []counter
 
 	err := helpers.Retry(func() error {
 		return db.DB().

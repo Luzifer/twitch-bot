@@ -12,6 +12,7 @@ import (
 const pollCacheTimeout = 10 * time.Second // Cache polls for a short moment to prevent multiple requests in one template
 
 type (
+	// PollInfo contains information about a Twitch poll
 	PollInfo struct {
 		ID               string `json:"id"`
 		BroadcasterID    string `json:"broadcaster_id"`
@@ -33,13 +34,15 @@ type (
 	}
 )
 
-func (c *Client) GetLatestPoll(ctx context.Context, username string) (*PollInfo, error) {
-	cacheKey := []string{"getLatestPoll", username}
+// GetLatestPoll returns the lastest (active or past) poll inside the
+// given channel
+func (c *Client) GetLatestPoll(ctx context.Context, channel string) (*PollInfo, error) {
+	cacheKey := []string{"getLatestPoll", channel}
 	if poll := c.apiCache.Get(cacheKey); poll != nil {
 		return poll.(*PollInfo), nil
 	}
 
-	id, err := c.GetIDForUsername(username)
+	id, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting ID for username")
 	}
@@ -48,9 +51,8 @@ func (c *Client) GetLatestPoll(ctx context.Context, username string) (*PollInfo,
 		Data []*PollInfo `json:"data"`
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,

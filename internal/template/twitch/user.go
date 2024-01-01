@@ -20,12 +20,12 @@ func init() {
 
 func tplTwitchDisplayName(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("displayName", plugins.GenericTemplateFunctionGetter(func(username string, v ...string) (string, error) {
-		displayName, err := args.GetTwitchClient().GetDisplayNameForUser(strings.TrimLeft(username, "#"))
+		displayName, err := args.GetTwitchClient().GetDisplayNameForUser(context.Background(), strings.TrimLeft(username, "#"))
 		if len(v) > 0 && (err != nil || displayName == "") {
 			return v[0], nil //nolint:nilerr // Default value, no need to return error
 		}
 
-		return displayName, err
+		return displayName, errors.Wrap(err, "getting display name")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the display name the specified user set for themselves",
 		Syntax:      "displayName <username> [fallback]",
@@ -38,7 +38,8 @@ func tplTwitchDisplayName(args plugins.RegistrationArguments) {
 
 func tplTwitchIDForUsername(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("idForUsername", plugins.GenericTemplateFunctionGetter(func(username string) (string, error) {
-		return args.GetTwitchClient().GetIDForUsername(username)
+		id, err := args.GetTwitchClient().GetIDForUsername(context.Background(), username)
+		return id, errors.Wrap(err, "getting ID for username")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the user-id for the given username",
 		Syntax:      "idForUsername <username>",
@@ -51,7 +52,7 @@ func tplTwitchIDForUsername(args plugins.RegistrationArguments) {
 
 func tplTwitchProfileImage(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("profileImage", plugins.GenericTemplateFunctionGetter(func(username string) (string, error) {
-		user, err := args.GetTwitchClient().GetUserInformation(strings.TrimLeft(username, "#@"))
+		user, err := args.GetTwitchClient().GetUserInformation(context.Background(), strings.TrimLeft(username, "#@"))
 		if err != nil {
 			return "", errors.Wrap(err, "getting user info")
 		}
@@ -69,7 +70,8 @@ func tplTwitchProfileImage(args plugins.RegistrationArguments) {
 
 func tplTwitchUsernameForID(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("usernameForID", plugins.GenericTemplateFunctionGetter(func(id string) (string, error) {
-		return args.GetTwitchClient().GetUsernameForID(context.Background(), id)
+		username, err := args.GetTwitchClient().GetUsernameForID(context.Background(), id)
+		return username, errors.Wrap(err, "getting username for ID")
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the current login name of an user-id",
 		Syntax:      "usernameForID <user-id>",

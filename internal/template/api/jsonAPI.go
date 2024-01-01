@@ -10,6 +10,7 @@ import (
 
 	"github.com/itchyny/gojq"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,7 +42,11 @@ func jsonAPI(uri, path string, fallback ...string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "executing request")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK:

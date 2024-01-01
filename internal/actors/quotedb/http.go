@@ -3,6 +3,7 @@ package quotedb
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,16 +21,19 @@ var (
 	listScript []byte
 )
 
-func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
-	register(plugins.HTTPRouteRegistrationArgs{
+//nolint:funlen
+func registerAPI(register plugins.HTTPRouteRegistrationFunc) (err error) {
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc:       handleScript,
 		Method:            http.MethodGet,
 		Module:            "quotedb",
 		Path:              "/app.js",
 		SkipDocumentation: true,
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	register(plugins.HTTPRouteRegistrationArgs{
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Add quotes for the given {channel}",
 		HandlerFunc:       handleAddQuotes,
 		Method:            http.MethodPost,
@@ -44,9 +48,11 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	register(plugins.HTTPRouteRegistrationArgs{
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Deletes quote with given {idx} from {channel}",
 		HandlerFunc:       handleDeleteQuote,
 		Method:            http.MethodDelete,
@@ -65,9 +71,11 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 				Name:        "idx",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	register(plugins.HTTPRouteRegistrationArgs{
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		Accept:       []string{"application/json", "text/html"},
 		Description:  "Lists all quotes for the given {channel}",
 		HandlerFunc:  handleListQuotes,
@@ -82,9 +90,11 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	register(plugins.HTTPRouteRegistrationArgs{
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Set quotes for the given {channel} (will overwrite ALL quotes!)",
 		HandlerFunc:       handleReplaceQuotes,
 		Method:            http.MethodPut,
@@ -99,9 +109,11 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	register(plugins.HTTPRouteRegistrationArgs{
+	if err = register(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Updates quote with given {idx} from {channel}",
 		HandlerFunc:       handleUpdateQuote,
 		Method:            http.MethodPut,
@@ -120,7 +132,11 @@ func registerAPI(register plugins.HTTPRouteRegistrationFunc) {
 				Name:        "idx",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
+
+	return nil
 }
 
 func handleAddQuotes(w http.ResponseWriter, r *http.Request) {
@@ -133,7 +149,7 @@ func handleAddQuotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, q := range quotes {
-		if err := AddQuote(db, channel, q); err != nil {
+		if err := addQuote(db, channel, q); err != nil {
 			http.Error(w, errors.Wrap(err, "adding quote").Error(), http.StatusInternalServerError)
 			return
 		}
@@ -154,7 +170,7 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = DelQuote(db, channel, idx); err != nil {
+	if err = delQuote(db, channel, idx); err != nil {
 		http.Error(w, errors.Wrap(err, "deleting quote").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -165,13 +181,13 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write(listFrontend)
+		w.Write(listFrontend) //nolint:errcheck,gosec,revive
 		return
 	}
 
 	channel := "#" + strings.TrimLeft(mux.Vars(r)["channel"], "#")
 
-	quotes, err := GetChannelQuotes(db, channel)
+	quotes, err := getChannelQuotes(db, channel)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting quotes").Error(), http.StatusInternalServerError)
 		return
@@ -192,7 +208,7 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := SetQuotes(db, channel, quotes); err != nil {
+	if err := setQuotes(db, channel, quotes); err != nil {
 		http.Error(w, errors.Wrap(err, "replacing quotes").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -202,7 +218,7 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 
 func handleScript(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript")
-	w.Write(listScript)
+	w.Write(listScript) //nolint:errcheck,gosec,revive
 }
 
 func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
@@ -228,7 +244,7 @@ func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = UpdateQuote(db, channel, idx, quotes[0]); err != nil {
+	if err = updateQuote(db, channel, idx, quotes[0]); err != nil {
 		http.Error(w, errors.Wrap(err, "updating quote").Error(), http.StatusInternalServerError)
 		return
 	}

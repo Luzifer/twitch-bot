@@ -56,6 +56,6 @@ func (g gitHelper) HasRepo() bool {
 	return err == nil
 }
 
-func (g gitHelper) getSignature(name, mail string) *object.Signature {
+func (gitHelper) getSignature(name, mail string) *object.Signature {
 	return &object.Signature{Name: name, Email: mail, When: time.Now()}
 }

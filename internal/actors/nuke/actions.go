@@ -1,6 +1,7 @@
 package nuke
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,6 +15,7 @@ type (
 func actionBan(channel, match, _, user string) error {
 	return errors.Wrap(
 		botTwitchClient.BanUser(
+			context.Background(),
 			channel,
 			user,
 			0,
@@ -26,6 +28,7 @@ func actionBan(channel, match, _, user string) error {
 func actionDelete(channel, _, msgid, _ string) (err error) {
 	return errors.Wrap(
 		botTwitchClient.DeleteMessage(
+			context.Background(),
 			channel,
 			msgid,
 		),
@@ -37,6 +40,7 @@ func getActionTimeout(duration time.Duration) actionFn {
 	return func(channel, match, msgid, user string) error {
 		return errors.Wrap(
 			botTwitchClient.BanUser(
+				context.Background(),
 				channel,
 				user,
 				duration,

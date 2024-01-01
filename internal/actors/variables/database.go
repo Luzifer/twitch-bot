@@ -17,12 +17,12 @@ type (
 	}
 )
 
-func GetVariable(db database.Connector, key string) (string, error) {
+func getVariable(db database.Connector, key string) (string, error) {
 	var v variable
 	err := helpers.Retry(func() error {
 		err := db.DB().First(&v, "name = ?", key).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err)
+			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // we get our internal error
 		}
 		return err
 	})
@@ -38,7 +38,7 @@ func GetVariable(db database.Connector, key string) (string, error) {
 	}
 }
 
-func SetVariable(db database.Connector, key, value string) error {
+func setVariable(db database.Connector, key, value string) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			return tx.Clauses(clause.OnConflict{
@@ -50,7 +50,7 @@ func SetVariable(db database.Connector, key, value string) error {
 	)
 }
 
-func RemoveVariable(db database.Connector, key string) error {
+func removeVariable(db database.Connector, key string) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			return tx.Delete(&variable{}, "name = ?", key).Error

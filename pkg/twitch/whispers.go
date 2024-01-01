@@ -14,19 +14,19 @@ import (
 //
 // For details about message limits see the official documentation:
 // https://dev.twitch.tv/docs/api/reference#send-whisper
-func (c *Client) SendWhisper(toUser, message string) error {
+func (c *Client) SendWhisper(ctx context.Context, toUser, message string) error {
 	var payload struct {
 		Message string `json:"message"`
 	}
 
 	payload.Message = message
 
-	botID, _, err := c.GetAuthorizedUser()
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	targetID, err := c.GetIDForUsername(toUser)
+	targetID, err := c.GetIDForUsername(ctx, toUser)
 	if err != nil {
 		return errors.Wrap(err, "getting target user-id")
 	}
@@ -37,9 +37,8 @@ func (c *Client) SendWhisper(toUser, message string) error {
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,
 			Body:     body,

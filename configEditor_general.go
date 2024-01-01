@@ -244,7 +244,7 @@ func configEditorHandleGeneralUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := range payload.BotEditors {
-		usr, err := twitchClient.GetUserInformation(payload.BotEditors[i])
+		usr, err := twitchClient.GetUserInformation(r.Context(), payload.BotEditors[i])
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "getting bot editor profile").Error(), http.StatusInternalServerError)
 			return

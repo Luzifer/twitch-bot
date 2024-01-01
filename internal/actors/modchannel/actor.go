@@ -1,3 +1,5 @@
+// Package modchannel contains an actor to modify title / category of
+// a channel
 package modchannel
 
 import (
@@ -20,6 +22,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 	tcGetter = args.GetTwitchClientForChannel
@@ -67,7 +70,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		game  = attrs.MustString("game", ptrStringEmpty)
 		title = attrs.MustString("title", ptrStringEmpty)
@@ -113,10 +116,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("channel"); err != nil || v == "" {
 		return errors.New("channel must be non-empty string")
 	}

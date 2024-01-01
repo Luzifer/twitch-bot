@@ -25,7 +25,7 @@ type (
 	}
 )
 
-func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) (evtID uint64, err error) {
+func addChannelEvent(db database.Connector, channel string, evt socketMessage) (evtID uint64, err error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(evt.Fields); err != nil {
 		return 0, errors.Wrap(err, "encoding fields")
@@ -47,7 +47,7 @@ func AddChannelEvent(db database.Connector, channel string, evt SocketMessage) (
 	return storEvt.ID, nil
 }
 
-func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, error) {
+func getChannelEvents(db database.Connector, channel string) ([]socketMessage, error) {
 	var evts []overlaysEvent
 
 	if err := helpers.Retry(func() error {
@@ -56,7 +56,7 @@ func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, e
 		return nil, errors.Wrap(err, "querying channel events")
 	}
 
-	var out []SocketMessage
+	var out []socketMessage
 	for _, e := range evts {
 		sm, err := e.ToSocketMessage()
 		if err != nil {
@@ -69,29 +69,29 @@ func GetChannelEvents(db database.Connector, channel string) ([]SocketMessage, e
 	return out, nil
 }
 
-func GetEventByID(db database.Connector, eventID uint64) (SocketMessage, error) {
+func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) {
 	var evt overlaysEvent
 
 	if err := helpers.Retry(func() (err error) {
 		err = db.DB().Where("id = ?", eventID).First(&evt).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err)
+			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // we get our internal error
 		}
 		return err
 	}); err != nil {
-		return SocketMessage{}, errors.Wrap(err, "fetching event")
+		return socketMessage{}, errors.Wrap(err, "fetching event")
 	}
 
 	return evt.ToSocketMessage()
 }
 
-func (o overlaysEvent) ToSocketMessage() (SocketMessage, error) {
+func (o overlaysEvent) ToSocketMessage() (socketMessage, error) {
 	fields := new(plugins.FieldCollection)
 	if err := json.NewDecoder(strings.NewReader(o.Fields)).Decode(fields); err != nil {
-		return SocketMessage{}, errors.Wrap(err, "decoding fields")
+		return socketMessage{}, errors.Wrap(err, "decoding fields")
 	}
 
-	return SocketMessage{
+	return socketMessage{
 		EventID: o.ID,
 		IsLive:  false,
 		Time:    o.CreatedAt,

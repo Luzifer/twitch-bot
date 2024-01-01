@@ -22,11 +22,11 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		tEvent2 = tEvent1.Add(time.Second)
 	)
 
-	evts, err := GetChannelEvents(dbc, channel)
+	evts, err := getChannelEvents(dbc, channel)
 	assert.NoError(t, err, "getting events on empty db")
 	assert.Zero(t, evts, "expect no events on empty db")
 
-	evtID, err = AddChannelEvent(dbc, channel, SocketMessage{
+	evtID, err = addChannelEvent(dbc, channel, socketMessage{
 		IsLive: true,
 		Time:   tEvent2,
 		Type:   "event 2",
@@ -35,7 +35,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 	assert.Equal(t, uint64(1), evtID)
 	assert.NoError(t, err, "adding second event")
 
-	evtID, err = AddChannelEvent(dbc, channel, SocketMessage{
+	evtID, err = addChannelEvent(dbc, channel, socketMessage{
 		IsLive: true,
 		Time:   tEvent1,
 		Type:   "event 1",
@@ -44,7 +44,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 	assert.Equal(t, uint64(2), evtID)
 	assert.NoError(t, err, "adding first event")
 
-	evtID, err = AddChannelEvent(dbc, "#otherchannel", SocketMessage{
+	evtID, err = addChannelEvent(dbc, "#otherchannel", socketMessage{
 		IsLive: true,
 		Time:   tEvent1,
 		Type:   "event",
@@ -53,15 +53,15 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 	assert.Equal(t, uint64(3), evtID)
 	assert.NoError(t, err, "adding other channel event")
 
-	evts, err = GetChannelEvents(dbc, channel)
+	evts, err = getChannelEvents(dbc, channel)
 	assert.NoError(t, err, "getting events")
 	assert.Len(t, evts, 2, "expect 2 events")
 
 	assert.Less(t, evts[0].Time, evts[1].Time, "expect sorting")
 
-	evt, err := GetEventByID(dbc, 2)
+	evt, err := getEventByID(dbc, 2)
 	assert.NoError(t, err)
-	assert.Equal(t, SocketMessage{
+	assert.Equal(t, socketMessage{
 		EventID: 2,
 		IsLive:  false,
 		Time:    tEvent1,

@@ -53,7 +53,9 @@ func pickWinnerFromRaffle(r raffle) (winner raffleEntry, err error) {
 
 func (cryptRandSrc) Int63() int64 {
 	var b [8]byte
-	rand.Read(b[:])
+	if _, err := rand.Read(b[:]); err != nil {
+		return -1
+	}
 	// mask off sign bit to ensure positive number
 	return int64(binary.LittleEndian.Uint64(b[:]) & (1<<63 - 1))
 }

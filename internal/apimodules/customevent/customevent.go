@@ -1,3 +1,5 @@
+// Package customevent contains an actor and database modules to create
+// custom (timed) events
 package customevent
 
 import (
@@ -27,14 +29,15 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
-func Register(args plugins.RegistrationArguments) error {
+// Register provides the plugins.RegisterFunc
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&storedCustomEvent{}); err != nil {
+	if err = db.DB().AutoMigrate(&storedCustomEvent{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	args.RegisterCopyDatabaseFunc("custom_event", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &storedCustomEvent{})
+		return database.CopyObjects(src, target, &storedCustomEvent{}) //nolint:wrapcheck // internal helper
 	})
 
 	mc = &memoryCache{dbc: db}
@@ -71,7 +74,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Creates an `custom` event containing the fields provided in the request body",
 		HandlerFunc: handleCreateEvent,
 		Method:      http.MethodPost,
@@ -94,7 +97,9 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
 	for schedule, fn := range map[string]func(){
 		fmt.Sprintf("@every %s", cleanupTimeout): scheduleCleanup,

@@ -12,10 +12,13 @@ import (
 )
 
 var (
-	ErrValueNotSet   = errors.New("specified value not found")
+	// ErrValueNotSet is used to notify the value is not available in the FieldCollection
+	ErrValueNotSet = errors.New("specified value not found")
+	// ErrValueMismatch is used to notify the value does not match the requested type
 	ErrValueMismatch = errors.New("specified value has different format")
 )
 
+// FieldCollection holds an map[string]any with conversion functions attached
 type FieldCollection struct {
 	data map[string]any
 	lock sync.RWMutex
@@ -357,6 +360,7 @@ func (f *FieldCollection) StringSlice(name string) ([]string, error) {
 
 // Implement JSON marshalling to plain underlying map[string]any
 
+// MarshalJSON implements the json.Marshaller interface
 func (f *FieldCollection) MarshalJSON() ([]byte, error) {
 	if f == nil || f.data == nil {
 		return []byte("{}"), nil
@@ -365,9 +369,15 @@ func (f *FieldCollection) MarshalJSON() ([]byte, error) {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 
-	return json.Marshal(f.data)
+	data, err := json.Marshal(f.data)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling data to json: %w", err)
+	}
+
+	return data, nil
 }
 
+// UnmarshalJSON implements the json.Unmarshaller interface
 func (f *FieldCollection) UnmarshalJSON(raw []byte) error {
 	data := make(map[string]any)
 	if err := json.Unmarshal(raw, &data); err != nil {
@@ -380,10 +390,12 @@ func (f *FieldCollection) UnmarshalJSON(raw []byte) error {
 
 // Implement YAML marshalling to plain underlying map[string]any
 
+// MarshalYAML implements the yaml.Marshaller interface
 func (f *FieldCollection) MarshalYAML() (any, error) {
 	return f.Data(), nil
 }
 
+// UnmarshalYAML implements the yaml.Unmarshaller interface
 func (f *FieldCollection) UnmarshalYAML(unmarshal func(any) error) error {
 	data := make(map[string]any)
 	if err := unmarshal(&data); err != nil {

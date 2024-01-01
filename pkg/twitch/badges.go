@@ -7,6 +7,7 @@ import (
 	"gopkg.in/irc.v4"
 )
 
+// Collection of known badges
 const (
 	BadgeBroadcaster = "broadcaster"
 	BadgeFounder     = "founder"
@@ -15,6 +16,7 @@ const (
 	BadgeVIP         = "vip"
 )
 
+// KnownBadges contains a list of all known badges
 var KnownBadges = []string{
 	BadgeBroadcaster,
 	BadgeFounder,
@@ -23,8 +25,11 @@ var KnownBadges = []string{
 	BadgeVIP,
 }
 
+// BadgeCollection represents a collection of badges the user has set
 type BadgeCollection map[string]*int
 
+// ParseBadgeLevels takes the badges from the irc.Message and returns
+// a BadgeCollection containing all badges the user has set
 func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 	out := BadgeCollection{}
 
@@ -72,10 +77,13 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 	return out
 }
 
+// Add sets the given badge to the given level
 func (b BadgeCollection) Add(badge string, level int) {
 	b[badge] = &level
 }
 
+// Get returns the level of the given badge. If the badge is not set
+// its level will be 0.
 func (b BadgeCollection) Get(badge string) int {
 	l, ok := b[badge]
 	if !ok {
@@ -85,6 +93,8 @@ func (b BadgeCollection) Get(badge string) int {
 	return *l
 }
 
+// Has checks whether the collection contains the given badge at any
+// level
 func (b BadgeCollection) Has(badge string) bool {
 	return b[badge] != nil
 }

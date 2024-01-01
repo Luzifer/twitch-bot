@@ -15,7 +15,7 @@ import (
 // SendChatAnnouncement sends an announcement in the specified
 // channel with the given message. Colors must be blue, green,
 // orange, purple or primary (empty color = primary)
-func (c *Client) SendChatAnnouncement(channel, color, message string) error {
+func (c *Client) SendChatAnnouncement(ctx context.Context, channel, color, message string) error {
 	var payload struct {
 		Color   string `json:"color,omitempty"`
 		Message string `json:"message"`
@@ -24,12 +24,12 @@ func (c *Client) SendChatAnnouncement(channel, color, message string) error {
 	payload.Color = color
 	payload.Message = message
 
-	botID, _, err := c.GetAuthorizedUser()
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
@@ -40,9 +40,8 @@ func (c *Client) SendChatAnnouncement(channel, color, message string) error {
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,
 			Body:     body,
@@ -57,18 +56,18 @@ func (c *Client) SendChatAnnouncement(channel, color, message string) error {
 
 // SendShoutout creates a Twitch-native shoutout in the given channel
 // for the given user. This equals `/shoutout <user>` in the channel.
-func (c *Client) SendShoutout(channel, user string) error {
-	botID, _, err := c.GetAuthorizedUser()
+func (c *Client) SendShoutout(ctx context.Context, channel, user string) error {
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
 
-	userID, err := c.GetIDForUsername(strings.TrimLeft(user, "#@"))
+	userID, err := c.GetIDForUsername(ctx, strings.TrimLeft(user, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting user user-id")
 	}
@@ -79,9 +78,8 @@ func (c *Client) SendShoutout(channel, user string) error {
 	params.Set("to_broadcaster_id", userID)
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusNoContent,
 			URL: fmt.Sprintf(

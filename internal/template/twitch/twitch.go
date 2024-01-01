@@ -8,6 +8,7 @@ import (
 
 var regFn []func(plugins.RegistrationArguments)
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	for _, fn := range regFn {
 		fn(args)

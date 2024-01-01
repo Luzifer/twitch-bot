@@ -1,3 +1,5 @@
+// Package counter contains actors and template functions to work with
+// database stored counters
 package counter
 
 import (
@@ -22,20 +24,22 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
+//
 //nolint:funlen // This function is a few lines too long but only contains definitions
-func Register(args plugins.RegistrationArguments) error {
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&Counter{}); err != nil {
+	if err = db.DB().AutoMigrate(&counter{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	args.RegisterCopyDatabaseFunc("counter", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &Counter{})
+		return database.CopyObjects(src, target, &counter{}) //nolint:wrapcheck // internal helper
 	})
 
 	formatMessage = args.FormatMessage
 
-	args.RegisterActor("counter", func() plugins.Actor { return &ActorCounter{} })
+	args.RegisterActor("counter", func() plugins.Actor { return &actorCounter{} })
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Update counter values",
@@ -73,7 +77,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Returns the (formatted) value as a plain string",
 		HandlerFunc: routeActorCounterGetValue,
 		Method:      http.MethodGet,
@@ -95,9 +99,11 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "name",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Updates the value of the counter",
 		HandlerFunc: routeActorCounterSetValue,
 		Method:      http.MethodPatch,
@@ -125,7 +131,9 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "name",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
 	args.RegisterTemplateFunction("channelCounter", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(name string) (string, error) {
@@ -157,7 +165,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterTemplateFunction("counterTopList", plugins.GenericTemplateFunctionGetter(func(prefix string, n int) ([]Counter, error) {
+	args.RegisterTemplateFunction("counterTopList", plugins.GenericTemplateFunctionGetter(func(prefix string, n int) ([]counter, error) {
 		return getCounterTopList(db, prefix, n)
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the top n counters for the given prefix as objects with Name and Value fields",
@@ -169,7 +177,7 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	args.RegisterTemplateFunction("counterValue", plugins.GenericTemplateFunctionGetter(func(name string, _ ...string) (int64, error) {
-		return GetCounterValue(db, name)
+		return getCounterValue(db, name)
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the current value of the counter which identifier was supplied",
 		Syntax:      "counterValue <counter name>",
@@ -185,11 +193,11 @@ func Register(args plugins.RegistrationArguments) error {
 			mod = val[0]
 		}
 
-		if err := UpdateCounter(db, name, mod, false); err != nil {
+		if err := updateCounter(db, name, mod, false); err != nil {
 			return 0, errors.Wrap(err, "updating counter")
 		}
 
-		return GetCounterValue(db, name)
+		return getCounterValue(db, name)
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Adds the given value (or 1 if no value) to the counter and returns its new value",
 		Syntax:      "counterValueAdd <counter name> [increase=1]",
@@ -202,9 +210,9 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type ActorCounter struct{}
+type actorCounter struct{}
 
-func (a ActorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
@@ -222,7 +230,7 @@ func (a ActorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, ev
 		}
 
 		return false, errors.Wrap(
-			UpdateCounter(db, counterName, counterValue, true),
+			updateCounter(db, counterName, counterValue, true),
 			"set counter",
 		)
 	}
@@ -241,15 +249,15 @@ func (a ActorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, ev
 	}
 
 	return false, errors.Wrap(
-		UpdateCounter(db, counterName, counterStep, false),
+		updateCounter(db, counterName, counterStep, false),
 		"update counter",
 	)
 }
 
-func (a ActorCounter) IsAsync() bool { return false }
-func (a ActorCounter) Name() string  { return "counter" }
+func (actorCounter) IsAsync() bool { return false }
+func (actorCounter) Name() string  { return "counter" }
 
-func (a ActorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if cn, err := attrs.String("counter"); err != nil || cn == "" {
 		return errors.New("counter name must be non-empty string")
 	}
@@ -269,7 +277,7 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 		template = "%d"
 	}
 
-	cv, err := GetCounterValue(db, mux.Vars(r)["name"])
+	cv, err := getCounterValue(db, mux.Vars(r)["name"])
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
 		return
@@ -291,7 +299,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = UpdateCounter(db, mux.Vars(r)["name"], value, absolute); err != nil {
+	if err = updateCounter(db, mux.Vars(r)["name"], value, absolute); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

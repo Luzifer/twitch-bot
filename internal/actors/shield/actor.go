@@ -1,3 +1,5 @@
+// Package shield contains an actor to update the shield-mode for a
+// given channel
 package shield
 
 import (
@@ -14,6 +16,7 @@ const actorName = "shield"
 
 var botTwitchClient *twitch.Client
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 
@@ -42,7 +45,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	ptrBoolFalse := func(v bool) *bool { return &v }(false)
 
 	return false, errors.Wrap(
@@ -55,10 +58,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if _, err = attrs.Bool("enable"); err != nil {
 		return errors.New("enable must be boolean")
 	}

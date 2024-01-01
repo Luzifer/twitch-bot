@@ -1,3 +1,4 @@
+// Package log contains an actor to write bot-log entries from a rule
 package log
 
 import (
@@ -14,6 +15,7 @@ var (
 	ptrStringEmpty = func(v string) *string { return &v }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	formatMessage = args.FormatMessage
 
@@ -42,7 +44,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	message, err := formatMessage(attrs.MustString("message", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing message template")
@@ -56,10 +58,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return true }
-func (a actor) Name() string  { return "log" }
+func (actor) IsAsync() bool { return true }
+func (actor) Name() string  { return "log" }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("message"); err != nil || v == "" {
 		return errors.New("message must be non-empty string")
 	}

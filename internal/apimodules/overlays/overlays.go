@@ -1,8 +1,11 @@
+// Package overlays contains a server to host overlays and interact
+// with the bot using sockets and a pre-defined Javascript client
 package overlays
 
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"sort"
@@ -32,22 +35,26 @@ const (
 )
 
 type (
-	SendReason string
+	// sendReason contains an enum of reasons why the message is
+	// transmitted to the listening overlay sockets
+	sendReason string
 
-	SocketMessage struct {
+	// socketMessage represents the message overlay sockets will receive
+	socketMessage struct {
 		EventID uint64                   `json:"event_id"`
 		IsLive  bool                     `json:"is_live"`
-		Reason  SendReason               `json:"reason"`
+		Reason  sendReason               `json:"reason"`
 		Time    time.Time                `json:"time"`
 		Type    string                   `json:"type"`
 		Fields  *plugins.FieldCollection `json:"fields"`
 	}
 )
 
+// Collection of SendReason entries
 const (
-	SendReasonLive         SendReason = "live-event"
-	SendReasonBulkReplay   SendReason = "bulk-replay"
-	SendReasonSingleReplay SendReason = "single-replay"
+	sendReasonLive         sendReason = "live-event"
+	sendReasonBulkReplay   sendReason = "bulk-replay"
+	sendReasonSingleReplay sendReason = "single-replay"
 )
 
 var (
@@ -64,7 +71,7 @@ var (
 		"join", "part", // Those make no sense for replay
 	}
 
-	subscribers     = map[string]func(SocketMessage){}
+	subscribers     = map[string]func(socketMessage){}
 	subscribersLock sync.RWMutex
 
 	upgrader = websocket.Upgrader{
@@ -75,20 +82,22 @@ var (
 	validateToken plugins.ValidateTokenFunc
 )
 
+// Register provides the plugins.RegisterFunc
+//
 //nolint:funlen
-func Register(args plugins.RegistrationArguments) error {
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
+	if err = db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	args.RegisterCopyDatabaseFunc("overlay_events", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &overlaysEvent{})
+		return database.CopyObjects(src, target, &overlaysEvent{}) //nolint:wrapcheck // internal helper
 	})
 
 	validateToken = args.ValidateToken
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Trigger a re-distribution of an event to all subscribed overlays",
 		HandlerFunc:  handleSingleEventReplay,
 		Method:       http.MethodPut,
@@ -102,9 +111,11 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "event_id",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Websocket subscriber for bot events",
 		HandlerFunc:  handleSocketSubscription,
 		Method:       http.MethodGet,
@@ -112,9 +123,11 @@ func Register(args plugins.RegistrationArguments) error {
 		Name:         "Websocket",
 		Path:         "/events.sock",
 		ResponseType: plugins.HTTPRouteResponseTypeMultiple,
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Fetch past events for the given channel",
 		HandlerFunc: handleEventsReplay,
 		Method:      http.MethodGet,
@@ -137,9 +150,11 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "channel",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc:       handleServeOverlayAsset,
 		IsPrefix:          true,
 		Method:            http.MethodGet,
@@ -147,21 +162,23 @@ func Register(args plugins.RegistrationArguments) error {
 		Path:              "/",
 		ResponseType:      plugins.HTTPRouteResponseTypeMultiple,
 		SkipDocumentation: true,
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterEventHandler(func(event string, eventData *plugins.FieldCollection) (err error) {
+	if err = args.RegisterEventHandler(func(event string, eventData *plugins.FieldCollection) (err error) {
 		subscribersLock.RLock()
 		defer subscribersLock.RUnlock()
 
-		msg := SocketMessage{
+		msg := socketMessage{
 			IsLive: true,
-			Reason: SendReasonLive,
+			Reason: sendReasonLive,
 			Time:   time.Now(),
 			Type:   event,
 			Fields: eventData,
 		}
 
-		if msg.EventID, err = AddChannelEvent(db, plugins.DeriveChannel(nil, eventData), SocketMessage{
+		if msg.EventID, err = addChannelEvent(db, plugins.DeriveChannel(nil, eventData), socketMessage{
 			IsLive: false,
 			Time:   time.Now(),
 			Type:   event,
@@ -179,7 +196,9 @@ func Register(args plugins.RegistrationArguments) error {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return fmt.Errorf("registering event handler: %w", err)
+	}
 
 	fsStack = httpFSStack{
 		newPrefixedFS("default", http.FS(embeddedOverlays)),
@@ -198,7 +217,7 @@ func Register(args plugins.RegistrationArguments) error {
 func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 	var (
 		channel = mux.Vars(r)["channel"]
-		msgs    []SocketMessage
+		msgs    []socketMessage
 		since   = time.Time{}
 	)
 
@@ -206,7 +225,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 		since = s
 	}
 
-	events, err := GetChannelEvents(db, "#"+strings.TrimLeft(channel, "#"))
+	events, err := getChannelEvents(db, "#"+strings.TrimLeft(channel, "#"))
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting channel events").Error(), http.StatusInternalServerError)
 		return
@@ -217,7 +236,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		msg.Reason = SendReasonBulkReplay
+		msg.Reason = sendReasonBulkReplay
 		msgs = append(msgs, msg)
 	}
 
@@ -240,13 +259,13 @@ func handleSingleEventReplay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	evt, err := GetEventByID(db, eventID)
+	evt, err := getEventByID(db, eventID)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "fetching event").Error(), http.StatusInternalServerError)
 		return
 	}
 
-	evt.Reason = SendReasonSingleReplay
+	evt.Reason = sendReasonSingleReplay
 
 	subscribersLock.RLock()
 	defer subscribersLock.RUnlock()
@@ -269,18 +288,18 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		logger.WithError(err).Error("Unable to upgrade socket")
 		return
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck // We don't really care about this
 
 	var (
 		authTimeout  = time.NewTimer(authTimeout)
 		connLock     = new(sync.Mutex)
 		errC         = make(chan error, 1)
 		isAuthorized bool
-		sendMsgC     = make(chan SocketMessage, 1)
+		sendMsgC     = make(chan socketMessage, 1)
 	)
 
 	// Register listener
-	unsub := subscribeSocket(func(msg SocketMessage) { sendMsgC <- msg })
+	unsub := subscribeSocket(func(msg socketMessage) { sendMsgC <- msg })
 	defer unsub()
 
 	keepAlive := time.NewTicker(socketKeepAlive)
@@ -292,7 +311,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				logger.WithError(err).Error("Unable to send ping message")
 				connLock.Unlock()
-				conn.Close()
+				conn.Close() //nolint:errcheck,gosec
 				return
 			}
 
@@ -328,7 +347,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			var recvMsg SocketMessage
+			var recvMsg socketMessage
 			if err = json.Unmarshal(p, &recvMsg); err != nil {
 				errC <- errors.Wrap(err, "decoding message")
 				return
@@ -349,7 +368,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 				authTimeout.Stop()
 				isAuthorized = true
-				sendMsgC <- SocketMessage{
+				sendMsgC <- socketMessage{
 					IsLive: true,
 					Time:   time.Now(),
 					Type:   msgTypeRequestAuth,
@@ -392,14 +411,14 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteJSON(msg); err != nil {
 				logger.WithError(err).Error("Unable to send socket message")
 				connLock.Unlock()
-				conn.Close()
+				conn.Close() //nolint:errcheck,gosec
 			}
 			connLock.Unlock()
 		}
 	}
 }
 
-func subscribeSocket(fn func(SocketMessage)) func() {
+func subscribeSocket(fn func(socketMessage)) func() {
 	id := uuid.Must(uuid.NewV4()).String()
 
 	subscribersLock.Lock()

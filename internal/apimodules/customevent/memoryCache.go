@@ -57,6 +57,7 @@ func (m *memoryCache) Refresh() (err error) {
 	return m.refresh()
 }
 
+//revive:disable-next-line:confusing-naming
 func (m *memoryCache) refresh() (err error) {
 	if m.events, err = getFutureEvents(m.dbc); err != nil {
 		return errors.Wrap(err, "fetching events from database")

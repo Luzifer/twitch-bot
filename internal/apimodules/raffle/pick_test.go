@@ -45,9 +45,12 @@ func testGenerateRaffe() raffle {
 
 func BenchmarkPickWinnerFromRaffle(b *testing.B) {
 	tData := testGenerateRaffe()
+	var err error
+
 	b.Run("pick", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			pickWinnerFromRaffle(tData)
+			_, err = pickWinnerFromRaffle(tData)
+			require.NoError(b, err)
 		}
 	})
 }

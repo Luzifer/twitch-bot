@@ -1,6 +1,8 @@
 package plugins
 
 type (
+	// ActionDocumentation contains the documentation for a single actor
+	// to be rendered into the documentation site
 	ActionDocumentation struct {
 		Description string `json:"description"`
 		Name        string `json:"name"`
@@ -9,6 +11,7 @@ type (
 		Fields []ActionDocumentationField `json:"fields"`
 	}
 
+	// ActionDocumentationField documents fields available in the actor
 	ActionDocumentationField struct {
 		Default         string                       `json:"default"`
 		DefaultComment  string                       `json:"default_comment"`
@@ -21,9 +24,11 @@ type (
 		Type            ActionDocumentationFieldType `json:"type"`
 	}
 
+	// ActionDocumentationFieldType defines known field types
 	ActionDocumentationFieldType string
 )
 
+// Enum of available field types
 const (
 	ActionDocumentationFieldTypeBool        ActionDocumentationFieldType = "bool"
 	ActionDocumentationFieldTypeDuration    ActionDocumentationFieldType = "duration"

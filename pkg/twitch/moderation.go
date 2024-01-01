@@ -23,7 +23,7 @@ const (
 // duration to 0 will result in a ban, setting if greater than 0 will
 // result in a timeout. The timeout is automatically converted to
 // full seconds. The timeout duration must be less than 1209600s.
-func (c *Client) BanUser(channel, username string, duration time.Duration, reason string) error {
+func (c *Client) BanUser(ctx context.Context, channel, username string, duration time.Duration, reason string) error {
 	var payload struct {
 		Data struct {
 			Duration int64  `json:"duration,omitempty"`
@@ -39,17 +39,17 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 	payload.Data.Duration = int64(duration / time.Second)
 	payload.Data.Reason = reason
 
-	botID, _, err := c.GetAuthorizedUser()
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
 
-	if payload.Data.UserID, err = c.GetIDForUsername(username); err != nil {
+	if payload.Data.UserID, err = c.GetIDForUsername(ctx, username); err != nil {
 		return errors.Wrap(err, "getting target user-id")
 	}
 
@@ -59,9 +59,8 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodPost,
 			OKStatus: http.StatusOK,
 			Body:     body,
@@ -98,13 +97,13 @@ func (c *Client) BanUser(channel, username string, duration time.Duration, reaso
 // If no messageID is given all messages are deleted. If a message ID
 // is given the message must be no older than 6 hours and it must not
 // be posted by broadcaster or moderator.
-func (c *Client) DeleteMessage(channel, messageID string) error {
-	botID, _, err := c.GetAuthorizedUser()
+func (c *Client) DeleteMessage(ctx context.Context, channel, messageID string) error {
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
@@ -117,9 +116,8 @@ func (c *Client) DeleteMessage(channel, messageID string) error {
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodDelete,
 			OKStatus: http.StatusNoContent,
 			URL: fmt.Sprintf(
@@ -132,26 +130,25 @@ func (c *Client) DeleteMessage(channel, messageID string) error {
 }
 
 // UnbanUser removes a timeout or ban given to the user in the channel
-func (c *Client) UnbanUser(channel, username string) error {
-	botID, _, err := c.GetAuthorizedUser()
+func (c *Client) UnbanUser(ctx context.Context, channel, username string) error {
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
 
-	userID, err := c.GetIDForUsername(username)
+	userID, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
 		return errors.Wrap(err, "getting target user-id")
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  context.Background(),
 			Method:   http.MethodDelete,
 			OKStatus: http.StatusNoContent,
 			URL: fmt.Sprintf(
@@ -165,12 +162,12 @@ func (c *Client) UnbanUser(channel, username string) error {
 
 // UpdateShieldMode activates or deactivates the Shield Mode in the given channel
 func (c *Client) UpdateShieldMode(ctx context.Context, channel string, enable bool) error {
-	botID, _, err := c.GetAuthorizedUser()
+	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
 		return errors.Wrap(err, "getting bot user-id")
 	}
 
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return errors.Wrap(err, "getting channel user-id")
 	}
@@ -183,9 +180,8 @@ func (c *Client) UpdateShieldMode(ctx context.Context, channel string, enable bo
 	}
 
 	return errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
-			Context:  ctx,
 			Method:   http.MethodPut,
 			OKStatus: http.StatusOK,
 			Body:     body,

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -33,7 +34,7 @@ type (
 )
 
 func init() {
-	registerRoute(plugins.HTTPRouteRegistrationArgs{
+	if err := registerRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Provides a status JSON to check whether the bot is living",
 		HandlerFunc: handleStatusRequest,
 		Method:      http.MethodGet,
@@ -50,7 +51,9 @@ func init() {
 		},
 		RequiresWriteAuth: false,
 		ResponseType:      plugins.HTTPRouteResponseTypeJSON,
-	})
+	}); err != nil {
+		logrus.WithError(err).Fatal("registering status route")
+	}
 }
 
 func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +85,7 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 					return errors.New("not initialized")
 				}
 
-				_, _, err := twitchClient.GetAuthorizedUser()
+				_, _, err := twitchClient.GetAuthorizedUser(r.Context())
 				return errors.Wrap(err, "fetching username")
 			},
 		},

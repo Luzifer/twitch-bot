@@ -1,6 +1,9 @@
+// Package whisper contains an actor to send whispers
 package whisper
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
@@ -17,6 +20,7 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
@@ -55,7 +59,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	to, err := formatMessage(attrs.MustString("to", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper receiver")
@@ -67,15 +71,15 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	return false, errors.Wrap(
-		botTwitchClient.SendWhisper(to, msg),
+		botTwitchClient.SendWhisper(context.Background(), to, msg),
 		"sending whisper",
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("to"); err != nil || v == "" {
 		return errors.New("to must be non-empty string")
 	}

@@ -18,9 +18,8 @@ func (c *Client) GetTokenInfo(ctx context.Context) (user string, scopes []string
 		return "", nil, time.Time{}, errors.New("no access token present")
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeBearerToken,
-		Context:  ctx,
 		Method:   http.MethodGet,
 		OKStatus: http.StatusOK,
 		Out:      &payload,

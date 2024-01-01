@@ -1,6 +1,9 @@
+// Package shoutout contains an actor to create a Twitch native
+// shoutout
 package shoutout
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/pkg/errors"
@@ -20,6 +23,7 @@ var (
 	shoutoutChatcommandRegex = regexp.MustCompile(`^/shoutout +([^\s]+)$`)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
@@ -51,7 +55,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	user, err := formatMessage(attrs.MustString("user", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing user template")
@@ -59,6 +63,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 	return false, errors.Wrap(
 		botTwitchClient.SendShoutout(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			user,
 		),
@@ -66,10 +71,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("user"); err != nil || v == "" {
 		return errors.New("user must be non-empty string")
 	}
@@ -89,7 +94,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("shoutout message does not match required format")
 	}
 
-	if err := botTwitchClient.SendShoutout(channel, matches[1]); err != nil {
+	if err := botTwitchClient.SendShoutout(context.Background(), channel, matches[1]); err != nil {
 		return errors.Wrap(err, "executing shoutout")
 	}
 

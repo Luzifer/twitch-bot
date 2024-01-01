@@ -1,3 +1,4 @@
+// Package slice contains slice manipulation helpers
 package slice
 
 import (
@@ -5,6 +6,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterTemplateFunction("inList", plugins.GenericTemplateFunctionGetter(func(search string, list ...string) bool {
 		return str.StringInSlice(search, list)

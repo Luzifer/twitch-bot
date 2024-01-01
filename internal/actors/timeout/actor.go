@@ -1,6 +1,8 @@
+// Package timeout contains an actor to timeout users
 package timeout
 
 import (
+	"context"
 	"regexp"
 	"strconv"
 	"time"
@@ -22,6 +24,7 @@ var (
 	timeoutChatcommandRegex = regexp.MustCompile(`^/timeout +([^\s]+) +([0-9]+) +(.+)$`)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
@@ -62,7 +65,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing reason template")
@@ -70,6 +73,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 	return false, errors.Wrap(
 		botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			plugins.DeriveUser(m, eventData),
 			attrs.MustDuration("duration", nil),
@@ -79,10 +83,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
 		return errors.New("duration must be of type duration greater or equal one second")
 	}
@@ -111,7 +115,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.Wrap(err, "parsing timeout duration")
 	}
 
-	if err = botTwitchClient.BanUser(channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
+	if err = botTwitchClient.BanUser(context.Background(), channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
 		return errors.Wrap(err, "executing timeout")
 	}
 

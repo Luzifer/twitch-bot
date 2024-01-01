@@ -1,3 +1,5 @@
+// Package linkdetector contains an actor to detect links in a message
+// and add them to a variable
 package linkdetector
 
 import (
@@ -11,6 +13,7 @@ const actorName = "linkdetector"
 
 var ptrFalse = func(v bool) *bool { return &v }(false)
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &Actor{} })
 
@@ -35,8 +38,10 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
+// Actor implements the actor interface
 type Actor struct{}
 
+// Execute implements the actor interface
 func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	if eventData.HasAll("links") {
 		// We already detected links, lets not do it again
@@ -52,8 +57,11 @@ func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 	return false, nil
 }
 
+// IsAsync implements the actor interface
 func (Actor) IsAsync() bool { return false }
 
+// Name implements the actor interface
 func (Actor) Name() string { return actorName }
 
+// Validate implements the actor interface
 func (Actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) error { return nil }

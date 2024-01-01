@@ -9,7 +9,7 @@ import (
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -39,7 +39,7 @@ func init() {
 		},
 	} {
 		if err := registerRoute(rd); err != nil {
-			log.WithError(err).Fatal("Unable to register auth routes")
+			logrus.WithError(err).Fatal("Unable to register auth routes")
 		}
 	}
 }
@@ -71,7 +71,11 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errors.Wrap(err, "getting access token").Error(), http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
@@ -79,7 +83,7 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser()
+	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser(r.Context())
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -129,7 +133,11 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errors.Wrap(err, "getting access token").Error(), http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.WithError(err).Error("closing response body (leaked fd)")
+		}
+	}()
 
 	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
@@ -137,7 +145,7 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser()
+	_, grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser(r.Context())
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return

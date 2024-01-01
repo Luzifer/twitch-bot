@@ -45,8 +45,10 @@ func init() {
 	})
 }
 
+// ActorScript contains an actor to execute arbitrary commands and scripts
 type ActorScript struct{}
 
+// Execute implements actor interface
 func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	command, err := attrs.StringSlice("command")
 	if err != nil {
@@ -121,9 +123,13 @@ func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, event
 	return preventCooldown, nil
 }
 
+// IsAsync implements actor interface
 func (ActorScript) IsAsync() bool { return false }
-func (ActorScript) Name() string  { return "script" }
 
+// Name implements actor interface
+func (ActorScript) Name() string { return "script" }
+
+// Validate implements actor interface
 func (ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	cmd, err := attrs.StringSlice("command")
 	if err != nil || len(cmd) == 0 {

@@ -143,7 +143,7 @@ func configEditorGlobalGetModules(w http.ResponseWriter, _ *http.Request) {
 }
 
 func configEditorGlobalGetUser(w http.ResponseWriter, r *http.Request) {
-	usr, err := twitchClient.GetUserInformation(r.FormValue("user"))
+	usr, err := twitchClient.GetUserInformation(r.Context(), r.FormValue("user"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -160,7 +160,7 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Error("Unable to initialize websocket")
 		return
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	var (
 		frontendNotify = make(chan string, 1)
@@ -190,7 +190,6 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 				log.WithError(err).Debug("Unable to send websocket ping")
 				return
 			}
-
 		}
 	}
 }

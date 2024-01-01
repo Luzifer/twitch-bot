@@ -1,3 +1,5 @@
+// Package clipdetector contains an actor to detect clip links in a
+// message and populate a template variable
 package clipdetector
 
 import (
@@ -19,6 +21,7 @@ var (
 	clipIDScanner   = regexp.MustCompile(`(?:clips\.twitch\.tv|www\.twitch\.tv/[^/]*/clip)/([A-Za-z0-9_-]+)`)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 
@@ -33,8 +36,10 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
+// Actor implements the actor interface
 type Actor struct{}
 
+// Execute implements the actor interface
 func (Actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	if eventData.HasAll("clips") {
 		// We already detected clips, lets not do it again
@@ -70,8 +75,11 @@ func (Actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	return false, nil
 }
 
+// IsAsync implements the actor interface
 func (Actor) IsAsync() bool { return false }
 
+// Name implements the actor interface
 func (Actor) Name() string { return actorName }
 
+// Validate implements the actor interface
 func (Actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) error { return nil }

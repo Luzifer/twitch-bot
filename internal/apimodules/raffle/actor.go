@@ -17,7 +17,7 @@ var ptrStrEmpty = ptrStr("")
 
 func ptrStr(v string) *string { return &v }
 
-func (a enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, evtData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, evtData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	if m != nil || evtData.MustString("reward_id", ptrStrEmpty) == "" {
 		return false, errors.New("enter-raffle actor is only supposed to act on channelpoint redeems")
 	}
@@ -67,10 +67,10 @@ func (a enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule
 	)
 }
 
-func (a enterRaffleActor) IsAsync() bool { return false }
-func (a enterRaffleActor) Name() string  { return "enter-raffle" }
+func (enterRaffleActor) IsAsync() bool { return false }
+func (enterRaffleActor) Name() string  { return "enter-raffle" }
 
-func (a enterRaffleActor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (enterRaffleActor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	keyword, err := attrs.String("keyword")
 	if err != nil || keyword == "" {
 		return errors.New("keyword must be non-empty string")

@@ -1,5 +1,6 @@
 package twitch
 
+// Collection of known API scopes
 const (
 	// API Scopes
 	ScopeChannelBot                  = "channel:bot"

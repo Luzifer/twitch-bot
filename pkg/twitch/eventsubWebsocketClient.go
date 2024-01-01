@@ -47,6 +47,8 @@ const (
 )
 
 type (
+	// EventSubSocketClient manages a WebSocket transport for the Twitch
+	// EventSub API
 	EventSubSocketClient struct {
 		logger            *logrus.Entry
 		socketDest        string
@@ -57,10 +59,12 @@ type (
 		conn    *websocket.Conn
 		newconn *websocket.Conn
 
-		runCtx       context.Context
+		runCtx       context.Context //nolint:containedctx
 		runCtxCancel context.CancelFunc
 	}
 
+	// EventSubSocketClientOpt is a setter function to apply changes to
+	// the EventSubSocketClient on create
 	EventSubSocketClientOpt func(*EventSubSocketClient)
 
 	eventSubSocketMessage struct {
@@ -109,6 +113,8 @@ type (
 	}
 )
 
+// NewEventSubSocketClient creates a new EventSubSocketClient and
+// applies the given EventSubSocketClientOpts
 func NewEventSubSocketClient(opts ...EventSubSocketClientOpt) (*EventSubSocketClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -138,10 +144,13 @@ func NewEventSubSocketClient(opts ...EventSubSocketClientOpt) (*EventSubSocketCl
 	return c, nil
 }
 
+// WithLogger configures the logger within the EventSubSocketClient
 func WithLogger(logger *logrus.Entry) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.logger = logger }
 }
 
+// WithMustSubscribe adds a topic to the subscriptions to be done on
+// connect
 func WithMustSubscribe(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) EventSubSocketClientOpt {
 	if version == "" {
 		version = EventSubTopicVersion1
@@ -157,6 +166,8 @@ func WithMustSubscribe(event, version string, condition EventSubCondition, callb
 	}
 }
 
+// WithRetryBackgroundSubscribe adds a topic to the subscriptions to
+// be done on connect async
 func WithRetryBackgroundSubscribe(event, version string, condition EventSubCondition, callback func(json.RawMessage) error) EventSubSocketClientOpt {
 	if version == "" {
 		version = EventSubTopicVersion1
@@ -173,16 +184,22 @@ func WithRetryBackgroundSubscribe(event, version string, condition EventSubCondi
 	}
 }
 
+// WithSocketURL overwrites the socket URL to connect to
 func WithSocketURL(url string) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.socketDest = url }
 }
 
+// WithTwitchClient overwrites the Client to be used
 func WithTwitchClient(c *Client) EventSubSocketClientOpt {
 	return func(e *EventSubSocketClient) { e.twitch = c }
 }
 
+// Close cancels the contained context and brings the
+// EventSubSocketClient to a halt
 func (e *EventSubSocketClient) Close() { e.runCtxCancel() }
 
+// Run starts the main communcation loop for the EventSubSocketClient
+//
 //nolint:gocyclo // Makes no sense to split further
 func (e *EventSubSocketClient) Run() error {
 	var (
@@ -424,7 +441,7 @@ func (e *EventSubSocketClient) retryBackgroundSubscribe(st eventSubSocketSubscri
 			if err := e.runCtx.Err(); err != nil {
 				// Our run-context was cancelled, stop retrying to subscribe
 				// to topics as this client was closed
-				return backoff.NewErrCannotRetry(err)
+				return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // We get our internal error
 			}
 
 			return e.subscribe(st)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 
@@ -24,7 +25,7 @@ func updateConfigFromRemote() {
 			for _, r := range cfg.Rules {
 				logger := log.WithField("rule", r.MatcherID())
 
-				rhu, err := r.UpdateFromSubscription()
+				rhu, err := r.UpdateFromSubscription(context.Background())
 				if err != nil {
 					logger.WithError(err).Error("updating rule")
 					continue

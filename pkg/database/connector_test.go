@@ -20,7 +20,11 @@ func TestNewConnector(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			dbc, err := New("sqlite", cStrings[name], testEncryptionPass)
 			require.NoError(t, err, "creating database connector")
-			t.Cleanup(func() { dbc.Close() })
+			t.Cleanup(func() {
+				if err := dbc.Close(); err != nil {
+					t.Logf("closing database connection: %s", err)
+				}
+			})
 
 			row := dbc.DB().Raw("SELECT count(1) AS tables FROM sqlite_master WHERE type='table' AND name='core_kvs';")
 

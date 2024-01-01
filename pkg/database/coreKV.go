@@ -112,6 +112,7 @@ func (c connector) ValidateEncryption() error {
 	}
 }
 
+//revive:disable-next-line:confusing-naming
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	var data coreKV
 
@@ -142,6 +143,7 @@ func (c connector) readCoreMeta(key string, value any, processor func(string) (s
 	return nil
 }
 
+//revive:disable-next-line:confusing-naming
 func (c connector) storeCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(value); err != nil {

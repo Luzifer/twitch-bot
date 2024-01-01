@@ -12,8 +12,8 @@ var _ http.FileSystem = httpFSStack{}
 type httpFSStack []http.FileSystem
 
 func (h httpFSStack) Open(name string) (http.File, error) {
-	for _, fs := range h {
-		if f, err := fs.Open(name); err == nil {
+	for _, stackedFS := range h {
+		if f, err := stackedFS.Open(name); err == nil {
 			return f, nil
 		}
 	}
@@ -34,5 +34,5 @@ func newPrefixedFS(prefix string, originFS http.FileSystem) *prefixedFS {
 }
 
 func (p prefixedFS) Open(name string) (http.File, error) {
-	return p.originFS.Open(path.Join(p.prefix, name))
+	return p.originFS.Open(path.Join(p.prefix, name)) //nolint:wrapcheck
 }

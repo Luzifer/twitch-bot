@@ -6,15 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
+// Collection of known EventSub event-types
 const (
 	EventSubEventTypeChannelAdBreakBegin                   = "channel.ad_break.begin"
 	EventSubEventTypeChannelFollow                         = "channel.follow"
@@ -29,13 +27,19 @@ const (
 	EventSubEventTypeStreamOffline                         = "stream.offline"
 	EventSubEventTypeStreamOnline                          = "stream.online"
 	EventSubEventTypeUserAuthorizationRevoke               = "user.authorization.revoke"
+)
 
+// Collection of topic versions known to the API
+const (
 	EventSubTopicVersion1    = "1"
 	EventSubTopicVersion2    = "2"
 	EventSubTopicVersionBeta = "beta"
 )
 
 type (
+	// EventSubCondition defines the condition the subscription should
+	// listen on - all fields are optional and those defined in the
+	// EventSub documentation for the given topic should be set
 	EventSubCondition struct {
 		BroadcasterUserID     string `json:"broadcaster_user_id,omitempty"`
 		CampaignID            string `json:"campaign_id,omitempty"`
@@ -50,6 +54,7 @@ type (
 		ModeratorUserID       string `json:"moderator_user_id,omitempty"`
 	}
 
+	// EventSubEventAdBreakBegin contains the payload for an AdBreak event
 	EventSubEventAdBreakBegin struct {
 		Duration             int64     `json:"duration_seconds"`
 		Timestamp            time.Time `json:"timestamp"`
@@ -62,6 +67,8 @@ type (
 		RequesterUserName    string    `json:"requester_user_name"`
 	}
 
+	// EventSubEventChannelPointCustomRewardRedemptionAdd contains the
+	// payload for an channel-point redeem event
 	EventSubEventChannelPointCustomRewardRedemptionAdd struct {
 		ID                   string `json:"id"`
 		BroadcasterUserID    string `json:"broadcaster_user_id"`
@@ -81,6 +88,8 @@ type (
 		RedeemedAt time.Time `json:"redeemed_at"`
 	}
 
+	// EventSubEventChannelUpdate contains the payload for a channel
+	// update event
 	EventSubEventChannelUpdate struct {
 		BroadcasterUserID           string   `json:"broadcaster_user_id"`
 		BroadcasterUserLogin        string   `json:"broadcaster_user_login"`
@@ -92,6 +101,7 @@ type (
 		ContentClassificationLabels []string `json:"content_classification_labels"`
 	}
 
+	// EventSubEventFollow contains the payload for a follow event
 	EventSubEventFollow struct {
 		UserID               string    `json:"user_id"`
 		UserLogin            string    `json:"user_login"`
@@ -102,6 +112,8 @@ type (
 		FollowedAt           time.Time `json:"followed_at"`
 	}
 
+	// EventSubEventPoll contains the payload for a poll change event
+	// (not all fields are present in all poll events, see docs!)
 	EventSubEventPoll struct {
 		ID                   string `json:"id"`
 		BroadcasterUserID    string `json:"broadcaster_user_id"`
@@ -125,6 +137,7 @@ type (
 		EndedAt   time.Time `json:"ended_at,omitempty"` // end
 	}
 
+	// EventSubEventRaid contains the payload for a raid event
 	EventSubEventRaid struct {
 		FromBroadcasterUserID    string `json:"from_broadcaster_user_id"`
 		FromBroadcasterUserLogin string `json:"from_broadcaster_user_login"`
@@ -135,6 +148,8 @@ type (
 		Viewers                  int64  `json:"viewers"`
 	}
 
+	// EventSubEventShoutoutCreated contains the payload for a shoutout
+	// created event
 	EventSubEventShoutoutCreated struct {
 		BroadcasterUserID      string    `json:"broadcaster_user_id"`
 		BroadcasterUserLogin   string    `json:"broadcaster_user_login"`
@@ -151,6 +166,8 @@ type (
 		TargetCooldownEndsAt   time.Time `json:"target_cooldown_ends_at"`
 	}
 
+	// EventSubEventShoutoutReceived contains the payload for a shoutout
+	// received event
 	EventSubEventShoutoutReceived struct {
 		BroadcasterUserID        string    `json:"broadcaster_user_id"`
 		BroadcasterUserLogin     string    `json:"broadcaster_user_login"`
@@ -162,12 +179,16 @@ type (
 		StartedAt                time.Time `json:"started_at"`
 	}
 
+	// EventSubEventStreamOffline contains the payload for a stream
+	// offline event
 	EventSubEventStreamOffline struct {
 		BroadcasterUserID    string `json:"broadcaster_user_id"`
 		BroadcasterUserLogin string `json:"broadcaster_user_login"`
 		BroadcasterUserName  string `json:"broadcaster_user_name"`
 	}
 
+	// EventSubEventStreamOnline contains the payload for a stream
+	// online event
 	EventSubEventStreamOnline struct {
 		ID                   string    `json:"id"`
 		BroadcasterUserID    string    `json:"broadcaster_user_id"`
@@ -177,17 +198,13 @@ type (
 		StartedAt            time.Time `json:"started_at"`
 	}
 
+	// EventSubEventUserAuthorizationRevoke contains the payload for an
+	// authorization revoke event
 	EventSubEventUserAuthorizationRevoke struct {
 		ClientID  string `json:"client_id"`
 		UserID    string `json:"user_id"`
 		UserLogin string `json:"user_login"`
 		UserName  string `json:"user_name"`
-	}
-
-	eventSubPostMessage struct {
-		Challenge    string               `json:"challenge"`
-		Subscription eventSubSubscription `json:"subscription"`
-		Event        json.RawMessage      `json:"event"`
 	}
 
 	eventSubSubscription struct {
@@ -207,14 +224,9 @@ type (
 		Secret    string `json:"secret"`
 		SessionID string `json:"session_id"`
 	}
-
-	registeredSubscription struct {
-		Type         string
-		Callbacks    map[string]func(json.RawMessage) error
-		Subscription eventSubSubscription
-	}
 )
 
+// Hash generates a hashstructure hash for the condition for comparison
 func (e EventSubCondition) Hash() (string, error) {
 	h, err := hashstructure.Hash(e, hashstructure.FormatV2, &hashstructure.HashOptions{TagName: "json"})
 	if err != nil {
@@ -222,10 +234,6 @@ func (e EventSubCondition) Hash() (string, error) {
 	}
 
 	return fmt.Sprintf("%x", h), nil
-}
-
-func (c *Client) createEventSubSubscriptionWebhook(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
-	return c.createEventSubSubscription(ctx, AuthTypeAppAccessToken, sub)
 }
 
 func (c *Client) createEventSubSubscriptionWebsocket(ctx context.Context, sub eventSubSubscription) (*eventSubSubscription, error) {
@@ -248,10 +256,9 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 		return nil, errors.Wrap(err, "assemble subscribe payload")
 	}
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: auth,
 		Body:     buf,
-		Context:  ctx,
 		Method:   http.MethodPost,
 		OKStatus: http.StatusAccepted,
 		Out:      &resp,
@@ -261,104 +268,4 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 	}
 
 	return &resp.Data[0], nil
-}
-
-func (c *Client) deleteEventSubSubscription(ctx context.Context, id string) error {
-	return errors.Wrap(c.Request(ClientRequestOpts{
-		AuthType: AuthTypeAppAccessToken,
-		Context:  ctx,
-		Method:   http.MethodDelete,
-		OKStatus: http.StatusNoContent,
-		URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?id=%s", id),
-	}), "executing request")
-}
-
-func (e *EventSubClient) fullAPIurl() string {
-	return strings.Join([]string{e.apiURL, e.secretHandle}, "/")
-}
-
-func (c *Client) getEventSubSubscriptions(ctx context.Context) ([]eventSubSubscription, error) {
-	var (
-		out    []eventSubSubscription
-		params = make(url.Values)
-		resp   struct {
-			Total      int64                  `json:"total"`
-			Data       []eventSubSubscription `json:"data"`
-			Pagination struct {
-				Cursor string `json:"cursor"`
-			} `json:"pagination"`
-		}
-	)
-
-	for {
-		if err := c.Request(ClientRequestOpts{
-			AuthType: AuthTypeAppAccessToken,
-			Context:  ctx,
-			Method:   http.MethodGet,
-			OKStatus: http.StatusOK,
-			Out:      &resp,
-			URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?%s", params.Encode()),
-		}); err != nil {
-			return nil, errors.Wrap(err, "executing request")
-		}
-
-		out = append(out, resp.Data...)
-
-		if resp.Pagination.Cursor == "" {
-			break
-		}
-
-		params.Set("after", resp.Pagination.Cursor)
-
-		// Clear from struct as struct is reused
-		resp.Data = nil
-		resp.Pagination.Cursor = ""
-	}
-
-	return out, nil
-}
-
-func (e *EventSubClient) unregisterCallback(cacheKey, cbKey string) {
-	e.subscriptionsLock.RLock()
-	regSub, ok := e.subscriptions[cacheKey]
-	e.subscriptionsLock.RUnlock()
-
-	if !ok {
-		// That subscription does not exist
-		log.WithField("cache_key", cacheKey).Debug("Subscription does not exist, not unregistering")
-		return
-	}
-
-	if _, ok = regSub.Callbacks[cbKey]; !ok {
-		// That callback does not exist
-		log.WithFields(log.Fields{
-			"cache_key": cacheKey,
-			"callback":  cbKey,
-		}).Debug("Callback does not exist, not unregistering")
-		return
-	}
-
-	logger := log.WithField("event", regSub.Type)
-
-	delete(regSub.Callbacks, cbKey)
-
-	if len(regSub.Callbacks) > 0 {
-		// Still callbacks registered, not removing the subscription
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
-	defer cancel()
-
-	if err := e.twitchClient.deleteEventSubSubscription(ctx, regSub.Subscription.ID); err != nil {
-		log.WithError(err).Error("Unable to execute delete subscription request")
-		return
-	}
-
-	e.subscriptionsLock.Lock()
-	defer e.subscriptionsLock.Unlock()
-
-	logger.Debug("Unregistered hook")
-
-	delete(e.subscriptions, cacheKey)
 }

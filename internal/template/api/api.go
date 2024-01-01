@@ -1,7 +1,9 @@
+// Package api contains helpers to interact with remote APIs in templates
 package api
 
 import "github.com/Luzifer/twitch-bot/v3/plugins"
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterTemplateFunction("jsonAPI", plugins.GenericTemplateFunctionGetter(jsonAPI), plugins.TemplateFuncDocumentation{
 		Description: "Fetches remote URL and applies jq-like query to it returning the result as string. (Remote API needs to return status 200 within 5 seconds.)",

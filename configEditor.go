@@ -53,7 +53,7 @@ func registerEditorFrontend() {
 			return
 		}
 
-		io.Copy(w, f)
+		io.Copy(w, f) //nolint:errcheck,gosec
 	})
 
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {

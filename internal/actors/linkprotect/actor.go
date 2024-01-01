@@ -1,6 +1,9 @@
+// Package linkprotect contains an actor to prevent chatters from
+// posting certain links
 package linkprotect
 
 import (
+	"context"
 	"regexp"
 	"strings"
 	"time"
@@ -22,6 +25,7 @@ var (
 	ptrStringEmpty  = func(v string) *string { return &v }("")
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 
@@ -163,6 +167,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	switch lt := attrs.MustString("action", ptrStringEmpty); lt {
 	case "ban":
 		if err = botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),
 			0,
@@ -178,6 +183,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		if err = botTwitchClient.DeleteMessage(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,
 		); err != nil {
@@ -191,6 +197,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 		}
 
 		if err = botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),
 			to,
@@ -291,6 +298,7 @@ func (actor) checkClipChannelDenied(denyList []string, clips []twitch.ClipInfo) 
 	return verdictAllFine
 }
 
+//revive:disable-next-line:flag-parameter
 func (actor) checkAllLinksAllowed(allowList, links []string, autoAllowClipLinks bool) verdict {
 	if len(allowList) == 0 {
 		// We're not explicitly allowing links, this method is a no-op
@@ -322,6 +330,7 @@ func (actor) checkAllLinksAllowed(allowList, links []string, autoAllowClipLinks 
 	return verdictMisbehave
 }
 
+//revive:disable-next-line:flag-parameter
 func (actor) checkLinkDenied(denyList, links []string, ignoreClipLinks bool) verdict {
 	for _, link := range links {
 		if ignoreClipLinks && clipLink.MatchString(link) {

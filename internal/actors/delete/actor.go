@@ -1,6 +1,9 @@
+// Package deleteactor contains an actor to delete messages
 package deleteactor
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
@@ -12,6 +15,7 @@ const actorName = "delete"
 
 var botTwitchClient *twitch.Client
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	botTwitchClient = args.GetTwitchClient()
 
@@ -28,7 +32,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, _ *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, _ *plugins.FieldCollection) (preventCooldown bool, err error) {
 	msgID, ok := m.Tags["id"]
 	if !ok || msgID == "" {
 		return false, nil
@@ -36,6 +40,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData
 
 	return false, errors.Wrap(
 		botTwitchClient.DeleteMessage(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,
 		),
@@ -43,9 +48,9 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
+func (actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
 	return nil
 }

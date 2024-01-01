@@ -1,3 +1,5 @@
+// Package subscriber contains template functions to fetch sub-count
+// and -points
 package subscriber
 
 import (
@@ -15,6 +17,7 @@ var (
 	tcGetter    func(string) (*twitch.Client, error)
 )
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	permCheckFn = args.HasPermissionForChannel
 	tcGetter = args.GetTwitchClientForChannel

@@ -10,6 +10,7 @@ import (
 
 var userState = newTwitchUserStateStore()
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	if err := args.RegisterRawMessageHandler(rawMessageHandler); err != nil {
 		return errors.Wrap(err, "registering raw message handler")

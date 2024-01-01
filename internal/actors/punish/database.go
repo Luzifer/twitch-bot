@@ -94,7 +94,7 @@ func getPunishment(db database.Connector, channel, user, uuid string) (*levelCon
 	err := helpers.Retry(func() error {
 		err := db.DB().First(&p, "key = ?", getDBKey(channel, user, uuid)).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err)
+			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // we get our internal error
 		}
 		return err
 	})

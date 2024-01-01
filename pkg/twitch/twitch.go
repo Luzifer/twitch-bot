@@ -1,3 +1,4 @@
+// Package twitch implements a client for the Twitch APIs
 package twitch
 
 import (
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
 )
@@ -28,6 +29,7 @@ const (
 	twitchRequestTimeout = 2 * time.Second
 )
 
+// Definitions of possible / understood auth types
 const (
 	AuthTypeUnauthorized AuthType = iota
 	AuthTypeAppAccessToken
@@ -35,6 +37,7 @@ const (
 )
 
 type (
+	// Client bundles the API access methods into a Client
 	Client struct {
 		clientID     string
 		clientSecret string
@@ -50,12 +53,15 @@ type (
 		apiCache *APICache
 	}
 
+	// ErrorResponse is a response sent by Twitch API in case there is
+	// an error
 	ErrorResponse struct {
 		Error   string `json:"error"`
 		Status  int    `json:"status"`
 		Message string `json:"message"`
 	}
 
+	// OAuthTokenResponse is used when requesting a token
 	OAuthTokenResponse struct {
 		AccessToken  string   `json:"access_token"`
 		RefreshToken string   `json:"refresh_token"`
@@ -64,6 +70,7 @@ type (
 		TokenType    string   `json:"token_type"`
 	}
 
+	// OAuthTokenValidationResponse is used when validating a token
 	OAuthTokenValidationResponse struct {
 		ClientID  string   `json:"client_id"`
 		Login     string   `json:"login"`
@@ -72,12 +79,15 @@ type (
 		ExpiresIn int      `json:"expires_in"`
 	}
 
+	// AuthType is a collection of available authorization types in the
+	// Twitch API
 	AuthType uint8
 
+	// ClientRequestOpts contains the options to create a request to the
+	// Twitch APIs
 	ClientRequestOpts struct {
 		AuthType        AuthType
 		Body            io.Reader
-		Context         context.Context
 		Method          string
 		NoRetry         bool
 		NoValidateToken bool
@@ -114,7 +124,7 @@ func ValidateStatus(opts ClientRequestOpts, resp *http.Response) error {
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			// Twitch doesn't want to hear any more of this
-			return backoff.NewErrCannotRetry(ret)
+			return backoff.NewErrCannotRetry(ret) //nolint:wrapcheck // We'll get our internal error
 		}
 		return ret
 	}
@@ -122,6 +132,7 @@ func ValidateStatus(opts ClientRequestOpts, resp *http.Response) error {
 	return nil
 }
 
+// New creates a new Client with the given credentials
 func New(clientID, clientSecret, accessToken, refreshToken string) *Client {
 	return &Client{
 		clientID:     clientID,
@@ -134,11 +145,14 @@ func New(clientID, clientSecret, accessToken, refreshToken string) *Client {
 	}
 }
 
+// APICache returns the internal APICache used by the Client
 func (c *Client) APICache() *APICache { return c.apiCache }
 
-func (c *Client) GetToken() (string, error) {
-	if err := c.ValidateToken(context.Background(), false); err != nil {
-		if err = c.RefreshToken(); err != nil {
+// GetToken returns the access-token for the configured credentials
+// after validating and - if required - renewing the token
+func (c *Client) GetToken(ctx context.Context) (string, error) {
+	if err := c.ValidateToken(ctx, false); err != nil {
+		if err = c.RefreshToken(ctx); err != nil {
 			return "", errors.Wrap(err, "refreshing token after validation error")
 		}
 
@@ -148,7 +162,9 @@ func (c *Client) GetToken() (string, error) {
 	return c.accessToken, nil
 }
 
-func (c *Client) RefreshToken() error {
+// RefreshToken takes the configured refresh-token and renews the
+// corresponding access-token
+func (c *Client) RefreshToken(ctx context.Context) error {
 	if c.refreshToken == "" {
 		return errors.New("no refresh token set")
 	}
@@ -161,9 +177,8 @@ func (c *Client) RefreshToken() error {
 
 	var resp OAuthTokenResponse
 
-	err := c.Request(ClientRequestOpts{
+	err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeUnauthorized,
-		Context:  context.Background(),
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
 		Out:      &resp,
@@ -175,11 +190,11 @@ func (c *Client) RefreshToken() error {
 
 	case errors.Is(err, ErrAnyHTTPError):
 		// Retried refresh failed, wipe tokens
-		log.WithError(err).Warning("resetting tokens after refresh-failure")
+		logrus.WithError(err).Warning("resetting tokens after refresh-failure")
 		c.UpdateToken("", "")
 		if c.tokenUpdateHook != nil {
 			if herr := c.tokenUpdateHook("", ""); herr != nil {
-				log.WithError(herr).Error("Unable to store token wipe after refresh failure")
+				logrus.WithError(herr).Error("Unable to store token wipe after refresh failure")
 			}
 		}
 		return errors.Wrap(err, "executing request")
@@ -190,7 +205,7 @@ func (c *Client) RefreshToken() error {
 
 	c.UpdateToken(resp.AccessToken, resp.RefreshToken)
 	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
-	log.WithField("expiry", c.tokenValidity).Trace("Access token refreshed")
+	logrus.WithField("expiry", c.tokenValidity).Trace("Access token refreshed")
 
 	if c.tokenUpdateHook == nil {
 		return nil
@@ -199,15 +214,24 @@ func (c *Client) RefreshToken() error {
 	return errors.Wrap(c.tokenUpdateHook(resp.AccessToken, resp.RefreshToken), "calling token update hook")
 }
 
+// SetTokenUpdateHook registers a function to listen for token changes
+// after renewing the internal token. It is presented with an access-
+// and a refresh-token if those changes.
 func (c *Client) SetTokenUpdateHook(f func(string, string) error) {
 	c.tokenUpdateHook = f
 }
 
+// UpdateToken overwrites the configured access- and refresh-tokens
 func (c *Client) UpdateToken(accessToken, refreshToken string) {
 	c.accessToken = accessToken
 	c.refreshToken = refreshToken
 }
 
+// ValidateToken executes a request against the Twitch API to validate
+// the token is still valid. If the expiry is known and the force
+// parameter is not supplied, the request is omitted.
+//
+//revive:disable-next-line:flag-parameter
 func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	if c.tokenValidity.After(time.Now()) && time.Since(c.tokenValidityChecked) < tokenValidityRecheckInterval && !force {
 		// We do have an expiration time and it's not expired
@@ -227,9 +251,8 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 
 	var resp OAuthTokenValidationResponse
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType:        AuthTypeBearerToken,
-		Context:         ctx,
 		Method:          http.MethodGet,
 		NoRetry:         true,
 		NoValidateToken: true,
@@ -246,12 +269,15 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 
 	c.tokenValidity = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
 	c.tokenValidityChecked = time.Now()
-	log.WithField("expiry", c.tokenValidity).Trace("Access token validated")
+	logrus.WithField("expiry", c.tokenValidity).Trace("Access token validated")
 
 	return nil
 }
 
-func (c *Client) GetTwitchAppAccessToken() (string, error) {
+// GetTwitchAppAccessToken uses client-id and -secret to generate a
+// new app-access-token in case none is present or returns the cached
+// token.
+func (c *Client) GetTwitchAppAccessToken(ctx context.Context) (string, error) {
 	if c.appAccessToken != "" {
 		return c.appAccessToken, nil
 	}
@@ -272,12 +298,11 @@ func (c *Client) GetTwitchAppAccessToken() (string, error) {
 	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
 	u.RawQuery = params.Encode()
 
-	ctx, cancel := context.WithTimeout(context.Background(), twitchRequestTimeout)
+	reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
 	defer cancel()
 
-	if err := c.Request(ClientRequestOpts{
+	if err := c.Request(reqCtx, ClientRequestOpts{
 		AuthType: AuthTypeUnauthorized,
-		Context:  ctx,
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
 		Out:      &rData,
@@ -290,9 +315,13 @@ func (c *Client) GetTwitchAppAccessToken() (string, error) {
 	return rData.AccessToken, nil
 }
 
+// Request executes the request towards the Twitch API defined by the
+// ClientRequestOpts and takes care of token management and response
+// checking
+//
 //nolint:gocyclo // Not gonna split to keep as a logical unit
-func (c *Client) Request(opts ClientRequestOpts) error {
-	log.WithFields(log.Fields{
+func (c *Client) Request(ctx context.Context, opts ClientRequestOpts) error {
+	logrus.WithFields(logrus.Fields{
 		"method": opts.Method,
 		"url":    c.replaceSecrets(opts.URL),
 	}).Trace("Execute Twitch API request")
@@ -307,8 +336,9 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 		opts.ValidateFunc = ValidateStatus
 	}
 
+	//nolint:wrapcheck // The backoff library returns our own errors
 	return backoff.NewBackoff().WithMaxIterations(retries).Retry(func() error {
-		reqCtx, cancel := context.WithTimeout(opts.Context, twitchRequestTimeout)
+		reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
 		defer cancel()
 
 		req, err := http.NewRequestWithContext(reqCtx, opts.Method, opts.URL, opts.Body)
@@ -322,7 +352,7 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 			// Nothing to do
 
 		case AuthTypeAppAccessToken:
-			accessToken, err := c.GetTwitchAppAccessToken()
+			accessToken, err := c.GetTwitchAppAccessToken(ctx)
 			if err != nil {
 				return errors.Wrap(err, "getting app-access-token")
 			}
@@ -333,7 +363,7 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 		case AuthTypeBearerToken:
 			accessToken := c.accessToken
 			if !opts.NoValidateToken {
-				accessToken, err = c.GetToken()
+				accessToken, err = c.GetToken(reqCtx)
 				if err != nil {
 					return errors.Wrap(err, "getting bearer access token")
 				}
@@ -350,7 +380,11 @@ func (c *Client) Request(opts ClientRequestOpts) error {
 		if err != nil {
 			return errors.Wrap(err, "execute request")
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				logrus.WithError(err).Error("closing response body (leaked fd)")
+			}
+		}()
 
 		if opts.AuthType == AuthTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
 			// Seems our token was somehow revoked, clear the token and retry which will get a new token
@@ -391,7 +425,5 @@ func (c *Client) replaceSecrets(u string) string {
 }
 
 func (*Client) hashSecret(secret string) string {
-	h := sha256.New()
-	h.Write([]byte(secret))
-	return fmt.Sprintf("[sha256:%x]", h.Sum(nil))
+	return fmt.Sprintf("[sha256:%x]", sha256.Sum256([]byte(secret)))
 }

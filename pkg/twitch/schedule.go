@@ -24,6 +24,8 @@ type (
 		} `json:"vacation"`
 	}
 
+	// ChannelStreamScheduleSegment represents a single stream inside the
+	// ChannelStreamSchedule
 	ChannelStreamScheduleSegment struct {
 		ID            string     `json:"id"`
 		StartTime     time.Time  `json:"start_time"`
@@ -40,7 +42,7 @@ type (
 
 // GetChannelStreamSchedule gets the broadcaster’s streaming schedule
 func (c *Client) GetChannelStreamSchedule(ctx context.Context, channel string) (*ChannelStreamSchedule, error) {
-	channelID, err := c.GetIDForUsername(strings.TrimLeft(channel, "#@"))
+	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
 		return nil, errors.Wrap(err, "getting channel user-id")
 	}
@@ -50,9 +52,8 @@ func (c *Client) GetChannelStreamSchedule(ctx context.Context, channel string) (
 	}
 
 	return payload.Data, errors.Wrap(
-		c.Request(ClientRequestOpts{
+		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeAppAccessToken,
-			Context:  ctx,
 			Method:   http.MethodGet,
 			OKStatus: http.StatusOK,
 			Out:      &payload,

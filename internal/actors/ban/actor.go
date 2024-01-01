@@ -1,6 +1,9 @@
+// Package ban contains actors to ban/unban users in a channel
 package ban
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -21,7 +24,8 @@ var (
 	banChatcommandRegex = regexp.MustCompile(`^/ban +([^\s]+) +(.+)$`)
 )
 
-func Register(args plugins.RegistrationArguments) error {
+// Register provides the plugins.RegisterFunc
+func Register(args plugins.RegistrationArguments) (err error) {
 	botTwitchClient = args.GetTwitchClient()
 	formatMessage = args.FormatMessage
 
@@ -45,7 +49,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Executes a ban of an user in the specified channel",
 		HandlerFunc: handleAPIBan,
 		Method:      http.MethodPost,
@@ -72,7 +76,9 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "user",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
 	args.RegisterMessageModFunc("/ban", handleChatCommand)
 
@@ -81,7 +87,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
@@ -91,6 +97,7 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 	return false, errors.Wrap(
 		botTwitchClient.BanUser(
+			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			plugins.DeriveUser(m, eventData),
 			0,
@@ -100,10 +107,10 @@ func (a actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	)
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	reasonTemplate, err := attrs.String("reason")
 	if err != nil || reasonTemplate == "" {
 		return errors.New("reason must be non-empty string")
@@ -124,7 +131,7 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 		reason  = r.FormValue("reason")
 	)
 
-	if err := botTwitchClient.BanUser(channel, user, 0, reason); err != nil {
+	if err := botTwitchClient.BanUser(r.Context(), channel, user, 0, reason); err != nil {
 		http.Error(w, errors.Wrap(err, "issuing ban").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -140,7 +147,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("ban message does not match required format")
 	}
 
-	if err := botTwitchClient.BanUser(channel, matches[1], 0, matches[2]); err != nil {
+	if err := botTwitchClient.BanUser(context.Background(), channel, matches[1], 0, matches[2]); err != nil {
 		return errors.Wrap(err, "executing ban")
 	}
 

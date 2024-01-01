@@ -1,3 +1,4 @@
+// Package delay contains an actor to delay rule execution
 package delay
 
 import (
@@ -11,6 +12,7 @@ import (
 
 const actorName = "delay"
 
+// Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -46,7 +48,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (a actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		ptrZeroDuration = func(v time.Duration) *time.Duration { return &v }(0)
 		delay           = attrs.MustDuration("delay", ptrZeroDuration)
@@ -66,9 +68,9 @@ func (a actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugin
 	return false, nil
 }
 
-func (a actor) IsAsync() bool { return false }
-func (a actor) Name() string  { return actorName }
+func (actor) IsAsync() bool { return false }
+func (actor) Name() string  { return actorName }
 
-func (a actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
+func (actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
 	return nil
 }

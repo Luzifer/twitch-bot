@@ -35,9 +35,10 @@ func (slackCompatibleActor) Name() string { return "slackhook" }
 
 func (s slackCompatibleActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if err = s.ValidateRequireNonEmpty(attrs, "hook_url", "text"); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
+	//nolint:wrapcheck
 	return s.ValidateRequireValidTemplate(tplValidator, attrs, "text")
 }
 

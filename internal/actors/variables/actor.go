@@ -1,3 +1,5 @@
+// Package variables contains an actor and database client to store
+// handle variables
 package variables
 
 import (
@@ -21,20 +23,22 @@ var (
 	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
+// Register provides the plugins.RegisterFunc
+//
 //nolint:funlen // Function contains only documentation registration
-func Register(args plugins.RegistrationArguments) error {
+func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
-	if err := db.DB().AutoMigrate(&variable{}); err != nil {
+	if err = db.DB().AutoMigrate(&variable{}); err != nil {
 		return errors.Wrap(err, "applying schema migration")
 	}
 
 	args.RegisterCopyDatabaseFunc("variable", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &variable{})
+		return database.CopyObjects(src, target, &variable{}) //nolint:wrapcheck // internal helper
 	})
 
 	formatMessage = args.FormatMessage
 
-	args.RegisterActor("setvariable", func() plugins.Actor { return &ActorSetVariable{} })
+	args.RegisterActor("setvariable", func() plugins.Actor { return &actorSetVariable{} })
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
 		Description: "Modify variable contents",
@@ -72,7 +76,7 @@ func Register(args plugins.RegistrationArguments) error {
 		},
 	})
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:  "Returns the value as a plain string",
 		HandlerFunc:  routeActorSetVarGetValue,
 		Method:       http.MethodGet,
@@ -86,9 +90,11 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "name",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
-	args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
+	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description: "Updates the value of the variable",
 		HandlerFunc: routeActorSetVarSetValue,
 		Method:      http.MethodPatch,
@@ -110,10 +116,12 @@ func Register(args plugins.RegistrationArguments) error {
 				Name:        "name",
 			},
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("registering API route: %w", err)
+	}
 
 	args.RegisterTemplateFunction("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) (string, error) {
-		value, err := GetVariable(db, name)
+		value, err := getVariable(db, name)
 		if err != nil {
 			return "", errors.Wrap(err, "getting variable")
 		}
@@ -134,9 +142,9 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type ActorSetVariable struct{}
+type actorSetVariable struct{}
 
-func (a ActorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
 	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
@@ -144,7 +152,7 @@ func (a ActorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule
 
 	if attrs.MustBool("clear", ptrBoolFalse) {
 		return false, errors.Wrap(
-			RemoveVariable(db, varName),
+			removeVariable(db, varName),
 			"removing variable",
 		)
 	}
@@ -155,15 +163,15 @@ func (a ActorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule
 	}
 
 	return false, errors.Wrap(
-		SetVariable(db, varName, value),
+		setVariable(db, varName, value),
 		"setting variable",
 	)
 }
 
-func (a ActorSetVariable) IsAsync() bool { return false }
-func (a ActorSetVariable) Name() string  { return "setvariable" }
+func (actorSetVariable) IsAsync() bool { return false }
+func (actorSetVariable) Name() string  { return "setvariable" }
 
-func (a ActorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (actorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
 	if v, err := attrs.String("variable"); err != nil || v == "" {
 		return errors.New("variable name must be non-empty string")
 	}
@@ -178,7 +186,7 @@ func (a ActorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, a
 }
 
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
-	vc, err := GetVariable(db, mux.Vars(r)["name"])
+	vc, err := getVariable(db, mux.Vars(r)["name"])
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
 		return
@@ -189,7 +197,7 @@ func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func routeActorSetVarSetValue(w http.ResponseWriter, r *http.Request) {
-	if err := SetVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil {
+	if err := setVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

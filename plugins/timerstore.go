@@ -7,19 +7,23 @@ import (
 	"time"
 )
 
+// TimerType defines an enum of available timer types
 type TimerType uint8
 
+// Definitions of supported TimerType values
 const (
 	TimerTypePermit TimerType = iota
 	TimerTypeCooldown
 )
 
 type (
+	// TimerEntry represents a time for the given type in the TimerStore
 	TimerEntry struct {
 		Kind TimerType `json:"kind"`
 		Time time.Time `json:"time"`
 	}
 
+	// TimerStore defines what to expect when interacting with a store
 	TimerStore interface {
 		AddCooldown(tt TimerType, limiter, ruleID string, expiry time.Time) error
 		InCooldown(tt TimerType, limiter, ruleID string) (bool, error)
