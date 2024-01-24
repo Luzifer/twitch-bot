@@ -104,6 +104,7 @@ func TestScanForLinks(t *testing.T) {
 			ExpectedLinks: []string{
 				"http://example.com",
 			},
+			ExpectedContains: true,
 		},
 		// Case: link is obfuscated using space and braces
 		{
@@ -112,6 +113,7 @@ func TestScanForLinks(t *testing.T) {
 			ExpectedLinks: []string{
 				"http://example.com",
 			},
+			ExpectedContains: true,
 		},
 		// Case: multiple links in one message
 		{
@@ -164,9 +166,10 @@ func TestScanForLinks(t *testing.T) {
 		},
 		// Case: Multiple spaces in the link
 		{
-			Heuristic:     true,
-			Message:       "Hey there, see my new project on exa mpl e. com! Get it fast now!",
-			ExpectedLinks: []string{"http://example.com"},
+			Heuristic:        true,
+			Message:          "Hey there, see my new project on exa mpl e. com! Get it fast now!",
+			ExpectedLinks:    []string{"http://example.com"},
+			ExpectedContains: true,
 		},
 		// Case: Dot in the end of the link with space
 		{
