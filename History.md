@@ -1,3 +1,20 @@
+# 3.24.1 / 2024-01-24
+
+  * New Features
+    * [core] Add support for `watch_streak` event
+    * [overlays] Add support for replaying events
+
+  * Improvements
+    * [linkcheck] Refactor: Improve wait-code
+    * [overlays] Add WebDAV support for remote Overlay editing
+
+  * Bugfixes
+    * [ci] Lint: Update linter config, improve code quality
+    * [core] Update dependencies
+    * [eventsub] Fix: Log error when giving up subscription retries
+    * [linkcheck] Fix tests broken by domain grabbers
+    * [overlays] Fix: Do not spam logs with errors when overlay reloaded
+
 # 3.24.0 / 2024-01-24
 
   * New Features
