@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -368,23 +367,6 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 		logrus.WithFields(logrus.Fields(fields.Data())).Info("User spent bits in chat message")
 
 		go handleMessage(i.c, m, eventTypeBits, fields)
-	}
-
-	if amount := i.tagToNumeric(m, "pinned-chat-paid-amount", 0); amount > 0 {
-		fields := plugins.FieldCollectionFromData(map[string]any{
-			"amount":            float64(amount) / math.Pow10(int(i.tagToNumeric(m, "pinned-chat-paid-exponent", 0))),
-			"currency":          m.Tags["pinned-chat-paid-currency"],
-			eventFieldChannel:   i.getChannel(m),
-			eventFieldUserID:    m.Tags["user-id"],
-			eventFieldUserName:  m.User,
-			"is_system_message": m.Tags["pinned-chat-paid-is-system-message"] == "1",
-			"level":             m.Tags["pinned-chat-paid-level"],
-			"message":           m.Trailing(),
-		})
-
-		logrus.WithFields(logrus.Fields(fields.Data())).Info("User used hype-chat message")
-
-		go handleMessage(i.c, m, eventTypeHypeChat, fields)
 	}
 
 	go handleMessage(i.c, m, nil, nil)
