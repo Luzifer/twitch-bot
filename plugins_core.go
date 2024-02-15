@@ -39,6 +39,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/vip"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/whisper"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/customevent"
+	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/kofi"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/msgformat"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/overlays"
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/raffle"
@@ -101,6 +102,7 @@ var (
 
 		// API-only modules
 		customevent.Register,
+		kofi.Register,
 		msgformat.Register,
 		overlays.Register,
 		raffle.Register,

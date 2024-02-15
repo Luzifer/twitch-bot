@@ -100,6 +100,21 @@ Fields:
 - `channel` - The channel the event occurred in
 - `user` - The login-name of the user who joined
 
+## `kofi_donation`
+
+A Ko-fi donation was received through the API-Webhook.
+
+Fields:
+
+- `channel` - The channel the event occurred for
+- `from` - The name submitted by Ko-fi (can be arbitrarily entered)
+- `amount` - The amount donated as submitted by Ko-fi (i.e. 27.95)
+- `currency` - The currency of the amount (i.e. USD)
+- `isSubscription` - Boolean, true on monthly subscriptions, false on single-donations
+- `isFirstSubPayment` - Boolean, true on first montly payment, false otherwise
+- `message` - The message entered by the donator (**not** present when donation was marked as private!)
+- `tier` - The tier the subscriber subscribed to (seems not to be filled on the first transaction?)
+
 ## `outbound_raid`
 
 The channel has raided another channel. (The event is issued in the moment the raid is executed, not when the raid timer starts!)

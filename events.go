@@ -27,6 +27,7 @@ var (
 	eventTypeFollow             = ptrStr("follow")
 	eventTypeGiftPaidUpgrade    = ptrStr("giftpaidupgrade")
 	eventTypeJoin               = ptrStr("join")
+	eventKoFiDonation           = ptrStr("kofi_donation")
 	eventTypeOutboundRaid       = ptrStr("outbound_raid")
 	eventTypePart               = ptrStr("part")
 	eventTypePermit             = ptrStr("permit")
@@ -61,6 +62,7 @@ var (
 		eventTypeFollow,
 		eventTypeGiftPaidUpgrade,
 		eventTypeJoin,
+		eventKoFiDonation,
 		eventTypeOutboundRaid,
 		eventTypePart,
 		eventTypePermit,
