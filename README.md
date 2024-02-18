@@ -1,8 +1,6 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/Luzifer/twitch-bot)](https://goreportcard.com/report/github.com/Luzifer/twitch-bot)
 ![](https://badges.fyi/github/license/Luzifer/twitch-bot)
 ![](https://badges.fyi/github/downloads/Luzifer/twitch-bot)
 ![](https://badges.fyi/github/latest-release/Luzifer/twitch-bot)
-![](https://knut.in/project-status/twitch-bot)
 
 # Luzifer / twitch-bot
 
@@ -12,7 +10,7 @@ At the moment it is a work-in-progress and does not yet implment all features it
 
 ## Configuration
 
-Please see the [Wiki](https://github.com/Luzifer/twitch-bot/wiki) for documentation of the configuration file.
+Please refer to the [Documentation](https://luzifer.github.io/twitch-bot/) how to setup and configure the bot.
 
 ```console
 # twitch-bot --help
