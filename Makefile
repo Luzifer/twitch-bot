@@ -50,7 +50,7 @@ trivy:
 		--format table \
 		--ignore-unfixed \
 		--quiet \
-		--scanners config,license,secret,vuln \
+		--scanners misconfig,license,secret,vuln \
 		--severity HIGH,CRITICAL \
 		--skip-dirs docs
 
