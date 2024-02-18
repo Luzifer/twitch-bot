@@ -93,7 +93,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API: %w", err)
 	}
 
-	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection) interface{} {
 		return func() (int, error) {
 			return getMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}

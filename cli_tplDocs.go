@@ -11,7 +11,7 @@ func init() {
 	cli.Add(cliRegistryEntry{
 		Name:        "tpl-docs",
 		Description: "Generate markdown documentation for available template functions",
-		Run: func(args []string) error {
+		Run: func([]string) error {
 			doc, err := generateTplDocs()
 			if err != nil {
 				return errors.Wrap(err, "generating template docs")

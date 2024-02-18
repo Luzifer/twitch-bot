@@ -182,7 +182,7 @@ func main() {
 	router.Use(corsMiddleware)
 	router.HandleFunc("/openapi.html", handleSwaggerHTML)
 	router.HandleFunc("/openapi.json", handleSwaggerRequest)
-	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/selfcheck", func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, runID, http.StatusOK)
 	})
 

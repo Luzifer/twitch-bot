@@ -9,7 +9,7 @@ func init() {
 	cli.Add(cliRegistryEntry{
 		Name:        "reset-secrets",
 		Description: "Remove encrypted data to reset encryption passphrase",
-		Run: func(args []string) error {
+		Run: func([]string) error {
 			if err := accessService.RemoveAllExtendedTwitchCredentials(); err != nil {
 				return errors.Wrap(err, "resetting Twitch credentials")
 			}

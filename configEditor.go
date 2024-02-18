@@ -46,7 +46,7 @@ func init() {
 }
 
 func registerEditorFrontend() {
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		f, err := configEditorFrontend.Open("editor/index.html")
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "opening index.html").Error(), http.StatusNotFound)
@@ -56,7 +56,7 @@ func registerEditorFrontend() {
 		io.Copy(w, f) //nolint:errcheck,gosec
 	})
 
-	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, _ *http.Request) {
 		if err := json.NewEncoder(w).Encode(struct {
 			DefaultBotScopes  []string
 			IRCBadges         []string

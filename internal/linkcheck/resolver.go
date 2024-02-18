@@ -99,7 +99,7 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 	}
 
 	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 		Jar: cookieJar,

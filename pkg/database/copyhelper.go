@@ -23,7 +23,7 @@ func CopyObjects(src, target *gorm.DB, objects ...any) (err error) {
 			return errors.Wrap(err, "cleaning target table")
 		}
 
-		if err = src.FindInBatches(copySlice, copyBatchSize, func(tx *gorm.DB, _ int) error {
+		if err = src.FindInBatches(copySlice, copyBatchSize, func(*gorm.DB, int) error {
 			if err = target.Save(copySlice).Error; err != nil {
 				if errors.Is(err, gorm.ErrEmptySlice) {
 					// That's fine and no reason to exit here

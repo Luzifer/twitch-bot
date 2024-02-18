@@ -37,7 +37,7 @@ func actionDelete(channel, _, msgid, _ string) (err error) {
 }
 
 func getActionTimeout(duration time.Duration) actionFn {
-	return func(channel, match, msgid, user string) error {
+	return func(channel, match, _, user string) error {
 		return errors.Wrap(
 			botTwitchClient.BanUser(
 				context.Background(),

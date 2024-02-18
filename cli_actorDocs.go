@@ -11,7 +11,7 @@ func init() {
 	cli.Add(cliRegistryEntry{
 		Name:        "actor-docs",
 		Description: "Generate markdown documentation for available actors",
-		Run: func(args []string) error {
+		Run: func([]string) error {
 			doc, err := generateActorDocs()
 			if err != nil {
 				return errors.Wrap(err, "generating actor docs")

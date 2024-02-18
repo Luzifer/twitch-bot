@@ -135,7 +135,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API route: %w", err)
 	}
 
-	args.RegisterTemplateFunction("channelCounter", func(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("channelCounter", func(_ *irc.Message, _ *plugins.Rule, fields *plugins.FieldCollection) interface{} {
 		return func(name string) (string, error) {
 			channel, err := fields.String("channel")
 			if err != nil {

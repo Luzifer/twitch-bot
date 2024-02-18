@@ -141,7 +141,7 @@ func TestAllowExecuteDisableOnTemplate(t *testing.T) {
 	} {
 		// We don't test the message formatter here but only the disable functionality
 		// so we fake the result of the evaluation
-		r.msgFormatter = func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error) {
+		r.msgFormatter = func(string, *irc.Message, *Rule, *FieldCollection) (string, error) {
 			return msg, nil
 		}
 

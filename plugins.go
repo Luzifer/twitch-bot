@@ -34,7 +34,7 @@ func loadPlugins(pluginDir string) error {
 
 	args := getRegistrationArguments()
 
-	return errors.Wrap(filepath.Walk(pluginDir, func(currentPath string, info os.FileInfo, err error) error {
+	return errors.Wrap(filepath.Walk(pluginDir, func(currentPath string, _ os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

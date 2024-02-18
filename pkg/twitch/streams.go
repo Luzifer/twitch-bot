@@ -24,7 +24,7 @@ type (
 		StartedAt    time.Time `json:"started_at"`
 		Language     string    `json:"language"`
 		ThumbnailURL string    `json:"thumbnail_url"`
-		TagIds       []string  `json:"tag_ids"`
+		TagIds       []string  `json:"tag_ids"` //revive:disable-line:var-naming // Disabled to prevent breaking change
 		IsMature     bool      `json:"is_mature"`
 	}
 )

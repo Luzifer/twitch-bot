@@ -6,7 +6,7 @@ func init() {
 	cli.Add(cliRegistryEntry{
 		Name:        "validate-config",
 		Description: "Try to load configuration file and report errors if any",
-		Run: func(args []string) error {
+		Run: func([]string) error {
 			return errors.Wrap(
 				loadConfig(cfg.Config),
 				"loading config",
