@@ -1,3 +1,11 @@
+# 3.25.0 / 2024-02-18
+
+  * New Features
+    * [kofi] Add `kofi_donation` event and Ko-fi webhook handler
+
+  * Improvements
+    * [core] Remove support for `hype_chat` event
+
 # 3.24.1 / 2024-01-24
 
   * New Features
