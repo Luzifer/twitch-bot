@@ -112,6 +112,7 @@ func (t *twitchWatcher) RemoveChannel(channel string) error {
 	return nil
 }
 
+//nolint:funlen // Just a collection of topics
 func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration {
 	return []topicRegistration{
 		{
@@ -128,6 +129,30 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorReadFollowers},
 			Hook:           t.handleEventSubChannelFollow,
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelHypetrainBegin,
+			Version:        twitch.EventSubTopicVersion1,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
+			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainBegin),
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelHypetrainEnd,
+			Version:        twitch.EventSubTopicVersion1,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
+			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainEnd),
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelHypetrainProgress,
+			Version:        twitch.EventSubTopicVersion1,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
+			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainProgress),
 			Optional:       true,
 		},
 		{
@@ -334,6 +359,31 @@ func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.R
 		fields.Set("poll", payload)
 
 		go handleMessage(ircHdl.Client(), nil, event, fields)
+		return nil
+	}
+}
+
+func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.RawMessage) error {
+	return func(m json.RawMessage) error {
+		var payload twitch.EventSubEventHypetrain
+		if err := json.Unmarshal(m, &payload); err != nil {
+			return errors.Wrap(err, "unmarshalling event")
+		}
+
+		fields := plugins.FieldCollectionFromData(map[string]any{
+			"channel": "#" + payload.BroadcasterUserLogin,
+			"level":   payload.Level,
+		})
+
+		if payload.Goal > 0 {
+			fields.Set("levelProgress", float64(payload.Progress)/float64(payload.Goal))
+		}
+
+		log.WithFields(log.Fields(fields.Data())).Info("Hypetrain event")
+
+		fields.Set("event", payload)
+		go handleMessage(ircHdl.Client(), nil, eventType, fields)
+
 		return nil
 	}
 }

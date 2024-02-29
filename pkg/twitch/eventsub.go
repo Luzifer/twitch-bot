@@ -17,6 +17,9 @@ const (
 	EventSubEventTypeChannelAdBreakBegin                   = "channel.ad_break.begin"
 	EventSubEventTypeChannelFollow                         = "channel.follow"
 	EventSubEventTypeChannelPointCustomRewardRedemptionAdd = "channel.channel_points_custom_reward_redemption.add"
+	EventSubEventTypeChannelHypetrainBegin                 = "channel.hype_train.begin"
+	EventSubEventTypeChannelHypetrainProgress              = "channel.hype_train.progress"
+	EventSubEventTypeChannelHypetrainEnd                   = "channel.hype_train.end"
 	EventSubEventTypeChannelRaid                           = "channel.raid"
 	EventSubEventTypeChannelShoutoutCreate                 = "channel.shoutout.create"
 	EventSubEventTypeChannelShoutoutReceive                = "channel.shoutout.receive"
@@ -110,6 +113,38 @@ type (
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		FollowedAt           time.Time `json:"followed_at"`
+	}
+
+	// EventSubEventHypetrain contains the payload for all three (begin,
+	// progress and end) hypetrain events. Certain fields are not
+	// available at all event types
+	EventSubEventHypetrain struct {
+		ID                   string `json:"id"`
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
+		Level                int64  `json:"level"`
+		Total                int64  `json:"total"`
+		Progress             int64  `json:"progress"` // Only Beginn, Progress
+		Goal                 int64  `json:"goal"`     // Only Beginn, Progress
+		TopContributions     []struct {
+			UserID    string `json:"user_id"`
+			UserLogin string `json:"user_login"`
+			UserName  string `json:"user_name"`
+			Type      string `json:"type"`
+			Total     int64  `json:"total"`
+		} `json:"top_contributions"`
+		LastContribution *struct { // Only Begin, Progress
+			UserID    string `json:"user_id"`
+			UserLogin string `json:"user_login"`
+			UserName  string `json:"user_name"`
+			Type      string `json:"type"`
+			Total     int64  `json:"total"`
+		} `json:"last_contribution,omitempty"`
+		StartedAt      time.Time  `json:"started_at"`
+		ExpiresAt      *time.Time `json:"expires_at,omitempty"`       // Only Begin, Progress
+		EndedAt        *time.Time `json:"ended_at,omitempty"`         // Only End
+		CooldownEndsAt *time.Time `json:"cooldown_ends_at,omitempty"` // Only End
 	}
 
 	// EventSubEventPoll contains the payload for a poll change event

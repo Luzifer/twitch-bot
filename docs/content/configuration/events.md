@@ -91,6 +91,17 @@ Fields:
 - `gifter` - The login-name of the user who gifted the subscription
 - `username` - The login-name of the user who upgraded their subscription
 
+## `hypetrain_begin`, `hypetrain_end`, `hypetrain_progress`
+
+An Hype-Train has begun, ended or progressed in the given channel.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `level` - The current level of the Hype-Train
+- `levelProgress` - Percentage of reached "points" in the current level to complete the level (not available on `hypetrain_end`)
+- `event` - Raw Hype-Train event, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L121) 
+
 ## `join`
 
 User joined the channel-chat. This is **NOT** an indicator they are viewing, the event is **NOT** reliably sent when the user really joined the chat. The event will be sent with some delay after they join the chat and is sometimes repeated multiple times during their stay. So **DO NOT** use this to greet users!
@@ -152,7 +163,7 @@ A poll was started / was ended / had changes in the given channel.
 Fields:
 
 - `channel` - The channel the event occurred in
-- `poll` - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L92)
+- `poll` - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L152)
 - `status` - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
 - `title` - The title of the poll the event was generated for
 
