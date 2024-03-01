@@ -1,7 +1,7 @@
 FROM luzifer/archlinux as builder
 
-COPY . /go/src/github.com/Luzifer/twitch-bot
-WORKDIR /go/src/github.com/Luzifer/twitch-bot
+COPY . /go/src/twitch-bot
+WORKDIR /go/src/twitch-bot
 
 ENV CGO_ENABLED=0 \
     GOPATH=/go
@@ -10,10 +10,12 @@ RUN set -ex \
  && pacman -Syy --noconfirm \
       curl \
       git \
+      git-lfs \
       go \
       make \
       nodejs-lts-hydrogen \
       npm \
+ && git config --global --add safe.directory /go/src/twitch-bot \
  && make node_modules frontend_prod \
  && go install \
       -trimpath \
