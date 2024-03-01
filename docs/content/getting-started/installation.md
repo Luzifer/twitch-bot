@@ -27,9 +27,9 @@ The Docker image is automatically built from the source and provided in two diff
 
 | Image | Description |
 | ----- | ----------- |
-| <span style="white-space:nowrap">`luzifer/twitch-bot:latest`</span> | The latest development version, not recommended for use as your main bot, perfect for testing the latest changes not yet released. |
-| <span style="white-space:nowrap">`luzifer/twitch-bot:stable`</span> | Automatically updated on every versioned release, you just can use this tag to always have the latest stable version. Pay attention: This automatically switches over on major / breaking releases! |
-| <span style="white-space:nowrap">`luzifer/twitch-bot:<version>`</span> | If you don't want to auto-update you can use the tagged version in the Docker image (i.e. tag `v3.15.0` would be available as `luzifer/twitch-bot:v3.15.0`) |
+| <span style="white-space:nowrap">`ghcr.io/luzifer/twitch-bot:develop`</span> | The latest development version, not recommended for use as your main bot, perfect for testing the latest changes not yet released. |
+| <span style="white-space:nowrap">`ghcr.io/luzifer/twitch-bot:latest`</span> | Automatically updated on every versioned release, you just can use this tag to always have the latest stable version. Pay attention: This automatically switches over on major / breaking releases! |
+| <span style="white-space:nowrap">`ghcr.io/luzifer/twitch-bot:<version>`</span> | If you don't want to auto-update you can use the tagged version in the Docker image (i.e. tag `v3.15.0` would be available as `luzifer/twitch-bot:v3.15.0`) |
 
 ## Building the Binary yourself
 
