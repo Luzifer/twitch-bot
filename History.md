@@ -1,3 +1,12 @@
+# 3.26.0 / 2024-03-05
+
+  * New Features
+    * [core] Add support for Hype-Train events
+
+  * Improvements
+    * [CI] Add Docker-Publish pipeline
+    * [docs] Update Docker image references to GHCR
+
 # 3.25.0 / 2024-02-18
 
   * New Features
