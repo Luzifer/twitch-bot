@@ -1,3 +1,8 @@
+# 3.26.1 / 2024-03-06
+
+  * Bugfixes
+    * [editor] Fix: Add hypetrain events to events match dropdown
+
 # 3.26.0 / 2024-03-05
 
   * New Features
