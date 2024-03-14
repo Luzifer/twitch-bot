@@ -344,7 +344,10 @@ func main() {
 				continue
 			}
 
-			ircHdl.ExecuteJoins(config.Channels)
+			if ircHdl != nil {
+				ircHdl.ExecuteJoins(config.Channels)
+			}
+
 			for _, c := range config.Channels {
 				if err := twitchWatch.AddChannel(c); err != nil {
 					log.WithError(err).WithField("channel", c).Error("Unable to add channel to watcher")
