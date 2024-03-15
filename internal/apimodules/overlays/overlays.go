@@ -192,21 +192,19 @@ func Register(args plugins.RegistrationArguments) (err error) {
 			Fields: eventData,
 		}
 
-		if msg.EventID, err = addChannelEvent(db, plugins.DeriveChannel(nil, eventData), socketMessage{
-			IsLive: false,
-			Time:   time.Now(),
-			Type:   event,
-			Fields: eventData,
-		}); err != nil {
-			return errors.Wrap(err, "storing event")
+		if !str.StringInSlice(event, storeExemption) {
+			if msg.EventID, err = addChannelEvent(db, plugins.DeriveChannel(nil, eventData), socketMessage{
+				IsLive: false,
+				Time:   time.Now(),
+				Type:   event,
+				Fields: eventData,
+			}); err != nil {
+				return errors.Wrap(err, "storing event")
+			}
 		}
 
 		for _, fn := range subscribers {
 			fn(msg)
-		}
-
-		if str.StringInSlice(event, storeExemption) {
-			return nil
 		}
 
 		return nil
