@@ -26,6 +26,7 @@ require (
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
 	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.21.0
+	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 	gopkg.in/irc.v4 v4.0.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.4
@@ -51,6 +52,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -97,6 +99,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
+	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/libc v1.41.0 // indirect

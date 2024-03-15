@@ -112,6 +112,8 @@ type (
 		FormatMessage MsgFormatter
 		// FrontendNotify is a way to send a notification to the frontend
 		FrontendNotify func(string)
+		// GetBaseURL returns the configured BaseURL for the bot
+		GetBaseURL func() string
 		// GetDatabaseConnector returns an active database.Connector to access the backend storage database
 		GetDatabaseConnector func() database.Connector
 		// GetLogger returns a sirupsen log.Entry pre-configured with the module name

@@ -33,6 +33,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/respond"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/shield"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/shoutout"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/spotify"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/stopexec"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/timeout"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/variables"
@@ -95,6 +96,7 @@ var (
 		numeric.Register,
 		random.Register,
 		slice.Register,
+		spotify.Register,
 		strings.Register,
 		subscriber.Register,
 		twitchFns.Register,
@@ -159,6 +161,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 	return plugins.RegistrationArguments{
 		FormatMessage:              formatMessage,
 		FrontendNotify:             func(mt string) { frontendNotifyHooks.Ping(mt) },
+		GetBaseURL:                 func() string { return cfg.BaseURL },
 		GetDatabaseConnector:       func() database.Connector { return db },
 		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },

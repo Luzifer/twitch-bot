@@ -441,7 +441,22 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 66%
+< Your int this hour: 88%
+```
+
+### `spotifyCurrentPlaying`
+
+Retrieves the current playing track for the given channel
+
+Syntax: `spotifyCurrentPlaying <channel>`
+
+Example:
+
+```
+! ^!spotify
+> !spotify
+# {{ spotifyCurrentPlaying .channel }}
+* Beast in Black - Die By The Blade
 ```
 
 ### `streamUptime`
