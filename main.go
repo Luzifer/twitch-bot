@@ -48,6 +48,7 @@ var (
 		LogLevel              string        `flag:"log-level" default:"info" description:"Log level (debug, info, warn, error, fatal)"`
 		PluginDir             string        `flag:"plugin-dir" default:"/usr/lib/twitch-bot" description:"Where to find and load plugins"`
 		SentryDSN             string        `flag:"sentry-dsn" default:"" description:"Sentry / GlitchTip DSN for error reporting"`
+		SentryEnvironment     string        `flag:"sentry-environment" default:"" description:"Environment to submit to Sentry to distinguish bot instances"`
 		StorageConnString     string        `flag:"storage-conn-string" default:"./storage.db" description:"Connection string for the database"`
 		StorageConnType       string        `flag:"storage-conn-type" default:"sqlite" description:"One of: mysql, postgres, sqlite"`
 		StorageEncryptionPass string        `flag:"storage-encryption-pass" default:"" description:"Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)"`
@@ -97,8 +98,9 @@ func initApp() error {
 
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
-			Dsn:     cfg.SentryDSN,
-			Release: strings.Join([]string{"twitch-bot", version}, "@"),
+			Dsn:         cfg.SentryDSN,
+			Environment: cfg.SentryEnvironment,
+			Release:     strings.Join([]string{"twitch-bot", version}, "@"),
 		}); err != nil {
 			return errors.Wrap(err, "initializing sentry sdk")
 		}
