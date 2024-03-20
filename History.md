@@ -1,3 +1,15 @@
+# 3.27.0 / 2024-03-20
+
+  * New Features
+    * [spotify] Add `spotifyCurrentPlaying` template function
+
+  * Improvements
+    * [core] Add Sentry-Environment configuration
+
+  * Bugfixes
+    * [core] Fix: Newly initialized bots crash when not authorized yet
+    * [overlays] Fix: JOIN / PART events spamming the database
+
 # 3.26.1 / 2024-03-06
 
   * Bugfixes
