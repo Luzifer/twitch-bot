@@ -298,6 +298,15 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 		OKStatus: http.StatusAccepted,
 		Out:      &resp,
 		URL:      "https://api.twitch.tv/helix/eventsub/subscriptions",
+		ValidateFunc: func(opts ClientRequestOpts, resp *http.Response) error {
+			if resp.StatusCode == http.StatusConflict {
+				// This is fine: We needed that subscription, it exists
+				return nil
+			}
+
+			// Fallback to default handling
+			return ValidateStatus(opts, resp)
+		},
 	}); err != nil {
 		return nil, errors.Wrap(err, "executing request")
 	}
