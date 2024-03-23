@@ -385,6 +385,10 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 			e.logger.Debug("websocket was closed normally")
 			return nil
 
+		case websocket.CloseAbnormalClosure:
+			e.logger.Warn("websocket reported abnormal closure")
+			return errors.Wrap(e.connect(e.socketDest, msgC, errC, "network-error"), "re-connecting after abnormal closure")
+
 		default:
 			// Some non-twitch close code we did not expect
 			e.logger.WithError(closeErr).Error("websocket reported unexpected error code")
