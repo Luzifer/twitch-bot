@@ -405,8 +405,17 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			case err == nil:
 				// We use nil-error to close the connection
 
-			case errors.As(err, &cErr) && websocket.IsCloseError(cErr, websocket.CloseNormalClosure, websocket.CloseGoingAway):
-				// We don't need to log when the remote closes the websocket gracefully
+			case errors.As(err, &cErr):
+				switch cErr.Code {
+				case websocket.CloseAbnormalClosure:
+					logger.WithError(err).Warn("overlay websocket was closed abnormally")
+
+				case websocket.CloseNormalClosure, websocket.CloseGoingAway:
+					// We don't need to log when the remote closes the websocket gracefully
+
+				default:
+					logger.WithError(err).Error("message processing caused error")
+				}
 
 			default:
 				logger.WithError(err).Error("message processing caused error")
