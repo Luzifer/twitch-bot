@@ -11,7 +11,7 @@ Fields:
 - `channel` - The channel the event occurred in
 - `duration` - Duration of the ads in seconds
 - `is_automatic` - Were the ads started by the ad-manager?
-- `timestamp` - When did the ad-break start
+- `started_at` - When did the ad-break start
 
 ## `ban`
 

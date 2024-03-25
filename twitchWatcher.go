@@ -245,7 +245,7 @@ func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"duration":     payload.Duration,
 		"is_automatic": payload.IsAutomatic,
-		"timestamp":    payload.Timestamp,
+		"started_at":   payload.StartedAt,
 	})
 
 	log.WithFields(log.Fields(fields.Data())).Info("Ad-Break started")

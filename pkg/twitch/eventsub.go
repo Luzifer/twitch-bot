@@ -60,7 +60,7 @@ type (
 	// EventSubEventAdBreakBegin contains the payload for an AdBreak event
 	EventSubEventAdBreakBegin struct {
 		Duration             int64     `json:"duration_seconds"`
-		Timestamp            time.Time `json:"timestamp"`
+		StartedAt            time.Time `json:"started_at"`
 		IsAutomatic          bool      `json:"is_automatic"`
 		BroadcasterUserID    string    `json:"broadcaster_user_id"`
 		BroadcasterUserLogin string    `json:"broadcaster_user_login"`
