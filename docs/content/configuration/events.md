@@ -2,6 +2,17 @@
 title: "Available Events"
 ---
 
+## `adbreak_begin`
+
+Ad-break has begun and ads are playing now in mentioned channel.
+
+Fields:
+
+- `channel` - The channel the event occurred in
+- `duration` - Duration of the ads in seconds
+- `is_automatic` - Were the ads started by the ad-manager?
+- `timestamp` - When did the ad-break start
+
 ## `ban`
 
 Moderator action caused a user to be banned from chat.
