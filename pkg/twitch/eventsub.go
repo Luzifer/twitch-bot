@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/mitchellh/hashstructure/v2"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Collection of known EventSub event-types
@@ -277,8 +279,10 @@ func (c *Client) createEventSubSubscriptionWebsocket(ctx context.Context, sub ev
 
 func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, sub eventSubSubscription) (*eventSubSubscription, error) {
 	var (
-		buf  = new(bytes.Buffer)
-		resp struct {
+		buf                   = new(bytes.Buffer)
+		err                   error
+		mustFetchSubsctiption bool
+		resp                  struct {
 			Total      int64                  `json:"total"`
 			Data       []eventSubSubscription `json:"data"`
 			Pagination struct {
@@ -287,11 +291,16 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 		}
 	)
 
-	if err := json.NewEncoder(buf).Encode(sub); err != nil {
+	conHash, err := sub.Condition.Hash()
+	if err != nil {
+		return nil, fmt.Errorf("hashing input condition: %w", err)
+	}
+
+	if err = json.NewEncoder(buf).Encode(sub); err != nil {
 		return nil, errors.Wrap(err, "assemble subscribe payload")
 	}
 
-	if err := c.Request(ctx, ClientRequestOpts{
+	if err = c.Request(ctx, ClientRequestOpts{
 		AuthType: auth,
 		Body:     buf,
 		Method:   http.MethodPost,
@@ -301,6 +310,7 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 		ValidateFunc: func(opts ClientRequestOpts, resp *http.Response) error {
 			if resp.StatusCode == http.StatusConflict {
 				// This is fine: We needed that subscription, it exists
+				mustFetchSubsctiption = true
 				return nil
 			}
 
@@ -308,8 +318,46 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 			return ValidateStatus(opts, resp)
 		},
 	}); err != nil {
-		return nil, errors.Wrap(err, "executing request")
+		return nil, fmt.Errorf("creating subscription: %w", err)
 	}
 
-	return &resp.Data[0], nil
+	if mustFetchSubsctiption {
+		params := make(url.Values)
+		params.Set("status", "enabled")
+		params.Set("type", sub.Type)
+
+		if err = c.Request(ctx, ClientRequestOpts{
+			AuthType: auth,
+			Method:   http.MethodGet,
+			OKStatus: http.StatusOK,
+			Out:      &resp,
+			URL:      fmt.Sprintf("https://api.twitch.tv/helix/eventsub/subscriptions?%s", params.Encode()),
+		}); err != nil {
+			return nil, fmt.Errorf("fetching subscription: %w", err)
+		}
+	}
+
+	for i := range resp.Data {
+		s := resp.Data[i]
+
+		if s.Type != sub.Type || s.Version != sub.Version {
+			// Not the subscription we're searching for
+			continue
+		}
+
+		sConHash, err := s.Condition.Hash()
+		if err != nil {
+			logrus.WithError(err).Error("hashing eventsub subscription condition")
+			continue
+		}
+
+		if sConHash != conHash {
+			// Different conditions
+			continue
+		}
+
+		return &s, nil
+	}
+
+	return nil, fmt.Errorf("no subscription matching input found")
 }
