@@ -189,7 +189,6 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		},
 
 		GetTwitchClientForChannel: func(channel string) (*twitch.Client, error) {
-			//nolint:wrapcheck // own package, no need to wrap
 			return accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
 				TwitchClient:       cfg.TwitchClient,
 				TwitchClientSecret: cfg.TwitchClientSecret,

@@ -445,7 +445,7 @@ func (e *EventSubSocketClient) retryBackgroundSubscribe(st eventSubSocketSubscri
 			if err := e.runCtx.Err(); err != nil {
 				// Our run-context was cancelled, stop retrying to subscribe
 				// to topics as this client was closed
-				return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // We get our internal error
+				return backoff.NewErrCannotRetry(err)
 			}
 
 			return e.subscribe(st)

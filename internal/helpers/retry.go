@@ -23,6 +23,6 @@ func Retry(fn func() error) error {
 // database and will be retried as if executed using Retry
 func RetryTransaction(db *gorm.DB, fn func(tx *gorm.DB) error) error {
 	return Retry(func() error {
-		return db.Transaction(fn) //nolint:wrapcheck
+		return db.Transaction(fn)
 	})
 }

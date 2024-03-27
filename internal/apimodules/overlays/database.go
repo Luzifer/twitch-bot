@@ -75,7 +75,7 @@ func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) 
 	if err := helpers.Retry(func() (err error) {
 		err = db.DB().Where("id = ?", eventID).First(&evt).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // we get our internal error
+			return backoff.NewErrCannotRetry(err)
 		}
 		return err
 	}); err != nil {

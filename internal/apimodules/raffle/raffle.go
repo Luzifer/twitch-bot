@@ -29,7 +29,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	args.RegisterCopyDatabaseFunc("raffle", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &raffle{}, &raffleEntry{}) //nolint:wrapcheck // internal helper
+		return database.CopyObjects(src, target, &raffle{}, &raffleEntry{})
 	})
 
 	dbc = newDBClient(db)

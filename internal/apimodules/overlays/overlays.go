@@ -92,7 +92,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	args.RegisterCopyDatabaseFunc("overlay_events", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &overlaysEvent{}) //nolint:wrapcheck // internal helper
+		return database.CopyObjects(src, target, &overlaysEvent{})
 	})
 
 	validateToken = args.ValidateToken

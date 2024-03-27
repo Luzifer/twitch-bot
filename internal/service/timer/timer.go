@@ -103,7 +103,7 @@ func (s Service) HasTimer(id string) (bool, error) {
 	err := helpers.Retry(func() error {
 		err := s.db.DB().First(&t, "id = ? AND expires_at >= ?", id, time.Now().UTC()).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // We'll get our own error
+			return backoff.NewErrCannotRetry(err)
 		}
 		return err
 	})

@@ -9,7 +9,9 @@ run:
   modules-download-mode: readonly
 
 output:
-  format: tab
+  formats:
+    - format: tab
+      path: stdout
 
 issues:
   # This disables the included exclude-list in golangci-lint as that

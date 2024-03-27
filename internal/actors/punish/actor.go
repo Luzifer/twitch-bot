@@ -40,7 +40,7 @@ func Register(args plugins.RegistrationArguments) error {
 	}
 
 	args.RegisterCopyDatabaseFunc("punish", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &punishLevel{}) //nolint:wrapcheck // internal helper
+		return database.CopyObjects(src, target, &punishLevel{})
 	})
 
 	botTwitchClient = args.GetTwitchClient()

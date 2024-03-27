@@ -37,7 +37,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	args.RegisterCopyDatabaseFunc("custom_event", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &storedCustomEvent{}) //nolint:wrapcheck // internal helper
+		return database.CopyObjects(src, target, &storedCustomEvent{})
 	})
 
 	mc = &memoryCache{dbc: db}

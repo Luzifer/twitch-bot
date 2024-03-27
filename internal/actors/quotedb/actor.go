@@ -36,7 +36,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	}
 
 	args.RegisterCopyDatabaseFunc("quote", func(src, target *gorm.DB) error {
-		return database.CopyObjects(src, target, &quote{}) //nolint:wrapcheck // internal helper
+		return database.CopyObjects(src, target, &quote{})
 	})
 
 	formatMessage = args.FormatMessage

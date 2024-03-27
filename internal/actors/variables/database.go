@@ -22,7 +22,7 @@ func getVariable(db database.Connector, key string) (string, error) {
 	err := helpers.Retry(func() error {
 		err := db.DB().First(&v, "name = ?", key).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(err) //nolint:wrapcheck // we get our internal error
+			return backoff.NewErrCannotRetry(err)
 		}
 		return err
 	})

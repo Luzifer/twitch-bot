@@ -172,7 +172,7 @@ func (s Service) GetTwitchClientForChannel(channel string, cfg ClientConfig) (*t
 	if err = helpers.Retry(func() error {
 		err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized) //nolint:wrapcheck // We get our own error
+			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized)
 		}
 		return errors.Wrap(err, "getting twitch credential from database")
 	}); err != nil {
@@ -251,7 +251,7 @@ func (s Service) HasTokensForChannel(channel string) (bool, error) {
 	if err = helpers.Retry(func() error {
 		err = s.db.DB().First(&perm, "channel = ?", strings.TrimLeft(channel, "#")).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized) //nolint:wrapcheck // We'll get our own error
+			return backoff.NewErrCannotRetry(ErrChannelNotAuthorized)
 		}
 		return errors.Wrap(err, "getting twitch credential from database")
 	}); err != nil {
