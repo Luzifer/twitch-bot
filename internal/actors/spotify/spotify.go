@@ -32,7 +32,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 	args.RegisterTemplateFunction(
 		"spotifyCurrentPlaying",
-		plugins.GenericTemplateFunctionGetter(getCurrentTrackForChannel),
+		plugins.GenericTemplateFunctionGetter(getCurrentArtistTitleForChannel),
 		plugins.TemplateFuncDocumentation{
 			Name:        "spotifyCurrentPlaying",
 			Description: "Retrieves the current playing track for the given channel",
@@ -43,7 +43,24 @@ func Register(args plugins.RegistrationArguments) (err error) {
 				Template:       "{{ spotifyCurrentPlaying .channel }}",
 				FakedOutput:    "Beast in Black - Die By The Blade",
 			},
-		})
+		},
+	)
+
+	args.RegisterTemplateFunction(
+		"spotifyLink",
+		plugins.GenericTemplateFunctionGetter(getCurrentLinkForChannel),
+		plugins.TemplateFuncDocumentation{
+			Name:        "spotifyLink",
+			Description: "Retrieves the link for the playing track for the given channel",
+			Syntax:      "spotifyLink <channel>",
+			Example: &plugins.TemplateFuncDocumentationExample{
+				MatchMessage:   "^!spotifylink",
+				MessageContent: "!spotifylink",
+				Template:       "{{ spotifyLink .channel }}",
+				FakedOutput:    "https://open.spotify.com/track/3HCzXf0lNpekSqsGBcGrCd",
+			},
+		},
+	)
 
 	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
 		Description:       "Starts authorization of an Spotify Account for a {channel}",
