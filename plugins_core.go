@@ -46,6 +46,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/apimodules/raffle"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/api"
+	"github.com/Luzifer/twitch-bot/v3/internal/template/date"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/random"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/slice"
@@ -93,6 +94,7 @@ var (
 
 		// Template functions
 		api.Register,
+		date.Register,
 		numeric.Register,
 		random.Register,
 		slice.Register,

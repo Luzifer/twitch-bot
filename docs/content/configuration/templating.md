@@ -256,6 +256,19 @@ Example:
 < 5 hours, 33 minutes, 12 seconds - 5 hours, 33 minutes
 ```
 
+### `formatHumanDateDiff`
+
+Formats a DateInterval object according to the format (%Y, %M, %D, %H, %I, %S for years, months, days, hours, minutes, seconds - Lowercase letters without leading zeros)
+
+Syntax: `formatHumanDateDiff <format> <obj>`
+
+Example:
+
+```
+# {{ humanDateDiff (mustToDate "2006-01-02 -0700" "2024-05-05 +0200") (mustToDate "2006-01-02 -0700" "2023-01-09 +0100") | formatHumanDateDiff "%Y years, %M months, %D days" }}
+< 01 years, 03 months, 25 days
+```
+
 ### `group`
 
 Gets matching group specified by index from `match_message` regular expression, when `fallback` is defined, it is used when group has an empty match
@@ -269,6 +282,19 @@ Example:
 > !command 12 test
 # {{ group 2 "oops" }} - {{ group 3 "oops" }}
 < test - oops
+```
+
+### `humanDateDiff`
+
+Returns a DateInterval object describing the time difference between a and b in a "human" way of counting the time (2023-02-05 -> 2024-03-05 = 1 Year, 1 Month)
+
+Syntax: `humanDateDiff <a> <b>`
+
+Example:
+
+```
+# {{ humanDateDiff (mustToDate "2006-01-02 -0700" "2024-05-05 +0200") (mustToDate "2006-01-02 -0700" "2023-01-09 +0100") }}
+< {1 3 25 23 0 0}
 ```
 
 ### `idForUsername`
@@ -441,7 +467,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 27%
+< Your int this hour: 70%
 ```
 
 ### `spotifyCurrentPlaying`
