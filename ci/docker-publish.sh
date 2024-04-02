@@ -19,8 +19,8 @@ branch)
   tags+=(develop)
   ;;
 tag)
-  # Build to latest & stable: Older tags are not intended to rebuild
-  tags+=(latest stable ${GITHUB_REF_NAME})
+  # Build to latest: Older tags are not intended to rebuild
+  tags+=(develop latest ${GITHUB_REF_NAME})
   ;;
 *)
   log "ERR: The ref type ${GITHUB_REF_TYPE} is not handled."
