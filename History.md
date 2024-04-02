@@ -1,3 +1,19 @@
+# 3.28.0 / 2024-04-02
+
+  * New Features
+    * [spotify] Add `spotifyLink` template function
+    * [templating] add `humanDateDiff` and `formatHumanDateDiff` functions
+
+  * Improvements
+    * [eventsub] Suppress error on abnormal closure and reconnect
+    * [overlays] Lower socket abnormal closure log-level to warning
+
+  * Bugfixes
+    * [core] Update dependencies
+    * [docs] Fix: Add missing documentation for `adbreak_begin`
+    * [eventsub] Fix: Do not retry subscription on collision
+    * [eventsub] Fix: Twitch renamed field in `adbreak_begin`
+
 # 3.27.0 / 2024-03-20
 
   * New Features
