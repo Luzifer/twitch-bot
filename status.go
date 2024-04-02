@@ -80,6 +80,7 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 		{
 			Name:        "Twitch Client Authorized",
 			Description: "Twitch Client is authorized and can fetch authorized user",
+			//nolint:contextcheck // Check is too stupid to see the context IS passed
 			checkFn: func() error {
 				if twitchClient == nil {
 					return errors.New("not initialized")
