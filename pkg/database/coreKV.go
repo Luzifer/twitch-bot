@@ -119,7 +119,7 @@ func (c connector) readCoreMeta(key string, value any, processor func(string) (s
 	if err = helpers.Retry(func() error {
 		err = c.db.First(&data, "name = ?", key).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrCoreMetaNotFound
+			return backoff.NewErrCannotRetry(ErrCoreMetaNotFound)
 		}
 		return errors.Wrap(err, "querying core meta table")
 	}); err != nil {
