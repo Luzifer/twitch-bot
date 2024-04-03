@@ -2,21 +2,33 @@ package spotify
 
 import (
 	"crypto/sha256"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/oauth2"
 )
 
-const spotifyRequestTimeout = 2 * time.Second
+const (
+	spotifyRequestTimeout = 2 * time.Second
+
+	pkcePBKDFIter = 210000
+	pkcePBKDFLen  = 64
+)
+
+var instanceSalt = uuid.Must(uuid.NewV4()).String()
 
 func handleStartAuth(w http.ResponseWriter, r *http.Request) {
 	channel := mux.Vars(r)["channel"]
+	pkceVerifier := hex.EncodeToString(pbkdf2.Key([]byte(channel), []byte(instanceSalt), pkcePBKDFIter, pkcePBKDFLen, sha512.New))
 
 	redirURL := baseURL.ResolveReference(&url.URL{Path: r.URL.Path})
 	conf, err := oauthConfig(channel, strings.Split(redirURL.String(), "?")[0])
@@ -30,13 +42,20 @@ func handleStartAuth(w http.ResponseWriter, r *http.Request) {
 	if code == "" {
 		http.Redirect(
 			w, r,
-			conf.AuthCodeURL(fmt.Sprintf("%x", sha256.Sum256(append([]byte(conf.ClientID), []byte(channel)...)))),
+			conf.AuthCodeURL(
+				fmt.Sprintf("%x", sha256.Sum256(append([]byte(conf.ClientID), []byte(channel)...))),
+				oauth2.S256ChallengeOption(pkceVerifier),
+			),
 			http.StatusFound,
 		)
 		return
 	}
 
-	token, err := conf.Exchange(r.Context(), r.URL.Query().Get("code"))
+	token, err := conf.Exchange(
+		r.Context(),
+		r.URL.Query().Get("code"),
+		oauth2.VerifierOption(pkceVerifier),
+	)
 	if err != nil {
 		logrus.WithError(err).Error("getting Spotify oauth token")
 		http.Error(w, "unable to get Spotify auth token", http.StatusInternalServerError)
@@ -58,14 +77,8 @@ func oauthConfig(channel, redirectURL string) (conf *oauth2.Config, err error) {
 		return nil, fmt.Errorf("getting clientId for channel: %w", err)
 	}
 
-	clientSecret, err := getModuleConfig(actorName, channel).String("clientSecret")
-	if err != nil {
-		return nil, fmt.Errorf("getting clientSecret for channel: %w", err)
-	}
-
 	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
+		ClientID: clientID,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://accounts.spotify.com/authorize",
 			TokenURL: "https://accounts.spotify.com/api/token",

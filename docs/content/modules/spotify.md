@@ -21,23 +21,25 @@ Start with going to the [Spotify for Developers Dashboard](https://developer.spo
 - Select "Web API" for the "API/SDKs you are planning to use"
 - Check the ToS box (of course after reading those!)
 - Click "Save"
-- From the "Settings" button of your app get the "Client ID" and "Client secret" and note them down
+- From the "Settings" button of your app get the "Client ID" and note it down
 - Optional: If you need to authorize multiple channels (i.e. for multiple users of the bot instance) you can edit the "Redirect URIs" on the "Settings" page and add more.
 
-{{< alert style="info" >}}If you are managing a bot instance for multiple persons having their own Spotify accounts you need to invite them to the Spotify app as long as it is in development-mode. You can do that in the Spotify Developer Dashboard under "User Management" (up to 25 users). As an alternative every person can create an own Spotify app and you can enter their `clientId` / `clientSecret` into the config for their respective channel.{{< /alert >}}
+{{< alert style="info" >}}If you are managing a bot instance for multiple persons having their own Spotify accounts you need to invite them to the Spotify app as long as it is in development-mode. You can do that in the Spotify Developer Dashboard under "User Management" (up to 25 users). As an alternative every person can create an own Spotify app and you can enter their `clientId` into the config for their respective channel.{{< /alert >}}
 
 Now head into the configuration file and configure the Spotify module:
 
 ```yaml
 # Module configuration by channel or defining bot-wide defaults. See
 # module specific documentation for options to configure in this
-# section. All modules come with internal defaults so there is no
-# need to configure this but you can overwrite the internal defaults.
+# section.
 module_config:
   spotify:
+    # Use one client-id for all channels (invite users)
     default:
       clientId: 'put the client ID you noted down here'
-      clientSecret: 'put the secret here'
+    # Use one client-id per channel (have each user create an app)
+    anotherttvuser:
+      clientId: 'put the client ID they sent you here'
 ```
 
 Now send the user which currently playing track should be displayed to the `https://example.com/spotify/<channel>` URL. So I for example would visit `https://example.com/spotify/luziferus`. They are redirected to Spotify, need to authorize the app and if everything went well the bot tells them "Spotify is now authorized for this channel, you can close this page".
