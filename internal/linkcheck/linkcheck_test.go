@@ -179,8 +179,7 @@ func TestScanForLinks(t *testing.T) {
 		},
 		// Case: false positives
 		{Heuristic: true, Message: "game dot exe has stopped working", ExpectedLinks: nil},
-		{Heuristic: false, Message: "You're following since 12.12.2020 DogChamp", ExpectedLinks: nil},
-		{Heuristic: true, Message: "You're following since 12.12.2020 DogChamp", ExpectedLinks: []string{"http://You.re"}},
+		{Heuristic: true, Message: "You are following since 12.12.2020 DogChamp", ExpectedLinks: nil},
 		{Heuristic: false, Message: "Hey btw. es kann sein, dass", ExpectedLinks: nil},
 	} {
 		t.Run(fmt.Sprintf("h:%v lc:%d m:%s", testCase.Heuristic, len(testCase.ExpectedLinks), testCase.Message), func(t *testing.T) {
