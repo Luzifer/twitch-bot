@@ -1,0 +1,7 @@
+name: CI Workflow
+on: push
+
+permissions:
+  packages: write
+
+jobs: {}

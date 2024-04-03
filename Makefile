@@ -15,6 +15,9 @@ lint:
 publish: frontend_prod
 	bash ./ci/build.sh
 
+short_test:
+	go test -cover -test.short -v ./...
+
 test:
 	go test -cover -v ./...
 
@@ -40,6 +43,9 @@ node_modules:
 update_ua_list:
 	# User-Agents provided by https://www.useragents.me/
 	curl -sSf https://www.useragents.me/api | jq -r '.data[].ua' | grep -v 'Trident' >internal/linkcheck/user-agents.txt
+
+gh-workflow:
+	bash ci/create-workflow.sh
 
 # -- Vulnerability scanning --
 

@@ -1,0 +1,71 @@
+---
+
+if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+needs: [test]
+
+defaults:
+  run:
+    shell: bash
+
+container:
+  image: luzifer/archlinux
+  env:
+    CGO_ENABLED: 0
+    GOPATH: /go
+
+runs-on: ubuntu-latest
+
+steps:
+  - name: Enable custom AUR package repo
+    run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
+
+  - name: Install required packages
+    run: |
+      pacman -Syy --noconfirm \
+        awk \
+        curl \
+        diffutils \
+        git \
+        git-lfs \
+        go \
+        golangci-lint-bin \
+        make \
+        nodejs-lts-hydrogen \
+        npm \
+        tar \
+        trivy \
+        unzip \
+        which \
+        zip
+
+  - uses: actions/checkout@v4
+    with:
+      lfs: true
+      show-progress: false
+
+  - name: Marking workdir safe
+    run: |
+      git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
+  - name: Build release
+    run: make publish
+
+  - name: Extract changelog
+    run: 'awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md'
+
+  - name: Update stable branch
+    if: startsWith(github.ref, 'refs/tags/')
+    run: |
+      git branch -f stable ${GITHUB_SHA}
+      git push -f origin stable
+
+  - name: Release
+    uses: ncipollo/release-action@v1
+    if: startsWith(github.ref, 'refs/tags/')
+    with:
+      artifacts: '.build/*'
+      bodyFile: release_changelog.md
+      draft: false
+      generateReleaseNotes: false
+
+...
