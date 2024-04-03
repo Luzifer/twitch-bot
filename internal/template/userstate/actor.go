@@ -3,6 +3,7 @@
 package userstate
 
 import (
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
@@ -16,7 +17,7 @@ func Register(args plugins.RegistrationArguments) error {
 		return errors.Wrap(err, "registering raw message handler")
 	}
 
-	args.RegisterTemplateFunction("botHasBadge", func(m *irc.Message, _ *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("botHasBadge", func(m *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) interface{} {
 		return func(badge string) bool {
 			state := userState.Get(plugins.DeriveChannel(m, fields))
 			if state == nil {

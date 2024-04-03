@@ -5,6 +5,7 @@ package filesay
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -57,7 +60,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	source, err := formatMessage(attrs.MustString("source", ptrStringEmpty), m, r, eventData)
@@ -114,14 +117,12 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return true }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) error {
-	sourceTpl, err := attrs.String("source")
-	if err != nil || sourceTpl == "" {
-		return errors.New("source is expected to be non-empty string")
-	}
-
-	if err = tplValidator(sourceTpl); err != nil {
-		return errors.Wrap(err, "validating source template")
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "source", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "source"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -41,7 +42,7 @@ func registerAction(name string, acf plugins.ActorCreationFunc) {
 	availableActions[name] = acf
 }
 
-func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData *plugins.FieldCollection) (preventCooldown bool, err error) {
+func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugins.RuleAction, eventData *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	availableActionsLock.RLock()
 	defer availableActionsLock.RUnlock()
 
@@ -65,7 +66,7 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 	return apc, errors.Wrap(err, "execute action")
 }
 
-func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plugins.FieldCollection) {
+func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *fieldcollection.FieldCollection) {
 	// Send events to registered handlers
 	if event != nil {
 		go notifyEventHandlers(*event, eventData)
@@ -77,9 +78,9 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *plug
 	}
 }
 
-func handleMessageRuleExecution(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection) {
+func handleMessageRuleExecution(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection) {
 	var (
-		ruleEventData   = plugins.NewFieldCollection()
+		ruleEventData   = fieldcollection.NewFieldCollection()
 		preventCooldown bool
 	)
 

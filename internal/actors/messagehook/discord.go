@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -50,18 +52,18 @@ type (
 	}
 )
 
-func (d discordActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (d discordActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var payload discordPayload
 
-	if payload.Content, err = formatMessage(attrs.MustString("content", ptrStringEmpty), m, r, eventData); err != nil {
+	if payload.Content, err = formatMessage(attrs.MustString("content", helpers.Ptr("")), m, r, eventData); err != nil {
 		return false, errors.Wrap(err, "parsing content")
 	}
 
-	if payload.Username, err = formatMessage(attrs.MustString("username", ptrStringEmpty), m, r, eventData); err != nil {
+	if payload.Username, err = formatMessage(attrs.MustString("username", helpers.Ptr("")), m, r, eventData); err != nil {
 		return false, errors.Wrap(err, "parsing username")
 	}
 
-	if payload.AvatarURL, err = formatMessage(attrs.MustString("avatar_url", ptrStringEmpty), m, r, eventData); err != nil {
+	if payload.AvatarURL, err = formatMessage(attrs.MustString("avatar_url", helpers.Ptr("")), m, r, eventData); err != nil {
 		return false, errors.Wrap(err, "parsing avatar_url")
 	}
 
@@ -69,14 +71,14 @@ func (d discordActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, ev
 		return false, err
 	}
 
-	return sendPayload(attrs.MustString("hook_url", ptrStringEmpty), payload, http.StatusNoContent)
+	return sendPayload(attrs.MustString("hook_url", helpers.Ptr("")), payload, http.StatusNoContent)
 }
 
 func (discordActor) IsAsync() bool { return false }
 
 func (discordActor) Name() string { return "discordhook" }
 
-func (d discordActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (d discordActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = d.ValidateRequireNonEmpty(attrs, "hook_url"); err != nil {
 		return err //nolint:wrapcheck
 	}
@@ -89,7 +91,7 @@ func (d discordActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs
 		return err //nolint:wrapcheck
 	}
 
-	if !attrs.MustBool("add_embed", ptrBoolFalse) {
+	if !attrs.MustBool("add_embed", helpers.Ptr(false)) {
 		// We're not validating the rest if embeds are disabled but in
 		// this case the content is mandatory
 		return d.ValidateRequireNonEmpty(attrs, "content") //nolint:wrapcheck
@@ -111,8 +113,8 @@ func (d discordActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs
 }
 
 //nolint:gocyclo // It's complex but just a bunch of converters
-func (discordActor) addEmbed(payload *discordPayload, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (err error) {
-	if !attrs.MustBool("add_embed", ptrBoolFalse) {
+func (discordActor) addEmbed(payload *discordPayload, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (err error) {
+	if !attrs.MustBool("add_embed", helpers.Ptr(false)) {
 		// No embed? No problem!
 		return nil
 	}
@@ -122,45 +124,45 @@ func (discordActor) addEmbed(payload *discordPayload, m *irc.Message, r *plugins
 		sv    string
 	)
 
-	if embed.Title, err = formatMessage(attrs.MustString("embed_title", ptrStringEmpty), m, r, eventData); err != nil {
+	if embed.Title, err = formatMessage(attrs.MustString("embed_title", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_title")
 	}
 
-	if embed.Description, err = formatMessage(attrs.MustString("embed_description", ptrStringEmpty), m, r, eventData); err != nil {
+	if embed.Description, err = formatMessage(attrs.MustString("embed_description", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_description")
 	}
 
-	if embed.URL, err = formatMessage(attrs.MustString("embed_url", ptrStringEmpty), m, r, eventData); err != nil {
+	if embed.URL, err = formatMessage(attrs.MustString("embed_url", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_url")
 	}
 
-	if sv, err = formatMessage(attrs.MustString("embed_image", ptrStringEmpty), m, r, eventData); err != nil {
+	if sv, err = formatMessage(attrs.MustString("embed_image", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_image")
 	} else if sv != "" {
 		embed.Image = &discordPayloadEmbedImage{URL: sv}
 	}
 
-	if sv, err = formatMessage(attrs.MustString("embed_thumbnail", ptrStringEmpty), m, r, eventData); err != nil {
+	if sv, err = formatMessage(attrs.MustString("embed_thumbnail", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_thumbnail")
 	} else if sv != "" {
 		embed.Thumbnail = &discordPayloadEmbedImage{URL: sv}
 	}
 
-	if sv, err = formatMessage(attrs.MustString("embed_author_name", ptrStringEmpty), m, r, eventData); err != nil {
+	if sv, err = formatMessage(attrs.MustString("embed_author_name", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_author_name")
 	} else if sv != "" {
 		embed.Author = &discordPayloadEmbedAuthor{Name: sv}
 
-		if embed.Author.URL, err = formatMessage(attrs.MustString("embed_author_url", ptrStringEmpty), m, r, eventData); err != nil {
+		if embed.Author.URL, err = formatMessage(attrs.MustString("embed_author_url", helpers.Ptr("")), m, r, eventData); err != nil {
 			return errors.Wrap(err, "parsing embed_author_url")
 		}
 
-		if embed.Author.IconURL, err = formatMessage(attrs.MustString("embed_author_icon_url", ptrStringEmpty), m, r, eventData); err != nil {
+		if embed.Author.IconURL, err = formatMessage(attrs.MustString("embed_author_icon_url", helpers.Ptr("")), m, r, eventData); err != nil {
 			return errors.Wrap(err, "parsing embed_author_icon_url")
 		}
 	}
 
-	if sv, err = formatMessage(attrs.MustString("embed_fields", ptrStringEmpty), m, r, eventData); err != nil {
+	if sv, err = formatMessage(attrs.MustString("embed_fields", helpers.Ptr("")), m, r, eventData); err != nil {
 		return errors.Wrap(err, "parsing embed_fields")
 	} else if sv != "" {
 		var flds []discordPayloadEmbedField

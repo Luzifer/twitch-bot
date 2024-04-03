@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -95,7 +96,7 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 		re.UserDisplayName = re.UserLogin
 	}
 
-	raffleEventFields := plugins.FieldCollectionFromData(map[string]any{
+	raffleEventFields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"user_id": m.Tags["user-id"],
 		"user":    user,
 	})

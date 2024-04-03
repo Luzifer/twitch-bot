@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
 	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -37,7 +38,7 @@ func newTemplateFuncProvider() *templateFuncProvider {
 	return out
 }
 
-func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) template.FuncMap {
+func (t *templateFuncProvider) GetFuncMap(m *irc.Message, r *plugins.Rule, fields *fieldcollection.FieldCollection) template.FuncMap {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 

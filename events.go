@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -93,7 +94,7 @@ var (
 	}
 )
 
-func notifyEventHandlers(event string, eventData *plugins.FieldCollection) {
+func notifyEventHandlers(event string, eventData *fieldcollection.FieldCollection) {
 	registeredEventHandlersLock.Lock()
 	defer registeredEventHandlersLock.Unlock()
 

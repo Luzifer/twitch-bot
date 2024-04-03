@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 type (
@@ -241,7 +241,7 @@ func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"duration":     payload.Duration,
 		"is_automatic": payload.IsAutomatic,
@@ -260,7 +260,7 @@ func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		"channel":     "#" + payload.BroadcasterUserLogin,
 		"followed_at": payload.FollowedAt,
 		"user_id":     payload.UserID,
@@ -279,7 +279,7 @@ func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"reward_cost":  payload.Reward.Cost,
 		"reward_id":    payload.Reward.ID,
@@ -302,7 +302,7 @@ func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		"channel": "#" + payload.FromBroadcasterUserLogin,
 		"to_id":   payload.ToBroadcasterUserID,
 		"to":      payload.ToBroadcasterUserLogin,
@@ -333,7 +333,7 @@ func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.R
 			return errors.Wrap(err, "unmarshalling event")
 		}
 
-		fields := plugins.FieldCollectionFromData(map[string]any{
+		fields := fieldcollection.FieldCollectionFromData(map[string]any{
 			"channel":               "#" + payload.BroadcasterUserLogin,
 			"hasChannelPointVoting": payload.ChannelPointsVoting.IsEnabled,
 			"title":                 payload.Title,
@@ -370,7 +370,7 @@ func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.
 			return errors.Wrap(err, "unmarshalling event")
 		}
 
-		fields := plugins.FieldCollectionFromData(map[string]any{
+		fields := fieldcollection.FieldCollectionFromData(map[string]any{
 			"channel": "#" + payload.BroadcasterUserLogin,
 			"level":   payload.Level,
 		})
@@ -394,7 +394,7 @@ func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"channel": "#" + payload.BroadcasterUserLogin,
 		"to_id":   payload.ToBroadcasterUserID,
 		"to":      payload.ToBroadcasterUserLogin,
@@ -413,7 +413,7 @@ func (*twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
 		return errors.Wrap(err, "unmarshalling event")
 	}
 
-	fields := plugins.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"channel": "#" + payload.BroadcasterUserLogin,
 		"from_id": payload.FromBroadcasterUserID,
 		"from":    payload.FromBroadcasterUserLogin,
@@ -570,7 +570,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel":  channel,
 			"category": *category,
 		}).Info("Category updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FieldCollectionFromData(map[string]interface{}{
 			"channel":  "#" + channel,
 			"category": *category,
 		}))
@@ -582,7 +582,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel": channel,
 			"title":   *title,
 		}).Info("Title updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, plugins.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FieldCollectionFromData(map[string]interface{}{
 			"channel": "#" + channel,
 			"title":   *title,
 		}))
@@ -600,7 +600,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			evt = eventTypeTwitchStreamOffline
 		}
 
-		go handleMessage(ircHdl.Client(), nil, evt, plugins.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FieldCollectionFromData(map[string]interface{}{
 			"channel": "#" + channel,
 		}))
 	}

@@ -9,9 +9,9 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const (
@@ -374,7 +374,7 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 	d.speakUp[strings.Join([]string{r.Channel, winner.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: winner.ID, Until: speakUpUntil}
 	d.lock.Unlock()
 
-	fields := plugins.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"user_id": winner.UserID,
 		"user":    winner.UserLogin,
 		"winner":  winner,
@@ -636,9 +636,9 @@ func (d *dbClient) Update(r raffle) error {
 
 // SendEvent processes the text template and sends the message if
 // enabled given through the event
-func (r raffle) SendEvent(evt raffleMessageEvent, fields *plugins.FieldCollection) (err error) {
+func (r raffle) SendEvent(evt raffleMessageEvent, fields *fieldcollection.FieldCollection) (err error) {
 	if fields == nil {
-		fields = plugins.NewFieldCollection()
+		fields = fieldcollection.NewFieldCollection()
 	}
 
 	fields.Set("raffle", r) // Make raffle available to templating

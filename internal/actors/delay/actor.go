@@ -7,6 +7,8 @@ import (
 
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -48,11 +50,10 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		ptrZeroDuration = func(v time.Duration) *time.Duration { return &v }(0)
-		delay           = attrs.MustDuration("delay", ptrZeroDuration)
-		jitter          = attrs.MustDuration("jitter", ptrZeroDuration)
+		delay  = attrs.MustDuration("delay", helpers.Ptr(time.Duration(0)))
+		jitter = attrs.MustDuration("jitter", helpers.Ptr(time.Duration(0)))
 	)
 
 	if delay == 0 && jitter == 0 {
@@ -71,6 +72,6 @@ func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *plugins.
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
+func (actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) (err error) {
 	return nil
 }

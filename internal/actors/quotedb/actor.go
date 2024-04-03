@@ -10,6 +10,8 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -23,9 +25,9 @@ var (
 	formatMessage plugins.MsgFormatter
 	send          plugins.SendMessageFunc
 
-	ptrStringEmpty     = func(v string) *string { return &v }("")
-	ptrStringOutFormat = func(v string) *string { return &v }("Quote #{{ .index }}: {{ .quote }}")
-	ptrStringZero      = func(v string) *string { return &v }("0")
+	// ptrStringEmpty     = func(v string) *string { return &v }("")
+	// ptrStringOutFormat = func(v string) *string { return &v }("Quote #{{ .index }}: {{ .quote }}")
+	// ptrStringZero      = func(v string) *string { return &v }("0")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -93,7 +95,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API: %w", err)
 	}
 
-	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, _ *plugins.Rule, _ *plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
 		return func() (int, error) {
 			return getMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}
@@ -113,11 +115,11 @@ type (
 	actor struct{}
 )
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		action   = attrs.MustString("action", ptrStringEmpty)
-		indexStr = attrs.MustString("index", ptrStringZero)
-		quote    = attrs.MustString("quote", ptrStringEmpty)
+		action   = attrs.MustString("action", helpers.Ptr(""))
+		indexStr = attrs.MustString("index", helpers.Ptr("0"))
+		quote    = attrs.MustString("quote", helpers.Ptr(""))
 	)
 
 	if indexStr == "" {
@@ -166,7 +168,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		fields.Set("index", idx)
 		fields.Set("quote", quote)
 
-		format := attrs.MustString("format", ptrStringOutFormat)
+		format := attrs.MustString("format", helpers.Ptr("Quote #{{ .index }}: {{ .quote }}"))
 		msg, err := formatMessage(format, m, r, fields)
 		if err != nil {
 			return false, errors.Wrap(err, "formatting output message")
@@ -190,31 +192,35 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	action := attrs.MustString("action", ptrStringEmpty)
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "action", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "quote", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "index", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "format", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "index", "quote", "format"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
+	}
+
+	action := attrs.MustString("action", helpers.Ptr(""))
 
 	switch action {
 	case "add":
 		if v, err := attrs.String("quote"); err != nil || v == "" {
-			return errors.New("quote must be non-empty string for action add")
+			return fmt.Errorf("quote must be non-empty string for action add")
 		}
 
 	case "del":
 		if v, err := attrs.String("index"); err != nil || v == "" {
-			return errors.New("index must be non-empty string for adction del")
+			return fmt.Errorf("index must be non-empty string for adction del")
 		}
 
 	case "get":
 		// No requirements
 
 	default:
-		return errors.New("action must be one of add, del or get")
-	}
-
-	for _, field := range []string{"index", "quote", "format"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+		return fmt.Errorf("action must be one of add, del or get")
 	}
 
 	return nil

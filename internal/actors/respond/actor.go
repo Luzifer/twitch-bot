@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -20,9 +22,6 @@ const actorName = "respond"
 var (
 	formatMessage plugins.MsgFormatter
 	send          plugins.SendMessageFunc
-
-	ptrBoolFalse   = func(v bool) *bool { return &v }(false)
-	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -102,7 +101,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		if !attrs.CanString("fallback") || attrs.MustString("fallback", nil) == "" {
@@ -127,7 +126,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		},
 	}
 
-	if attrs.MustBool("as_reply", ptrBoolFalse) {
+	if attrs.MustBool("as_reply", helpers.Ptr(false)) {
 		id, ok := m.Tags["id"]
 		if ok {
 			if ircMessage.Tags == nil {
@@ -146,15 +145,15 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("message"); err != nil || v == "" {
-		return errors.New("message must be non-empty string")
-	}
-
-	for _, field := range []string{"message", "fallback"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "message", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "fallback", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "as_reply", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "to_channel", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "message", "fallback"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

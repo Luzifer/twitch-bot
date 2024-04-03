@@ -7,6 +7,7 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
@@ -15,7 +16,7 @@ type (
 	// Actor defines an interface to implement in the plugin for actors
 	Actor interface {
 		// Execute will be called after the config was read into the Actor
-		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData *FieldCollection, attrs *FieldCollection) (preventCooldown bool, err error)
+		Execute(c *irc.Client, m *irc.Message, r *Rule, evtData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error)
 		// IsAsync may return true if the Execute function is to be executed
 		// in a Go routine as of long runtime. Normally it should return false
 		// except in very specific cases
@@ -26,7 +27,7 @@ type (
 		// Validate will be called to validate the loaded configuration. It should
 		// return an error if required keys are missing from the AttributeStore
 		// or if keys contain broken configs
-		Validate(TemplateValidatorFunc, *FieldCollection) error
+		Validate(TemplateValidatorFunc, *fieldcollection.FieldCollection) error
 	}
 
 	// ActorCreationFunc is a function to return a new instance of the
@@ -62,7 +63,7 @@ type (
 
 	// EventHandlerFunc defines the type of function required to listen
 	// for events
-	EventHandlerFunc func(evt string, eventData *FieldCollection) error
+	EventHandlerFunc func(evt string, eventData *fieldcollection.FieldCollection) error
 	// EventHandlerRegisterFunc is passed from the bot to the
 	// plugins RegisterFunc to register a new event handler function
 	// which is then fed with all events occurring in the bot
@@ -76,12 +77,12 @@ type (
 	// ModuleConfigGetterFunc is passed from the bot to the
 	// plugins RegisterFunc to fetch module generic or channel specific
 	// configuration from the module configuration
-	ModuleConfigGetterFunc func(module, channel string) *FieldCollection
+	ModuleConfigGetterFunc func(module, channel string) *fieldcollection.FieldCollection
 
 	// MsgFormatter is passed from the bot to the
 	// plugins RegisterFunc to format messages using all registered and
 	// available template functions
-	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *FieldCollection) (string, error)
+	MsgFormatter func(tplString string, m *irc.Message, r *Rule, fields *fieldcollection.FieldCollection) (string, error)
 
 	// MsgModificationFunc can be used to modify messages between the
 	// plugins generating them and the bot sending them to the Twitch
@@ -160,7 +161,7 @@ type (
 
 	// TemplateFuncGetter is the type of function to implement in the
 	// plugin to create a new template function on request of the bot
-	TemplateFuncGetter func(*irc.Message, *Rule, *FieldCollection) any
+	TemplateFuncGetter func(*irc.Message, *Rule, *fieldcollection.FieldCollection) any
 	// TemplateFuncRegister is passed from the bot to the
 	// plugins RegisterFunc to register a new TemplateFuncGetter
 	TemplateFuncRegister func(name string, fg TemplateFuncGetter, doc ...TemplateFuncDocumentation)
@@ -184,5 +185,5 @@ var ErrSkipSendingMessage = errors.New("skip sending message")
 // requiring access to the irc.Message, Rule or FieldCollection to
 // satisfy the TemplateFuncGetter interface
 func GenericTemplateFunctionGetter(f any) TemplateFuncGetter {
-	return func(*irc.Message, *Rule, *FieldCollection) any { return f }
+	return func(*irc.Message, *Rule, *fieldcollection.FieldCollection) any { return f }
 }

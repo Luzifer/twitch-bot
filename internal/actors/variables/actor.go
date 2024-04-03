@@ -11,6 +11,8 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -144,7 +146,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 type actorSetVariable struct{}
 
-func (actorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing variable name")
@@ -171,15 +173,14 @@ func (actorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, 
 func (actorSetVariable) IsAsync() bool { return false }
 func (actorSetVariable) Name() string  { return "setvariable" }
 
-func (actorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("variable"); err != nil || v == "" {
-		return errors.New("variable name must be non-empty string")
-	}
-
-	for _, field := range []string{"set", "variable"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "variable", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "clear", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "set", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "set", "variable"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package commercial
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -61,7 +64,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	durationStr, err := formatMessage(attrs.MustString("duration", ptrStringEmpty), m, r, eventData)
@@ -75,14 +78,12 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	durationTemplate, err := attrs.String("duration")
-	if err != nil || durationTemplate == "" {
-		return errors.New("duration must be non-empty string")
-	}
-
-	if err = tplValidator(durationTemplate); err != nil {
-		return errors.Wrap(err, "validating duration template")
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "duration", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "duration"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

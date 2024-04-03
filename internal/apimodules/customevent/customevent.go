@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -130,14 +131,14 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func parseEvent(channel string, fieldData io.Reader) (*plugins.FieldCollection, error) {
+func parseEvent(channel string, fieldData io.Reader) (*fieldcollection.FieldCollection, error) {
 	payload := make(map[string]any)
 
 	if err := json.NewDecoder(fieldData).Decode(&payload); err != nil {
 		return nil, errors.Wrap(err, "parsing event payload")
 	}
 
-	fields := plugins.FieldCollectionFromData(payload)
+	fields := fieldcollection.FieldCollectionFromData(payload)
 	fields.Set("channel", "#"+strings.TrimLeft(channel, "#"))
 
 	return fields, nil

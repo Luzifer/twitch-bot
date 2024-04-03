@@ -13,6 +13,8 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -20,8 +22,6 @@ import (
 var (
 	db            database.Connector
 	formatMessage plugins.MsgFormatter
-
-	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -135,7 +135,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API route: %w", err)
 	}
 
-	args.RegisterTemplateFunction("channelCounter", func(_ *irc.Message, _ *plugins.Rule, fields *plugins.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("channelCounter", func(_ *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) interface{} {
 		return func(name string) (string, error) {
 			channel, err := fields.String("channel")
 			if err != nil {
@@ -212,13 +212,13 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 type actorCounter struct{}
 
-func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
 	}
 
-	if counterSet := attrs.MustString("counter_set", ptrStringEmpty); counterSet != "" {
+	if counterSet := attrs.MustString("counter_set", helpers.Ptr("")); counterSet != "" {
 		parseValue, err := formatMessage(counterSet, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute counter value template")
@@ -236,7 +236,7 @@ func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 	}
 
 	var counterStep int64 = 1
-	if s := attrs.MustString("counter_step", ptrStringEmpty); s != "" {
+	if s := attrs.MustString("counter_step", helpers.Ptr("")); s != "" {
 		parseStep, err := formatMessage(s, m, r, eventData)
 		if err != nil {
 			return false, errors.Wrap(err, "execute counter step template")
@@ -257,15 +257,14 @@ func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 func (actorCounter) IsAsync() bool { return false }
 func (actorCounter) Name() string  { return "counter" }
 
-func (actorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if cn, err := attrs.String("counter"); err != nil || cn == "" {
-		return errors.New("counter name must be non-empty string")
-	}
-
-	for _, field := range []string{"counter", "counter_step", "counter_set"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "counter", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "counter_step", Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "counter_set", Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "counter", "counter_step", "counter_set"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -32,7 +33,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, _ *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, _ *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	msgID, ok := m.Tags["id"]
 	if !ok || msgID == "" {
 		return false, nil
@@ -51,6 +52,6 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) (err error) {
+func (actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) (err error) {
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -87,7 +88,7 @@ func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fields := plugins.NewFieldCollection()
+	fields := fieldcollection.NewFieldCollection()
 	fields.Set("channel", "#"+strings.TrimLeft(channel, "#"))
 
 	switch payload.Type {

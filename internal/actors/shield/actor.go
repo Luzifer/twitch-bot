@@ -4,10 +4,13 @@ package shield
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -45,14 +48,12 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
-	ptrBoolFalse := func(v bool) *bool { return &v }(false)
-
+func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	return false, errors.Wrap(
 		botTwitchClient.UpdateShieldMode(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
-			attrs.MustBool("enable", ptrBoolFalse),
+			attrs.MustBool("enable", helpers.Ptr(false)),
 		),
 		"configuring shield mode",
 	)
@@ -61,9 +62,11 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if _, err = attrs.Bool("enable"); err != nil {
-		return errors.New("enable must be boolean")
+func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "enable", Type: fieldcollection.SchemaFieldTypeBool}),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

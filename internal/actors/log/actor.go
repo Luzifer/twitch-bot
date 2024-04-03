@@ -2,18 +2,19 @@
 package log
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-var (
-	formatMessage  plugins.MsgFormatter
-	ptrStringEmpty = func(v string) *string { return &v }("")
-)
+var formatMessage plugins.MsgFormatter
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
@@ -44,8 +45,8 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
-	message, err := formatMessage(attrs.MustString("message", ptrStringEmpty), m, r, eventData)
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
+	message, err := formatMessage(attrs.MustString("message", helpers.Ptr("")), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing message template")
 	}
@@ -61,13 +62,12 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return true }
 func (actor) Name() string  { return "log" }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("message"); err != nil || v == "" {
-		return errors.New("message must be non-empty string")
-	}
-
-	if err = tplValidator(attrs.MustString("message", ptrStringEmpty)); err != nil {
-		return errors.Wrap(err, "validating message template")
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "message", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "message"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

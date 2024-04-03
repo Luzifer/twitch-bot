@@ -4,11 +4,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateRequireNonEmpty(t *testing.T) {
-	attrs := FieldCollectionFromData(map[string]any{
+	attrs := fieldcollection.FieldCollectionFromData(map[string]any{
 		"str":   "",
 		"str_v": "valid",
 		"int":   0,

@@ -3,6 +3,7 @@ package plugins
 import (
 	"reflect"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/pkg/errors"
 )
 
@@ -16,9 +17,9 @@ type (
 // (not returning ErrValueNotSet) and does not contain zero value
 // recognized by reflect (to just check whether the field is set
 // but allow zero values use HasAll on the FieldCollection)
-func (ActorKit) ValidateRequireNonEmpty(attrs *FieldCollection, fields ...string) error {
+func (ActorKit) ValidateRequireNonEmpty(attrs *fieldcollection.FieldCollection, fields ...string) error {
 	for _, field := range fields {
-		v, err := attrs.Any(field)
+		v, err := attrs.Get(field)
 		if err != nil {
 			return errors.Wrapf(err, "getting field %s", field)
 		}
@@ -34,7 +35,7 @@ func (ActorKit) ValidateRequireNonEmpty(attrs *FieldCollection, fields ...string
 // ValidateRequireValidTemplate checks whether fields are gettable
 // as strings and do have a template which validates (this does not
 // check for empty strings as an empty template is indeed valid)
-func (ActorKit) ValidateRequireValidTemplate(tplValidator TemplateValidatorFunc, attrs *FieldCollection, fields ...string) error {
+func (ActorKit) ValidateRequireValidTemplate(tplValidator TemplateValidatorFunc, attrs *fieldcollection.FieldCollection, fields ...string) error {
 	for _, field := range fields {
 		v, err := attrs.String(field)
 		if err != nil {
@@ -52,11 +53,11 @@ func (ActorKit) ValidateRequireValidTemplate(tplValidator TemplateValidatorFunc,
 // ValidateRequireValidTemplateIfSet checks whether the field is
 // either not set or a valid template (this does not
 // check for empty strings as an empty template is indeed valid)
-func (ActorKit) ValidateRequireValidTemplateIfSet(tplValidator TemplateValidatorFunc, attrs *FieldCollection, fields ...string) error {
+func (ActorKit) ValidateRequireValidTemplateIfSet(tplValidator TemplateValidatorFunc, attrs *fieldcollection.FieldCollection, fields ...string) error {
 	for _, field := range fields {
 		v, err := attrs.String(field)
 		if err != nil {
-			if errors.Is(err, ErrValueNotSet) {
+			if errors.Is(err, fieldcollection.ErrValueNotSet) {
 				continue
 			}
 			return errors.Wrapf(err, "getting string field %s", field)

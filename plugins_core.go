@@ -10,6 +10,7 @@ import (
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/ban"
@@ -181,12 +182,12 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		SendMessage:                sendMessage,
 		ValidateToken:              authService.ValidateTokenFor,
 
-		CreateEvent: func(evt string, eventData *plugins.FieldCollection) error {
+		CreateEvent: func(evt string, eventData *fieldcollection.FieldCollection) error {
 			handleMessage(ircHdl.Client(), nil, &evt, eventData)
 			return nil
 		},
 
-		GetModuleConfigForChannel: func(module, channel string) *plugins.FieldCollection {
+		GetModuleConfigForChannel: func(module, channel string) *fieldcollection.FieldCollection {
 			return config.ModuleConfig.GetChannelConfig(module, channel)
 		},
 

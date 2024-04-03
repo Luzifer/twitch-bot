@@ -19,6 +19,7 @@ import (
 	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -303,7 +304,7 @@ func (c *configFile) CloseRawMessageWriter() (err error) {
 	return nil
 }
 
-func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *plugins.FieldCollection) []*plugins.Rule {
+func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *fieldcollection.FieldCollection) []*plugins.Rule {
 	configLock.RLock()
 	defer configLock.RUnlock()
 

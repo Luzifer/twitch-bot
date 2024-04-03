@@ -4,6 +4,7 @@ package punish
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -25,11 +28,9 @@ const (
 )
 
 var (
-	botTwitchClient    *twitch.Client
-	db                 database.Connector
-	formatMessage      plugins.MsgFormatter
-	ptrDefaultCooldown = func(v time.Duration) *time.Duration { return &v }(oneWeek)
-	ptrStringEmpty     = func(v string) *string { return &v }("")
+	botTwitchClient *twitch.Client
+	db              database.Connector
+	formatMessage   plugins.MsgFormatter
 )
 
 // Register provides the plugins.RegisterFunc
@@ -146,12 +147,12 @@ type (
 
 // Punish
 
-func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		cooldown = attrs.MustDuration("cooldown", ptrDefaultCooldown)
-		reason   = attrs.MustString("reason", ptrStringEmpty)
+		cooldown = attrs.MustDuration("cooldown", helpers.Ptr(oneWeek))
+		reason   = attrs.MustString("reason", helpers.Ptr(""))
 		user     = attrs.MustString("user", nil)
-		uuid     = attrs.MustString("uuid", ptrStringEmpty)
+		uuid     = attrs.MustString("uuid", helpers.Ptr(""))
 	)
 
 	levels, err := attrs.StringSlice("levels")
@@ -225,17 +226,16 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 func (actorPunish) IsAsync() bool { return false }
 func (actorPunish) Name() string  { return actorNamePunish }
 
-func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("user"); err != nil || v == "" {
-		return errors.New("user must be non-empty string")
-	}
-
-	if v, err := attrs.StringSlice("levels"); err != nil || len(v) == 0 {
-		return errors.New("levels must be slice of strings with length > 0")
-	}
-
-	if err = tplValidator(attrs.MustString("user", ptrStringEmpty)); err != nil {
-		return errors.Wrap(err, "validating user template")
+func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "levels", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "user", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "cooldown", Type: fieldcollection.SchemaFieldTypeDuration}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "reason", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "uuid", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "user"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil
@@ -243,10 +243,10 @@ func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *p
 
 // Reset
 
-func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		user = attrs.MustString("user", nil)
-		uuid = attrs.MustString("uuid", ptrStringEmpty)
+		uuid = attrs.MustString("uuid", helpers.Ptr(""))
 	)
 
 	if user, err = formatMessage(user, m, r, eventData); err != nil {
@@ -262,13 +262,13 @@ func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, 
 func (actorResetPunish) IsAsync() bool { return false }
 func (actorResetPunish) Name() string  { return actorNameResetPunish }
 
-func (actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("user"); err != nil || v == "" {
-		return errors.New("user must be non-empty string")
-	}
-
-	if err = tplValidator(attrs.MustString("user", ptrStringEmpty)); err != nil {
-		return errors.Wrap(err, "validating user template")
+func (actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "user", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "uuid", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "user"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

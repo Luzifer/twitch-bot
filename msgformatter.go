@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -19,7 +20,7 @@ var (
 
 	stripNewline = regexp.MustCompile(`(?m)\s*\n\s*`)
 
-	formatMessageFieldSetters = []func(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection){
+	formatMessageFieldSetters = []func(compiledFields *fieldcollection.FieldCollection, m *irc.Message, fields *fieldcollection.FieldCollection){
 		formatMessageFieldChannel,
 		formatMessageFieldMessage,
 		formatMessageFieldUserID,
@@ -27,8 +28,8 @@ var (
 	}
 )
 
-func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *plugins.FieldCollection) (string, error) {
-	compiledFields := plugins.NewFieldCollection()
+func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *fieldcollection.FieldCollection) (string, error) {
+	compiledFields := fieldcollection.NewFieldCollection()
 
 	if config != nil {
 		configLock.RLock()
@@ -61,11 +62,11 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *pl
 	return strings.TrimSpace(buf.String()), errors.Wrap(err, "execute template")
 }
 
-func formatMessageFieldChannel(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+func formatMessageFieldChannel(compiledFields *fieldcollection.FieldCollection, m *irc.Message, fields *fieldcollection.FieldCollection) {
 	compiledFields.Set(eventFieldChannel, plugins.DeriveChannel(m, fields))
 }
 
-func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.Message, _ *plugins.FieldCollection) {
+func formatMessageFieldMessage(compiledFields *fieldcollection.FieldCollection, m *irc.Message, _ *fieldcollection.FieldCollection) {
 	if m == nil {
 		return
 	}
@@ -73,7 +74,7 @@ func formatMessageFieldMessage(compiledFields *plugins.FieldCollection, m *irc.M
 	compiledFields.Set("msg", m)
 }
 
-func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Message, _ *plugins.FieldCollection) {
+func formatMessageFieldUserID(compiledFields *fieldcollection.FieldCollection, m *irc.Message, _ *fieldcollection.FieldCollection) {
 	if m == nil {
 		return
 	}
@@ -83,7 +84,7 @@ func formatMessageFieldUserID(compiledFields *plugins.FieldCollection, m *irc.Me
 	}
 }
 
-func formatMessageFieldUsername(compiledFields *plugins.FieldCollection, m *irc.Message, fields *plugins.FieldCollection) {
+func formatMessageFieldUsername(compiledFields *fieldcollection.FieldCollection, m *irc.Message, fields *fieldcollection.FieldCollection) {
 	compiledFields.Set("username", plugins.DeriveUser(m, fields))
 }
 
@@ -93,7 +94,7 @@ func validateTemplate(tplString string) error {
 
 	_, err := template.
 		New(tplString).
-		Funcs(tplFuncs.GetFuncMap(nil, nil, plugins.NewFieldCollection())).
+		Funcs(tplFuncs.GetFuncMap(nil, nil, fieldcollection.NewFieldCollection())).
 		Parse(tplString)
 	return errors.Wrap(err, "parsing template")
 }

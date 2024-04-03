@@ -5,13 +5,13 @@ package linkdetector
 import (
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/linkcheck"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "linkdetector"
-
-var ptrFalse = func(v bool) *bool { return &v }(false)
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
@@ -42,13 +42,13 @@ func Register(args plugins.RegistrationArguments) error {
 type Actor struct{}
 
 // Execute implements the actor interface
-func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	if eventData.HasAll("links") {
 		// We already detected links, lets not do it again
 		return false, nil
 	}
 
-	if attrs.MustBool("heuristic", ptrFalse) {
+	if attrs.MustBool("heuristic", helpers.Ptr(false)) {
 		eventData.Set("links", linkcheck.New().HeuristicScanForLinks(m.Trailing()))
 	} else {
 		eventData.Set("links", linkcheck.New().ScanForLinks(m.Trailing()))
@@ -64,4 +64,6 @@ func (Actor) IsAsync() bool { return false }
 func (Actor) Name() string { return actorName }
 
 // Validate implements the actor interface
-func (Actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) error { return nil }
+func (Actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) error {
+	return nil
+}

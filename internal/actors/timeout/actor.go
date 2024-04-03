@@ -3,6 +3,7 @@ package timeout
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -65,7 +68,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "executing reason template")
@@ -86,17 +89,17 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.Duration("duration"); err != nil || v < time.Second {
-		return errors.New("duration must be of type duration greater or equal one second")
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "duration", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeDuration}),
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "reason", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "reason"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
-	if v, err := attrs.String("reason"); err != nil || v == "" {
-		return errors.New("reason must be non-empty string")
-	}
-
-	if err = tplValidator(attrs.MustString("reason", ptrStringEmpty)); err != nil {
-		return errors.Wrap(err, "validating reason template")
+	if attrs.MustDuration("duration", nil) < time.Second {
+		return errors.New("duration must be greater or equal one second")
 	}
 
 	return nil

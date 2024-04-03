@@ -10,9 +10,9 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 type (
@@ -86,7 +86,7 @@ func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) 
 }
 
 func (o overlaysEvent) ToSocketMessage() (socketMessage, error) {
-	fields := new(plugins.FieldCollection)
+	fields := new(fieldcollection.FieldCollection)
 	if err := json.NewDecoder(strings.NewReader(o.Fields)).Decode(fields); err != nil {
 		return socketMessage{}, errors.Wrap(err, "decoding fields")
 	}

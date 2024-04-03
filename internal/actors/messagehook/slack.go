@@ -7,6 +7,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -14,14 +16,14 @@ type slackCompatibleActor struct {
 	plugins.ActorKit
 }
 
-func (s slackCompatibleActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (s slackCompatibleActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	text, err := formatMessage(attrs.MustString("text", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "parsing text")
 	}
 
 	return sendPayload(
-		s.fixHookURL(attrs.MustString("hook_url", ptrStringEmpty)),
+		s.fixHookURL(attrs.MustString("hook_url", helpers.Ptr(""))),
 		map[string]string{
 			"text": text,
 		},
@@ -33,7 +35,7 @@ func (slackCompatibleActor) IsAsync() bool { return false }
 
 func (slackCompatibleActor) Name() string { return "slackhook" }
 
-func (s slackCompatibleActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (s slackCompatibleActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = s.ValidateRequireNonEmpty(attrs, "hook_url", "text"); err != nil {
 		return err //nolint:wrapcheck
 	}

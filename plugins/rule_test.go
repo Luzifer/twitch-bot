@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
@@ -141,7 +142,7 @@ func TestAllowExecuteDisableOnTemplate(t *testing.T) {
 	} {
 		// We don't test the message formatter here but only the disable functionality
 		// so we fake the result of the evaluation
-		r.msgFormatter = func(string, *irc.Message, *Rule, *FieldCollection) (string, error) {
+		r.msgFormatter = func(string, *irc.Message, *Rule, *fieldcollection.FieldCollection) (string, error) {
 			return msg, nil
 		}
 

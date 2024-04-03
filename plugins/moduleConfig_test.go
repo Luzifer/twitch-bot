@@ -3,6 +3,7 @@ package plugins
 import (
 	"testing"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -10,12 +11,12 @@ import (
 func TestModuleConfigGet(t *testing.T) {
 	strPtrEmpty := func(v string) *string { return &v }("")
 	m := ModuleConfig{
-		"test": map[string]*FieldCollection{
-			DefaultConfigName: FieldCollectionFromData(map[string]any{
+		"test": map[string]*fieldcollection.FieldCollection{
+			DefaultConfigName: fieldcollection.FieldCollectionFromData(map[string]any{
 				"setindefault": DefaultConfigName,
 				"setinboth":    DefaultConfigName,
 			}),
-			"test": FieldCollectionFromData(map[string]any{
+			"test": fieldcollection.FieldCollectionFromData(map[string]any{
 				"setinchannel": "channel",
 				"setinboth":    "channel",
 			}),

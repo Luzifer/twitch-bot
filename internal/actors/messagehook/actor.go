@@ -20,12 +20,7 @@ const (
 	postTimeout = 5 * time.Second
 )
 
-var (
-	formatMessage plugins.MsgFormatter
-
-	ptrBoolFalse   = func(v bool) *bool { return &v }(false)
-	ptrStringEmpty = func(s string) *string { return &s }("")
-)
+var formatMessage plugins.MsgFormatter
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {

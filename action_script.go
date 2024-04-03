@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -49,7 +50,7 @@ func init() {
 type ActorScript struct{}
 
 // Execute implements actor interface
-func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	command, err := attrs.StringSlice("command")
 	if err != nil {
 		return false, errors.Wrap(err, "getting command")
@@ -130,7 +131,7 @@ func (ActorScript) IsAsync() bool { return false }
 func (ActorScript) Name() string { return "script" }
 
 // Validate implements actor interface
-func (ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
+func (ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	cmd, err := attrs.StringSlice("command")
 	if err != nil || len(cmd) == 0 {
 		return errors.New("command must be slice of strings with length > 0")

@@ -13,8 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
@@ -174,7 +174,7 @@ func (a *autoMessage) allowExecuteDisableOnTemplate() bool {
 		return true
 	}
 
-	fields := plugins.NewFieldCollection()
+	fields := fieldcollection.NewFieldCollection()
 	fields.Set("channel", a.Channel)
 
 	res, err := formatMessage(*a.DisableOnTemplate, nil, nil, fields)

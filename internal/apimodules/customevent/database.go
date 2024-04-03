@@ -9,9 +9,9 @@ import (
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const cleanupTimeout = 15 * time.Minute
@@ -48,7 +48,7 @@ func getFutureEvents(db database.Connector) (out []storedCustomEvent, err error)
 	)
 }
 
-func storeEvent(db database.Connector, scheduleAt time.Time, channel string, fields *plugins.FieldCollection) error {
+func storeEvent(db database.Connector, scheduleAt time.Time, channel string, fields *fieldcollection.FieldCollection) error {
 	fieldBuf := new(bytes.Buffer)
 	if err := json.NewEncoder(fieldBuf).Encode(fields); err != nil {
 		return errors.Wrap(err, "marshalling fields")

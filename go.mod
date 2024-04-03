@@ -4,19 +4,19 @@ go 1.21
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.2
-	github.com/Luzifer/go_helpers/v2 v2.23.0
+	github.com/Luzifer/go_helpers/v2 v2.24.0
 	github.com/Luzifer/korvike/functions v0.11.0
 	github.com/Luzifer/rconfig/v2 v2.5.0
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-git/go-git/v5 v5.11.0
+	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gofrs/uuid/v3 v3.1.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
-	github.com/itchyny/gojq v0.12.14
+	github.com/itchyny/gojq v0.12.15
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/orandin/sentrus v1.0.0
 	github.com/pkg/errors v0.9.1
@@ -31,7 +31,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.8
+	gorm.io/gorm v1.25.9
 )
 
 require (
@@ -87,7 +87,7 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
@@ -105,6 +105,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/libc v1.49.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.7.2 // indirect
+	modernc.org/memory v1.8.0 // indirect
 	modernc.org/sqlite v1.29.5 // indirect
 )

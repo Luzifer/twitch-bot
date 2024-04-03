@@ -1,8 +1,10 @@
 package raffle
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -17,7 +19,7 @@ var ptrStrEmpty = ptrStr("")
 
 func ptrStr(v string) *string { return &v }
 
-func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, evtData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, evtData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	if m != nil || evtData.MustString("reward_id", ptrStrEmpty) == "" {
 		return false, errors.New("enter-raffle actor is only supposed to act on channelpoint redeems")
 	}
@@ -43,7 +45,7 @@ func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, 
 		EnteredAt:       time.Now().UTC(),
 	}
 
-	raffleEventFields := plugins.FieldCollectionFromData(map[string]any{
+	raffleEventFields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"user_id": re.UserID,
 		"user":    re.UserLogin,
 	})
@@ -70,10 +72,11 @@ func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, 
 func (enterRaffleActor) IsAsync() bool { return false }
 func (enterRaffleActor) Name() string  { return "enter-raffle" }
 
-func (enterRaffleActor) Validate(_ plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	keyword, err := attrs.String("keyword")
-	if err != nil || keyword == "" {
-		return errors.New("keyword must be non-empty string")
+func (enterRaffleActor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "keyword", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

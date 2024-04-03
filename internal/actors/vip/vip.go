@@ -3,11 +3,14 @@ package vip
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -16,8 +19,6 @@ var (
 	formatMessage plugins.MsgFormatter
 	permCheckFn   plugins.ChannelPermissionCheckFunc
 	tcGetter      func(string) (*twitch.Client, error)
-
-	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -98,21 +99,19 @@ type (
 )
 
 func (actor) IsAsync() bool { return false }
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	for _, field := range []string{"channel", "user"} {
-		if v, err := attrs.String(field); err != nil || v == "" {
-			return errors.Errorf("%s must be non-empty string", field)
-		}
-
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "channel", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "user", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "channel", "user"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil
 }
 
-func (actor) getParams(m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (channel, user string, err error) {
+func (actor) getParams(m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (channel, user string, err error) {
 	if channel, err = formatMessage(attrs.MustString("channel", nil), m, r, eventData); err != nil {
 		return "", "", errors.Wrap(err, "parsing channel")
 	}
@@ -124,7 +123,7 @@ func (actor) getParams(m *irc.Message, r *plugins.Rule, eventData *plugins.Field
 	return strings.TrimLeft(channel, "#"), user, nil
 }
 
-func (u unvipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (u unvipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	channel, user, err := u.getParams(m, r, eventData, attrs)
 	if err != nil {
 		return false, errors.Wrap(err, "getting parameters")
@@ -140,7 +139,7 @@ func (u unvipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 
 func (unvipActor) Name() string { return "unvip" }
 
-func (v vipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (v vipActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	channel, user, err := v.getParams(m, r, eventData, attrs)
 	if err != nil {
 		return false, errors.Wrap(err, "getting parameters")

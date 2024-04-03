@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -226,7 +227,7 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 
 	var (
 		evt    *string
-		fields = plugins.NewFieldCollection()
+		fields = fieldcollection.NewFieldCollection()
 	)
 
 	fields.Set(eventFieldChannel, i.getChannel(m)) // Compatibility to plugins.DeriveChannel
@@ -258,7 +259,7 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 }
 
 func (i ircHandler) handleClearMessage(m *irc.Message) {
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		eventFieldChannel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		"message_id":      m.Tags["target-msg-id"],
 		"target_name":     m.Tags["login"],
@@ -270,7 +271,7 @@ func (i ircHandler) handleClearMessage(m *irc.Message) {
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
@@ -278,7 +279,7 @@ func (i ircHandler) handleJoin(m *irc.Message) {
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
@@ -299,7 +300,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 	username := msgParts[1]
 
-	fields := plugins.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 		eventFieldUserID:   m.Tags["user-id"],
@@ -356,7 +357,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	}
 
 	if bits := i.tagToNumeric(m, "bits", 0); bits > 0 {
-		fields := plugins.FieldCollectionFromData(map[string]interface{}{
+		fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
 			"bits":             bits,
 			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"message":          m.Trailing(),
@@ -380,7 +381,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		"trailing":        m.Trailing(),
 	}).Trace("IRC USERNOTICE event")
 
-	evtData := plugins.FieldCollectionFromData(map[string]any{
+	evtData := fieldcollection.FieldCollectionFromData(map[string]any{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.Tags["login"], // Compatibility to plugins.DeriveUser
 		eventFieldUserID:   m.Tags["user-id"],

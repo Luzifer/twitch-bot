@@ -3,10 +3,13 @@ package whisper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -16,8 +19,6 @@ const actorName = "whisper"
 var (
 	botTwitchClient *twitch.Client
 	formatMessage   plugins.MsgFormatter
-
-	ptrStringEmpty = func(s string) *string { return &s }("")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -28,7 +29,7 @@ func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
-		Description: "Send a whisper (requires a verified bot!)",
+		Description: "Send a whisper",
 		Name:        "Send Whisper",
 		Type:        "whisper",
 
@@ -59,7 +60,7 @@ func Register(args plugins.RegistrationArguments) error {
 
 type actor struct{}
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	to, err := formatMessage(attrs.MustString("to", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing whisper receiver")
@@ -79,19 +80,13 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("to"); err != nil || v == "" {
-		return errors.New("to must be non-empty string")
-	}
-
-	if v, err := attrs.String("message"); err != nil || v == "" {
-		return errors.New("message must be non-empty string")
-	}
-
-	for _, field := range []string{"message", "to"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "message", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "to", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "message", "to"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

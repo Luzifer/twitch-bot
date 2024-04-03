@@ -21,6 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -41,12 +42,12 @@ type (
 
 	// socketMessage represents the message overlay sockets will receive
 	socketMessage struct {
-		EventID uint64                   `json:"event_id"`
-		IsLive  bool                     `json:"is_live"`
-		Reason  sendReason               `json:"reason"`
-		Time    time.Time                `json:"time"`
-		Type    string                   `json:"type"`
-		Fields  *plugins.FieldCollection `json:"fields"`
+		EventID uint64                           `json:"event_id"`
+		IsLive  bool                             `json:"is_live"`
+		Reason  sendReason                       `json:"reason"`
+		Time    time.Time                        `json:"time"`
+		Type    string                           `json:"type"`
+		Fields  *fieldcollection.FieldCollection `json:"fields"`
 	}
 )
 
@@ -180,7 +181,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API route: %w", err)
 	}
 
-	if err = args.RegisterEventHandler(func(event string, eventData *plugins.FieldCollection) (err error) {
+	if err = args.RegisterEventHandler(func(event string, eventData *fieldcollection.FieldCollection) (err error) {
 		subscribersLock.RLock()
 		defer subscribersLock.RUnlock()
 

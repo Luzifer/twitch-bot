@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -88,7 +89,7 @@ func generateTplDocsRender(e *plugins.TemplateFuncDocumentationExample) (string,
 		rule.MatchMessage = &e.MatchMessage
 	}
 
-	return formatMessage(e.Template, msg, rule, plugins.FieldCollectionFromData(map[string]any{
+	return formatMessage(e.Template, msg, rule, fieldcollection.FieldCollectionFromData(map[string]any{
 		"testDuration": 5*time.Hour + 33*time.Minute + 12*time.Second,
 	}))
 }

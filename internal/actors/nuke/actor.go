@@ -4,6 +4,7 @@
 package nuke
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -13,7 +14,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -29,10 +32,6 @@ var (
 
 	messageStore     = map[string][]*storedMessage{}
 	messageStoreLock sync.RWMutex
-
-	ptrStringDelete = func(v string) *string { return &v }("delete")
-	ptrStringEmpty  = func(s string) *string { return &s }("")
-	ptrString10m    = func(v string) *string { return &v }("10m")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -150,14 +149,14 @@ type (
 	}
 )
 
-func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	rawMatch, err := formatMessage(attrs.MustString("match", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting match")
 	}
 	match := regexp.MustCompile(rawMatch)
 
-	rawScan, err := formatMessage(attrs.MustString("scan", ptrString10m), m, r, eventData)
+	rawScan, err := formatMessage(attrs.MustString("scan", helpers.Ptr("10m")), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting scan duration")
 	}
@@ -171,7 +170,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		action     actionFn
 		actionName string
 	)
-	rawAction, err := formatMessage(attrs.MustString("action", ptrStringDelete), m, r, eventData)
+	rawAction, err := formatMessage(attrs.MustString("action", helpers.Ptr("delete")), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "formatting action")
 	}
@@ -235,15 +234,14 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *plugins.FieldCollection) (err error) {
-	if v, err := attrs.String("match"); err != nil || v == "" {
-		return errors.New("match must be non-empty string")
-	}
-
-	for _, field := range []string{"scan", "action", "match"} {
-		if err = tplValidator(attrs.MustString(field, ptrStringEmpty)); err != nil {
-			return errors.Wrapf(err, "validating %s template", field)
-		}
+func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "match", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "action", Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "scan", Type: fieldcollection.SchemaFieldTypeString}),
+		helpers.SchemaValidateTemplateField(tplValidator, "scan", "action", "match"),
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/go_helpers/v2/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/linkdetector"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -40,7 +41,7 @@ func Register(args plugins.RegistrationArguments) error {
 type Actor struct{}
 
 // Execute implements the actor interface
-func (Actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *plugins.FieldCollection, attrs *plugins.FieldCollection) (preventCooldown bool, err error) {
+func (Actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	if eventData.HasAll("clips") {
 		// We already detected clips, lets not do it again
 		return false, nil
@@ -82,4 +83,6 @@ func (Actor) IsAsync() bool { return false }
 func (Actor) Name() string { return actorName }
 
 // Validate implements the actor interface
-func (Actor) Validate(plugins.TemplateValidatorFunc, *plugins.FieldCollection) error { return nil }
+func (Actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) error {
+	return nil
+}
