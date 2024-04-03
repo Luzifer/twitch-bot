@@ -2,7 +2,7 @@
 package access
 
 import (
-	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -28,8 +28,6 @@ type (
 	ClientConfig struct {
 		TwitchClient       string
 		TwitchClientSecret string
-
-		FallbackToken string // DEPRECATED
 
 		TokenUpdateHook func()
 	}
@@ -93,72 +91,11 @@ func (s Service) GetChannelPermissions(channel string) ([]string, error) {
 // bot user
 func (s Service) GetBotTwitchClient(cfg ClientConfig) (*twitch.Client, error) {
 	botUsername, err := s.GetBotUsername()
-	switch {
-	case errors.Is(err, nil):
-		// This is fine, we have a username
-		return s.GetTwitchClientForChannel(botUsername, cfg)
-
-	case errors.Is(err, database.ErrCoreMetaNotFound):
-		// The bot has no username stored, we try to auto-migrate below
-
-	default:
-		return nil, errors.Wrap(err, "getting bot username from database")
-	}
-
-	// Bot username is not set, either we're running from fallback token
-	// or did not yet execute the v3.5.0 migration
-
-	var botAccessToken, botRefreshToken string
-	err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotToken, &botAccessToken)
-	switch {
-	case errors.Is(err, nil):
-		// This is fine, we do have a pre-v3.5.0 config, lets do the migration
-
-	case errors.Is(err, database.ErrCoreMetaNotFound):
-		// We're don't have a stored pre-v3.5.0 token either, so we're
-		// running from the fallback token (which might be empty)
-		return twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, cfg.FallbackToken, ""), nil
-
-	default:
-		return nil, errors.Wrap(err, "getting bot access token from database")
-	}
-
-	if err = s.db.ReadEncryptedCoreMeta(coreMetaKeyBotRefreshToken, &botRefreshToken); err != nil {
-		return nil, errors.Wrap(err, "getting bot refresh token from database")
-	}
-
-	// Now we do have (hopefully valid) tokens for the bot and therefore
-	// can determine who the bot is. That means we can set the username
-	// for later reference and afterwards delete the duplicated tokens.
-
-	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, botAccessToken, botRefreshToken).GetAuthorizedUser(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "validating stored access token")
+		return nil, fmt.Errorf("getting bot username: %w", err)
 	}
 
-	if err = s.db.StoreCoreMeta(coreMetaKeyBotUsername, botUser); err != nil {
-		return nil, errors.Wrap(err, "setting bot username")
-	}
-
-	if _, err = s.GetTwitchClientForChannel(botUser, cfg); errors.Is(err, gorm.ErrRecordNotFound) {
-		// There is no extended permission for that channel, we probably
-		// are in a state created by the v2 migrator. Lets just store the
-		// token without any permissions as we cannot know the permissions
-		// assigned to that token
-		if err = s.SetExtendedTwitchCredentials(botUser, botAccessToken, botRefreshToken, nil); err != nil {
-			return nil, errors.Wrap(err, "moving bot access token")
-		}
-	}
-
-	if err = s.db.DeleteCoreMeta(coreMetaKeyBotToken); err != nil {
-		return nil, errors.Wrap(err, "deleting deprecated bot token")
-	}
-
-	if err = s.db.DeleteCoreMeta(coreMetaKeyBotRefreshToken); err != nil {
-		return nil, errors.Wrap(err, "deleting deprecated bot refresh-token")
-	}
-
-	return s.GetTwitchClientForChannel(botUser, cfg)
+	return s.GetTwitchClientForChannel(botUsername, cfg)
 }
 
 // GetTwitchClientForChannel returns a twitch.Client configured to act
