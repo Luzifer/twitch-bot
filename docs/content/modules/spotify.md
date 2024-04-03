@@ -17,7 +17,7 @@ Start with going to the [Spotify for Developers Dashboard](https://developer.spo
 
 - "App name" is something you can choose yourself
 - "App description" is also required, choose yourself
-- "Redirect URI" must be `https://example.com/spotify/<channel>` so for exmaple `https://example.com/spotify/luziferus`
+- "Redirect URI" must be `https://example.com/spotify/<channel>` so for example `https://example.com/spotify/luziferus`
 - Select "Web API" for the "API/SDKs you are planning to use"
 - Check the ToS box (of course after reading those!)
 - Click "Save"
