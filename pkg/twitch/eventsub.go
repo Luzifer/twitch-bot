@@ -324,7 +324,6 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 	if mustFetchSubsctiption {
 		params := make(url.Values)
 		params.Set("status", "enabled")
-		params.Set("type", sub.Type)
 
 		if err = c.Request(ctx, ClientRequestOpts{
 			AuthType: auth,
