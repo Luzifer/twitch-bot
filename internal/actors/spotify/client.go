@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -24,6 +25,12 @@ func getCurrentTrackForChannel(channel string) (track currentPlayingTrackRespons
 		return track, fmt.Errorf("loading oauth token: %w", err)
 	}
 
+	defer func() {
+		if err := db.StoreEncryptedCoreMeta(strings.Join([]string{"spotify-auth", channel}, ":"), token); err != nil {
+			logrus.WithError(err).Error("storing back Spotify auth token")
+		}
+	}()
+
 	ctx, cancel := context.WithTimeout(context.Background(), spotifyRequestTimeout)
 	defer cancel()
 
@@ -42,14 +49,34 @@ func getCurrentTrackForChannel(channel string) (track currentPlayingTrackRespons
 		}
 	}()
 
-	defer func() {
-		if err := db.StoreEncryptedCoreMeta(strings.Join([]string{"spotify-auth", channel}, ":"), token); err != nil {
-			logrus.WithError(err).Error("storing back Spotify auth token")
-		}
-	}()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return track, fmt.Errorf("reading response body: %w", err)
+	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&track); err != nil {
-		return track, fmt.Errorf("decoding response: %w", err)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// This is perfect, continue below
+
+	case http.StatusUnauthorized:
+		// The token is FUBAR
+		return track, fmt.Errorf("token expired (HTTP 401 - unauthorized)")
+
+	case http.StatusForbidden:
+		// The request is FUBAR
+		return track, fmt.Errorf("bad oAuth request, report this to dev (HTTP 403 - forbidden): %q", body)
+
+	case http.StatusTooManyRequests:
+		// We asked too often
+		return track, fmt.Errorf("rate-limited (HTTP 429 - too many requests)")
+
+	default:
+		// WTF?
+		return track, fmt.Errorf("unexpected HTTP status %d", resp.StatusCode)
+	}
+
+	if err = json.Unmarshal(body, &track); err != nil {
+		return track, fmt.Errorf("decoding response (%q): %w", body, err)
 	}
 
 	return track, nil
