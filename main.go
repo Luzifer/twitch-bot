@@ -146,28 +146,6 @@ func main() {
 		log.WithError(err).Fatal("applying timer migration")
 	}
 
-	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
-		TwitchClient:       cfg.TwitchClient,
-		TwitchClientSecret: cfg.TwitchClientSecret,
-		TokenUpdateHook: func() {
-			// make frontend reload its state as of token change
-			frontendNotifyHooks.Ping(frontendNotifyTypeReload)
-		},
-	}); err != nil {
-		if !errors.Is(err, access.ErrChannelNotAuthorized) {
-			log.WithError(err).Fatal("initializing Twitch client")
-		}
-		twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, "", "")
-	}
-
-	twitchWatch := newTwitchWatcher()
-	// Query may run that often as the twitchClient has an internal
-	// cache but shouldn't run more often as EventSub subscriptions
-	// are retried on error each time
-	if _, err = cronService.AddFunc("@every 30s", twitchWatch.Check); err != nil {
-		log.WithError(err).Fatal("registering twitchWatch cron")
-	}
-
 	// Allow config to subscribe to external rules
 	updCron := updateConfigCron()
 	if _, err = cronService.AddFunc(updCron, updateConfigFromRemote); err != nil {
@@ -249,6 +227,29 @@ func main() {
 
 	if err = startCheck(); err != nil {
 		log.WithError(err).Fatal("Missing required parameters")
+	}
+
+	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
+		TwitchClient:       cfg.TwitchClient,
+		TwitchClientSecret: cfg.TwitchClientSecret,
+		TokenUpdateHook: func() {
+			// make frontend reload its state as of token change
+			frontendNotifyHooks.Ping(frontendNotifyTypeReload)
+		},
+	}); err != nil {
+		if !errors.Is(err, access.ErrChannelNotAuthorized) {
+			log.WithError(err).Fatal("initializing Twitch client")
+		}
+		twitchClient = twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, "", "")
+	}
+
+	twitchWatch := newTwitchWatcher()
+
+	// Query may run that often as the twitchClient has an internal
+	// cache but shouldn't run more often as EventSub subscriptions
+	// are retried on error each time
+	if _, err = cronService.AddFunc("@every 30s", twitchWatch.Check); err != nil {
+		log.WithError(err).Fatal("registering twitchWatch cron")
 	}
 
 	fsEvents := make(chan configChangeEvent, 1)
