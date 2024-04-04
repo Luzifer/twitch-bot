@@ -128,9 +128,9 @@ Example:
 
 ### `counterTopList`
 
-Returns the top n counters for the given prefix as objects with Name and Value fields
+Returns the top n counters for the given prefix as objects with Name and Value fields. Can be ordered by `name` / `value` / `first_seen` / `last_modified` ascending (`ASC`) or descending (`DESC`): i.e. `last_modified DESC` defaults to `value DESC`
 
-Syntax: `counterTopList <prefix> <n>`
+Syntax: `counterTopList <prefix> <n> [orderBy]`
 
 Example:
 
@@ -467,7 +467,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 70%
+< Your int this hour: 88%
 ```
 
 ### `spotifyCurrentPlaying`

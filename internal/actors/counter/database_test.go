@@ -64,6 +64,35 @@ func TestCounterTopListAndRank(t *testing.T) {
 		{Name: "#example:test:3", Value: 3, FirstSeen: testTime, LastModified: testTime},
 	}, cc)
 
+	cc, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name DESC")
+	require.NoError(t, err)
+	assert.Len(t, cc, 3)
+
+	assert.Equal(t, []counter{
+		{Name: "#example:test:5", Value: 5, FirstSeen: testTime, LastModified: testTime},
+		{Name: "#example:test:4", Value: 4, FirstSeen: testTime, LastModified: testTime},
+		{Name: "#example:test:3", Value: 3, FirstSeen: testTime, LastModified: testTime},
+	}, cc)
+
+	cc, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name")
+	require.NoError(t, err)
+	assert.Len(t, cc, 3)
+
+	assert.Equal(t, []counter{
+		{Name: "#example:test:0", Value: 0, FirstSeen: testTime, LastModified: testTime},
+		{Name: "#example:test:1", Value: 1, FirstSeen: testTime, LastModified: testTime},
+		{Name: "#example:test:2", Value: 2, FirstSeen: testTime, LastModified: testTime},
+	}, cc)
+
+	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "foobar")
+	assert.Error(t, err)
+
+	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name foo")
+	assert.Error(t, err)
+
+	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name ASC; DROP TABLE counters;")
+	assert.Error(t, err)
+
 	rank, count, err := getCounterRank(dbc,
 		fmt.Sprintf(counterTemplate, ""),
 		fmt.Sprintf(counterTemplate, 4))

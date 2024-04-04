@@ -166,11 +166,11 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		},
 	})
 
-	args.RegisterTemplateFunction("counterTopList", plugins.GenericTemplateFunctionGetter(func(prefix string, n int) ([]counter, error) {
-		return getCounterTopList(db, prefix, n)
+	args.RegisterTemplateFunction("counterTopList", plugins.GenericTemplateFunctionGetter(func(prefix string, n int, orderBy string) ([]counter, error) {
+		return getCounterTopList(db, prefix, n, orderBy)
 	}), plugins.TemplateFuncDocumentation{
-		Description: "Returns the top n counters for the given prefix as objects with Name and Value fields",
-		Syntax:      `counterTopList <prefix> <n>`,
+		Description: "Returns the top n counters for the given prefix as objects with Name and Value fields. Can be ordered by `name` / `value` / `first_seen` / `last_modified` ascending (`ASC`) or descending (`DESC`): i.e. `last_modified DESC` defaults to `value DESC`",
+		Syntax:      `counterTopList <prefix> <n> [orderBy]`,
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ range (counterTopList (list .channel "test" "" | join ":") 3) }}{{ .Name }}: {{ .Value }} - {{ end }}`,
 			FakedOutput: "#example:test:foo: 5 - #example:test:bar: 4 - ",
