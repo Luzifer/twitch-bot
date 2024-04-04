@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -193,7 +194,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 			mod = val[0]
 		}
 
-		if err := updateCounter(db, name, mod, false); err != nil {
+		if err := updateCounter(db, name, mod, false, time.Now()); err != nil {
 			return 0, errors.Wrap(err, "updating counter")
 		}
 
@@ -230,7 +231,7 @@ func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 		}
 
 		return false, errors.Wrap(
-			updateCounter(db, counterName, counterValue, true),
+			updateCounter(db, counterName, counterValue, true, time.Now()),
 			"set counter",
 		)
 	}
@@ -249,7 +250,7 @@ func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, even
 	}
 
 	return false, errors.Wrap(
-		updateCounter(db, counterName, counterStep, false),
+		updateCounter(db, counterName, counterStep, false, time.Now()),
 		"update counter",
 	)
 }
@@ -298,7 +299,7 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = updateCounter(db, mux.Vars(r)["name"], value, absolute); err != nil {
+	if err = updateCounter(db, mux.Vars(r)["name"], value, absolute, time.Now()); err != nil {
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

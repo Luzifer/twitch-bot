@@ -1,6 +1,8 @@
 package counter
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -11,8 +13,10 @@ import (
 
 type (
 	counter struct {
-		Name  string `gorm:"primaryKey"`
-		Value int64
+		Name         string `gorm:"primaryKey"`
+		Value        int64
+		FirstSeen    time.Time
+		LastModified time.Time
 	}
 )
 
@@ -32,7 +36,7 @@ func getCounterValue(db database.Connector, counterName string) (int64, error) {
 }
 
 //revive:disable-next-line:flag-parameter
-func updateCounter(db database.Connector, counterName string, value int64, absolute bool) error {
+func updateCounter(db database.Connector, counterName string, value int64, absolute bool, atTime time.Time) error {
 	if !absolute {
 		cv, err := getCounterValue(db, counterName)
 		if err != nil {
@@ -46,8 +50,8 @@ func updateCounter(db database.Connector, counterName string, value int64, absol
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 			return tx.Clauses(clause.OnConflict{
 				Columns:   []clause.Column{{Name: "name"}},
-				DoUpdates: clause.AssignmentColumns([]string{"value"}),
-			}).Create(counter{Name: counterName, Value: value}).Error
+				DoUpdates: clause.AssignmentColumns([]string{"last_modified", "value"}),
+			}).Create(counter{Name: counterName, Value: value, FirstSeen: atTime.UTC(), LastModified: atTime.UTC()}).Error
 		}),
 		"storing counter value",
 	)
