@@ -17,11 +17,11 @@ import (
 
 const actorName = "shield"
 
-var botTwitchClient *twitch.Client
+var botTwitchClient func() *twitch.Client
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -50,7 +50,7 @@ type actor struct{}
 
 func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	return false, errors.Wrap(
-		botTwitchClient.UpdateShieldMode(
+		botTwitchClient().UpdateShieldMode(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			attrs.MustBool("enable", helpers.Ptr(false)),

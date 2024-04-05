@@ -17,13 +17,13 @@ import (
 const actorName = "whisper"
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	formatMessage   plugins.MsgFormatter
 )
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -72,7 +72,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 
 	return false, errors.Wrap(
-		botTwitchClient.SendWhisper(context.Background(), to, msg),
+		botTwitchClient().SendWhisper(context.Background(), to, msg),
 		"sending whisper",
 	)
 }

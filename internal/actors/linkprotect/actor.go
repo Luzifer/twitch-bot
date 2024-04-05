@@ -22,13 +22,13 @@ import (
 const actorName = "linkprotect"
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	clipLink        = regexp.MustCompile(`.*(?:clips\.twitch\.tv|www\.twitch\.tv/[^/]*/clip)/.*`)
 )
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -167,7 +167,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	// That message misbehaved so we need to punish them
 	switch lt := attrs.MustString("action", helpers.Ptr("")); lt {
 	case "ban":
-		if err = botTwitchClient.BanUser(
+		if err = botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),
@@ -183,7 +183,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			return false, errors.New("found no mesage id")
 		}
 
-		if err = botTwitchClient.DeleteMessage(
+		if err = botTwitchClient().DeleteMessage(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,
@@ -197,7 +197,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			return false, errors.Wrap(err, "parsing punishment level")
 		}
 
-		if err = botTwitchClient.BanUser(
+		if err = botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),

@@ -14,11 +14,11 @@ import (
 
 const actorName = "delete"
 
-var botTwitchClient *twitch.Client
+var botTwitchClient func() *twitch.Client
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
@@ -40,7 +40,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 	}
 
 	return false, errors.Wrap(
-		botTwitchClient.DeleteMessage(
+		botTwitchClient().DeleteMessage(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,

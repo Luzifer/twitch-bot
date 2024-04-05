@@ -20,7 +20,7 @@ import (
 const actorName = "ban"
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	formatMessage   plugins.MsgFormatter
 
 	banChatcommandRegex = regexp.MustCompile(`^/ban +([^\s]+) +(.+)$`)
@@ -28,7 +28,7 @@ var (
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) (err error) {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -98,7 +98,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 
 	return false, errors.Wrap(
-		botTwitchClient.BanUser(
+		botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			plugins.DeriveUser(m, eventData),
@@ -132,7 +132,7 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 		reason  = r.FormValue("reason")
 	)
 
-	if err := botTwitchClient.BanUser(r.Context(), channel, user, 0, reason); err != nil {
+	if err := botTwitchClient().BanUser(r.Context(), channel, user, 0, reason); err != nil {
 		http.Error(w, errors.Wrap(err, "issuing ban").Error(), http.StatusInternalServerError)
 		return
 	}
@@ -148,7 +148,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("ban message does not match required format")
 	}
 
-	if err := botTwitchClient.BanUser(context.Background(), channel, matches[1], 0, matches[2]); err != nil {
+	if err := botTwitchClient().BanUser(context.Background(), channel, matches[1], 0, matches[2]); err != nil {
 		return errors.Wrap(err, "executing ban")
 	}
 

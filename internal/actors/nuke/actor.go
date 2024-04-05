@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	formatMessage   plugins.MsgFormatter
 
 	messageStore     = map[string][]*storedMessage{}
@@ -36,7 +36,7 @@ var (
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })

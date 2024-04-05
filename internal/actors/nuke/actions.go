@@ -14,7 +14,7 @@ type (
 
 func actionBan(channel, match, _, user string) error {
 	return errors.Wrap(
-		botTwitchClient.BanUser(
+		botTwitchClient().BanUser(
 			context.Background(),
 			channel,
 			user,
@@ -27,7 +27,7 @@ func actionBan(channel, match, _, user string) error {
 
 func actionDelete(channel, _, msgid, _ string) (err error) {
 	return errors.Wrap(
-		botTwitchClient.DeleteMessage(
+		botTwitchClient().DeleteMessage(
 			context.Background(),
 			channel,
 			msgid,
@@ -39,7 +39,7 @@ func actionDelete(channel, _, msgid, _ string) (err error) {
 func getActionTimeout(duration time.Duration) actionFn {
 	return func(channel, match, _, user string) error {
 		return errors.Wrap(
-			botTwitchClient.BanUser(
+			botTwitchClient().BanUser(
 				context.Background(),
 				channel,
 				user,

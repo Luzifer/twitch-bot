@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	db              database.Connector
 	formatMessage   plugins.MsgFormatter
 )
@@ -44,7 +44,7 @@ func Register(args plugins.RegistrationArguments) error {
 		return database.CopyObjects(src, target, &punishLevel{})
 	})
 
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorNamePunish, func() plugins.Actor { return &actorPunish{} })
@@ -172,7 +172,7 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 
 	switch lt := levels[nLvl]; lt {
 	case "ban":
-		if err = botTwitchClient.BanUser(
+		if err = botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(user, "@"),
@@ -188,7 +188,7 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 			return false, errors.New("found no mesage id")
 		}
 
-		if err = botTwitchClient.DeleteMessage(
+		if err = botTwitchClient().DeleteMessage(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			msgID,
@@ -202,7 +202,7 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 			return false, errors.Wrap(err, "parsing punishment level")
 		}
 
-		if err = botTwitchClient.BanUser(
+		if err = botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(user, "@"),

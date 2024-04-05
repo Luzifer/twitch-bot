@@ -19,7 +19,7 @@ import (
 const actorName = "shoutout"
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	formatMessage   plugins.MsgFormatter
 	ptrStringEmpty  = func(v string) *string { return &v }("")
 
@@ -28,7 +28,7 @@ var (
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
@@ -65,7 +65,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 
 	return false, errors.Wrap(
-		botTwitchClient.SendShoutout(
+		botTwitchClient().SendShoutout(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			user,
@@ -96,7 +96,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("shoutout message does not match required format")
 	}
 
-	if err := botTwitchClient.SendShoutout(context.Background(), channel, matches[1]); err != nil {
+	if err := botTwitchClient().SendShoutout(context.Background(), channel, matches[1]); err != nil {
 		return errors.Wrap(err, "executing shoutout")
 	}
 

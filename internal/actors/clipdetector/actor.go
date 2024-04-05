@@ -18,13 +18,13 @@ import (
 const actorName = "clipdetector"
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 	clipIDScanner   = regexp.MustCompile(`(?:clips\.twitch\.tv|www\.twitch\.tv/[^/]*/clip)/([A-Za-z0-9_-]+)`)
 )
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &Actor{} })
 
@@ -64,7 +64,7 @@ func (Actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 			continue
 		}
 
-		clipInfo, err := botTwitchClient.GetClipByID(context.Background(), clipIDMatch[1])
+		clipInfo, err := botTwitchClient().GetClipByID(context.Background(), clipIDMatch[1])
 		if err != nil {
 			return false, errors.Wrap(err, "getting clip info")
 		}

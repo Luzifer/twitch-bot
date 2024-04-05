@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	botTwitchClient *twitch.Client
+	botTwitchClient func() *twitch.Client
 
 	announceChatcommandRegex = regexp.MustCompile(`^/announce(|blue|green|orange|purple) +(.+)$`)
 )
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	botTwitchClient = args.GetTwitchClient()
+	botTwitchClient = args.GetTwitchClient
 
 	args.RegisterMessageModFunc("/announce", handleChatCommand)
 
@@ -36,7 +36,7 @@ func handleChatCommand(m *irc.Message) error {
 		return errors.New("announce message does not match required format")
 	}
 
-	if err := botTwitchClient.SendChatAnnouncement(context.Background(), channel, matches[1], matches[2]); err != nil {
+	if err := botTwitchClient().SendChatAnnouncement(context.Background(), channel, matches[1], matches[2]); err != nil {
 		return errors.Wrap(err, "sending announcement")
 	}
 
