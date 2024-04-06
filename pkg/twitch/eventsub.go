@@ -29,6 +29,8 @@ const (
 	EventSubEventTypeChannelPollBegin                      = "channel.poll.begin"
 	EventSubEventTypeChannelPollEnd                        = "channel.poll.end"
 	EventSubEventTypeChannelPollProgress                   = "channel.poll.progress"
+	EventSubEventTypeChannelSuspiciousUserMessage          = "channel.suspicious_user.message"
+	EventSubEventTypeChannelSuspiciousUserUpdate           = "channel.suspicious_user.update"
 	EventSubEventTypeStreamOffline                         = "stream.offline"
 	EventSubEventTypeStreamOnline                          = "stream.online"
 	EventSubEventTypeUserAuthorizationRevoke               = "user.authorization.revoke"
@@ -233,6 +235,53 @@ type (
 		BroadcasterUserName  string    `json:"broadcaster_user_name"`
 		Type                 string    `json:"type"`
 		StartedAt            time.Time `json:"started_at"`
+	}
+
+	// EventSubEventSuspiciousUserMessage contains the payload for a
+	// channel.suspicious_user.message
+	EventSubEventSuspiciousUserMessage struct {
+		BroadcasterUserID    string   `json:"broadcaster_user_id"`
+		BroadcasterUserName  string   `json:"broadcaster_user_name"`
+		BroadcasterUserLogin string   `json:"broadcaster_user_login"`
+		UserID               string   `json:"user_id"`
+		UserName             string   `json:"user_name"`
+		UserLogin            string   `json:"user_login"`
+		LowTrustStatus       string   `json:"low_trust_status"` // Can be the following: "none", "active_monitoring", or "restricted"
+		SharedBanChannelIDs  []string `json:"shared_ban_channel_ids"`
+		Types                []string `json:"types"`                  // can be "manual", "ban_evader_detector", or "shared_channel_ban"
+		BanEvasionEvaluation string   `json:"ban_evasion_evaluation"` // can be "unknown", "possible", or "likely"
+		Message              struct {
+			MessageID string `json:"message_id"`
+			Text      string `json:"text"`
+			Fragments []struct {
+				Type      string `json:"type"`
+				Text      string `json:"text"`
+				Cheermote struct {
+					Prefix string `json:"prefix"`
+					Bits   int    `json:"bits"`
+					Tier   int    `json:"tier"`
+				} `json:"Cheermote"`
+				Emote struct {
+					ID         string `json:"id"`
+					EmoteSetID string `json:"emote_set_id"`
+				} `json:"emote"`
+			} `json:"fragments"`
+		} `json:"message"`
+	}
+
+	// EventSubEventSuspiciousUserUpdated contains the payload for a
+	// channel.suspicious_user.update
+	EventSubEventSuspiciousUserUpdated struct {
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		ModeratorUserID      string `json:"moderator_user_id"`
+		ModeratorUserName    string `json:"moderator_user_name"`
+		ModeratorUserLogin   string `json:"moderator_user_login"`
+		UserID               string `json:"user_id"`
+		UserName             string `json:"user_name"`
+		UserLogin            string `json:"user_login"`
+		LowTrustStatus       string `json:"low_trust_status"` // Can be the following: "none", "active_monitoring", or "restricted"
 	}
 
 	// EventSubEventUserAuthorizationRevoke contains the payload for an

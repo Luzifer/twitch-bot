@@ -273,6 +273,29 @@ Fields:
 - `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `username` - The login-name of the user who gifted the subscription
 
+## `sus_user_message`
+
+A suspicious (monitored / restricted) user sent a message in the given channel
+
+- `ban_evasion` _string_ - Status of the ban-evasion detection: `unknown`, `possible`, `likely`
+- `channel` _string_ - The channel in which the event occurred
+- `message` _string_ - The message the user sent in plain text
+- `shared_ban_channels` _[]string_ - IDs of channels with shared ban-info in which the user is also banned
+- `status` _string_ - Restriction status: `active_monitoring`, `restricted`
+- `user_id` _string_ - ID of the user sending the message
+- `user_type` _[]string_ - How the user ended being on the naughty-list: `manually_added`, `ban_evader_detector`, or `shared_channel_ban`
+- `username` _string_ - The login-name of the user sending the message
+
+## `sus_user_update`
+
+The status of suspicious user was changed by a moderator
+
+- `channel` _string_ - The channel in which the event occurred
+- `moderator` _string_ - The login-name of the moderator changing the status
+- `status` _string_ - Restriction status: `no_treatment`, `active_monitoring`, `restricted`
+- `user_id` _string_ - ID of the suspicious user
+- `username` _string_ - Login-name of the suspicious user
+
 ## `timeout`
 
 Moderator action caused a user to be timed out from chat.

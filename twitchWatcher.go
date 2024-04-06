@@ -232,6 +232,22 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Hook:           t.handleEventSubStreamOnOff(true),
 			Optional:       true,
 		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelSuspiciousUserMessage,
+			Version:        twitch.EventSubTopicVersionBeta,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModeratorReadSuspiciousUsers},
+			Hook:           t.handleEventSubSusUserMessage,
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelSuspiciousUserUpdate,
+			Version:        twitch.EventSubTopicVersionBeta,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModeratorReadSuspiciousUsers},
+			Hook:           t.handleEventSubSusUserUpdate,
+			Optional:       true,
+		},
 	}
 }
 
@@ -436,6 +452,49 @@ func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMe
 		t.triggerUpdate(payload.BroadcasterUserLogin, nil, nil, &isOnline)
 		return nil
 	}
+}
+
+func (*twitchWatcher) handleEventSubSusUserMessage(m json.RawMessage) (err error) {
+	var payload twitch.EventSubEventSuspiciousUserMessage
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+		"ban_evasion":         payload.BanEvasionEvaluation,
+		"channel":             "#" + payload.BroadcasterUserLogin,
+		"message":             payload.Message.Text,
+		"shared_ban_channels": payload.SharedBanChannelIDs,
+		"status":              payload.LowTrustStatus,
+		"user_id":             payload.UserID,
+		"user_type":           payload.Types,
+		"username":            payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("restricted user message")
+	go handleMessage(ircHdl.Client(), nil, eventTypeSusUserMessage, fields)
+
+	return nil
+}
+
+func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error) {
+	var payload twitch.EventSubEventSuspiciousUserUpdated
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return errors.Wrap(err, "unmarshalling event")
+	}
+
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+		"channel":   "#" + payload.BroadcasterUserLogin,
+		"moderator": payload.ModeratorUserLogin,
+		"status":    payload.LowTrustStatus,
+		"user_id":   payload.UserID,
+		"username":  payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("user restriction updated")
+	go handleMessage(ircHdl.Client(), nil, eventTypeSusUserUpdate, fields)
+
+	return nil
 }
 
 func (t *twitchWatcher) updateChannelFromAPI(channel string) error {

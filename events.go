@@ -45,6 +45,8 @@ var (
 	eventTypeSubgift            = ptrStr("subgift")
 	eventTypeSubmysterygift     = ptrStr("submysterygift")
 	eventTypeSub                = ptrStr("sub")
+	eventTypeSusUserMessage     = ptrStr("sus_user_message")
+	eventTypeSusUserUpdate      = ptrStr("sus_user_update")
 	eventTypeTimeout            = ptrStr("timeout")
 	eventTypeWatchStreak        = ptrStr("watch_streak")
 	eventTypeWhisper            = ptrStr("whisper")
@@ -83,6 +85,8 @@ var (
 		eventTypeSub,
 		eventTypeSubgift,
 		eventTypeSubmysterygift,
+		eventTypeSusUserMessage,
+		eventTypeSusUserUpdate,
 		eventTypeTimeout,
 		eventTypeWatchStreak,
 		eventTypeWhisper,
