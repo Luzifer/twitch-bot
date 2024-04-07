@@ -8,10 +8,10 @@ Ad-break has begun and ads are playing now in mentioned channel.
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `duration` - Duration of the ads in seconds
-- `is_automatic` - Were the ads started by the ad-manager?
-- `started_at` - When did the ad-break start
+- `channel` _string_ - The channel the event occurred in
+- `duration` _int64_ - Duration of the ads in seconds
+- `is_automatic` _bool_ - Were the ads started by the ad-manager?
+- `started_at` _time.Time_ - When did the ad-break start
 
 ## `ban`
 
@@ -21,9 +21,9 @@ Note: This event does **not** contain the acting user! You cannot use the `{{.us
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `target_id` - The ID of the user being banned
-- `target_name` - The login-name of the user being banned
+- `channel` _string_ - The channel the event occurred in
+- `target_id` _string_ - The ID of the user being banned
+- `target_name` _string_ - The login-name of the user being banned
 
 ## `bits`
 
@@ -31,9 +31,9 @@ User spent bits in the channel. The full message is available like in a normal c
 
 Fields:
 
-- `bits` - Total amount of bits spent in the message
-- `channel` - The channel the event occurred in
-- `username` - The login-name of the user who spent the bits
+- `bits` _int64_ - Total amount of bits spent in the message
+- `channel` _string_ - The channel the event occurred in
+- `username` _string_ - The login-name of the user who spent the bits
 
 ## `category_update`
 
@@ -41,8 +41,8 @@ The current category for the channel was changed. (This event has some delay to 
 
 Fields:
 
-- `category` - The name of the new game / category
-- `channel` - The channel the event occurred in
+- `category` _string_ - The name of the new game / category
+- `channel` _string_ - The channel the event occurred in
 
 ## `channelpoint_redeem`
 
@@ -50,14 +50,14 @@ A custom channel-point reward was redeemed in the given channel. (Only available
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `reward_cost` - Number of points the user paid for the reward
-- `reward_id` - ID of the reward the user redeemed
-- `reward_title` - Title of the reward the user redeemed
-- `status` - Status of the reward (one of `unknown`, `unfulfilled`, `fulfilled`, and `canceled`)
-- `user_id` - The ID of the user who redeemed the reward
-- `user_input` - The text the user entered into the input for the reward
-- `user` - The login-name of the user who redeemed the reward
+- `channel` _string_ - The channel the event occurred in
+- `reward_cost` _int64_ - Number of points the user paid for the reward
+- `reward_id` _string_ - ID of the reward the user redeemed
+- `reward_title` _string_ - Title of the reward the user redeemed
+- `status` _string_ - Status of the reward (one of `unknown`, `unfulfilled`, `fulfilled`, and `canceled`)
+- `user_id` _string_ - The ID of the user who redeemed the reward
+- `user_input` _string_ - The text the user entered into the input for the reward
+- `user` _string_ - The login-name of the user who redeemed the reward
 
 ## `clearchat`
 
@@ -67,7 +67,7 @@ Note: This event does **not** contain the acting user! You cannot use the `{{.us
 
 Fields:
 
-- `channel` - The channel the event occurred in
+- `channel` _string_ - The channel the event occurred in
 
 ## `delete`
 
@@ -77,9 +77,9 @@ Note: This event does **not** contain the acting user! You cannot use the `{{.us
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `message_id` - The UUID of the message being deleted
-- `target_name` - Login name of the author of the deleted message
+- `channel` _string_ - The channel the event occurred in
+- `message_id` _string_ - The UUID of the message being deleted
+- `target_name` _string_ - Login name of the author of the deleted message
 
 ## `follow`
 
@@ -87,10 +87,10 @@ User followed the channel. This event is not de-duplicated and therefore might b
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `followed_at` - Time object of the follow date
-- `user_id` - ID of the newly following user
-- `user` - The login-name of the user who followed
+- `channel` _string_ - The channel the event occurred in
+- `followed_at` _time.Time_ - Time object of the follow date
+- `user_id` _string_ - ID of the newly following user
+- `user` _string_ - The login-name of the user who followed
 
 ## `giftpaidupgrade`
 
@@ -98,9 +98,9 @@ User upgraded their gifted subscription into a paid one. This event does not con
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `gifter` - The login-name of the user who gifted the subscription
-- `username` - The login-name of the user who upgraded their subscription
+- `channel` _string_ - The channel the event occurred in
+- `gifter` _string_ - The login-name of the user who gifted the subscription
+- `username` _string_ - The login-name of the user who upgraded their subscription
 
 ## `hypetrain_begin`, `hypetrain_end`, `hypetrain_progress`
 
@@ -108,10 +108,10 @@ An Hype-Train has begun, ended or progressed in the given channel.
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `level` - The current level of the Hype-Train
-- `levelProgress` - Percentage of reached "points" in the current level to complete the level (not available on `hypetrain_end`)
-- `event` - Raw Hype-Train event, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L121) 
+- `channel` _string_ - The channel the event occurred in
+- `level` _int64_ - The current level of the Hype-Train
+- `levelProgress` _float64_ - Percentage of reached "points" in the current level to complete the level (not available on `hypetrain_end`)
+- `event` _EventSubEventHypetrain_ - Raw Hype-Train event, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L121) 
 
 ## `join`
 
@@ -119,8 +119,8 @@ User joined the channel-chat. This is **NOT** an indicator they are viewing, the
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `user` - The login-name of the user who joined
+- `channel` _string_ - The channel the event occurred in
+- `user` _string_ - The login-name of the user who joined
 
 ## `kofi_donation`
 
@@ -128,14 +128,14 @@ A Ko-fi donation was received through the API-Webhook.
 
 Fields:
 
-- `channel` - The channel the event occurred for
-- `from` - The name submitted by Ko-fi (can be arbitrarily entered)
-- `amount` - The amount donated as submitted by Ko-fi (i.e. 27.95)
-- `currency` - The currency of the amount (i.e. USD)
-- `isSubscription` - Boolean, true on monthly subscriptions, false on single-donations
-- `isFirstSubPayment` - Boolean, true on first montly payment, false otherwise
-- `message` - The message entered by the donator (**not** present when donation was marked as private!)
-- `tier` - The tier the subscriber subscribed to (seems not to be filled on the first transaction?)
+- `channel` _string_ - The channel the event occurred for
+- `from` _string_ - The name submitted by Ko-fi (can be arbitrarily entered)
+- `amount` _float64_ - The amount donated as submitted by Ko-fi (i.e. 27.95)
+- `currency` _string_ - The currency of the amount (i.e. USD)
+- `isSubscription` _bool_ - true on monthly subscriptions, false on single-donations
+- `isFirstSubPayment` _bool_ - true on first montly payment, false otherwise
+- `message` _string_ - The message entered by the donator (**not** present when donation was marked as private!)
+- `tier` _string_ - The tier the subscriber subscribed to (seems not to be filled on the first transaction?)
 
 ## `outbound_raid`
 
@@ -143,10 +143,10 @@ The channel has raided another channel. (The event is issued in the moment the r
 
 Fields:
 
-- `channel` - The channel the raid originated at
-- `to` - The login-name of the channel the viewers are sent to
-- `to_id` - The ID of the channel the viewers are sent to
-- `viewers` - The number of viewers included in the raid
+- `channel` _string_ - The channel the raid originated at
+- `to` _string_ - The login-name of the channel the viewers are sent to
+- `to_id` _string_ - The ID of the channel the viewers are sent to
+- `viewers` _int64_ - The number of viewers included in the raid
 
 ## `part`
 
@@ -154,8 +154,8 @@ User left the channel-chat. This is **NOT** an indicator they are no longer view
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `user` - The login-name of the user who left
+- `channel` _string_ - The channel the event occurred in
+- `user` _string_ - The login-name of the user who left
 
 ## `permit`
 
@@ -163,9 +163,9 @@ User received a permit, which means they are no longer affected by rules which a
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `user` - The login-name of the user who **gave** the permit
-- `to` - The username who got the permit
+- `channel` _string_ - The channel the event occurred in
+- `user` _string_ - The login-name of the user who **gave** the permit
+- `to` _string_ - The username who got the permit
 
 ## `poll_begin` / `poll_end` / `poll_progress`
 
@@ -173,10 +173,10 @@ A poll was started / was ended / had changes in the given channel.
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `poll` - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L152)
-- `status` - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
-- `title` - The title of the poll the event was generated for
+- `channel` _string_ - The channel the event occurred in
+- `poll` _EventSubEventPoll_ - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L152)
+- `status` _string_ - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
+- `title` _string_ - The title of the poll the event was generated for
 
 ## `raid`
 
@@ -184,9 +184,9 @@ The channel was raided by another user.
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `username` - The login-name of the user who raided the channel
-- `viewercount` - The amount of users who have been raided (this number is not fully accurate)
+- `channel` _string_ - The channel the event occurred in
+- `username` _string_ - The login-name of the user who raided the channel
+- `viewercount` _int64_ - The amount of users who have been raided (this number is not fully accurate)
 
 ## `resub`
 
@@ -194,10 +194,10 @@ The user shared their resubscription. (This event is triggered manually by the u
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
-- `subscribed_months` - How long have they been subscribed
-- `username` - The login-name of the user who resubscribed
+- `channel` _string_ - The channel the event occurred in
+- `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `subscribed_months` _int64_ - How long have they been subscribed
+- `username` _string_ - The login-name of the user who resubscribed
 
 ## `shoutout_created`
 
@@ -205,10 +205,10 @@ The channel gave another streamer a (Twitch native) shoutout
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `to_id` - The ID of the channel who received the shoutout
-- `to` - The login-name of the channel who received the shoutout
-- `viewers` - The amount of viewers the shoutout was shown to
+- `channel` _string_ - The channel the event occurred in
+- `to_id` _string_ - The ID of the channel who received the shoutout
+- `to` _string_ - The login-name of the channel who received the shoutout
+- `viewers` _int64_ - The amount of viewers the shoutout was shown to
 
 ## `shoutout_received`
 
@@ -216,10 +216,10 @@ The channel received a (Twitch native) shoutout by another channel.
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `from_id` - The ID of the channel who issued the shoutout
-- `from` - The login-name of the channel who issued the shoutout
-- `viewers` - The amount of viewers the shoutout was shown to
+- `channel` _string_ - The channel the event occurred in
+- `from_id` _string_ - The ID of the channel who issued the shoutout
+- `from` _string_ - The login-name of the channel who issued the shoutout
+- `viewers` _int64_ - The amount of viewers the shoutout was shown to
 
 ## `stream_offline`
 
@@ -227,7 +227,7 @@ The channels stream went offline. (This event has some delay to the real categor
 
 Fields:
 
-- `channel` - The channel the event occurred in
+- `channel` _string_ - The channel the event occurred in
 
 ## `stream_online`
 
@@ -235,7 +235,7 @@ The channels stream went offline. (This event has some delay to the real categor
 
 Fields:
 
-- `channel` - The channel the event occurred in
+- `channel` _string_ - The channel the event occurred in
 
 ## `sub`
 
@@ -243,9 +243,9 @@ The user newly subscribed on their own. (This event is triggered automatically a
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
-- `username` - The login-name of the user who subscribed
+- `channel` _string_ - The channel the event occurred in
+- `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `username` _string_ - The login-name of the user who subscribed
 
 ## `subgift`
 
@@ -253,13 +253,14 @@ The user gifted the subscription to a specific user. (This event **DOES** occur 
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `gifted_months` - Number of months the user gifted
-- `origin_id` - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
-- `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
-- `subscribed_months` - How long the recipient has been subscribed
-- `to` - The user who received the sub
-- `username` - The login-name of the user who gifted the subscription
+- `channel` _string_ - The channel the event occurred in
+- `gifted_months` _int64_ - Number of months the user gifted
+- `origin_id` _string_ - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
+- `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `subscribed_months` _int64_ - How long the recipient has been subscribed
+- `to` _string_ - The user who received the sub
+- `total_gifted` _int64_ - How many subs has the user given in total (might be zero due to users preferences)
+- `username` _string_ - The login-name of the user who gifted the subscription
 
 ## `submysterygift`
 
@@ -267,11 +268,11 @@ The user gifted multiple subs to the community. (This event is followed by `numb
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `number` - The amount of gifted subs
-- `origin_id` - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
-- `plan` - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
-- `username` - The login-name of the user who gifted the subscription
+- `channel` _string_ - The channel the event occurred in
+- `number` _int64_ - The amount of gifted subs
+- `origin_id` _string_ - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
+- `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `username` _string_ - The login-name of the user who gifted the subscription
 
 ## `sus_user_message`
 
@@ -304,11 +305,11 @@ Note: This event does **not** contain the acting user! You cannot use the `{{.us
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `duration` - The timeout duration (`time.Duration`, nanoseconds)
-- `seconds` - The timeout duration (`int`, seconds)
-- `target_id` - The ID of the user being timed out 
-- `target_name` - The login-name of the user being timed out 
+- `channel` _string_ - The channel the event occurred in
+- `duration` _time.Duration_ - The timeout duration (nanoseconds)
+- `seconds` _int_ - The timeout duration (seconds)
+- `target_id` _string_ - The ID of the user being timed out 
+- `target_name` _string_ - The login-name of the user being timed out 
 
 ## `title_update`
 
@@ -316,8 +317,8 @@ The current title for the channel was changed. (This event has some delay to the
 
 Fields:
 
-- `channel` - The channel the event occurred in
-- `title` - The title of the stream
+- `channel` _string_ - The channel the event occurred in
+- `title` _string_ - The title of the stream
 
 ## `whisper`
 
@@ -325,4 +326,4 @@ The bot received a whisper message. (You can use `(.*)` as message match and `{{
 
 Fields:
 
-- `username` - The login-name of the user who sent the message
+- `username` _string_ - The login-name of the user who sent the message
