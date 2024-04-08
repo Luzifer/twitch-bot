@@ -23,6 +23,8 @@ import (
 var (
 	db            database.Connector
 	formatMessage plugins.MsgFormatter
+
+	errNotAValue = fmt.Errorf("not a value")
 )
 
 // Register provides the plugins.RegisterFunc
@@ -213,46 +215,49 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 type actorCounter struct{}
 
-func (actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
+func (a actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
 		return false, errors.Wrap(err, "preparing response")
 	}
 
-	if counterSet := attrs.MustString("counter_set", helpers.Ptr("")); counterSet != "" {
-		parseValue, err := formatMessage(counterSet, m, r, eventData)
-		if err != nil {
-			return false, errors.Wrap(err, "execute counter value template")
+	// First lets look whether we shall set the counter (counter_set is
+	// defined and the template evaluates into something which is not
+	// an empty string)
+	counterSet, err := a.parseAttributeTemplateToNumber(m, r, eventData, attrs, "counter_set", 0)
+	switch {
+	case err == nil:
+		// Nice, we got a value to set
+		if err = updateCounter(db, counterName, counterSet, true, time.Now()); err != nil {
+			return false, fmt.Errorf("setting counter: %w", err)
 		}
+		return false, nil
 
-		counterValue, err := strconv.ParseInt(parseValue, 10, 64)
-		if err != nil {
-			return false, errors.Wrap(err, "parse counter value")
-		}
+	case errors.Is(err, errNotAValue):
+		// Nope, not a set but that's fine, we just go to step-adjustment
 
-		return false, errors.Wrap(
-			updateCounter(db, counterName, counterValue, true, time.Now()),
-			"set counter",
-		)
+	default:
+		// B0rked
+		return false, fmt.Errorf("parsing counter-set: %w", err)
 	}
 
-	var counterStep int64 = 1
-	if s := attrs.MustString("counter_step", helpers.Ptr("")); s != "" {
-		parseStep, err := formatMessage(s, m, r, eventData)
-		if err != nil {
-			return false, errors.Wrap(err, "execute counter step template")
+	// Second check whether we do have a template in counter_step and it
+	// evaluates into a non-empty string and then adjust the counter
+	// accordingly
+	counterStep, err := a.parseAttributeTemplateToNumber(m, r, eventData, attrs, "counter_step", 1)
+	switch {
+	case err == nil, errors.Is(err, errNotAValue):
+		// Either got a value or there was none, therefore the default was
+		// returned which is 1 and we can apply this
+		if err = updateCounter(db, counterName, counterStep, false, time.Now()); err != nil {
+			return false, fmt.Errorf("updating counter: %w", err)
 		}
+		return false, nil
 
-		counterStep, err = strconv.ParseInt(parseStep, 10, 64)
-		if err != nil {
-			return false, errors.Wrap(err, "parse counter step")
-		}
+	default:
+		// B0rked
+		return false, fmt.Errorf("parsing counter-step: %w", err)
 	}
-
-	return false, errors.Wrap(
-		updateCounter(db, counterName, counterStep, false, time.Now()),
-		"update counter",
-	)
 }
 
 func (actorCounter) IsAsync() bool { return false }
@@ -270,6 +275,52 @@ func (actorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *
 	}
 
 	return nil
+}
+
+func (actorCounter) parseAttributeTemplateToNumber(
+	m *irc.Message,
+	r *plugins.Rule,
+	eventData *fieldcollection.FieldCollection,
+	attrs *fieldcollection.FieldCollection,
+	field string,
+	defaultValue int64,
+) (v int64, err error) {
+	// Get the string
+	sv, err := attrs.String(field)
+	switch {
+	case err == nil:
+		// We got a string and continue below
+
+	case errors.Is(err, fieldcollection.ErrValueNotSet):
+		// That's fine, the string is not available, we report that and
+		// return the default value
+		return defaultValue, errNotAValue
+
+	default:
+		// Not sure what brought us here but we should report that
+		return defaultValue, fmt.Errorf("getting string value: %w", err)
+	}
+
+	// Now we need to evaluate the template
+	sv, err = formatMessage(sv, m, r, eventData)
+	if err != nil {
+		return defaultValue, fmt.Errorf("executing template: %w", err)
+	}
+
+	// The template evaluated into an empty string, we don't try to
+	// parse that and report it as a missing value with default
+	if sv == "" {
+		return defaultValue, errNotAValue
+	}
+
+	// The template was not empty, we need to parse the resulting int
+	// and return it
+	v, err = strconv.ParseInt(sv, 10, 64)
+	if err != nil {
+		return defaultValue, fmt.Errorf("parsing to int: %w", err)
+	}
+
+	return v, nil
 }
 
 func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
