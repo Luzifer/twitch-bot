@@ -93,6 +93,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "duration", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeDuration}),
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "reason", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "reason"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

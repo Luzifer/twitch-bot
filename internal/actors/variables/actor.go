@@ -178,6 +178,7 @@ func (actorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, att
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "variable", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "clear", Type: fieldcollection.SchemaFieldTypeBool}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "set", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "set", "variable"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

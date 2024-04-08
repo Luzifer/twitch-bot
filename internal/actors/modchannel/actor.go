@@ -125,6 +125,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "channel", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "game", Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "title", Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "channel", "game", "title"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

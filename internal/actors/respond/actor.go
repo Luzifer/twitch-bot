@@ -151,6 +151,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "fallback", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "as_reply", Type: fieldcollection.SchemaFieldTypeBool}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "to_channel", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "message", "fallback"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

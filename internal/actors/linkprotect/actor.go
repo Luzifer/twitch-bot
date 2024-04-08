@@ -223,6 +223,13 @@ func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.Fi
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "action", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "reason", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "allowed_links", Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "disallowed_links", Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "allowed_clip_channels", Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "disallowed_clip_channels", Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "stop_on_action", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "stop_on_no_action", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.MustHaveNoUnknowFields,
 		func(attrs, _ *fieldcollection.FieldCollection) error {
 			if len(attrs.MustStringSlice("allowed_links", helpers.Ptr([]string{})))+
 				len(attrs.MustStringSlice("disallowed_links", helpers.Ptr([]string{})))+

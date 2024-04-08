@@ -65,6 +65,7 @@ func (actor) Name() string  { return actorName }
 func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "when", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "when"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

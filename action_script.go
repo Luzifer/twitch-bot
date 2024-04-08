@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -132,12 +133,15 @@ func (ActorScript) Name() string { return "script" }
 
 // Validate implements actor interface
 func (ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
-	cmd, err := attrs.StringSlice("command")
-	if err != nil || len(cmd) == 0 {
-		return errors.New("command must be slice of strings with length > 0")
+	if err = attrs.ValidateSchema(
+		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "command", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeStringSlice}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "skip_cooldown_on_error", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.MustHaveNoUnknowFields,
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
 	}
 
-	for i, el := range cmd {
+	for i, el := range attrs.MustStringSlice("command", nil) {
 		if err = tplValidator(el); err != nil {
 			return errors.Wrapf(err, "validating cmd template (element %d)", i)
 		}

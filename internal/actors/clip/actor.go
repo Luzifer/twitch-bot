@@ -113,6 +113,8 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 	if err = attrs.ValidateSchema(
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "channel", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "creator", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "add_delay", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "channel", "creator"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

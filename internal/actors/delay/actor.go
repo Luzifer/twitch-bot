@@ -2,6 +2,7 @@
 package delay
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -72,6 +73,13 @@ func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *fieldcol
 func (actor) IsAsync() bool { return false }
 func (actor) Name() string  { return actorName }
 
-func (actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) (err error) {
+func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "delay", Type: fieldcollection.SchemaFieldTypeDuration}),
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "jitter", Type: fieldcollection.SchemaFieldTypeDuration}),
+		fieldcollection.MustHaveNoUnknowFields,
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
+	}
 	return nil
 }

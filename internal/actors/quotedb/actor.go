@@ -198,6 +198,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "quote", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "index", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "format", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "index", "quote", "format"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

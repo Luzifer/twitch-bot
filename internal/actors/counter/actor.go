@@ -263,6 +263,7 @@ func (actorCounter) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "counter", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "counter_step", Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "counter_set", Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "counter", "counter_step", "counter_set"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

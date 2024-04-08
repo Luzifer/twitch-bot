@@ -233,6 +233,7 @@ func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *f
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "cooldown", Type: fieldcollection.SchemaFieldTypeDuration}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "reason", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "uuid", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "user"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)
@@ -266,6 +267,7 @@ func (actorResetPunish) Validate(tplValidator plugins.TemplateValidatorFunc, att
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "user", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "uuid", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "user"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

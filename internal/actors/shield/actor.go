@@ -65,6 +65,7 @@ func (actor) Name() string  { return actorName }
 func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "enable", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.MustHaveNoUnknowFields,
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)
 	}

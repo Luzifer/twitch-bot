@@ -239,6 +239,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "match", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "action", Type: fieldcollection.SchemaFieldTypeString}),
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "scan", Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 		helpers.SchemaValidateTemplateField(tplValidator, "scan", "action", "match"),
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)

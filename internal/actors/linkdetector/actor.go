@@ -3,6 +3,8 @@
 package linkdetector
 
 import (
+	"fmt"
+
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/fieldcollection"
@@ -64,6 +66,13 @@ func (Actor) IsAsync() bool { return false }
 func (Actor) Name() string { return actorName }
 
 // Validate implements the actor interface
-func (Actor) Validate(plugins.TemplateValidatorFunc, *fieldcollection.FieldCollection) error {
+func (Actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
+	if err = attrs.ValidateSchema(
+		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "heuristic", Type: fieldcollection.SchemaFieldTypeBool}),
+		fieldcollection.MustHaveNoUnknowFields,
+	); err != nil {
+		return fmt.Errorf("validating attributes: %w", err)
+	}
+
 	return nil
 }

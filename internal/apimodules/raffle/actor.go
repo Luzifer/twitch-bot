@@ -75,6 +75,7 @@ func (enterRaffleActor) Name() string  { return "enter-raffle" }
 func (enterRaffleActor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = attrs.ValidateSchema(
 		fieldcollection.MustHaveField(fieldcollection.SchemaField{Name: "keyword", NonEmpty: true, Type: fieldcollection.SchemaFieldTypeString}),
+		fieldcollection.MustHaveNoUnknowFields,
 	); err != nil {
 		return fmt.Errorf("validating attributes: %w", err)
 	}
