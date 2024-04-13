@@ -1,3 +1,36 @@
+# 3.29.1 / 2024-04-13
+
+> [!IMPORTANT]
+> This release introduces a new configuration validation which might lead to your bot not starting as of stronger type checking of actor settings. To validate the config is fine run a validation against the config once before replacing the bot binary / Docker image:
+>
+> `./twitch-bot --storage-conn-string "file::memory:?cache=shared" -c path/to/config.yaml validate-config`
+>
+> Using the connection string shown above will use a non-persistent database and can be used while the existing bot is running.
+
+  * New Features
+    * [eventsub] Add support for suspicious user events
+
+  * Improvements
+    * [core] Enforce attribute type schema validation on config
+    * [core] Remove deprecated fallback token / token migration
+    * [counter] Allow `counterTopList` to specify how to sort
+    * [counter] Record first seen and last updated on counters
+    * [counter] Revise template parsing logic
+    * [docs] Add field-type annotations to events
+    * [spotify] Improve error handling / documentation
+    * [spotify] Switch to PKCE flow, remove need for clientSecret
+
+  * Bugfixes
+    * [core] Fix: Do not retry core-kv query when it's not set
+    * [core] Fix: Don't initialize twitch client before start checks
+    * [eventsub] Fix: Fetching existing subscriptions broken
+
+> [!NOTE]
+> In case you're using the DockerHub Docker images and rely on the presence of the `stable` tag please switch to the [Github Registry](https://github.com/Luzifer/twitch-bot/pkgs/container/twitch-bot) and use the `latest` tag. Development releases are published as `develop`. The `stable` tag will not be updated beyond `v3.28.1`, DockerHub images are currently still supported but will be faded out.
+
+> [!NOTE]
+> Re-release of v3.29.0 as of broken tests in that release, no functional changes.
+
 # 3.29.0 / 2024-04-13
 
 > [!IMPORTANT]
