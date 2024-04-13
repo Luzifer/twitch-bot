@@ -1,4 +1,4 @@
-# 3.29.1 / 2024-04-13
+# 3.29.2 / 2024-04-13
 
 > [!IMPORTANT]
 > This release introduces a new configuration validation which might lead to your bot not starting as of stronger type checking of actor settings. To validate the config is fine run a validation against the config once before replacing the bot binary / Docker image:
