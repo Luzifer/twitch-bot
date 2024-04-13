@@ -11,7 +11,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -21,18 +21,11 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - name: Install required packages
-        run: |
-          pacman -Syy --noconfirm \
-            curl \
-            git \
-            git-lfs \
-            make \
-            tar
       - uses: actions/checkout@v4
         with:
           lfs: true
           show-progress: false
+          submodules: true
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
       - name: Generate documentation
@@ -54,7 +47,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: true
           show-progress: false
       - name: Log into registry
         uses: docker/login-action@v3
@@ -72,7 +64,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -80,16 +72,12 @@ jobs:
     services:
       crdb:
         image: luzifer/crdb-gh-service
+        options: --health-cmd "curl -sSf http://localhost:8080/health" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
       - name: Install required packages
         run: |
           pacman -Syy --noconfirm \
-            cockroachdb-bin \
-            git \
-            go \
-            make
+            cockroachdb-bin
       - uses: actions/checkout@v4
         with:
           show-progress: false
@@ -115,7 +103,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -127,15 +115,11 @@ jobs:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
           MYSQL_USER: twitch-bot
+        options: --health-cmd "healthcheck.sh --connect --innodb_initialized" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
       - name: Install required packages
         run: |
           pacman -Syy --noconfirm \
-            git \
-            go \
-            make \
             mariadb-clients
       - uses: actions/checkout@v4
         with:
@@ -161,7 +145,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -173,15 +157,11 @@ jobs:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
           MYSQL_USER: twitch-bot
+        options: --health-cmd "mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
       - name: Install required packages
         run: |
           pacman -Syy --noconfirm \
-            git \
-            go \
-            make \
             mariadb-clients
       - uses: actions/checkout@v4
         with:
@@ -207,7 +187,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -217,15 +197,8 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_PASSWORD: twitch-bot-pass
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
-      - name: Install required packages
-        run: |
-          pacman -Syy --noconfirm \
-            git \
-            go \
-            make
       - uses: actions/checkout@v4
         with:
           show-progress: false
@@ -244,35 +217,14 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
     runs-on: ubuntu-latest
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
-      - name: Install required packages
-        run: |
-          pacman -Syy --noconfirm \
-            awk \
-            curl \
-            diffutils \
-            git \
-            git-lfs \
-            go \
-            golangci-lint-bin \
-            make \
-            nodejs-lts-hydrogen \
-            npm \
-            tar \
-            trivy \
-            unzip \
-            which \
-            zip
       - uses: actions/checkout@v4
         with:
-          lfs: true
           show-progress: false
       - name: Marking workdir safe
         run: |
@@ -300,35 +252,14 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/archlinux
+      image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
         GOPATH: /go
     runs-on: ubuntu-latest
     steps:
-      - name: Enable custom AUR package repo
-        run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
-      - name: Install required packages
-        run: |
-          pacman -Syy --noconfirm \
-            awk \
-            curl \
-            diffutils \
-            git \
-            git-lfs \
-            go \
-            golangci-lint-bin \
-            make \
-            nodejs-lts-hydrogen \
-            npm \
-            tar \
-            trivy \
-            unzip \
-            which \
-            zip
       - uses: actions/checkout@v4
         with:
-          lfs: true
           show-progress: false
       - name: Marking workdir safe
         run: |

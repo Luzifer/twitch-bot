@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 container:
-  image: luzifer/archlinux
+  image: luzifer/gh-arch-env
   env:
     CGO_ENABLED: 0
     GOPATH: /go
@@ -18,18 +18,17 @@ runs-on: ubuntu-latest
 services:
   crdb:
     image: luzifer/crdb-gh-service
+    options: >-
+      --health-cmd "curl -sSf http://localhost:8080/health"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
 
 steps:
-  - name: Enable custom AUR package repo
-    run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
-
   - name: Install required packages
     run: |
       pacman -Syy --noconfirm \
-        cockroachdb-bin \
-        git \
-        go \
-        make
+        cockroachdb-bin
 
   - uses: actions/checkout@v4
     with:

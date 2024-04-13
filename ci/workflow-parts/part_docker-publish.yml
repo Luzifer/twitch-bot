@@ -12,7 +12,6 @@ runs-on: ubuntu-latest
 steps:
   - uses: actions/checkout@v4
     with:
-      lfs: true
       show-progress: false
 
   - name: Log into registry

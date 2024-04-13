@@ -36,7 +36,7 @@ frontend_lint: node_modules
 		src
 
 node_modules:
-	npm ci
+	npm ci --include dev
 
 # --- Tools
 

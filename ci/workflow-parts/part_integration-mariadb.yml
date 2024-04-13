@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 container:
-  image: luzifer/archlinux
+  image: luzifer/gh-arch-env
   env:
     CGO_ENABLED: 0
     GOPATH: /go
@@ -22,17 +22,16 @@ services:
       MYSQL_PASSWORD: twitch-bot-pass
       MYSQL_ROOT_PASSWORD: root-pass
       MYSQL_USER: twitch-bot
+    options: >-
+      --health-cmd "healthcheck.sh --connect --innodb_initialized"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
 
 steps:
-  - name: Enable custom AUR package repo
-    run: echo -e "[luzifer]\nSigLevel = Never\nServer = https://archrepo.hub.luzifer.io/\$arch" >>/etc/pacman.conf
-
   - name: Install required packages
     run: |
       pacman -Syy --noconfirm \
-        git \
-        go \
-        make \
         mariadb-clients
 
   - uses: actions/checkout@v4

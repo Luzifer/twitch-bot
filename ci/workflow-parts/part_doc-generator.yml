@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 container:
-  image: luzifer/archlinux
+  image: luzifer/gh-arch-env
   env:
     CGO_ENABLED: 0
     GOPATH: /go
@@ -21,20 +21,11 @@ permissions:
 runs-on: ubuntu-latest
 
 steps:
-
-  - name: Install required packages
-    run: |
-      pacman -Syy --noconfirm \
-        curl \
-        git \
-        git-lfs \
-        make \
-        tar
-
   - uses: actions/checkout@v4
     with:
       lfs: true
       show-progress: false
+      submodules: true
 
   - name: Marking workdir safe
     run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
