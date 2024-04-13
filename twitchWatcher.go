@@ -234,7 +234,6 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelSuspiciousUserMessage,
-			Version:        twitch.EventSubTopicVersionBeta,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorReadSuspiciousUsers},
 			Hook:           t.handleEventSubSusUserMessage,
@@ -242,7 +241,6 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelSuspiciousUserUpdate,
-			Version:        twitch.EventSubTopicVersionBeta,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID, ModeratorUserID: userID},
 			RequiredScopes: []string{twitch.ScopeModeratorReadSuspiciousUsers},
 			Hook:           t.handleEventSubSusUserUpdate,
