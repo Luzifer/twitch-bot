@@ -2,6 +2,6 @@ name: CI Workflow
 on: push
 
 permissions:
-  packages: write
+  contents: read
 
 jobs: {}

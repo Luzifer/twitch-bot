@@ -1,7 +1,7 @@
 name: CI Workflow
 on: push
 permissions:
-  packages: write
+  contents: read
 jobs:
   doc-generator:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -43,6 +43,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    permissions:
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -221,6 +223,8 @@ jobs:
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -234,13 +238,11 @@ jobs:
       - name: Extract changelog
         run: awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md
       - name: Update stable branch
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           git branch -f stable ${GITHUB_SHA}
           git push -f origin stable
       - name: Release
         uses: ncipollo/release-action@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           artifacts: .build/*
           bodyFile: release_changelog.md

@@ -7,6 +7,9 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  packages: write
+
 runs-on: ubuntu-latest
 
 steps:

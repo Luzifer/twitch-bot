@@ -13,6 +13,9 @@ container:
     CGO_ENABLED: 0
     GOPATH: /go
 
+permissions:
+  contents: write
+
 runs-on: ubuntu-latest
 
 steps:
@@ -31,14 +34,12 @@ steps:
     run: 'awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md'
 
   - name: Update stable branch
-    if: startsWith(github.ref, 'refs/tags/')
     run: |
       git branch -f stable ${GITHUB_SHA}
       git push -f origin stable
 
   - name: Release
     uses: ncipollo/release-action@v1
-    if: startsWith(github.ref, 'refs/tags/')
     with:
       artifacts: '.build/*'
       bodyFile: release_changelog.md
