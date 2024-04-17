@@ -467,7 +467,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 88%
+< Your int this hour: 72%
 ```
 
 ### `spotifyCurrentPlaying`
@@ -565,6 +565,19 @@ Example:
 > !weather Hamburg
 # {{ textAPI (printf "https://api.scorpstuff.com/weather.php?units=metric&city=%s" (urlquery (group 1))) }}
 * Weather for Hamburg, DE: Few clouds with a temperature of 22 C (71.6 F). [...]
+```
+
+### `userExists`
+
+Checks whether the given user exists
+
+Syntax: `userExists <username>`
+
+Example:
+
+```
+# {{ userExists "luziferus" }}
+* true
 ```
 
 ### `usernameForID`

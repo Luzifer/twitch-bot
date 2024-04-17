@@ -14,6 +14,7 @@ func init() {
 		tplTwitchDisplayName,
 		tplTwitchIDForUsername,
 		tplTwitchProfileImage,
+		tplTwitchUserExists,
 		tplTwitchUsernameForID,
 	)
 }
@@ -64,6 +65,25 @@ func tplTwitchProfileImage(args plugins.RegistrationArguments) {
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ profileImage .username }}`,
 			FakedOutput: "https://static-cdn.jtvnw.net/jtv_user_pictures/[...].png",
+		},
+	})
+}
+
+func tplTwitchUserExists(args plugins.RegistrationArguments) {
+	args.RegisterTemplateFunction("userExists", plugins.GenericTemplateFunctionGetter(func(username string) bool {
+		user, err := args.GetTwitchClient().GetUserInformation(context.Background(), strings.TrimLeft(username, "#@"))
+		if err != nil {
+			// Well, they probably don't exist
+			return false
+		}
+
+		return strings.EqualFold(username, user.Login)
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Checks whether the given user exists",
+		Syntax:      "userExists <username>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ userExists "luziferus" }}`,
+			FakedOutput: "true",
 		},
 	})
 }

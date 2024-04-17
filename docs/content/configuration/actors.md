@@ -523,7 +523,7 @@ Send raw IRC message
 
 ## Send Whisper
 
-Send a whisper (requires a verified bot!)
+Send a whisper
 
 ```yaml
 - type: whisper
