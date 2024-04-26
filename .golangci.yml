@@ -77,9 +77,7 @@ linters-settings:
     min-complexity: 15
 
   gomnd:
-    settings:
-      mnd:
-        ignored-functions: 'strconv.(?:Format|Parse)\B+'
+    ignored-functions: 'strconv.(?:Format|Parse)\B+'
 
   revive:
     rules:
