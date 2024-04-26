@@ -1,3 +1,14 @@
+# 3.30.0 / 2024-04-26
+
+  * New Features
+    * [templating] Add `userExists` function
+
+  * Improvements
+    * [eventsub] Suspicious user topics were moved from beta to v1
+
+  * Bugfixes
+    * Update dependencies
+
 # 3.29.2 / 2024-04-13
 
 > [!IMPORTANT]
