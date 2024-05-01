@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -8,6 +9,7 @@ import (
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/twitch-bot/v3/internal/locker"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -79,6 +81,9 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *fiel
 }
 
 func handleMessageRuleExecution(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection) {
+	locker.LockByKey(path.Join("rule-execution", r.MatcherID()))
+	defer locker.UnlockByKey(path.Join("rule-execution", r.MatcherID()))
+
 	var (
 		ruleEventData   = fieldcollection.NewFieldCollection()
 		preventCooldown bool
