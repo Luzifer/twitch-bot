@@ -1,3 +1,11 @@
+# 3.31.0 / 2024-05-13
+
+  * Improvements
+    * [core] Add locking to prevent concurrent rule executions
+
+  * Bugfixes
+    * [spotify] Fix: Refresh-Token gets revoked when using two functions
+
 # 3.30.0 / 2024-04-26
 
   * New Features
