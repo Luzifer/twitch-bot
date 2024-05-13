@@ -70,20 +70,3 @@ func handleStartAuth(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Spotify is now authorized for this channel, you can close this page")
 }
-
-func oauthConfig(channel, redirectURL string) (conf *oauth2.Config, err error) {
-	clientID, err := getModuleConfig(actorName, channel).String("clientId")
-	if err != nil {
-		return nil, fmt.Errorf("getting clientId for channel: %w", err)
-	}
-
-	return &oauth2.Config{
-		ClientID: clientID,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.spotify.com/authorize",
-			TokenURL: "https://accounts.spotify.com/api/token",
-		},
-		RedirectURL: redirectURL,
-		Scopes:      []string{"user-read-currently-playing"},
-	}, nil
-}

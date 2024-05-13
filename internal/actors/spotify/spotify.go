@@ -35,7 +35,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		plugins.GenericTemplateFunctionGetter(getCurrentArtistTitleForChannel),
 		plugins.TemplateFuncDocumentation{
 			Name:        "spotifyCurrentPlaying",
-			Description: "Retrieves the current playing track for the given channel",
+			Description: "Retrieves the current playing track for the given channel (returns an empty string when nothing is playing)",
 			Syntax:      "spotifyCurrentPlaying <channel>",
 			Example: &plugins.TemplateFuncDocumentationExample{
 				MatchMessage:   "^!spotify",
@@ -51,7 +51,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		plugins.GenericTemplateFunctionGetter(getCurrentLinkForChannel),
 		plugins.TemplateFuncDocumentation{
 			Name:        "spotifyLink",
-			Description: "Retrieves the link for the playing track for the given channel",
+			Description: "Retrieves the link for the playing track for the given channel (returns an empty string when nothing is playing)",
 			Syntax:      "spotifyLink <channel>",
 			Example: &plugins.TemplateFuncDocumentationExample{
 				MatchMessage:   "^!spotifylink",

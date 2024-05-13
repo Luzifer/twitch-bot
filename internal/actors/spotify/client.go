@@ -3,33 +3,24 @@ package spotify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
+
+var errNotPlaying = errors.New("nothing playing")
 
 func getCurrentTrackForChannel(channel string) (track currentPlayingTrackResponse, err error) {
 	channel = strings.TrimLeft(channel, "#")
 
-	conf, err := oauthConfig(channel, "")
+	client, err := getAuthorizedClient(channel, "")
 	if err != nil {
-		return track, fmt.Errorf("getting oauth config: %w", err)
+		return track, fmt.Errorf("retrieving authorized Spotify client: %w", err)
 	}
-
-	var token *oauth2.Token
-	if err = db.ReadEncryptedCoreMeta(strings.Join([]string{"spotify-auth", channel}, ":"), &token); err != nil {
-		return track, fmt.Errorf("loading oauth token: %w", err)
-	}
-
-	defer func() {
-		if err := db.StoreEncryptedCoreMeta(strings.Join([]string{"spotify-auth", channel}, ":"), token); err != nil {
-			logrus.WithError(err).Error("storing back Spotify auth token")
-		}
-	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), spotifyRequestTimeout)
 	defer cancel()
@@ -39,7 +30,7 @@ func getCurrentTrackForChannel(channel string) (track currentPlayingTrackRespons
 		return track, fmt.Errorf("creating currently-playing request: %w", err)
 	}
 
-	resp, err := conf.Client(context.Background(), token).Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return track, fmt.Errorf("executing request: %w", err)
 	}
@@ -57,6 +48,10 @@ func getCurrentTrackForChannel(channel string) (track currentPlayingTrackRespons
 	switch resp.StatusCode {
 	case http.StatusOK:
 		// This is perfect, continue below
+
+	case http.StatusNoContent:
+		// User is not playing anything
+		return track, errNotPlaying
 
 	case http.StatusUnauthorized:
 		// The token is FUBAR
@@ -85,6 +80,10 @@ func getCurrentTrackForChannel(channel string) (track currentPlayingTrackRespons
 func getCurrentArtistTitleForChannel(channel string) (artistTitle string, err error) {
 	track, err := getCurrentTrackForChannel(channel)
 	if err != nil {
+		if errors.Is(err, errNotPlaying) {
+			return "", nil
+		}
+
 		return "", fmt.Errorf("getting track info: %w", err)
 	}
 
@@ -102,6 +101,10 @@ func getCurrentArtistTitleForChannel(channel string) (artistTitle string, err er
 func getCurrentLinkForChannel(channel string) (link string, err error) {
 	track, err := getCurrentTrackForChannel(channel)
 	if err != nil {
+		if errors.Is(err, errNotPlaying) {
+			return "", nil
+		}
+
 		return "", fmt.Errorf("getting track info: %w", err)
 	}
 
