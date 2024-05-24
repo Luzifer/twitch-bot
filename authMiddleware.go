@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
@@ -51,7 +52,25 @@ func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 			token = pass
 
 		case r.Header.Get("Authorization") != "":
-			token = r.Header.Get("Authorization")
+			var (
+				tokenType string
+				hadPrefix bool
+			)
+
+			tokenType, token, hadPrefix = strings.Cut(r.Header.Get("Authorization"), " ")
+			switch {
+			case !hadPrefix:
+				// Legacy: Accept `Authorization: tokenhere`
+				token = tokenType
+
+			case strings.EqualFold(tokenType, "token"):
+				// This is perfect: `Authorization: Token tokenhere`
+
+			default:
+				// That was unexpected: `Authorization: Bearer tokenhere` or similar
+				http.Error(w, "invalid token type", http.StatusForbidden)
+				return
+			}
 
 		default:
 			http.Error(w, "auth not successful", http.StatusForbidden)
