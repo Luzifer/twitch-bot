@@ -467,7 +467,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 82%
+< Your int this hour: 41%
 ```
 
 ### `spotifyCurrentPlaying`
@@ -498,6 +498,19 @@ Example:
 > !spotifylink
 # {{ spotifyLink .channel }}
 * https://open.spotify.com/track/3HCzXf0lNpekSqsGBcGrCd
+```
+
+### `streamIsLive`
+
+Check whether a given channel is currently live
+
+Syntax: `streamIsLive <username>`
+
+Example:
+
+```
+# {{ streamIsLive "luziferus" }}
+* true
 ```
 
 ### `streamUptime`

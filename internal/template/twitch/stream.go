@@ -15,6 +15,7 @@ func init() {
 		regFn,
 		tplTwitchRecentGame,
 		tplTwitchRecentTitle,
+		tplTwitchStreamIsLive,
 		tplTwitchStreamUptime,
 	)
 }
@@ -51,6 +52,20 @@ func tplTwitchRecentTitle(args plugins.RegistrationArguments) {
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:    `{{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}`,
 			FakedOutput: "Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none",
+		},
+	})
+}
+
+func tplTwitchStreamIsLive(args plugins.RegistrationArguments) {
+	args.RegisterTemplateFunction("streamIsLive", plugins.GenericTemplateFunctionGetter(func(username string) bool {
+		_, err := args.GetTwitchClient().GetCurrentStreamInfo(context.Background(), strings.TrimLeft(username, "#"))
+		return err == nil
+	}), plugins.TemplateFuncDocumentation{
+		Description: "Check whether a given channel is currently live",
+		Syntax:      "streamIsLive <username>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:    `{{ streamIsLive "luziferus" }}`,
+			FakedOutput: "true",
 		},
 	})
 }
