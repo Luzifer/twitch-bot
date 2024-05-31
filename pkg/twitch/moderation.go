@@ -58,7 +58,7 @@ func (c *Client) BanUser(ctx context.Context, channel, username string, duration
 		return errors.Wrap(err, "encoding payload")
 	}
 
-	return errors.Wrap(
+	return errors.Wrapf(
 		c.Request(ctx, ClientRequestOpts{
 			AuthType: AuthTypeBearerToken,
 			Method:   http.MethodPost,
@@ -89,7 +89,7 @@ func (c *Client) BanUser(ctx context.Context, channel, username string, duration
 				return ValidateStatus(opts, resp)
 			},
 		}),
-		"executing ban request",
+		"executing ban request for %q in %q", username, channel,
 	)
 }
 
