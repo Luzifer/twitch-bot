@@ -172,7 +172,7 @@ jobs:
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
       - name: Set up MySQL service
         run: |
-          mariadb -h mysql -u root --password=root-pass <<EOF
+          mariadb --skip-ssl -h mysql -u root --password=root-pass <<EOF
           CREATE DATABASE integration DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
           GRANT ALL ON integration.* TO 'twitch-bot'@'%';
           EOF
