@@ -1,9 +1,12 @@
 package main
 
-import "github.com/pkg/errors"
+import (
+	"github.com/Luzifer/go_helpers/v2/cli"
+	"github.com/pkg/errors"
+)
 
 func init() {
-	cli.Add(cliRegistryEntry{
+	cliTool.Add(cli.RegistryEntry{
 		Name:        "validate-config",
 		Description: "Try to load configuration file and report errors if any",
 		Run: func([]string) error {

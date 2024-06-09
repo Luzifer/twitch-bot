@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 
+	"github.com/Luzifer/go_helpers/v2/cli"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/pkg/errors"
@@ -16,12 +17,12 @@ var (
 )
 
 func init() {
-	cli.Add(cliRegistryEntry{
+	cliTool.Add(cli.RegistryEntry{
 		Name:        "copy-database",
 		Description: "Copies database contents to a new storage DSN i.e. for migrating to a new DBMS",
 		Params:      []string{"<target storage-type>", "<target DSN>"},
 		Run: func(args []string) error {
-			if len(args) < 3 { //nolint:gomnd // Just a count of parameters
+			if len(args) < 3 { //nolint:mnd // Just a count of parameters
 				return errors.New("Usage: twitch-bot copy-database <target storage-type> <target DSN>")
 			}
 

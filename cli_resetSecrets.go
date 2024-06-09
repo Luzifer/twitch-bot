@@ -1,12 +1,13 @@
 package main
 
 import (
+	"github.com/Luzifer/go_helpers/v2/cli"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	cli.Add(cliRegistryEntry{
+	cliTool.Add(cli.RegistryEntry{
 		Name:        "reset-secrets",
 		Description: "Remove encrypted data to reset encryption passphrase",
 		Run: func([]string) error {

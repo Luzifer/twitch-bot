@@ -52,9 +52,7 @@ func (t *testTimerStore) InCooldown(tt TimerType, limiter, ruleID string) (bool,
 }
 
 func (testTimerStore) getCooldownTimerKey(tt TimerType, limiter, ruleID string) string {
-	h := sha256.New()
-	fmt.Fprintf(h, "%d:%s:%s", tt, limiter, ruleID)
-	return fmt.Sprintf("sha256:%x", h.Sum(nil))
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf("%d:%s:%s", tt, limiter, ruleID))))
 }
 
 // Permit timer
@@ -69,7 +67,5 @@ func (t *testTimerStore) HasPermit(channel, username string) (bool, error) {
 }
 
 func (testTimerStore) getPermitTimerKey(channel, username string) string {
-	h := sha256.New()
-	fmt.Fprintf(h, "%d:%s:%s", TimerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@")))
-	return fmt.Sprintf("sha256:%x", h.Sum(nil))
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf("%d:%s:%s", TimerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@"))))))
 }

@@ -78,12 +78,9 @@ func (c connector) StoreEncryptedCoreMeta(key string, value any) error {
 }
 
 func (c connector) ValidateEncryption() error {
-	validationHasher := sha512.New()
-	fmt.Fprint(validationHasher, c.encryptionSecret)
-
 	var (
 		storedHash     string
-		validationHash = fmt.Sprintf("%x", validationHasher.Sum(nil))
+		validationHash = fmt.Sprintf("%x", sha512.Sum512([]byte(c.encryptionSecret)))
 	)
 
 	err := backoff.NewBackoff().

@@ -188,7 +188,7 @@ func handleModVIP(m *irc.Message, modFn func(tc *twitch.Client, channel, user st
 	channel := strings.TrimLeft(plugins.DeriveChannel(m, nil), "#")
 
 	parts := strings.Split(m.Trailing(), " ")
-	if len(parts) != 2 { //nolint:gomnd // Just a count, makes no sense as a constant
+	if len(parts) != 2 { //nolint:mnd // Just a count, makes no sense as a constant
 		return errors.Errorf("wrong command usage, must consist of 2 words")
 	}
 

@@ -211,7 +211,9 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 	}
 	tmpFileName := tmpFile.Name()
 
-	fmt.Fprintf(tmpFile, "# Automatically updated by %s using Config-Editor frontend, last update: %s\n", authorName, time.Now().Format(time.RFC3339))
+	if _, err = fmt.Fprintf(tmpFile, "# Automatically updated by %s using Config-Editor frontend, last update: %s\n", authorName, time.Now().Format(time.RFC3339)); err != nil {
+		return fmt.Errorf("writing file header: %w", err)
+	}
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
 		tmpFile.Close() //nolint:errcheck,gosec,revive

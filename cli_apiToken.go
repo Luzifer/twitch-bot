@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/Luzifer/go_helpers/v2/cli"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -10,12 +11,12 @@ import (
 )
 
 func init() {
-	cli.Add(cliRegistryEntry{
+	cliTool.Add(cli.RegistryEntry{
 		Name:        "api-token",
 		Description: "Generate an api-token to be entered into the config",
 		Params:      []string{"<token-name>", "<scope>", "[...scope]"},
 		Run: func(args []string) error {
-			if len(args) < 3 { //nolint:gomnd // Just a count of parameters
+			if len(args) < 3 { //nolint:mnd // Just a count of parameters
 				return errors.New("Usage: twitch-bot api-token <token name> <scope> [...scope]")
 			}
 

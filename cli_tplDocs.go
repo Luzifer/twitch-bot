@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"os"
 
+	"github.com/Luzifer/go_helpers/v2/cli"
 	"github.com/pkg/errors"
 )
 
 func init() {
-	cli.Add(cliRegistryEntry{
+	cliTool.Add(cli.RegistryEntry{
 		Name:        "tpl-docs",
 		Description: "Generate markdown documentation for available template functions",
 		Run: func([]string) error {

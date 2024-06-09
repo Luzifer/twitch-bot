@@ -336,7 +336,7 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text-plain")
-	fmt.Fprintf(w, template, cv)
+	http.Error(w, fmt.Sprintf(template, cv), http.StatusOK)
 }
 
 func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {

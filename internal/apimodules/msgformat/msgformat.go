@@ -54,5 +54,5 @@ func handleFormattedMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, msg)
+	http.Error(w, msg, http.StatusOK)
 }

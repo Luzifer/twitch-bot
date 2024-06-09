@@ -9,7 +9,7 @@ import (
 )
 
 func updateConfigCron() string {
-	minute := rand.Intn(60) //nolint:gomnd,gosec // Only used to distribute load
+	minute := rand.Intn(60) //nolint:mnd,gosec // Only used to distribute load
 	return fmt.Sprintf("0 %d * * * *", minute)
 }
 

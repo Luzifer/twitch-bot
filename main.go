@@ -193,7 +193,7 @@ func main() {
 	}
 
 	if len(rconfig.Args()) > 1 {
-		if err = cli.Call(rconfig.Args()[1:]); err != nil {
+		if err = cliTool.Call(rconfig.Args()[1:]); err != nil {
 			log.Fatalf("error in command: %s", err)
 		}
 		return

@@ -68,5 +68,5 @@ func handleStartAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "Spotify is now authorized for this channel, you can close this page")
+	http.Error(w, "Spotify is now authorized for this channel, you can close this page", http.StatusOK)
 }

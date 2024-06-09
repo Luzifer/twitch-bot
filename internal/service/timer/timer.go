@@ -72,9 +72,7 @@ func (s Service) InCooldown(tt plugins.TimerType, limiter, ruleID string) (bool,
 }
 
 func (Service) getCooldownTimerKey(tt plugins.TimerType, limiter, ruleID string) string {
-	h := sha256.New()
-	fmt.Fprintf(h, "%d:%s:%s", tt, limiter, ruleID)
-	return fmt.Sprintf("sha256:%x", h.Sum(nil))
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf("%d:%s:%s", tt, limiter, ruleID))))
 }
 
 // Permit timer
@@ -90,9 +88,10 @@ func (s Service) HasPermit(channel, username string) (bool, error) {
 }
 
 func (Service) getPermitTimerKey(channel, username string) string {
-	h := sha256.New()
-	fmt.Fprintf(h, "%d:%s:%s", plugins.TimerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@")))
-	return fmt.Sprintf("sha256:%x", h.Sum(nil))
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf(
+		"%d:%s:%s",
+		plugins.TimerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@")),
+	))))
 }
 
 // Generic timer

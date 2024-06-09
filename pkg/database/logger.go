@@ -21,10 +21,10 @@ func NewLogrusLogWriterWithLevel(logger *logrus.Logger, level logrus.Level, dbDr
 
 // Print implements the gorm.Logger interface
 func (l LogWriter) Print(a ...any) {
-	fmt.Fprint(l.Writer, a...)
+	fmt.Fprint(l.Writer, a...) //nolint:errcheck // Interface ignores this error
 }
 
 // Printf implements the gorm.Logger interface
 func (l LogWriter) Printf(format string, a ...any) {
-	fmt.Fprintf(l.Writer, format, a...)
+	fmt.Fprintf(l.Writer, format, a...) //nolint:errcheck // Interface ignores this error
 }
