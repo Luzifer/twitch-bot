@@ -1,3 +1,12 @@
+# 3.32.0 / 2024-06-09
+
+  * New Features
+    * [templating] Add `streamIsLive` function
+
+  * Bugfixes
+    * [core] Fix: Accept proper token declaration in Authorization header
+    * [core] Fix: Include username and channel in ban errors
+
 # 3.31.0 / 2024-05-13
 
   * Improvements
