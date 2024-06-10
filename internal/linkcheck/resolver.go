@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	_ "embed"
+	"io"
 	"math/big"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/sirupsen/logrus"
 )
 
@@ -88,12 +88,12 @@ func (resolver) getJar() *cookiejar.Jar {
 // that link after all redirects were followed
 //
 //nolint:gocyclo
-func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack []string, userAgent string) string {
+func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack *stack, userAgent string) string {
 	if !linkTest.MatchString(link) && !r.skipValidation {
 		return ""
 	}
 
-	if str.StringInSlice(link, callStack) || len(callStack) == maxRedirects {
+	if callStack.Count(link) > 2 || callStack.Height() == maxRedirects {
 		// We got ourselves a loop: Yay!
 		return link
 	}
@@ -155,10 +155,35 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 			return ""
 		}
 		target := r.resolveReference(u, tu)
-		return r.resolveFinal(target, cookieJar, append(callStack, link), userAgent)
+		callStack.Visit(link)
+		return r.resolveFinal(target, cookieJar, callStack, userAgent)
 	}
 
-	// We got a response, it's no redirect, we count this as a success
+	// We got a response, it's no redirect, lets check for in-document stuff
+	docBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+
+	if metaRedir, err := resolveMetaRedirect(docBody); err == nil {
+		// Meta-Redirect found
+		tu, err := url.Parse(metaRedir)
+		if err != nil {
+			return ""
+		}
+		target := r.resolveReference(u, tu)
+		callStack.Visit(link)
+		return r.resolveFinal(target, cookieJar, callStack, userAgent)
+	}
+
+	if resp.Header.Get("Set-Cookie") != "" {
+		// A new cookie was set, lets refresh the page once to see if stuff
+		// changes with that new cookie
+		callStack.Visit(link)
+		return r.resolveFinal(u.String(), cookieJar, callStack, userAgent)
+	}
+
+	// We had no in-document redirects: we count this as a success
 	return u.String()
 }
 
@@ -201,7 +226,7 @@ func (resolver) resolveReference(origin *url.URL, loc *url.URL) string {
 
 func (r resolver) runResolver() {
 	for qe := range r.resolverC {
-		if link := r.resolveFinal(qe.Link, r.getJar(), nil, r.userAgent()); link != "" {
+		if link := r.resolveFinal(qe.Link, r.getJar(), &stack{}, r.userAgent()); link != "" {
 			qe.Callback(link)
 		}
 		qe.WaitGroup.Done()
