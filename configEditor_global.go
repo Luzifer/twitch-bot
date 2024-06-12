@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -25,6 +26,15 @@ func registerEditorGlobalMethods() {
 			Module:       moduleConfigEditor,
 			Name:         "Get available actions",
 			Path:         "/actions",
+			ResponseType: plugins.HTTPRouteResponseTypeJSON,
+		},
+		{
+			Description:  "Exchanges the Twitch token against an internal Bearer token",
+			HandlerFunc:  configEditorGlobalLogin,
+			Method:       http.MethodPost,
+			Module:       moduleConfigEditor,
+			Name:         "Authorize on Config-Editor",
+			Path:         "/login",
 			ResponseType: plugins.HTTPRouteResponseTypeJSON,
 		},
 		{
@@ -150,6 +160,37 @@ func configEditorGlobalGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(usr); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func configEditorGlobalLogin(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, payload.Token, "")
+	id, user, err := tc.GetAuthorizedUser(r.Context())
+	if err != nil {
+		http.Error(w, "access denied", http.StatusUnauthorized)
+		return
+	}
+
+	tok, expiresAt, err := editorTokenService.CreateLoginToken(id, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"expiresAt": expiresAt,
+		"token":     tok,
+	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

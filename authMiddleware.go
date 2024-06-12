@@ -66,8 +66,11 @@ func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 			case strings.EqualFold(tokenType, "token"):
 				// This is perfect: `Authorization: Token tokenhere`
 
+			case strings.EqualFold(tokenType, "bearer"):
+				// This is perfect: `Authorization: Bearer tokenhere`
+
 			default:
-				// That was unexpected: `Authorization: Bearer tokenhere` or similar
+				// That was unexpected
 				http.Error(w, "invalid token type", http.StatusForbidden)
 				return
 			}
