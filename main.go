@@ -140,7 +140,6 @@ func main() {
 	authService = authcache.New(
 		authBackendInternalAppToken,
 		authBackendInternalEditorToken,
-		authBackendTwitchToken,
 	)
 
 	cronService = cron.New(cron.WithSeconds())
