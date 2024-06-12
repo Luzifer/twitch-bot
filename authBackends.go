@@ -13,7 +13,7 @@ import (
 
 const internalTokenAuthCacheExpiry = 5 * time.Minute
 
-func authBackendInternalToken(token string) (modules []string, expiresAt time.Time, err error) {
+func authBackendInternalAppToken(token string) (modules []string, expiresAt time.Time, err error) {
 	for _, auth := range config.AuthTokens {
 		if auth.validate(token) != nil {
 			continue
@@ -24,6 +24,22 @@ func authBackendInternalToken(token string) (modules []string, expiresAt time.Ti
 	}
 
 	return nil, time.Time{}, authcache.ErrUnauthorized
+}
+
+func authBackendInternalEditorToken(token string) ([]string, time.Time, error) {
+	id, user, expiresAt, err := editorTokenService.ValidateLoginToken(token)
+	if err != nil {
+		// None of our tokens: Nay.
+		return nil, time.Time{}, authcache.ErrUnauthorized
+	}
+
+	if !str.StringInSlice(user, config.BotEditors) && !str.StringInSlice(id, config.BotEditors) {
+		// That user is none of our editors: Deny access
+		return nil, time.Time{}, authcache.ErrUnauthorized
+	}
+
+	// Editors have full access: Return module "*"
+	return []string{"*"}, expiresAt, nil
 }
 
 func authBackendTwitchToken(token string) (modules []string, expiresAt time.Time, err error) {
