@@ -7,7 +7,7 @@
         :disabled="loading"
         @click="openAuthURL"
       >
-        <i class="fab fa-twitch fa-fw me-1" />
+        <i :class="{'fa-fw me-1': true, 'fab fa-twitch': !loading, 'fas fa-circle-notch fa-spin': loading }" />
         Login with Twitch
       </button>
     </div>
