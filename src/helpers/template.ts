@@ -1,0 +1,15 @@
+export const BuiltinTemplateFunctions = [
+  'and',
+  'call',
+  'html',
+  'index',
+  'slice',
+  'js',
+  'len',
+  'not',
+  'or',
+  'print',
+  'printf',
+  'println',
+  'urlquery',
+]

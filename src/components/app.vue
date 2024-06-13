@@ -48,6 +48,8 @@
       </div>
       <div class="layoutContent">
         <router-view />
+
+        <toaster />
       </div>
     </div>
   </div>
@@ -57,9 +59,10 @@
 import { defineComponent } from 'vue'
 
 import HeadNav from './_headNav.vue'
+import Toaster from './_toaster.vue'
 
 export default defineComponent({
-  components: { HeadNav },
+  components: { HeadNav, Toaster },
 
   name: 'TwitchBotEditorApp',
 })
