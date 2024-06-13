@@ -67,6 +67,7 @@ const app = createApp({
         // User token is not valid and therefore should be removed
         // which essentially triggers a logout
         this.logout()
+        throw new Error('user has been logged out')
       }
 
       return resp
@@ -146,6 +147,7 @@ const app = createApp({
       })
         .then((resp: Response): any => {
           if (resp.status !== 200) {
+            this.$root.bus.emit('login-processing', false)
             throw new Error(`login failed, status=${resp.status}`)
           }
 
