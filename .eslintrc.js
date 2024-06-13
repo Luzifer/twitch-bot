@@ -8,7 +8,7 @@
 const Module = require('module')
 
 const hacks = [
-  'babel-eslint',
+  '@babel/eslint-parser',
   'eslint-plugin-vue',
 ]
 
@@ -34,7 +34,7 @@ module.exports = {
   },
 
   extends: [
-    'plugin:vue/recommended',
+    'plugin:vue/vue3-recommended',
     'eslint:recommended', // https://eslint.org/docs/rules/
   ],
 
@@ -44,13 +44,14 @@ module.exports = {
 
   parserOptions: {
     ecmaVersion: 2020,
-    parser: '@babel/eslint-parser',
+    parser: '@typescript-eslint/parser',
     requireConfigFile: false,
   },
 
   plugins: [
     // required to lint *.vue files
     'vue',
+    '@typescript-eslint',
   ],
 
   reportUnusedDisableDirectives: true,
@@ -65,6 +66,7 @@ module.exports = {
     'arrow-spacing': ['error', { after: true, before: true }],
     'block-spacing': ['error'],
     'brace-style': ['error', '1tbs'],
+    'camelcase': ['error'],
     'comma-dangle': ['error', 'always-multiline'],
     'comma-spacing': ['error'],
     'comma-style': ['error', 'last'],
@@ -134,6 +136,7 @@ module.exports = {
     'switch-colon-spacing': ['error'],
     'template-curly-spacing': ['error', 'never'],
     'unicode-bom': ['error', 'never'],
+    'vue/comment-directive': 'off',
     'vue/new-line-between-multi-line-property': ['error'],
     'vue/no-empty-component-block': ['error'],
     'vue/no-reserved-component-names': ['error'],

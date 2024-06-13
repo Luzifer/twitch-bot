@@ -4,7 +4,8 @@ config.yaml
 docs/resources/_gen
 editor/app.css
 editor/app.js
-editor/bundle.*
+editor/*.ttf
+editor/*.woff2
 .env
 hugo_*
 .hugo_build.lock
