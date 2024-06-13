@@ -24,7 +24,14 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
 import { Toast } from 'bootstrap'
-import { ToastContent } from './_toaster.vue'
+
+export type ToastContent = {
+  id: string
+  autoHide: boolean | undefined
+  color: string | undefined
+  delay: number | undefined
+  text: string
+}
 
 export default defineComponent({
   data() {
@@ -66,7 +73,10 @@ export default defineComponent({
 
   mounted() {
     this.$refs.toast.addEventListener('hidden.bs.toast', () => this.$emit('hidden'))
-    this.hdl = new Toast(this.$refs.toast)
+    this.hdl = new Toast(this.$refs.toast, {
+      autohide: this.toast.autoHide !== false,
+      delay: this.toast.delay || 5000,
+    })
     this.hdl.show()
   },
 

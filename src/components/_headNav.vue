@@ -29,6 +29,7 @@
             class="nav-item dropdown"
           >
             <a
+              ref="userMenuToggle"
               class="nav-link d-flex align-items-center"
               href="#"
               role="button"
@@ -58,6 +59,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { Dropdown } from 'bootstrap'
 
 export default defineComponent({
   computed: {
@@ -70,6 +72,12 @@ export default defineComponent({
     logout() {
       this.bus.emit('logout')
     },
+  },
+
+  mounted() {
+    if (this.isLoggedIn) {
+      new Dropdown(this.$refs.userMenuToggle)
+    }
   },
 
   name: 'TwitchBotEditorHeadNav',
