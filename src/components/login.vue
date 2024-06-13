@@ -52,7 +52,7 @@ export default defineComponent({
   },
 
   mounted() {
-    this.$root.bus.on(BusEventTypes.LoginProcessing, (loading: boolean) => {
+    this.bus.on(BusEventTypes.LoginProcessing, (loading: boolean) => {
       this.loading = loading
     })
   },
