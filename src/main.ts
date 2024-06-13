@@ -9,7 +9,9 @@ import 'bootstrap/dist/js/bootstrap.bundle' // Popper & Bootstrap globally avail
 import { createApp, h } from 'vue'
 import mitt from 'mitt'
 
+import BusEventTypes from './helpers/busevents'
 import ConfigNotifyListener from './helpers/configNotify'
+import { ToastContent } from './components/_toaster.vue'
 
 import router from './router'
 import App from './components/app.vue'
@@ -36,20 +38,17 @@ const app = createApp({
 
       // We renew 720sec before expiration (0.8 * 1h)
       return new Date(this.tokenExpiresAt.getTime() - 720000)
-    }
+    },
   },
 
   data(): Object {
     return {
       now: new Date(),
+      tickers: {},
       token: '',
       tokenExpiresAt: null as Date | null,
       tokenUser: '',
-
       userInfo: null as null | {},
-
-      tickers: {},
-
       vars: {},
     }
   },
@@ -64,8 +63,10 @@ const app = createApp({
      */
     check403(resp: Response): Response {
       if (resp.status === 403) {
-        // User token is not valid and therefore should be removed
-        // which essentially triggers a logout
+        /*
+         * User token is not valid and therefore should be removed
+         * which essentially triggers a logout
+         */
         this.logout()
         throw new Error('user has been logged out')
       }
@@ -76,7 +77,9 @@ const app = createApp({
     loadVars(): Promise<void | Response> {
       return fetch('editor/vars.json')
         .then((resp: Response) => resp.json())
-        .then((data: any) => { this.vars = data })
+        .then((data: any) => {
+          this.vars = data
+        })
     },
 
     login(token: string, expiresAt: Date, username: string): void {
@@ -128,18 +131,22 @@ const app = createApp({
   mounted(): void {
     this.bus.on('logout', this.logout)
 
-    this.$root.registerTicker('updateRootNow', () => { this.now = new Date() }, 30000)
+    this.$root.registerTicker('updateRootNow', () => {
+      this.now = new Date()
+    }, 30000)
     this.$root.registerTicker('renewToken', () => this.renewToken(), 60000)
 
     // Start background-listen for config updates
-    new ConfigNotifyListener((msgType: string) => { this.$root.bus.emit(msgType) })
+    new ConfigNotifyListener((msgType: string) => {
+      this.$root.bus.emit(msgType)
+    })
 
     this.loadVars()
 
     const params = new URLSearchParams(window.location.hash.replace(/^[#/]+/, ''))
     const authToken = params.get('access_token')
     if (authToken) {
-      this.$root.bus.emit('login-processing', true)
+      this.$root.bus.emit(BusEventTypes.LoginProcessing, true)
       fetch('config-editor/login', {
         body: JSON.stringify({ token: authToken }),
         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +154,11 @@ const app = createApp({
       })
         .then((resp: Response): any => {
           if (resp.status !== 200) {
-            this.$root.bus.emit('login-processing', false)
+            this.$root.bus.emit(BusEventTypes.LoginProcessing, false)
+            this.bus.emit(BusEventTypes.Toast, {
+              color: 'danger',
+              text: 'Login failed',
+            } as ToastContent)
             throw new Error(`login failed, status=${resp.status}`)
           }
 

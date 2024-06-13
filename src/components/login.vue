@@ -11,16 +11,19 @@
         Login with Twitch
       </button>
     </div>
+    <toaster />
   </div>
 </template>
 
 <script lang="ts">
+import BusEventTypes from '../helpers/busevents'
 import { defineComponent } from 'vue'
 
 import HeadNav from './_headNav.vue'
+import Toaster from './_toaster.vue'
 
 export default defineComponent({
-  components: { HeadNav },
+  components: { HeadNav, Toaster },
 
   computed: {
     authURL() {
@@ -49,7 +52,7 @@ export default defineComponent({
   },
 
   mounted() {
-    this.$root.bus.on('login-processing', (loading: boolean) => {
+    this.$root.bus.on(BusEventTypes.LoginProcessing, (loading: boolean) => {
       this.loading = loading
     })
   },

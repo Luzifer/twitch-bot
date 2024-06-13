@@ -1,14 +1,10 @@
 <template>
   <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <a
-        class="navbar-brand"
-        href="#"
-        @click.prevent
-      >
+      <span class="navbar-brand">
         <i class="fas fa-robot fa-fw me-1 text-info" />
         Twitch-Bot
-      </a>
+      </span>
 
       <button
         class="navbar-toggler"
