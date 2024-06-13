@@ -10,15 +10,9 @@
 </template>
 
 <script lang="ts">
+import Toast, { ToastContent } from './_toast.vue'
 import BusEventTypes from '../helpers/busevents'
 import { defineComponent } from 'vue'
-import Toast from './_toast.vue'
-
-export type ToastContent = {
-  id: string
-  color: string | undefined
-  text: string
-}
 
 export default defineComponent({
   components: { Toast },
