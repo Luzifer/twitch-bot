@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,14 @@ import (
 )
 
 const frontendNotifyTypeReload = "configReload"
+
+type (
+	configEditorLoginResponse struct {
+		ExpiresAt time.Time `json:"expiresAt"`
+		Token     string    `json:"token"`
+		User      string    `json:"user"`
+	}
+)
 
 var frontendNotifyHooks = newHooker()
 
@@ -72,6 +81,16 @@ func registerEditorGlobalMethods() {
 			Name:         "Websocket: Subscribe config changes",
 			Path:         "/notify-config",
 			ResponseType: plugins.HTTPRouteResponseTypeTextPlain,
+		},
+		{
+			Description:         "Takes the authorization token present in the request and returns a new one for the same user",
+			HandlerFunc:         configEditorGlobalRefreshToken,
+			Method:              http.MethodGet,
+			Module:              moduleConfigEditor,
+			Name:                "Refresh Auth-Token",
+			Path:                "/refreshToken",
+			RequiresEditorsAuth: true,
+			ResponseType:        plugins.HTTPRouteResponseTypeJSON,
 		},
 		{
 			Description: "Validate a cron expression and return the next executions",
@@ -187,9 +206,35 @@ func configEditorGlobalLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(map[string]any{
-		"expiresAt": expiresAt,
-		"token":     tok,
+	if err := json.NewEncoder(w).Encode(configEditorLoginResponse{
+		ExpiresAt: expiresAt,
+		Token:     tok,
+		User:      user,
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func configEditorGlobalRefreshToken(w http.ResponseWriter, r *http.Request) {
+	tokenType, token, found := strings.Cut(r.Header.Get("Authorization"), " ")
+	if !found || !strings.EqualFold(tokenType, "bearer") {
+		http.Error(w, "invalid renew request", http.StatusBadRequest)
+	}
+
+	id, user, _, err := editorTokenService.ValidateLoginToken(token)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	tok, expiresAt, err := editorTokenService.CreateLoginToken(id, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if err := json.NewEncoder(w).Encode(configEditorLoginResponse{
+		ExpiresAt: expiresAt,
+		Token:     tok,
+		User:      user,
 	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
