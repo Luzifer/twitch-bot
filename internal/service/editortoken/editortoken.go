@@ -15,7 +15,7 @@ import (
 
 const (
 	coreMetaSigningKey = "editortoken:signing-key"
-	tokenValidity      = 24 * time.Hour
+	tokenValidity      = time.Hour
 )
 
 type (
