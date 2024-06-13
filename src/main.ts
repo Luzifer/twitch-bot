@@ -1,17 +1,16 @@
 /* eslint-disable sort-imports */
+/* global RequestInit, TimerHandler */
 
 import './style.scss' // Internal global styles
 import 'bootstrap/dist/css/bootstrap.css' // Bootstrap 5 Styles
 import '@fortawesome/fontawesome-free/css/all.css' // All FA free icons
-
-import 'bootstrap/dist/js/bootstrap.bundle' // Popper & Bootstrap globally available
 
 import { createApp, h } from 'vue'
 import mitt from 'mitt'
 
 import BusEventTypes from './helpers/busevents'
 import ConfigNotifyListener from './helpers/configNotify'
-import { ToastContent } from './components/_toaster.vue'
+import { ToastContent } from './components/_toast.vue'
 
 import router from './router'
 import App from './components/app.vue'
@@ -138,7 +137,7 @@ const app = createApp({
 
     // Start background-listen for config updates
     new ConfigNotifyListener((msgType: string) => {
-      this.$root.bus.emit(msgType)
+      this.bus.emit(msgType)
     })
 
     this.loadVars()
@@ -146,7 +145,7 @@ const app = createApp({
     const params = new URLSearchParams(window.location.hash.replace(/^[#/]+/, ''))
     const authToken = params.get('access_token')
     if (authToken) {
-      this.$root.bus.emit(BusEventTypes.LoginProcessing, true)
+      this.bus.emit(BusEventTypes.LoginProcessing, true)
       fetch('config-editor/login', {
         body: JSON.stringify({ token: authToken }),
         headers: { 'Content-Type': 'application/json' },
@@ -154,10 +153,16 @@ const app = createApp({
       })
         .then((resp: Response): any => {
           if (resp.status !== 200) {
-            this.$root.bus.emit(BusEventTypes.LoginProcessing, false)
+            let errorText = 'Login failed unexpectedly'
+            if (resp.status === 403) {
+              errorText = 'Access denied to this bot instance'
+            }
+
+            this.bus.emit(BusEventTypes.LoginProcessing, false)
             this.bus.emit(BusEventTypes.Toast, {
+              autoHide: false,
               color: 'danger',
-              text: 'Login failed',
+              text: errorText,
             } as ToastContent)
             throw new Error(`login failed, status=${resp.status}`)
           }
