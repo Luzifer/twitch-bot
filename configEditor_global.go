@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -197,6 +198,12 @@ func configEditorGlobalLogin(w http.ResponseWriter, r *http.Request) {
 	id, user, err := tc.GetAuthorizedUser(r.Context())
 	if err != nil {
 		http.Error(w, "access denied", http.StatusUnauthorized)
+		return
+	}
+
+	if !str.StringInSlice(user, config.BotEditors) && !str.StringInSlice(id, config.BotEditors) {
+		// That user is none of our editors: Deny access
+		http.Error(w, "access denied", http.StatusForbidden)
 		return
 	}
 
