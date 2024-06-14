@@ -32,7 +32,7 @@ export default defineComponent({
   mounted() {
     this.bus.on(BusEventTypes.Toast, (toast: ToastContent) => this.toasts.push({
       ...toast,
-      id: crypto.randomUUID(),
+      id: toast.id || crypto.randomUUID(),
     }))
   },
 
