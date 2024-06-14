@@ -1,0 +1,17 @@
+{
+  "menu": {
+    "headers": {
+      "chatInteraction": "Chat Interaction",
+      "core": "Core",
+      "modules": "Modules"
+    },
+    "autoMessages": "Auto-Messages",
+    "dashboard": "Dashboard",
+    "generalSettings": "General Settings",
+    "raffles": "Raffles",
+    "rules": "Rules"
+  },
+  "nav": {
+    "signOut": "Sign-Out"
+  }
+}

@@ -27,10 +27,10 @@ export default defineComponent({
 
   computed: {
     authURL() {
-      const scopes = []
+      const scopes: string[] = []
 
       const params = new URLSearchParams()
-      params.set('client_id', this.$root.vars.TwitchClientID)
+      params.set('client_id', this.$root?.vars?.TwitchClientID || '')
       params.set('redirect_uri', window.location.href.split('#')[0].split('?')[0])
       params.set('response_type', 'token')
       params.set('scope', scopes.join(' '))
@@ -52,8 +52,8 @@ export default defineComponent({
   },
 
   mounted() {
-    this.bus.on(BusEventTypes.LoginProcessing, (loading: boolean) => {
-      this.loading = loading
+    this.bus.on(BusEventTypes.LoginProcessing as string, (loading: unknown) => {
+      this.loading = loading as boolean
     })
   },
 

@@ -12,6 +12,7 @@ import BusEventTypes from './helpers/busevents'
 import ConfigNotifyListener from './helpers/configNotify'
 import { errorToast } from './helpers/toasts'
 
+import i18n from './i18n'
 import router from './router'
 import App from './components/app.vue'
 import Login from './components/login.vue'
@@ -188,5 +189,7 @@ const app = createApp({
 })
 
 app.config.globalProperties.bus = mitt()
+app.config.globalProperties.$foo = 'bare'
+app.use(i18n)
 app.use(router)
 app.mount('#app')

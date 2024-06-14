@@ -47,7 +47,7 @@
                   class="dropdown-item"
                   href="#"
                   @click.prevent="logout"
-                >Sign-out</a>
+                >{{ $t('nav.signOut') }}</a>
               </li>
             </ul>
           </li>
@@ -64,7 +64,7 @@ import { Dropdown } from 'bootstrap'
 export default defineComponent({
   computed: {
     profileImage(): string {
-      return this.$root.userInfo?.profile_image_url || ''
+      return this.$root?.userInfo?.profile_image_url || ''
     },
   },
 
@@ -76,7 +76,7 @@ export default defineComponent({
 
   mounted() {
     if (this.isLoggedIn) {
-      new Dropdown(this.$refs.userMenuToggle)
+      new Dropdown(this.$refs.userMenuToggle as Element)
     }
   },
 

@@ -22,7 +22,7 @@
 
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, type PropType } from 'vue'
 import { Toast } from 'bootstrap'
 
 export type ToastContent = {
@@ -36,7 +36,7 @@ export type ToastContent = {
 export default defineComponent({
   data() {
     return {
-      hdl: null,
+      hdl: null as Toast | null,
     }
   },
 
@@ -72,11 +72,15 @@ export default defineComponent({
   },
 
   mounted() {
-    this.$refs.toast.addEventListener('hidden.bs.toast', () => this.$emit('hidden'))
-    this.hdl = new Toast(this.$refs.toast, {
+    const t: Element = this.$refs.toast as Element
+
+    t.addEventListener('hidden.bs.toast', () => this.$emit('hidden'))
+
+    this.hdl = new Toast(t, {
       autohide: this.toast.autoHide !== false,
       delay: this.toast.delay || 5000,
     })
+
     this.hdl.show()
   },
 
