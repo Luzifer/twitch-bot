@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts">
-import Toast, { ToastContent } from './_toast.vue'
+import Toast, { type ToastContent } from './_toast.vue'
 import BusEventTypes from '../helpers/busevents'
 import { defineComponent } from 'vue'
 
@@ -30,9 +30,9 @@ export default defineComponent({
   },
 
   mounted() {
-    this.bus.on(BusEventTypes.Toast, (toast: ToastContent) => this.toasts.push({
-      ...toast,
-      id: toast.id || crypto.randomUUID(),
+    this.bus.on(BusEventTypes.Toast, (toast: unknown) => this.toasts.push({
+      ...toast as ToastContent,
+      id: (toast as ToastContent).id || crypto.randomUUID(),
     }))
   },
 

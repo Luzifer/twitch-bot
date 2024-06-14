@@ -1,4 +1,4 @@
-import { ToastContent } from '../components/_toast.vue'
+import { type ToastContent } from '../components/_toast.vue'
 
 /**
  * Create the content of an error-toast
