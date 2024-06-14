@@ -10,7 +10,7 @@ import mitt from 'mitt'
 
 import BusEventTypes from './helpers/busevents'
 import ConfigNotifyListener from './helpers/configNotify'
-import { ToastContent } from './components/_toast.vue'
+import { errorToast } from './helpers/toasts'
 
 import router from './router'
 import App from './components/app.vue'
@@ -159,11 +159,7 @@ const app = createApp({
             }
 
             this.bus.emit(BusEventTypes.LoginProcessing, false)
-            this.bus.emit(BusEventTypes.Toast, {
-              autoHide: false,
-              color: 'danger',
-              text: errorText,
-            } as ToastContent)
+            this.bus.emit(BusEventTypes.Toast, errorToast(errorText))
             throw new Error(`login failed, status=${resp.status}`)
           }
 
