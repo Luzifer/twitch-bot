@@ -27,9 +27,9 @@ import { Toast } from 'bootstrap'
 
 export type ToastContent = {
   id: string
-  autoHide: boolean | undefined
-  color: string | undefined
-  delay: number | undefined
+  autoHide?: boolean
+  color?: string
+  delay?: number
   text: string
 }
 
