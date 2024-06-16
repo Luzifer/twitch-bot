@@ -43,13 +43,36 @@ func TestTokenFlow(t *testing.T) {
 		user = "example"
 	)
 
-	tok, expiresAt, err := s.CreateLoginToken(id, user)
+	tok, expiresAt, err := s.CreateUserToken(id, user, []string{"*"})
 	require.NoError(t, err)
 	assert.True(t, expiresAt.After(time.Now().Add(tokenValidity-time.Minute)))
 
-	tid, tuser, texpiresAt, err := s.ValidateLoginToken(tok)
+	tid, tuser, texpiresAt, modules, err := s.ValidateLoginToken(tok)
 	require.NoError(t, err)
 	assert.Equal(t, id, tid)
 	assert.Equal(t, user, tuser)
 	assert.Equal(t, expiresAt, texpiresAt)
+	assert.Equal(t, []string{"*"}, modules)
+
+	// Generic without expiry
+	tok, err = s.CreateGenericModuleToken([]string{"test"}, 0)
+	require.NoError(t, err)
+
+	tid, tuser, texpiresAt, modules, err = s.ValidateLoginToken(tok)
+	require.NoError(t, err)
+	assert.Equal(t, "", tid)
+	assert.Equal(t, "", tuser)
+	assert.Equal(t, time.Time{}, texpiresAt)
+	assert.Equal(t, []string{"test"}, modules)
+
+	// Generic with expiry
+	tok, err = s.CreateGenericModuleToken([]string{"test"}, time.Minute)
+	require.NoError(t, err)
+
+	tid, tuser, texpiresAt, modules, err = s.ValidateLoginToken(tok)
+	require.NoError(t, err)
+	assert.Equal(t, "", tid)
+	assert.Equal(t, "", tuser)
+	assert.True(t, time.Now().Add(time.Minute+time.Second).After(texpiresAt))
+	assert.Equal(t, []string{"test"}, modules)
 }
