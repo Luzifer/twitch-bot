@@ -207,7 +207,8 @@ func configEditorGlobalLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tok, expiresAt, err := editorTokenService.CreateLoginToken(id, user)
+	// Bot-Editors do have unlimited access to all modules: Pass in module `*`
+	tok, expiresAt, err := editorTokenService.CreateUserToken(id, user, []string{"*"})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -228,12 +229,12 @@ func configEditorGlobalRefreshToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid renew request", http.StatusBadRequest)
 	}
 
-	id, user, _, err := editorTokenService.ValidateLoginToken(token)
+	id, user, _, modules, err := editorTokenService.ValidateLoginToken(token)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	tok, expiresAt, err := editorTokenService.CreateLoginToken(id, user)
+	tok, expiresAt, err := editorTokenService.CreateUserToken(id, user, modules)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
