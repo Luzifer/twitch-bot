@@ -93,6 +93,12 @@ backendLoop:
 		ce.ExpiresAt = time.Now().Add(negativeCacheTime)
 	}
 
+	if ce.ExpiresAt.IsZero() {
+		// Infinite valid token, we should periodically re-check and
+		// therefore cache for the negativeCacheTime
+		ce.ExpiresAt = time.Now().Add(negativeCacheTime)
+	}
+
 	s.lock.Lock()
 	s.cache[s.cacheKey(token)] = &ce
 	s.lock.Unlock()

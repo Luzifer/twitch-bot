@@ -78,7 +78,7 @@ func registerEditorRulesRoutes() {
 }
 
 func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -117,7 +117,7 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorRulesDelete(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -154,7 +154,7 @@ func configEditorRulesGet(w http.ResponseWriter, _ *http.Request) {
 }
 
 func configEditorRulesUpdate(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
