@@ -6,7 +6,10 @@ const routes = [
   { component: Dashboard, name: 'dashboard', path: '/' },
 
   // General settings
-  { component: {}, name: 'generalSettings', path: '/general-settings' },
+  { component: {}, name: 'botAuth', path: '/bot-auth' },
+  { component: {}, name: 'channels', path: '/channels' },
+  { component: {}, name: 'editors', path: '/editors' },
+  { component: {}, name: 'tokens', path: '/tokens' },
 
   // Auto-Messages
   { component: {}, name: 'autoMessagesList', path: '/auto-messages' },

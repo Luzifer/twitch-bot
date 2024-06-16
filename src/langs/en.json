@@ -24,10 +24,13 @@
       "modules": "Modules"
     },
     "autoMessages": "Auto-Messages",
+    "botAuth": "Bot Authorization",
+    "channels": "Channels",
     "dashboard": "Dashboard",
-    "generalSettings": "General Settings",
+    "editors": "Editors",
     "raffles": "Raffles",
-    "rules": "Rules"
+    "rules": "Rules",
+    "tokens": "Access-Tokens"
   },
   "nav": {
     "signOut": "Sign-Out"
