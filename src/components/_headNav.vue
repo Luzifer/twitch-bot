@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg bg-body-tertiary user-select-none">
+  <nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary user-select-none">
     <div class="container-fluid">
       <span class="navbar-brand user-select-none">
         <i class="fas fa-robot fa-fw me-1 text-info" />
@@ -91,7 +91,7 @@ export default defineComponent({
 })
 </script>
 
-<style>
+<style scoped>
 .nav-profile-image {
   max-width: 24px;
 }
