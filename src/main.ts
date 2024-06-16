@@ -91,8 +91,7 @@ const app = createApp({
       window.history.replaceState(null, '', window.location.href.split('#')[0])
 
       fetch(`config-editor/user?user=${this.tokenUser}`, this.$root.fetchOpts)
-        .then((resp: Response) => this.$root.check403(resp))
-        .then((resp: Response) => resp.json())
+        .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
         .then((data: any) => {
           this.userInfo = data
         })
@@ -103,6 +102,11 @@ const app = createApp({
       this.token = ''
       this.tokenExpiresAt = null
       this.tokenUser = ''
+    },
+
+    parseResponseFromJSON(resp: Response): Promise<any> {
+      this.check403(resp)
+      return resp.json()
     },
 
     registerTicker(id: string, func: TimerHandler, intervalMs: number): void {
@@ -116,8 +120,7 @@ const app = createApp({
       }
 
       fetch('config-editor/refreshToken', this.$root.fetchOpts)
-        .then((resp: Response) => this.$root.check403(resp))
-        .then((resp: Response) => resp.json())
+        .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
         .then((data: any) => this.login(data.token, new Date(data.expiresAt), data.user))
     },
 

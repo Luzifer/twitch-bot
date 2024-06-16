@@ -11,6 +11,7 @@ const buildOpts = {
   entryPoints: ['src/main.ts'],
   legalComments: 'none',
   loader: {
+    '.md': 'text',
     '.ttf': 'file',
     '.woff2': 'file',
   },

@@ -33,6 +33,7 @@ import Toaster from './_toaster.vue'
   min-height: calc(100vh - 56px);
   min-width: 1;
   padding-left: 225px;
+  padding-top: 56px;
   position: relative;
 }
 

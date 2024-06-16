@@ -7,6 +7,8 @@ enum BusEventTypes {
   FetchError = 'fetchError',
   LoadingData = 'loadingData',
   LoginProcessing = 'loginProcessing',
+  RaffleChanged = 'raffleChanged',
+  RaffleEntryChanged = 'raffleEntryChanged',
   Toast = 'toast',
 }
 

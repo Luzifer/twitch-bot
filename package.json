@@ -3,6 +3,7 @@
     "@fortawesome/fontawesome-free": "^6.5.2",
     "bootstrap": "^5.3.3",
     "codejar": "^4.2.0",
+    "marked": "^13.0.0",
     "mitt": "^3.0.1",
     "prismjs": "^1.29.0",
     "vue": "^3.4.28",

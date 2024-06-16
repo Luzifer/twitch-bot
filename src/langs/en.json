@@ -1,4 +1,22 @@
 {
+  "dashboard": {
+    "activeRaffles": {
+      "caption": "Active",
+      "header": "Raffles"
+    },
+    "botScopes": {
+      "caption": "Missing Scopes",
+      "header": "Bot-Scopes"
+    },
+    "changelog": {
+      "fullLink": "See full changelog in [History.md](https://github.com/Luzifer/twitch-bot/blob/master/History.md) on Github",
+      "heading": "Changelog"
+    },
+    "healthCheck": {
+      "caption": "Checks OK",
+      "header": "Bot-Health"
+    }
+  },
   "menu": {
     "headers": {
       "chatInteraction": "Chat Interaction",

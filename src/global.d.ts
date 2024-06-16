@@ -1,6 +1,9 @@
 /* eslint-disable no-unused-vars */
+/* global RequestInit, TimerHandler */
 
 import { Emitter, EventType } from 'mitt'
+
+type CheckAccessFunction = (resp: Response) => Response
 
 type EditorVars = {
   DefaultBotScopes: string[]
@@ -10,6 +13,10 @@ type EditorVars = {
   TwitchClientID: string
   Version: string
 }
+
+type ParseResponseFunction = (resp: Response) => Promise<any>
+type TickerRegisterFunction = (id: string, func: TimerHandler, intervalMs: number) => void
+type TickerUnregisterFunction = (id: string) => void
 
 type UserInfo = {
   display_name: string
@@ -23,6 +30,11 @@ declare module '@vue/runtime-core' {
     bus: Emitter<Record<EventType, unknown>>
 
     // On the $root
+    check403: CheckAccessFunction
+    fetchOpts: RequestInit
+    parseResponseFromJSON: ParseResponseFunction
+    registerTicker: TickerRegisterFunction
+    unregisterTicker: TickerUnregisterFunction
     userInfo: UserInfo | null
     vars: EditorVars | null
   }

@@ -20,7 +20,6 @@
   </div>
 </template>
 
-
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue'
 import { Toast } from 'bootstrap'
