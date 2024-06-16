@@ -5,6 +5,7 @@
     :value="value"
     :value-extra-class="valueClass"
     :caption="$t('dashboard.botScopes.caption')"
+    :click-route="{name:'botAuth'}"
   />
 </template>
 
