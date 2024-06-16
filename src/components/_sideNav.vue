@@ -34,7 +34,10 @@ export default defineComponent({
           header: this.$t('menu.headers.core'),
           links: [
             { icon: 'fas fa-chart-area', name: this.$t('menu.dashboard'), target: 'dashboard' },
-            { icon: 'fas fa-cog', name: this.$t('menu.generalSettings'), target: 'generalSettings' },
+            { icon: 'fas fa-robot', name: this.$t('menu.botAuth'), target: 'botAuth' },
+            { icon: 'fas fa-tv', name: this.$t('menu.channels'), target: 'channels' },
+            { icon: 'fas fa-user-gear', name: this.$t('menu.editors'), target: 'editors' },
+            { icon: 'fas fa-id-card-clip', name: this.$t('menu.tokens'), target: 'tokens' },
           ],
         },
         {
