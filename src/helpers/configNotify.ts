@@ -1,12 +1,14 @@
+import BusEventTypes from './busevents'
+
 class ConfigNotifyListener {
   private backoff: number = 100
 
-  private listener: Function
+  private eventListener: Function
 
   private socket: WebSocket | null = null
 
   constructor(listener: Function) {
-    this.listener = listener
+    this.eventListener = listener
     this.connect()
   }
 
@@ -21,6 +23,7 @@ class ConfigNotifyListener {
 
     this.socket.onopen = () => {
       console.debug('[notify] Socket connected')
+      this.eventListener(BusEventTypes.NotifySocketConnected)
     }
 
     this.socket.onmessage = evt => {
@@ -30,12 +33,13 @@ class ConfigNotifyListener {
       this.backoff = 100 // We've received a message, reset backoff
 
       if (msg.msg_type !== 'ping') {
-        this.listener(msg.msg_type)
+        this.eventListener(msg.msg_type)
       }
     }
 
     this.socket.onclose = evt => {
       console.debug(`[notify] Socket was closed wasClean=${evt.wasClean}`)
+      this.eventListener(BusEventTypes.NotifySocketDisconnected)
       this.updateBackoffAndReconnect()
     }
   }

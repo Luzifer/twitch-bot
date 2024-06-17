@@ -25,6 +25,14 @@
         <ul class="navbar-nav me-auto mb-2 mb-lg-0" />
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
           <li
+            v-if="!socketConnected"
+            class="nav-item d-flex align-content-center"
+          >
+            <span class="navbar-text me-2">
+              <i class="fas fa-cloud fa-fw text-warning" />
+            </span>
+          </li>
+          <li
             v-if="isLoggedIn"
             class="nav-item dropdown"
           >
@@ -58,6 +66,7 @@
 </template>
 
 <script lang="ts">
+import BusEventTypes from '../helpers/busevents'
 import { defineComponent } from 'vue'
 import { Dropdown } from 'bootstrap'
 
@@ -68,6 +77,12 @@ export default defineComponent({
     },
   },
 
+  data() {
+    return {
+      socketConnected: false,
+    }
+  },
+
   methods: {
     logout() {
       this.bus.emit('logout')
@@ -75,6 +90,14 @@ export default defineComponent({
   },
 
   mounted() {
+    this.bus.on(BusEventTypes.NotifySocketConnected, () => {
+      this.socketConnected = true
+    })
+
+    this.bus.on(BusEventTypes.NotifySocketDisconnected, () => {
+      this.socketConnected = false
+    })
+
     if (this.isLoggedIn) {
       new Dropdown(this.$refs.userMenuToggle as Element)
     }
