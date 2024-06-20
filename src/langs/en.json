@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "activeRaffles": {
+      "caption": "Active",
+      "header": "Raffles"
+    },
+    "botScopes": {
+      "caption": "Missing Scopes",
+      "header": "Bot-Scopes"
+    },
+    "changelog": {
+      "fullLink": "See full changelog in [History.md](https://github.com/Luzifer/twitch-bot/blob/master/History.md) on Github",
+      "heading": "Changelog"
+    },
+    "healthCheck": {
+      "caption": "Checks OK",
+      "header": "Bot-Health"
+    }
+  },
+  "menu": {
+    "headers": {
+      "chatInteraction": "Chat Interaction",
+      "core": "Core",
+      "modules": "Modules"
+    },
+    "autoMessages": "Auto-Messages",
+    "botAuth": "Bot Authorization",
+    "channels": "Channels",
+    "dashboard": "Dashboard",
+    "editors": "Editors",
+    "raffles": "Raffles",
+    "rules": "Rules",
+    "tokens": "Access-Tokens"
+  },
+  "nav": {
+    "signOut": "Sign-Out"
+  }
+}

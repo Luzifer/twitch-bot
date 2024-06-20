@@ -4,12 +4,14 @@ config.yaml
 docs/resources/_gen
 editor/app.css
 editor/app.js
-editor/bundle.*
+editor/*.ttf
+editor/*.woff2
 .env
 hugo_*
 .hugo_build.lock
 node_modules
 .rendered-docs
+src/components/_template.vue
 storage.db
 storage.db-journal
 storage.json.gz
