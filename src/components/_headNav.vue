@@ -79,7 +79,7 @@ export default defineComponent({
 
   data() {
     return {
-      socketConnected: false,
+      socketConnected: true, // Directly after load it should always be connected
     }
   },
 
