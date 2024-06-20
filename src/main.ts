@@ -31,8 +31,8 @@ const app = createApp({
     },
 
     tokenRenewAt(): Date | null {
-      if (this.tokenExpiresAt === null || this.tokenExpiresAt.getTime() < this.now.getTime()) {
-        // We don't know when it expires or it's expired, we can't renew
+      if (this.tokenExpiresAt === null) {
+        // We don't know when it expires, we can't renew
         return null
       }
 
@@ -88,7 +88,7 @@ const app = createApp({
       this.tokenUser = username
       window.localStorage.setItem('twitch-bot-token', JSON.stringify({ expiresAt, token, username }))
       // Nuke the Twitch auth-response from the browser history
-      window.history.replaceState(null, '', window.location.href.split('#')[0])
+      this.$router.replace({ name: 'dashboard' })
 
       fetch(`config-editor/user?user=${this.tokenUser}`, this.$root.fetchOpts)
         .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
