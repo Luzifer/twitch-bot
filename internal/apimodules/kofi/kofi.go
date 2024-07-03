@@ -100,8 +100,8 @@ func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 		fields.Set("isSubscription", payload.IsSubscriptionPayment)
 		fields.Set("isFirstSubPayment", payload.IsFirstSubscriptionPayment)
 
-		if payload.IsPublic {
-			fields.Set("message", payload.Message)
+		if payload.IsPublic && payload.Message != nil {
+			fields.Set("message", *payload.Message)
 		}
 
 		if payload.IsSubscriptionPayment && payload.TierName != nil {
