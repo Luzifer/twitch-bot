@@ -122,6 +122,11 @@ const app = createApp({
       fetch('config-editor/refreshToken', this.$root.fetchOpts)
         .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
         .then((data: any) => this.login(data.token, new Date(data.expiresAt), data.user))
+        .catch(err => {
+          // Being unable to renew a token is a reason to logout
+          this.logout()
+          throw err
+        })
     },
 
     unregisterTicker(id: string): void {
