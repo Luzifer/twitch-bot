@@ -1,12 +1,13 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
+import BothAuth from './components/botauth.vue'
 import Dashboard from './components/dashboard.vue'
 
 const routes = [
   { component: Dashboard, name: 'dashboard', path: '/' },
 
   // General settings
-  { component: {}, name: 'botAuth', path: '/bot-auth' },
+  { component: BothAuth, name: 'botAuth', path: '/bot-auth' },
   { component: {}, name: 'channels', path: '/channels' },
   { component: {}, name: 'editors', path: '/editors' },
   { component: {}, name: 'tokens', path: '/tokens' },
