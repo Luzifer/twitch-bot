@@ -15,7 +15,7 @@
 
     <div class="row mt-3">
       <div class="col">
-      <!-- Here Bot-Logs: #44 -->
+        <DashboardEventlog />
       </div>
       <div class="col">
         <DashboardChangelog />
@@ -28,6 +28,7 @@
 import DashboardActiveRaffles from './dashboard/activeRaffles.vue'
 import DashboardBotScopes from './dashboard/scopes.vue'
 import DashboardChangelog from './dashboard/changelog.vue'
+import DashboardEventlog from './dashboard/eventlog.vue'
 import DashboardHealthCheck from './dashboard/healthcheck.vue'
 import { defineComponent } from 'vue'
 
@@ -36,6 +37,7 @@ export default defineComponent({
     DashboardActiveRaffles,
     DashboardBotScopes,
     DashboardChangelog,
+    DashboardEventlog,
     DashboardHealthCheck,
   },
 
