@@ -81,25 +81,22 @@ export default defineComponent({
         })
     },
 
-    fetchAuthURLs(): Promise<void> {
-      return fetch('config-editor/auth-urls', this.$root?.fetchOpts)
-        .then((resp: Response) => this.$root?.parseResponseFromJSON(resp))
+    fetchAuthURLs(): Promise<void> | undefined {
+      return this.$root?.fetchJSON('config-editor/auth-urls')
         .then((data: any) => {
           this.authURLs = data
         })
     },
 
-    fetchBotProfile(user: string): Promise<void> {
-      return fetch(`config-editor/user?user=${user}`, this.$root?.fetchOpts)
-        .then((resp: Response) => this.$root?.parseResponseFromJSON(resp))
+    fetchBotProfile(user: string): Promise<void> | undefined {
+      return this.$root?.fetchJSON(`config-editor/user?user=${user}`)
         .then((data: any) => {
           this.botProfile = data
         })
     },
 
-    fetchGeneralConfig(): Promise<void> {
-      return fetch('config-editor/general', this.$root?.fetchOpts)
-        .then((resp: Response) => this.$root?.parseResponseFromJSON(resp))
+    fetchGeneralConfig(): Promise<void> | undefined {
+      return this.$root?.fetchJSON('config-editor/general')
         .then((data: any) => {
           this.generalConfig = data
         })
@@ -109,7 +106,7 @@ export default defineComponent({
   mounted() {
     this.fetchAuthURLs()
     this.fetchGeneralConfig()
-      .then(() => this.fetchBotProfile(this.generalConfig.bot_name))
+      ?.then(() => this.fetchBotProfile(this.generalConfig.bot_name))
   },
 
   name: 'TwitchBotEditorBotAuth',
