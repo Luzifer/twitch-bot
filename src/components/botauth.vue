@@ -60,6 +60,7 @@
 
 
 <script lang="ts">
+import BusEventTypes from '../helpers/busevents'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -72,6 +73,10 @@ export default defineComponent({
   },
 
   methods: {
+    /**
+     * Copies auth-url for the bot into clipboard and gives user feedback
+     * by colorizing copy-button for a short moment
+     */
     copyAuthURL(): void {
       navigator.clipboard.writeText(this.authURLs.update_bot_token)
         .then(() => {
@@ -81,6 +86,9 @@ export default defineComponent({
         })
     },
 
+    /**
+     * Fetches auth-URLs from the backend
+     */
     fetchAuthURLs(): Promise<void> | undefined {
       return this.$root?.fetchJSON('config-editor/auth-urls')
         .then((data: any) => {
@@ -88,6 +96,12 @@ export default defineComponent({
         })
     },
 
+    /**
+     * Fetches the bot profile (including display-name and profile
+     * image) and stores it locally
+     *
+     * @param user Login-name of the user to fetch the profile for
+     */
     fetchBotProfile(user: string): Promise<void> | undefined {
       return this.$root?.fetchJSON(`config-editor/user?user=${user}`)
         .then((data: any) => {
@@ -95,18 +109,30 @@ export default defineComponent({
         })
     },
 
+    /**
+     * Fetches the general config object from the backend including the
+     * authorized bot-name
+     */
     fetchGeneralConfig(): Promise<void> | undefined {
       return this.$root?.fetchJSON('config-editor/general')
         .then((data: any) => {
           this.generalConfig = data
         })
+        .then(() => this.fetchBotProfile(this.generalConfig.bot_name))
     },
   },
 
   mounted() {
+    // Reload config after it changed
+    this.bus.on(BusEventTypes.ConfigReload, () => this.fetchGeneralConfig())
+
+    // Socket-reconnect could mean we need new auth-urls as the state
+    // may have changed due to bot-restart
+    this.bus.on(BusEventTypes.NotifySocketConnected, () => this.fetchAuthURLs())
+
+    // Do initial fetches
     this.fetchAuthURLs()
     this.fetchGeneralConfig()
-      ?.then(() => this.fetchBotProfile(this.generalConfig.bot_name))
   },
 
   name: 'TwitchBotEditorBotAuth',
