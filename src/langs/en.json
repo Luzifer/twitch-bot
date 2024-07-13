@@ -12,6 +12,9 @@
       "fullLink": "See full changelog in [History.md](https://github.com/Luzifer/twitch-bot/blob/master/History.md) on Github",
       "heading": "Changelog"
     },
+    "eventlog": {
+      "heading": "Eventlog"
+    },
     "healthCheck": {
       "caption": "Checks OK",
       "header": "Bot-Health"
