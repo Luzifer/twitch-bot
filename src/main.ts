@@ -82,9 +82,8 @@ const app = createApp({
         .then((resp: Response) => this.parseResponseFromJSON(resp))
     },
 
-    loadVars(): Promise<void | Response> {
-      return fetch('editor/vars.json')
-        .then((resp: Response) => resp.json())
+    loadVars(): Promise<void> {
+      return this.fetchJSON('editor/vars.json')
         .then((data: any) => {
           this.vars = data
         })
@@ -100,8 +99,7 @@ const app = createApp({
         this.$router.replace({ name: 'dashboard' })
       }
 
-      fetch(`config-editor/user?user=${this.tokenUser}`, this.$root.fetchOpts)
-        .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
+      this.fetchJSON(`config-editor/user?user=${this.tokenUser}`)
         .then((data: any) => {
           this.userInfo = data
         })
@@ -129,10 +127,9 @@ const app = createApp({
         return
       }
 
-      fetch('config-editor/refreshToken', this.$root.fetchOpts)
-        .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
+      this.fetchJSON('config-editor/refreshToken')
         .then((data: any) => this.login(data.token, new Date(data.expiresAt), data.user))
-        .catch(err => {
+        .catch((err: Error) => {
           // Being unable to renew a token is a reason to logout
           this.logout()
           throw err

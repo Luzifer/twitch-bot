@@ -40,9 +40,9 @@ export default defineComponent({
   },
 
   mounted() {
-    this.bus.on(BusEventTypes.RaffleChanged, () => {
-      this.fetchRaffleCount()
-    })
+    // Refresh raffle counts when raffle changed
+    this.bus.on(BusEventTypes.RaffleChanged, () => this.fetchRaffleCount())
+
     this.fetchRaffleCount()
   },
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-100">
+  <div class="h-100 user-select-none">
     <head-nav :is-logged-in="true" />
 
     <div class="layout">

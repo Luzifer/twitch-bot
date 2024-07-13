@@ -51,9 +51,9 @@ export default defineComponent({
   },
 
   mounted() {
-    this.bus.on(BusEventTypes.ConfigReload, () => {
-      this.fetchGeneralConfig()
-    })
+    // Scopes might have changed due to authorization change
+    this.bus.on(BusEventTypes.ConfigReload, () => this.fetchGeneralConfig())
+
     this.fetchGeneralConfig()
   },
 
