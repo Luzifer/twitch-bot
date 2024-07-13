@@ -14,6 +14,7 @@ type EditorVars = {
   Version: string
 }
 
+type FetchJSONFunction = (path: string, opts: Object = {}) => Promise<any>
 type ParseResponseFunction = (resp: Response) => Promise<any>
 type TickerRegisterFunction = (id: string, func: TimerHandler, intervalMs: number) => void
 type TickerUnregisterFunction = (id: string) => void
@@ -31,6 +32,7 @@ declare module '@vue/runtime-core' {
 
     // On the $root
     check403: CheckAccessFunction
+    fetchJSON: FetchJSONFunction
     fetchOpts: RequestInit
     parseResponseFromJSON: ParseResponseFunction
     registerTicker: TickerRegisterFunction

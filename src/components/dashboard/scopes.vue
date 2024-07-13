@@ -42,8 +42,7 @@ export default defineComponent({
 
   methods: {
     fetchGeneralConfig(): void {
-      fetch('config-editor/general', this.$root?.fetchOpts)
-        .then((resp: Response) => this.$root?.parseResponseFromJSON(resp))
+      this.$root?.fetchJSON('config-editor/general')
         .then((data: any) => {
           this.botScopes = data.channel_scopes[data.bot_name] || []
           this.loading = false

@@ -74,6 +74,14 @@ const app = createApp({
       return resp
     },
 
+    fetchJSON(path: string, opts: Object = {}): Promise<any> {
+      return fetch(path, {
+        ...this.fetchOpts,
+        ...opts,
+      })
+        .then((resp: Response) => this.parseResponseFromJSON(resp))
+    },
+
     loadVars(): Promise<void | Response> {
       return fetch('editor/vars.json')
         .then((resp: Response) => resp.json())
