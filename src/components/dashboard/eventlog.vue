@@ -1,5 +1,5 @@
 <template>
-  <div class="card user-select-none">
+  <div class="card">
     <div class="card-header">
       {{ $t('dashboard.eventlog.heading') }}
     </div>

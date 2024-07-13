@@ -1,10 +1,10 @@
 <template>
-  <div class="card user-select-none">
+  <div class="card">
     <div class="card-header">
       {{ $t('dashboard.changelog.heading') }}
     </div>
     <div
-      class="card-body"
+      class="card-body user-select-text"
       v-html="changelog"
     />
   </div>
@@ -51,9 +51,3 @@ export default defineComponent({
   name: 'DashboardChangelog',
 })
 </script>
-
-<style scoped>
-.card-body {
-  user-select: text !important;
-}
-</style>

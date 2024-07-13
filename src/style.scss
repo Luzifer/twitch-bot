@@ -3,3 +3,7 @@ body,
 #app {
   height: 100%;
 }
+
+.user-select-text {
+  user-select: text !important;
+}

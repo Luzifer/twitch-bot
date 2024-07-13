@@ -4,14 +4,14 @@
       v-for="section in navigation"
       :key="section.header"
     >
-      <div class="navHeading user-select-none">
+      <div class="navHeading">
         {{ section.header }}
       </div>
       <RouterLink
         v-for="link in section.links"
         :key="link.target"
         :to="{name: link.target}"
-        class="nav-link user-select-none"
+        class="nav-link"
       >
         <i :class="`${link.icon} fa-fw me-1`" />
         {{ link.name }}
