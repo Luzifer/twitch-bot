@@ -34,7 +34,7 @@ import { type RouteLocationRaw } from 'vue-router'
 export default defineComponent({
   computed: {
     cardClass(): string {
-      const classList = ['card user-select-none']
+      const classList = ['card']
 
       if (this.clickRoute) {
         classList.push('pointer-click')

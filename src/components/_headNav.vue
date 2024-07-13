@@ -1,7 +1,7 @@
 <template>
-  <nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary user-select-none">
+  <nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <span class="navbar-brand user-select-none">
+      <span class="navbar-brand">
         <i class="fas fa-robot fa-fw me-1 text-info" />
         Twitch-Bot
       </span>

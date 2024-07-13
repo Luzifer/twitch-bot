@@ -1,5 +1,5 @@
 <template>
-  <div class="container my-3 user-select-none">
+  <div class="container my-3">
     <div class="row justify-content-center">
       <div class="col col-9">
         <div class="card">
@@ -19,7 +19,7 @@
             <div class="input-group">
               <input
                 type="text"
-                class="form-control user-select-all"
+                class="form-control"
                 :value="authURLs?.update_bot_token || ''"
                 :disabled="!authURLs?.update_bot_token"
                 readonly
