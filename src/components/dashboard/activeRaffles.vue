@@ -31,8 +31,7 @@ export default defineComponent({
 
   methods: {
     fetchRaffleCount(): void {
-      fetch('raffle/', this.$root?.fetchOpts)
-        .then((resp: Response) => this.$root?.parseResponseFromJSON(resp))
+      this.$root?.fetchJSON('raffle/')
         .then((data: any) => {
           this.activeRaffles = data.filter((raffle: any) => raffle.status === 'active').length
           this.loading = false

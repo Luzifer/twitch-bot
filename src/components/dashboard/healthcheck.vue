@@ -41,8 +41,7 @@ export default defineComponent({
 
   methods: {
     fetchStatus(): void {
-      fetch('status/status.json?fail-status=200')
-        .then((resp: Response) => resp.json())
+      this.$root?.fetchJSON('status/status.json?fail-status=200')
         .then((data: any) => {
           this.status = data
         })
