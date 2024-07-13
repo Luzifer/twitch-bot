@@ -88,7 +88,9 @@ const app = createApp({
       this.tokenUser = username
       window.localStorage.setItem('twitch-bot-token', JSON.stringify({ expiresAt, token, username }))
       // Nuke the Twitch auth-response from the browser history
-      this.$router.replace({ name: 'dashboard' })
+      if (window.location.hash.includes('access_token=')) {
+        this.$router.replace({ name: 'dashboard' })
+      }
 
       fetch(`config-editor/user?user=${this.tokenUser}`, this.$root.fetchOpts)
         .then((resp: Response) => this.$root.parseResponseFromJSON(resp))
