@@ -11,7 +11,7 @@
 /**
  * SocketMessage received for every event and passed to the new `(eventObj) => { ... }` handlers
  * @typedef {Object} SocketMessage
- * @prop {Number} [event_id] - UID of the event used to re-trigger an event
+ * @prop {String} [event_id] - UID of the event used to re-trigger an event
  * @prop {Boolean} [is_live] - Whether the event was sent through a replay (false) or occurred live (true)
  * @prop {String} [reason] - Reason of this message (one of `bulk-replay`, `live-event`, `single-replay`)
  * @prop {String} [time] - RFC3339 timestamp of the event

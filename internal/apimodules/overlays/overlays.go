@@ -42,7 +42,7 @@ type (
 
 	// socketMessage represents the message overlay sockets will receive
 	socketMessage struct {
-		EventID uint64                           `json:"event_id"`
+		EventID uint64                           `json:"event_id,string"`
 		IsLive  bool                             `json:"is_live"`
 		Reason  sendReason                       `json:"reason"`
 		Time    time.Time                        `json:"time"`
