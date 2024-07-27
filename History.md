@@ -1,3 +1,15 @@
+# 3.33.0 / 2024-07-27
+
+  * New Features
+    * [overlays] Add eventfeed as default-overlay
+
+  * Improvements
+    * [linkcheck] Add support for meta-redirects
+
+  * Bugfixes
+    * [kofi] Fix: Use message as string
+    * [overlays] Fix: Transmit event-id as string
+
 # 3.32.0 / 2024-06-09
 
   * New Features
