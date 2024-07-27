@@ -1,21 +1,35 @@
-import vuePlugin from 'esbuild-vue'
 import esbuild from 'esbuild'
+import { sassPlugin } from 'esbuild-sass-plugin'
+import vuePlugin from 'esbuild-plugin-vue3'
 
-esbuild.build({
+const buildOpts = {
+  assetNames: '[name]-[hash]',
   bundle: true,
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'dev'),
   },
-  entryPoints: ['src/main.js'],
-  loader: {},
+  entryPoints: ['src/main.ts'],
+  legalComments: 'none',
+  loader: {
+    '.md': 'text',
+    '.ttf': 'file',
+    '.woff2': 'file',
+  },
   minify: true,
   outfile: 'editor/app.js',
-  plugins: [vuePlugin()],
-  target: [
-    'chrome87',
-    'edge87',
-    'es2020',
-    'firefox84',
-    'safari14',
+  plugins: [
+    sassPlugin(),
+    vuePlugin(),
   ],
-})
+  target: [
+    'chrome109',
+    'edge116',
+    'es2020',
+    'firefox115',
+    'safari15',
+  ],
+}
+
+export { buildOpts }
+
+esbuild.build(buildOpts)

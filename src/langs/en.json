@@ -1,0 +1,51 @@
+{
+  "botauth": {
+    "description": "Here you can manage your bots auth-token: it's required to communicate with Twitch Chat and APIs. The access will be valid as long as you don't change the password or revoke the apps permission in your bot account.",
+    "directives": [
+      "Copy the URL provided below",
+      "Open an incognito-tab or different browser, you are not logged into Twitch or are logged in with your bot account",
+      "Open the copied URL, sign in with the bot account and accept the permissions",
+      "You will see a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten."
+    ],
+    "heading": "Updating Bot-Authorization"
+  },
+  "dashboard": {
+    "activeRaffles": {
+      "caption": "Active",
+      "header": "Raffles"
+    },
+    "botScopes": {
+      "caption": "Missing Scopes",
+      "header": "Bot-Scopes"
+    },
+    "changelog": {
+      "fullLink": "See full changelog in [History.md](https://github.com/Luzifer/twitch-bot/blob/master/History.md) on Github",
+      "heading": "Changelog"
+    },
+    "eventlog": {
+      "heading": "Eventlog"
+    },
+    "healthCheck": {
+      "caption": "Checks OK",
+      "header": "Bot-Health"
+    }
+  },
+  "menu": {
+    "headers": {
+      "chatInteraction": "Chat Interaction",
+      "core": "Core",
+      "modules": "Modules"
+    },
+    "autoMessages": "Auto-Messages",
+    "botAuth": "Bot Authorization",
+    "channels": "Channels",
+    "dashboard": "Dashboard",
+    "editors": "Editors",
+    "raffles": "Raffles",
+    "rules": "Rules",
+    "tokens": "Access-Tokens"
+  },
+  "nav": {
+    "signOut": "Sign-Out"
+  }
+}
