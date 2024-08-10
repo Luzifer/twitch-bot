@@ -28,7 +28,7 @@ type (
 	}
 
 	raffle struct {
-		ID uint64 `gorm:"primaryKey" json:"id"`
+		ID uint64 `gorm:"primaryKey" json:"id,string"`
 
 		Channel string       `json:"channel"`
 		Keyword string       `json:"keyword"`
@@ -67,7 +67,7 @@ type (
 	}
 
 	raffleEntry struct {
-		ID       uint64 `gorm:"primaryKey" json:"id"`
+		ID       uint64 `gorm:"primaryKey" json:"id,string"`
 		RaffleID uint64 `gorm:"uniqueIndex:user_per_raffle" json:"-"`
 
 		UserID          string `gorm:"size:128;uniqueIndex:user_per_raffle" json:"userID"`
