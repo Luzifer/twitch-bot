@@ -9,6 +9,29 @@
     ],
     "heading": "Updating Bot-Authorization"
   },
+  "channel": {
+    "btnAdd": "Add Channel",
+    "permissionsAll": "…do all of the above!",
+    "permissionInfoHeader": "Explanation",
+    "permissionIntro": "In order to access non-public information as channel-point redemptions or take actions limited to the channel owner the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!",
+    "permissionIntroBullets": [
+      "Select permissions on the left side",
+      "Copy the URL provided below",
+      "Pass the URL to the channel owner and tell them to open it with their personal account logged in",
+      "The bot will display a message containing the updated account"
+    ],
+    "permissionStart": "For <strong>#{channel}</strong> the bot should be able to&hellip;",
+    "table": {
+      "colChannel": "Channel",
+      "colPermissions": "Permissions",
+      "textPermissions": "{granted} of {avail} granted",
+      "titleAllPermissions": "Bot can use all available extra features",
+      "titleNoPermissions": "Bot can not use features aside of chatting",
+      "titlePartialPermissions": "Bot can use some extra features"
+    },
+    "toastChannelAdded": "Channel added",
+    "toastChannelRemoved": "Channel removed"
+  },
   "dashboard": {
     "activeRaffles": {
       "caption": "Active",

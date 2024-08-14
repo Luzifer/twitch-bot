@@ -114,6 +114,14 @@ const app = createApp({
 
     parseResponseFromJSON(resp: Response): Promise<any> {
       this.check403(resp)
+
+      if (resp.status === 204) {
+        // We can't expect content here
+        return new Promise(resolve => {
+          resolve({})
+        })
+      }
+
       return resp.json()
     },
 
