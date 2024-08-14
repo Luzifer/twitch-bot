@@ -81,6 +81,7 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	msg := &plugins.Rule{}
@@ -119,6 +120,7 @@ func configEditorRulesDelete(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if err := patchConfig(cfg.Config, user, "", "Delete rule", func(c *configFile) error {
@@ -155,6 +157,7 @@ func configEditorRulesUpdate(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	msg := &plugins.Rule{}

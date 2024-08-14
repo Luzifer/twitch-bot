@@ -81,6 +81,7 @@ func configEditorHandleAutoMessageAdd(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	msg := &autoMessage{}
@@ -106,6 +107,7 @@ func configEditorHandleAutoMessageDelete(w http.ResponseWriter, r *http.Request)
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if err := patchConfig(cfg.Config, user, "", "Delete auto-message", func(c *configFile) error {
@@ -142,6 +144,7 @@ func configEditorHandleAutoMessageUpdate(w http.ResponseWriter, r *http.Request)
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	msg := &autoMessage{}

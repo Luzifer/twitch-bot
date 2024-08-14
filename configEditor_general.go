@@ -172,6 +172,7 @@ func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Req
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if err := patchConfig(cfg.Config, user, "", "Delete auth-token", func(cfg *configFile) error {
@@ -234,6 +235,7 @@ func configEditorHandleGeneralUpdate(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		return
 	}
 
 	var payload configEditorGeneralConfig
