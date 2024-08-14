@@ -1,3 +1,10 @@
+# 3.33.1 / 2024-08-14
+
+  * Bugfixes
+    * [core] Fix: Do not execute action after permission check
+    * [editor] Update dependencies
+    * [raffle] Fix: Send ID as string
+
 # 3.33.0 / 2024-07-27
 
   * New Features
