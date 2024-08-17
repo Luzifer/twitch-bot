@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
 import BotAuth from './components/botauth.vue'
+import BotEditors from './components/editors.vue'
 import ChannelOverview from './components/channelOverview.vue'
 import ChannelPermissions from './components/channelPermissions.vue'
 import Dashboard from './components/dashboard.vue'
@@ -35,7 +36,7 @@ const routes = [
     path: '/channels',
   },
   {
-    component: {},
+    component: BotEditors,
     name: 'editors',
     path: '/editors',
   },

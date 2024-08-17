@@ -53,6 +53,11 @@
       "header": "Bot-Health"
     }
   },
+  "editors": {
+    "btnAdd": "Add Editor",
+    "toastEditorAdded": "Editor added",
+    "toastEditorRemoved": "Editor removed"
+  },
   "errors": {
     "loginFailedAccessDenied": "Access denied to this bot instance",
     "loginFailedUnexpectedStatus": "Login failed unexpectedly"
