@@ -177,9 +177,9 @@ const app = createApp({
       })
         .then((resp: Response): any => {
           if (resp.status !== 200) {
-            let errorText = 'Login failed unexpectedly'
+            let errorText = this.$t('errors.loginFailedUnexpectedStatus')
             if (resp.status === 403) {
-              errorText = 'Access denied to this bot instance'
+              errorText = this.$t('errors.loginFailedAccessDenied')
             }
 
             this.bus.emit(BusEventTypes.LoginProcessing, false)

@@ -53,6 +53,10 @@
       "header": "Bot-Health"
     }
   },
+  "errors": {
+    "loginFailedAccessDenied": "Access denied to this bot instance",
+    "loginFailedUnexpectedStatus": "Login failed unexpectedly"
+  },
   "menu": {
     "headers": {
       "chatInteraction": "Chat Interaction",
