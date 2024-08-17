@@ -212,7 +212,6 @@ const app = createApp({
 })
 
 app.config.globalProperties.bus = mitt()
-app.config.globalProperties.$foo = 'bare'
 app.use(i18n)
 app.use(router)
 app.mount('#app')
