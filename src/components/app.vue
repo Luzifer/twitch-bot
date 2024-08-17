@@ -30,7 +30,7 @@ import Toaster from './_toaster.vue'
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  min-height: calc(100vh - 56px);
+  min-height: 100vh;
   min-width: 1;
   padding-left: 225px;
   padding-top: 56px;
