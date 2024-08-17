@@ -6,29 +6,119 @@ import ChannelPermissions from './components/channelPermissions.vue'
 import Dashboard from './components/dashboard.vue'
 
 const routes = [
-  { component: Dashboard, name: 'dashboard', path: '/' },
+  {
+    component: Dashboard,
+    name: 'dashboard',
+    path: '/',
+  },
 
   // General settings
-  { component: BothAuth, name: 'botAuth', path: '/bot-auth' },
-  { component: ChannelOverview, name: 'channels', path: '/channels' },
-  { component: ChannelPermissions, name: 'channelPermissions', path: '/channels/:channel/permissions', props: true },
-  { component: {}, name: 'editors', path: '/editors' },
-  { component: {}, name: 'tokens', path: '/tokens' },
+  {
+    component: BothAuth,
+    name: 'botAuth',
+    path: '/bot-auth',
+  },
+  {
+    children: [
+      {
+        component: ChannelOverview,
+        name: 'channels',
+        path: '',
+      },
+      {
+        component: ChannelPermissions,
+        name: 'channelPermissions',
+        path: ':channel', props: true,
+      },
+    ],
+    path: '/channels',
+  },
+  {
+    component: {},
+    name: 'editors',
+    path: '/editors',
+  },
+  {
+    component: {},
+    name: 'tokens',
+    path: '/tokens',
+  },
 
   // Auto-Messages
-  { component: {}, name: 'autoMessagesList', path: '/auto-messages' },
-  { component: {}, name: 'autoMessageEdit', path: '/auto-messages/edit/:id' },
-  { component: {}, name: 'autoMessageNew', path: '/auto-messages/new' },
+  {
+    children: [
+      {
+        component: {},
+        name: 'autoMessagesList',
+        path: '',
+      },
+      {
+        component: {},
+        name: 'autoMessageEdit',
+        path: ':id',
+      },
+      {
+        component: {},
+        name: 'autoMessageNew',
+        path: 'new',
+      },
+    ],
+    path: '/auto-messages',
+  },
 
   // Rules
-  { component: {}, name: 'rulesList', path: '/rules' },
-  { component: {}, name: 'rulesEdit', path: '/rules/edit/:id' },
-  { component: {}, name: 'rulesNew', path: '/rules/new' },
+  {
+    children: [
+      {
+        component: {},
+        name: 'rulesList',
+        path: '',
+      },
+      {
+        component: {},
+        name: 'rulesEdit',
+        path: ':id',
+      },
+      {
+        component: {},
+        name: 'rulesNew',
+        path: 'new',
+      },
+    ],
+    path: '/rules',
+  },
 
   // Raffles
-  { component: {}, name: 'rafflesList', path: '/raffles' },
-  { component: {}, name: 'rafflesEdit', path: '/raffles/edit/:id' },
-  { component: {}, name: 'rafflesNew', path: '/raffles/new' },
+  {
+    children: [
+      {
+        component: {},
+        name: 'rafflesList',
+        path: '',
+      },
+      {
+        children: [
+          {
+            component: {},
+            name: 'rafflesEdit',
+            path: '',
+          },
+          {
+            component: {},
+            name: 'raffleEntries',
+            path: 'entries',
+          },
+        ],
+        path: ':id',
+      },
+      {
+        component: {},
+        name: 'rafflesNew',
+        path: 'new',
+      },
+    ],
+    path: '/raffles',
+  },
 ] as RouteRecordRaw[]
 
 const router = createRouter({
