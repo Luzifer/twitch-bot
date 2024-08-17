@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 
-import BothAuth from './components/botauth.vue'
+import BotAuth from './components/botauth.vue'
 import ChannelOverview from './components/channelOverview.vue'
 import ChannelPermissions from './components/channelPermissions.vue'
 import Dashboard from './components/dashboard.vue'
@@ -14,7 +14,7 @@ const routes = [
 
   // General settings
   {
-    component: BothAuth,
+    component: BotAuth,
     name: 'botAuth',
     path: '/bot-auth',
   },
@@ -28,7 +28,8 @@ const routes = [
       {
         component: ChannelPermissions,
         name: 'channelPermissions',
-        path: ':channel', props: true,
+        path: ':channel',
+        props: true,
       },
     ],
     path: '/channels',
