@@ -345,11 +345,11 @@ const app = createApp({
     handleKoFiDonation(eventId, data, time) {
       let text
       if (data.isSubscription && data.isFirstSubPayment) {
-        text = `${data.from} just started a monthly subscription of ${Number(data.amount).toFixed(2)}€`
+        text = `${data.from} just started a monthly subscription of ${Number(data.amount).toFixed(2)} ${data.currency}`
       } else if (data.isSubscription && !data.isFirstSubPayment) {
-        text = `${data.from} continued their monthly subscription of ${Number(data.amount).toFixed(2)}€`
+        text = `${data.from} continued their monthly subscription of ${Number(data.amount).toFixed(2)} ${data.currency}`
       } else {
-        text = `${data.from} just donated ${Number(data.amount).toFixed(2)}€`
+        text = `${data.from} just donated ${Number(data.amount).toFixed(2)} ${data.currency}`
       }
 
       this.addEvent({
