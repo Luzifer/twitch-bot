@@ -1,3 +1,10 @@
+# 3.33.2 / 2024-08-27
+
+  * Bugfixes
+    * [overlays] Fix KoFi donation currency in eventfeed
+    * [raffle] Lint: Ignore linter false-positive
+    * [CI] Lint: Replace deprecated linter
+
 # 3.33.1 / 2024-08-14
 
   * Bugfixes
