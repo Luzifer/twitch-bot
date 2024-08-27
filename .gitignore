@@ -11,8 +11,8 @@ hugo_*
 .hugo_build.lock
 node_modules
 .rendered-docs
-src/components/_template.vue
 storage.db
 storage.db-journal
 storage.json.gz
+_template.vue
 twitch-bot
