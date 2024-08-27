@@ -57,7 +57,7 @@ func (cryptRandSrc) Int63() int64 {
 		return -1
 	}
 	// mask off sign bit to ensure positive number
-	return int64(binary.LittleEndian.Uint64(b[:]) & (1<<63 - 1))
+	return int64(binary.LittleEndian.Uint64(b[:]) & (1<<63 - 1)) //#nosec:G115 - Masking ensures conversion is fine
 }
 
 // We're using a non-seedable source
