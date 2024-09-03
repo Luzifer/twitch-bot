@@ -25,6 +25,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/linkdetector"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/linkprotect"
 	logActor "github.com/Luzifer/twitch-bot/v3/internal/actors/log"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/marker"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/messagehook"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/nuke"
@@ -78,6 +79,7 @@ var (
 		linkdetector.Register,
 		linkprotect.Register,
 		logActor.Register,
+		marker.Register,
 		messagehook.Register,
 		modchannel.Register,
 		nuke.Register,

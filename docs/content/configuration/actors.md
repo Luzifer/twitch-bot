@@ -84,6 +84,23 @@ Triggers the creation of a Clip from the given channel owned by the creator (sub
     add_delay: false
 ```
 
+## Create Marker
+
+Creates a marker on the currently running stream of the given channel. The marker will be created on behalf of the channel owner and requires matching scope.
+
+```yaml
+- type: marker
+  attributes:
+    # Channel to create the marker in, defaults to the channel of the event / message
+    # Optional: true
+    # Type:     string (Supports Templating)
+    channel: ""
+    # Description of the marker to create (up to 140 chars)
+    # Optional: true
+    # Type:     string (Supports Templating)
+    description: ""
+```
+
 ## Custom Event
 
 Create a custom event

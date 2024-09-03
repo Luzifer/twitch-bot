@@ -5,7 +5,7 @@ import "github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 var (
 	channelExtendedScopes = map[string]string{
 		twitch.ScopeChannelEditCommercial:        "run commercial",
-		twitch.ScopeChannelManageBroadcast:       "modify category / title",
+		twitch.ScopeChannelManageBroadcast:       "modify category / title, create markers",
 		twitch.ScopeChannelManagePolls:           "manage polls",
 		twitch.ScopeChannelManagePredictions:     "manage predictions",
 		twitch.ScopeChannelManageRaids:           "start raids",

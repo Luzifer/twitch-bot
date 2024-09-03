@@ -1,7 +1,9 @@
 package twitch
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -32,6 +34,40 @@ type (
 // ErrNoStreamsFound allows to differntiate between an HTTP error and
 // the fact there just is no stream found
 var ErrNoStreamsFound = errors.New("no streams found")
+
+// CreateStreamMarker creates a marker for the currently running stream.
+// The stream must be live, no VoD, no upload and no re-run.
+// The description may be up to 140 chars and can be omitted.
+func (c *Client) CreateStreamMarker(ctx context.Context, description string) (err error) {
+	body := new(bytes.Buffer)
+
+	userID, _, err := c.GetAuthorizedUser(ctx)
+	if err != nil {
+		return fmt.Errorf("getting ID for current user: %w", err)
+	}
+
+	if err = json.NewEncoder(body).Encode(struct {
+		UserID      string `json:"user_id"`
+		Description string `json:"description,omitempty"`
+	}{
+		UserID:      userID,
+		Description: description,
+	}); err != nil {
+		return fmt.Errorf("encoding payload: %w", err)
+	}
+
+	if err := c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Body:     body,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		URL:      "https://api.twitch.tv/helix/streams/markers",
+	}); err != nil {
+		return fmt.Errorf("creating marker: %w", err)
+	}
+
+	return nil
+}
 
 // GetCurrentStreamInfo returns the StreamInfo of the currently running
 // stream of the given username
