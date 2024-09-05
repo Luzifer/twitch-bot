@@ -2,16 +2,14 @@ package linkcheck
 
 import (
 	"context"
-	"crypto/rand"
-	_ "embed"
 	"io"
-	"math/big"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -30,6 +28,8 @@ type (
 	resolver struct {
 		resolverC      chan resolverQueueEntry
 		skipValidation bool
+
+		t *testing.T
 	}
 
 	resolverQueueEntry struct {
@@ -40,19 +40,11 @@ type (
 )
 
 var (
-	defaultUserAgents = []string{}
-	linkTest          = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
-	numericHost       = regexp.MustCompile(`^(?:[0-9]+\.)*[0-9]+(?::[0-9]+)?$`)
-
-	//go:embed user-agents.txt
-	uaList string
+	linkTest    = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
+	numericHost = regexp.MustCompile(`^(?:[0-9]+\.)*[0-9]+(?::[0-9]+)?$`)
 
 	defaultResolver = newResolver(resolverPoolSize)
 )
-
-func init() {
-	defaultUserAgents = strings.Split(strings.TrimSpace(uaList), "\n")
-}
 
 func newResolver(poolSize int, opts ...func(*resolver)) *resolver {
 	r := &resolver{
@@ -74,6 +66,10 @@ func withSkipVerify() func(*resolver) {
 	return func(r *resolver) { r.skipValidation = true }
 }
 
+func withTesting(t *testing.T) func(*resolver) {
+	return func(r *resolver) { r.t = t }
+}
+
 func (r resolver) Resolve(qe resolverQueueEntry) {
 	qe.WaitGroup.Add(1)
 	r.resolverC <- qe
@@ -87,8 +83,8 @@ func (resolver) getJar() *cookiejar.Jar {
 // resolveFinal takes a link and looks up the final destination of
 // that link after all redirects were followed
 //
-//nolint:gocyclo
-func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack *stack, userAgent string) string {
+//nolint:funlen,gocyclo
+func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack *stack) string {
 	if !linkTest.MatchString(link) && !r.skipValidation {
 		return ""
 	}
@@ -131,12 +127,19 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 	// Sanitize host: Trailing dots are valid but not required
 	u.Host = strings.TrimRight(u.Host, ".")
 
+	if r.t != nil {
+		r.t.Logf("resolving link: link=%q jar_c=%#v stack_c=%d stack_h=%d",
+			link, len(cookieJar.Cookies(u)), callStack.Count(link), callStack.Height())
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return ""
 	}
 
-	req.Header.Set("User-Agent", userAgent)
+	for k, v := range generateUserAgentHeaders() {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -156,7 +159,7 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 		}
 		target := r.resolveReference(u, tu)
 		callStack.Visit(link)
-		return r.resolveFinal(target, cookieJar, callStack, userAgent)
+		return r.resolveFinal(target, cookieJar, callStack)
 	}
 
 	// We got a response, it's no redirect, lets check for in-document stuff
@@ -173,14 +176,14 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 		}
 		target := r.resolveReference(u, tu)
 		callStack.Visit(link)
-		return r.resolveFinal(target, cookieJar, callStack, userAgent)
+		return r.resolveFinal(target, cookieJar, callStack)
 	}
 
 	if resp.Header.Get("Set-Cookie") != "" {
 		// A new cookie was set, lets refresh the page once to see if stuff
 		// changes with that new cookie
 		callStack.Visit(link)
-		return r.resolveFinal(u.String(), cookieJar, callStack, userAgent)
+		return r.resolveFinal(u.String(), cookieJar, callStack)
 	}
 
 	// We had no in-document redirects: we count this as a success
@@ -226,14 +229,9 @@ func (resolver) resolveReference(origin *url.URL, loc *url.URL) string {
 
 func (r resolver) runResolver() {
 	for qe := range r.resolverC {
-		if link := r.resolveFinal(qe.Link, r.getJar(), &stack{}, r.userAgent()); link != "" {
+		if link := r.resolveFinal(qe.Link, r.getJar(), &stack{}); link != "" {
 			qe.Callback(link)
 		}
 		qe.WaitGroup.Done()
 	}
-}
-
-func (resolver) userAgent() string {
-	n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(defaultUserAgents))))
-	return defaultUserAgents[n.Int64()]
 }

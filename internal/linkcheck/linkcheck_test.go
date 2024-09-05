@@ -57,13 +57,12 @@ func TestScanForLinks(t *testing.T) {
 		t.SkipNow()
 	}
 
-	c := New()
-
 	for _, testCase := range []struct {
 		Heuristic        bool
 		Message          string
 		ExpectedLinks    []string
 		ExpectedContains bool
+		TraceStack       bool
 	}{
 		// Case: full URL is present in the message
 		{
@@ -183,6 +182,13 @@ func TestScanForLinks(t *testing.T) {
 		{Heuristic: false, Message: "Hey btw. es kann sein, dass", ExpectedLinks: nil},
 	} {
 		t.Run(fmt.Sprintf("h:%v lc:%d m:%s", testCase.Heuristic, len(testCase.ExpectedLinks), testCase.Message), func(t *testing.T) {
+			var c *Checker
+			if testCase.TraceStack {
+				c = New(withResolver(newResolver(resolverPoolSize, withTesting(t))))
+			} else {
+				c = New()
+			}
+
 			var linksFound []string
 			if testCase.Heuristic {
 				linksFound = c.HeuristicScanForLinks(testCase.Message)
@@ -208,24 +214,4 @@ func TestScanForLinks(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestUserAgentListNotEmpty(t *testing.T) {
-	if len(defaultUserAgents) == 0 {
-		t.Fatal("found empty user-agent list")
-	}
-}
-
-func TestUserAgentRandomizer(t *testing.T) {
-	uas := map[string]int{}
-
-	for i := 0; i < 10; i++ {
-		uas[defaultResolver.userAgent()]++
-	}
-
-	for _, c := range uas {
-		assert.Less(t, c, 10)
-	}
-
-	assert.Equal(t, 0, uas[""]) // there should be no empty UA
 }

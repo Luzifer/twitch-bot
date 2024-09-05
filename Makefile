@@ -40,9 +40,10 @@ node_modules:
 
 # --- Tools
 
-update_ua_list:
-	# User-Agents provided by https://www.useragents.me/
-	curl -sSf https://www.useragents.me/api | jq -r '.data[].ua' | grep -v 'Trident' >internal/linkcheck/user-agents.txt
+update-chrome-major:
+	sed -i -E \
+		's/chromeMajor = [0-9]+/chromeMajor = $(shell curl -sSf https://lv.luzifer.io/v1/catalog/google-chrome/stable/version | cut -d '.' -f 1)/' \
+		internal/linkcheck/useragent.go
 
 gh-workflow:
 	bash ci/create-workflow.sh
