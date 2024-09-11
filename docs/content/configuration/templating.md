@@ -165,6 +165,19 @@ Example:
 * 1 6
 ```
 
+### `currentVOD`
+
+Returns the VOD of the currently running stream in the given channel (causes an error if no current stream / VOD is found)
+
+Syntax: `currentVOD <username>`
+
+Example:
+
+```
+# {{ currentVOD .channel }}
+* https://www.twitch.tv/videos/123456789
+```
+
 ### `displayName`
 
 Returns the display name the specified user set for themselves
@@ -467,7 +480,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 41%
+< Your int this hour: 23%
 ```
 
 ### `spotifyCurrentPlaying`

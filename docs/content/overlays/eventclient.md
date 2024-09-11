@@ -116,7 +116,7 @@ SocketMessage received for every event and passed to the new `(eventObj) => { ..
 
 | Name | Type | Description |
 | --- | --- | --- |
-| [event_id] | <code>Number</code> | UID of the event used to re-trigger an event |
+| [event_id] | <code>String</code> | UID of the event used to re-trigger an event |
 | [is_live] | <code>Boolean</code> | Whether the event was sent through a replay (false) or occurred live (true) |
 | [reason] | <code>String</code> | Reason of this message (one of `bulk-replay`, `live-event`, `single-replay`) |
 | [time] | <code>String</code> | RFC3339 timestamp of the event |
