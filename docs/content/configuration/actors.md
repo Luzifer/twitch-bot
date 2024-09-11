@@ -86,7 +86,7 @@ Triggers the creation of a Clip from the given channel owned by the creator (sub
 
 ## Create Marker
 
-Creates a marker on the currently running stream of the given channel. The marker will be created on behalf of the channel owner and requires matching scope.
+Creates a marker on the currently running stream of the given channel. The marker will be created on behalf of the channel owner and requires matching scope. (Subsequent actions can use variable `marker` to access marker details.)
 
 ```yaml
 - type: marker

@@ -31,7 +31,7 @@ func Register(args plugins.RegistrationArguments) error {
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })
 
 	args.RegisterActorDocumentation(plugins.ActionDocumentation{
-		Description: "Creates a marker on the currently running stream of the given channel. The marker will be created on behalf of the channel owner and requires matching scope.",
+		Description: "Creates a marker on the currently running stream of the given channel. The marker will be created on behalf of the channel owner and requires matching scope. (Subsequent actions can use variable `marker` to access marker details.)",
 		Name:        "Create Marker",
 		Type:        actorName,
 		Fields: []plugins.ActionDocumentationField{
@@ -86,9 +86,12 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		return false, fmt.Errorf("getting Twitch client for %q: %w", channel, err)
 	}
 
-	if err = tc.CreateStreamMarker(context.TODO(), description); err != nil {
+	var marker twitch.StreamMarkerInfo
+	if marker, err = tc.CreateStreamMarker(context.TODO(), description); err != nil {
 		return false, fmt.Errorf("creating marker: %w", err)
 	}
+
+	eventData.Set("marker", marker)
 
 	return false, nil
 }
