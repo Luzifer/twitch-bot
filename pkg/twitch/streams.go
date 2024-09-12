@@ -32,7 +32,7 @@ type (
 
 	// StreamMarkerInfo contains information about a marker on a stream
 	StreamMarkerInfo struct {
-		ID              int64     `json:"id"`
+		ID              string    `json:"id"`
 		CreatedAt       time.Time `json:"created_at"`
 		Description     string    `json:"description"`
 		PositionSeconds int64     `json:"position_seconds"`
