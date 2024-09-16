@@ -1,3 +1,12 @@
+# 3.34.0 / 2024-09-16
+
+  * New Features
+    * [marker] Implement actor to create stream markers
+    * [templating] Add `currentVOD` function
+
+  * Bugfixes
+    * [linkcheck] Fix: Replace static (deprecated) user-agent list
+
 # 3.33.2 / 2024-08-27
 
   * Bugfixes
