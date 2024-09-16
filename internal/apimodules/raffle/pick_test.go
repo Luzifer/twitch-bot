@@ -18,23 +18,23 @@ func testGenerateRaffe() raffle {
 	}
 
 	// Now lets generate 132 non-followers taking part
-	for i := 0; i < 132; i++ {
-		r.Entries = append(r.Entries, raffleEntry{ID: uint64(i), Multiplier: 1})
+	for i := uint64(0); i < 132; i++ {
+		r.Entries = append(r.Entries, raffleEntry{ID: i, Multiplier: 1})
 	}
 
 	// Now lets generate 500 followers taking part
-	for i := 0; i < 500; i++ {
-		r.Entries = append(r.Entries, raffleEntry{ID: 10000 + uint64(i), Multiplier: r.MultiFollower})
+	for i := uint64(0); i < 500; i++ {
+		r.Entries = append(r.Entries, raffleEntry{ID: 10000 + i, Multiplier: r.MultiFollower})
 	}
 
 	// Now lets generate 200 subscribers taking part
-	for i := 0; i < 200; i++ {
-		r.Entries = append(r.Entries, raffleEntry{ID: 20000 + uint64(i), Multiplier: r.MultiSubscriber})
+	for i := uint64(0); i < 200; i++ {
+		r.Entries = append(r.Entries, raffleEntry{ID: 20000 + i, Multiplier: r.MultiSubscriber})
 	}
 
 	// Now lets generate 5 VIPs taking part
-	for i := 0; i < 5; i++ {
-		r.Entries = append(r.Entries, raffleEntry{ID: 30000 + uint64(i), Multiplier: r.MultiVIP})
+	for i := uint64(0); i < 5; i++ {
+		r.Entries = append(r.Entries, raffleEntry{ID: 30000 + i, Multiplier: r.MultiVIP})
 	}
 
 	// They didn't join in order so lets shuffle them
