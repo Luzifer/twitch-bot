@@ -78,7 +78,7 @@ func registerEditorAutoMessageRoutes() {
 }
 
 func configEditorHandleAutoMessageAdd(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -104,7 +104,7 @@ func configEditorHandleAutoMessageAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorHandleAutoMessageDelete(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -141,7 +141,7 @@ func configEditorHandleAutoMessagesGet(w http.ResponseWriter, _ *http.Request) {
 }
 
 func configEditorHandleAutoMessageUpdate(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, err := getAuthorizationFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return

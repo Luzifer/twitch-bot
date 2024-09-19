@@ -1,21 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
-
-	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
+	"strings"
 )
 
-func getAuthorizationFromRequest(r *http.Request) (string, *twitch.Client, error) {
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		return "", nil, errors.New("no authorization provided")
+func getAuthorizationFromRequest(r *http.Request) (string, error) {
+	_, token, hadPrefix := strings.Cut(r.Header.Get("Authorization"), " ")
+	if !hadPrefix {
+		return "", fmt.Errorf("no authorization provided")
 	}
 
-	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, token, "")
+	_, user, _, _, err := editorTokenService.ValidateLoginToken(token) //nolint:dogsled // Required at other places
+	if err != nil {
+		return "", fmt.Errorf("getting authorized user: %w", err)
+	}
 
-	_, user, err := tc.GetAuthorizedUser(r.Context())
-	return user, tc, errors.Wrap(err, "getting authorized user")
+	if user == "" {
+		user = "API-User"
+	}
+
+	return user, nil
 }
