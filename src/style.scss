@@ -1,0 +1,17 @@
+* {
+  -webkit-user-drag: none !important;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+.nav-link.router-link-active {
+  font-weight: bold;
+}
+
+.user-select-text {
+  user-select: text !important;
+}

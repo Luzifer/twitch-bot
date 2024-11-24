@@ -24,6 +24,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
+	"github.com/Luzifer/twitch-bot/v3/internal/service/editortoken"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/timer"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -68,10 +69,11 @@ var (
 
 	runID = uuid.Must(uuid.NewV4()).String()
 
-	db            database.Connector
-	accessService *access.Service
-	authService   *authcache.Service
-	timerService  *timer.Service
+	db                 database.Connector
+	accessService      *access.Service
+	authService        *authcache.Service
+	editorTokenService *editortoken.Service
+	timerService       *timer.Service
 
 	twitchClient *twitch.Client
 
@@ -136,11 +138,12 @@ func main() {
 	}
 
 	authService = authcache.New(
-		authBackendInternalToken,
-		authBackendTwitchToken,
+		authBackendInternalAppToken,
+		authBackendInternalEditorToken,
 	)
 
 	cronService = cron.New(cron.WithSeconds())
+	editorTokenService = editortoken.New(db)
 
 	if timerService, err = timer.New(db, cronService); err != nil {
 		log.WithError(err).Fatal("applying timer migration")

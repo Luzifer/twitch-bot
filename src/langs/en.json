@@ -1,0 +1,83 @@
+{
+  "botauth": {
+    "description": "Here you can manage your bots auth-token: it's required to communicate with Twitch Chat and APIs. The access will be valid as long as you don't change the password or revoke the apps permission in your bot account.",
+    "directives": [
+      "Copy the URL provided below",
+      "Open an incognito-tab or different browser, you are not logged into Twitch or are logged in with your bot account",
+      "Open the copied URL, sign in with the bot account and accept the permissions",
+      "You will see a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten."
+    ],
+    "heading": "Updating Bot-Authorization"
+  },
+  "channel": {
+    "btnAdd": "Add Channel",
+    "permissionsAll": "…do all of the above!",
+    "permissionInfoHeader": "Explanation",
+    "permissionIntro": "In order to access non-public information as channel-point redemptions or take actions limited to the channel owner the bot needs additional permissions. The <strong>owner</strong> of the channel needs to grant those!",
+    "permissionIntroBullets": [
+      "Select permissions on the left side",
+      "Copy the URL provided below",
+      "Pass the URL to the channel owner and tell them to open it with their personal account logged in",
+      "The bot will display a message containing the updated account"
+    ],
+    "permissionStart": "For <strong>#{channel}</strong> the bot should be able to&hellip;",
+    "table": {
+      "colChannel": "Channel",
+      "colPermissions": "Permissions",
+      "textPermissions": "{granted} of {avail} granted",
+      "titleAllPermissions": "Bot can use all available extra features",
+      "titleNoPermissions": "Bot can not use features aside of chatting",
+      "titlePartialPermissions": "Bot can use some extra features"
+    },
+    "toastChannelAdded": "Channel added",
+    "toastChannelRemoved": "Channel removed"
+  },
+  "dashboard": {
+    "activeRaffles": {
+      "caption": "Active",
+      "header": "Raffles"
+    },
+    "botScopes": {
+      "caption": "Missing Scopes",
+      "header": "Bot-Scopes"
+    },
+    "changelog": {
+      "fullLink": "See full changelog in [History.md](https://github.com/Luzifer/twitch-bot/blob/master/History.md) on Github",
+      "heading": "Changelog"
+    },
+    "eventlog": {
+      "heading": "Eventlog"
+    },
+    "healthCheck": {
+      "caption": "Checks OK",
+      "header": "Bot-Health"
+    }
+  },
+  "editors": {
+    "btnAdd": "Add Editor",
+    "toastEditorAdded": "Editor added",
+    "toastEditorRemoved": "Editor removed"
+  },
+  "errors": {
+    "loginFailedAccessDenied": "Access denied to this bot instance",
+    "loginFailedUnexpectedStatus": "Login failed unexpectedly"
+  },
+  "menu": {
+    "headers": {
+      "chatInteraction": "Chat Interaction",
+      "core": "Core",
+      "modules": "Modules"
+    },
+    "autoMessages": "Auto-Messages",
+    "botAuth": "Bot Authorization",
+    "channels": "Channels",
+    "dashboard": "Dashboard",
+    "editors": "Editors",
+    "raffles": "Raffles",
+    "rules": "Rules",
+    "tokens": "Access-Tokens"
+  },
+  "nav": {
+    "signOut": "Sign-Out"
+  }
+}
