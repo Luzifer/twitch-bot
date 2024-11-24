@@ -2,6 +2,9 @@
 package date
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -24,6 +27,38 @@ func Register(args plugins.RegistrationArguments) error {
 		Example: &plugins.TemplateFuncDocumentationExample{
 			Template:       `{{ humanDateDiff (mustToDate "2006-01-02 -0700" "2024-05-05 +0200") (mustToDate "2006-01-02 -0700" "2023-01-09 +0100") | formatHumanDateDiff "%Y years, %M months, %D days" }}`,
 			ExpectedOutput: "01 years, 03 months, 25 days",
+		},
+	})
+
+	args.RegisterTemplateFunction("parseDuration", plugins.GenericTemplateFunctionGetter(func(duration string) (time.Duration, error) {
+		d, err := time.ParseDuration(duration)
+		if err != nil {
+			return 0, fmt.Errorf("parsing duration: %w", err)
+		}
+
+		return d, nil
+	}), plugins.TemplateFuncDocumentation{
+		Description: `Parses a duration (i.e. 1h25m10s) into a time.Duration`,
+		Syntax:      "parseDuration <duration>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:       `{{ parseDuration "1h30s" }}`,
+			ExpectedOutput: "1h0m30s",
+		},
+	})
+
+	args.RegisterTemplateFunction("parseDurationToSeconds", plugins.GenericTemplateFunctionGetter(func(duration string) (int64, error) {
+		d, err := time.ParseDuration(duration)
+		if err != nil {
+			return 0, fmt.Errorf("parsing duration: %w", err)
+		}
+
+		return int64(d / time.Second), nil
+	}), plugins.TemplateFuncDocumentation{
+		Description: `Parses a duration (i.e. 1h25m10s) into a number of seconds`,
+		Syntax:      "parseDurationToSeconds <duration>",
+		Example: &plugins.TemplateFuncDocumentationExample{
+			Template:       `{{ parseDurationToSeconds "1h25m10s" }}`,
+			ExpectedOutput: "5110",
 		},
 	})
 
