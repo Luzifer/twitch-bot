@@ -1,3 +1,11 @@
+# 3.35.0 / 2024-12-02
+
+  * New Features
+    * [template] Add functions `parseDuration`, `parseDurationToSeconds`
+
+  * Bugfixes
+    * [raffle] Fix: Raffle channel did not allow underscore in channel name
+
 # 3.34.0 / 2024-09-16
 
   * New Features
