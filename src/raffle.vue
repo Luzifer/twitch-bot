@@ -1127,7 +1127,7 @@ export default {
     },
 
     validateRaffleChannel() {
-      if (!/^[a-zA-Z0-9]{4,25}$/.test(this.models.raffle.channel)) {
+      if (!constants.REGEXP_USER.test(this.models.raffle.channel)) {
         return false
       }
       return null
