@@ -36,7 +36,7 @@ func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category,
 
 	for {
 		if err := c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
+			AuthType: AuthTypeAppAccessToken,
 			Method:   http.MethodGet,
 			OKStatus: http.StatusOK,
 			Out:      &resp,
