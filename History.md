@@ -1,3 +1,10 @@
+# 3.35.1 / 2024-12-12
+
+  * Bugfixes
+    * [core] Fix: Reduce token requirements for category search
+    * Update node dependencies
+    * Update Go dependencies
+
 # 3.35.0 / 2024-12-02
 
   * New Features
