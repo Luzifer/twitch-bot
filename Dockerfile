@@ -10,7 +10,6 @@ RUN set -ex \
  && pacman -Syy --noconfirm \
       curl \
       git \
-      git-lfs \
       go \
       make \
       nodejs-lts-jod \
