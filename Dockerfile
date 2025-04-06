@@ -13,7 +13,7 @@ RUN set -ex \
       git-lfs \
       go \
       make \
-      nodejs-lts-hydrogen \
+      nodejs-lts-jod \
       npm \
  && git config --global --add safe.directory /go/src/twitch-bot \
  && make node_modules frontend_prod \
