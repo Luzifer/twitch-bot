@@ -8,10 +8,10 @@ permissions:
 
 jobs:
   test:
-    defaults: &runDefaults
+    defaults:
       run:
         shell: bash
-    container: &archEnvContainer
+    container:
       image: luzifer/gh-arch-env
       env:
         CGO_ENABLED: 0
@@ -33,8 +33,14 @@ jobs:
   doc-generator:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     permissions:
       contents: read
       pages: write
@@ -59,7 +65,9 @@ jobs:
   docker-publish:
     if: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' }}
     needs: [test]
-    defaults: *runDefaults
+    defaults:
+      run:
+        shell: bash
     permissions:
       packages: write
     runs-on: ubuntu-latest
@@ -79,8 +87,14 @@ jobs:
   integration-crdb:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     runs-on: ubuntu-latest
     services:
       crdb:
@@ -120,8 +134,14 @@ jobs:
   integration-mariadb:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     runs-on: ubuntu-latest
     services:
       mariadb:
@@ -160,8 +180,14 @@ jobs:
   integration-mysql:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -198,8 +224,14 @@ jobs:
   integration-postgres:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -233,8 +265,14 @@ jobs:
   release:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [test]
-    defaults: *runDefaults
-    container: *archEnvContainer
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: luzifer/gh-arch-env
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
     permissions:
       contents: write
     runs-on: ubuntu-latest
