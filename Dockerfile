@@ -1,4 +1,4 @@
-FROM luzifer/archlinux@sha256:f1451af5b77cc918b548ead62dba0e31135e6b8c3b0c6914e769dfbcc766ea86 as builder
+FROM golang:1.24-alpine AS builder
 
 COPY . /go/src/twitch-bot
 WORKDIR /go/src/twitch-bot
@@ -7,12 +7,11 @@ ENV CGO_ENABLED=0 \
     GOPATH=/go
 
 RUN set -ex \
- && pacman -Syy --noconfirm \
+ && apk --no-cache add \
       curl \
       git \
-      go \
       make \
-      nodejs-lts-jod \
+      nodejs \
       npm \
  && git config --global --add safe.directory /go/src/twitch-bot \
  && make node_modules frontend_prod \
@@ -25,7 +24,12 @@ RUN set -ex \
 
 FROM alpine:3.21@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
 
-LABEL maintainer "Knut Ahlers <knut@ahlers.me>"
+LABEL org.opencontainers.image.authors="Knut Ahlers <knut@ahlers.me>" \
+      org.opencontainers.image.url="https://github.com/users/Luzifer/packages/container/package/twitch-bot" \
+      org.opencontainers.image.documentation="https://luzifer.github.io/twitch-bot/" \
+      org.opencontainers.image.source="https://github.com/Luzifer/twitch-bot" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.title="Self-hosted alternative to one of the big Twitch bots managed by big companies"
 
 ENV CONFIG=/data/config.yaml \
     STORAGE_CONN_STRING=/data/store.db
