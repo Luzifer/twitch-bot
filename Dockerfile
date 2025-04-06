@@ -23,7 +23,7 @@ RUN set -ex \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
 
 
-FROM alpine:latest
+FROM alpine:3.21
 
 LABEL maintainer "Knut Ahlers <knut@ahlers.me>"
 
