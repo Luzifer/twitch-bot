@@ -1,3 +1,15 @@
+# 3.35.3 / 2025-04-06
+
+  * Bugfixes
+    * Update Font Awesome to v6.7.2
+    * Update dependency go to v1.24.2
+    * Update module golang.org/x/crypto to v0.37.0
+    * Update dependency eslint-plugin-vue to v9.33.0
+    * Update dependency eslint to v8.57.1
+    * Update dependency @babel/eslint-parser to v7.27.0
+    * Update dependency esbuild to ^0.25.0 [SECURITY]
+    * CI: Switch to alpine based build image, add image labels
+
 # 3.35.2 / 2025-04-06
 
   * Bugfixes
