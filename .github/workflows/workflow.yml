@@ -99,7 +99,7 @@ jobs:
     services:
       crdb:
         image: luzifer/crdb-gh-service@sha256:d25372d1c7f95f1c75e8d4988c094f3a9f57c3474901a4b731de083a377e5c1b
-        options: >
+        options: >-
           --health-cmd "curl -sSf http://localhost:8080/health"
           --health-interval 10s
           --health-retries 5
@@ -150,7 +150,7 @@ jobs:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
           MYSQL_USER: twitch-bot
-        options: >
+        options: >-
           --health-cmd "healthcheck.sh
           --connect
           --innodb_initialized"
@@ -196,7 +196,7 @@ jobs:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
           MYSQL_USER: twitch-bot
-        options: >
+        options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 10s
           --health-retries 5
@@ -238,7 +238,7 @@ jobs:
         image: postgres:15@sha256:9e9298817d19f4bd60c5028a25762b394db37dda173dd3d035a1bc155542051a
         env:
           POSTGRES_PASSWORD: twitch-bot-pass
-        options: >
+        options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-retries 5
