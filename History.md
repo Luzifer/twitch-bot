@@ -1,3 +1,10 @@
+# 3.35.2 / 2025-04-06
+
+  * Bugfixes
+    * Update Go & Node dependencies
+    * Fix: Replace nodejs LTS version
+    * Lint: Migrate linter config, use local linter, fix issues
+
 # 3.35.1 / 2024-12-12
 
   * Bugfixes
