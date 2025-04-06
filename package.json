@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "@babel/eslint-parser": "7.22.5",
+    "@babel/eslint-parser": "7.27.0",
     "esbuild": "^0.25.0",
     "esbuild-vue": "1.2.2",
     "eslint": "8.36.0",
