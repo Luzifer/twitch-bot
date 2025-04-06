@@ -286,10 +286,6 @@ jobs:
         run: make publish
       - name: Extract changelog
         run: awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md
-      - name: Update stable branch
-        run: |
-          git branch -f stable ${GITHUB_SHA}
-          git push -f origin stable
       - name: Release
         uses: ncipollo/release-action@440c8c1cb0ed28b9f43e4d1d670870f059653174 # v1
         with:
