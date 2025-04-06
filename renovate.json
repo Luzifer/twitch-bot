@@ -1,0 +1,6 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "https://git.luzifer.io/luzifer/renovate-config/raw/branch/master/default.json"
+  ]
+}

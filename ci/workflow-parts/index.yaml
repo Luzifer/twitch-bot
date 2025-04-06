@@ -1,7 +1,0 @@
-name: CI Workflow
-on: push
-
-permissions:
-  contents: read
-
-jobs: {}

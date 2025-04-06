@@ -69,9 +69,6 @@ update-chrome-major: ## Patch latest Chrome major version into linkcheck
 		's/chromeMajor = [0-9]+/chromeMajor = $(shell curl -sSf https://lv.luzifer.io/v1/catalog/google-chrome/stable/version | cut -d '.' -f 1)/' \
 		internal/linkcheck/useragent.go
 
-gh-workflow: ## Regenerate CI workflow
-	bash ci/create-workflow.sh
-
 ##@ Vulnerability scanning
 
 trivy: ## Run Trivy against the code
