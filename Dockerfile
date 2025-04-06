@@ -1,4 +1,4 @@
-FROM luzifer/archlinux as builder
+FROM luzifer/archlinux@sha256:f1451af5b77cc918b548ead62dba0e31135e6b8c3b0c6914e769dfbcc766ea86 as builder
 
 COPY . /go/src/twitch-bot
 WORKDIR /go/src/twitch-bot
@@ -23,7 +23,7 @@ RUN set -ex \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
 
 
-FROM alpine:3.21
+FROM alpine:3.21@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
 
 LABEL maintainer "Knut Ahlers <knut@ahlers.me>"
 
