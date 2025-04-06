@@ -83,7 +83,7 @@ func (resolver) getJar() *cookiejar.Jar {
 // resolveFinal takes a link and looks up the final destination of
 // that link after all redirects were followed
 //
-//nolint:funlen,gocyclo
+//nolint:gocyclo
 func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack *stack) string {
 	if !linkTest.MatchString(link) && !r.skipValidation {
 		return ""

@@ -181,7 +181,7 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write(listFrontend) //nolint:errcheck,gosec,revive
+		w.Write(listFrontend) //nolint:errcheck,gosec
 		return
 	}
 
@@ -218,7 +218,7 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 
 func handleScript(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript")
-	w.Write(listScript) //nolint:errcheck,gosec,revive
+	w.Write(listScript) //nolint:errcheck,gosec
 }
 
 func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {

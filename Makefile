@@ -4,7 +4,7 @@ HUGO_VERSION:=0.117.0
 ## Tool Binaries
 GO_RUN := go run -modfile ./tools/go.mod
 GO_TEST = $(GO_RUN) gotest.tools/gotestsum --format pkgname
-GOLANCI_LINT = $(GO_RUN) github.com/golangci/golangci-lint/cmd/golangci-lint
+GOLANCI_LINT = golangci-lint
 
 ##@ General
 

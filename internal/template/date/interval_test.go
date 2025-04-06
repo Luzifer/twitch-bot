@@ -13,7 +13,6 @@ import (
 //go:embed tzdata
 var tzDataEuropeBerlin []byte
 
-//nolint:funlen // This is just a collection of test cases
 func TestNewInterval(t *testing.T) {
 	tz, err := time.LoadLocationFromTZData("Europe/Berlin", tzDataEuropeBerlin)
 	require.NoError(t, err)

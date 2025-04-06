@@ -85,11 +85,11 @@ func getQuote(db database.Connector, channel string, quote int) (int, string, er
 
 func getQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int64, string, error) {
 	if quoteIdx == 0 {
-		max, err := getMaxQuoteIdx(db, channel)
+		maxQuoteIdx, err := getMaxQuoteIdx(db, channel)
 		if err != nil {
 			return 0, 0, "", errors.Wrap(err, "getting max quote idx")
 		}
-		quoteIdx = rand.Intn(max) + 1 // #nosec G404 // no need for cryptographic safety
+		quoteIdx = rand.Intn(maxQuoteIdx) + 1 // #nosec G404 // no need for cryptographic safety
 	}
 
 	var q quote
