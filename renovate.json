@@ -2,5 +2,19 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "https://git.luzifer.io/luzifer/renovate-config/raw/branch/master/default.json"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "vue"
+      ],
+      "allowedVersions": "<3.0.0"
+    },
+    {
+      "matchPackageNames": [
+        "bootstrap"
+      ],
+      "allowedVersions": "<5.0.0"
+    }
   ]
 }
