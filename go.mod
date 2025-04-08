@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
 	golang.org/x/crypto v0.37.0
-	golang.org/x/net v0.38.0
+	golang.org/x/net v0.39.0
 	golang.org/x/oauth2 v0.29.0
 	gopkg.in/irc.v4 v4.0.0
 	gopkg.in/yaml.v3 v3.0.1
