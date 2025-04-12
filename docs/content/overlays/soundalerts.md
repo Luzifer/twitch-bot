@@ -15,7 +15,7 @@ To use it
 
 - generate an API token with the `overlays` permission and note it in a secure place
 - add a Browser-Source to your OBS scenes with at least 1×1 px in size
-- set the URL to `https://your-bot.example.com/overlays/sounds.html?token=[your-token]&channel=[your-channel]`
+- set the URL to `https://your-bot.example.com/overlays/sounds.html#token=[your-token]&channel=[your-channel]`
 
 After you've done this you're already done with the setup inside your OBS.
 
