@@ -1,3 +1,16 @@
+# 3.35.4 / 2025-04-12
+
+  * Bugfixes
+    * [docs] Fix: Typo in URL
+    * CI: Drop "stable" branch
+    * Update luzifer/gh-arch-env Docker digest to fd19117
+    * Update mariadb:11 Docker digest to 81e8930
+    * Update module github.com/getsentry/sentry-go to v0.32.0
+    * Update module github.com/go-git/go-git/v5 to v5.15.0
+    * Update module github.com/go-sql-driver/mysql to v1.9.2
+    * Update module golang.org/x/net to v0.39.0
+    * Update postgres:15 Docker digest to fe45ed1
+
 # 3.35.3 / 2025-04-06
 
   * Bugfixes
