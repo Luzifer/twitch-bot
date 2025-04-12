@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       crdb:
-        image: luzifer/crdb-gh-service@sha256:d25372d1c7f95f1c75e8d4988c094f3a9f57c3474901a4b731de083a377e5c1b
+        image: ghcr.io/luzifer-docker/crdb-gh-service:v25.1.4
         options: >-
           --health-cmd "curl -sSf http://localhost:8080/health"
           --health-interval 10s
