@@ -2,5 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "https://git.luzifer.io/luzifer/renovate-config/raw/branch/master/default.json"
+  ],
+  "packageRules": [
+    {
+      "matchFileNames": [
+        "(^|/).github/workflows/.*"
+      ],
+      "schedule": [
+        "* 21 * * 0"
+      ]
+    }
   ]
 }
