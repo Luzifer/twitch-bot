@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       crdb:
-        image: ghcr.io/luzifer-docker/crdb-gh-service:v25.1.4
+        image: ghcr.io/luzifer-docker/crdb-gh-service:v25.1.4@sha256:5df5ee716ac5f681a16b23493170b267458d182e6f2f68bfd53bdf67168d8b7e
         options: >-
           --health-cmd "curl -sSf http://localhost:8080/health"
           --health-interval 10s
@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mariadb:
-        image: mariadb:11.7.2
+        image: mariadb:11.7.2@sha256:81e893032978c4bf8ad43710b7a979774ed90787fa32d199162148ce28fe3b76
         env:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
@@ -191,7 +191,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:9.2.0
+        image: mysql:9.2.0@sha256:0596fa224cdf3b3355ce3ddbfd7ce77be27ec9e51841dfc5d2e1c8b81eea69d2
         env:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
@@ -235,7 +235,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.4
+        image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
         env:
           POSTGRES_PASSWORD: twitch-bot-pass
         options: >-
