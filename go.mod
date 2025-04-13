@@ -8,7 +8,7 @@ require (
 	github.com/Luzifer/go-openssl/v4 v4.2.4
 	github.com/Luzifer/go_helpers/v2 v2.25.0
 	github.com/Luzifer/korvike/functions v1.0.2
-	github.com/Luzifer/rconfig/v2 v2.5.2
+	github.com/Luzifer/rconfig/v2 v2.6.0
 	github.com/getsentry/sentry-go v0.32.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.15.0
