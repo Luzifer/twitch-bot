@@ -12,7 +12,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -37,7 +37,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -91,7 +91,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -138,7 +138,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -184,7 +184,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -228,7 +228,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -269,7 +269,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:664cf41530ef50fbc22f23ddae1b85ec9a6c04660f6ee586524d4b6625cbe157
+      image: luzifer/gh-arch-env@sha256:d0d04e616cccfb05baef16af5131660fc59e75c8db9bcb06915c8e04edb169f2
       env:
         CGO_ENABLED: 0
         GOPATH: /go
