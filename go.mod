@@ -11,7 +11,7 @@ require (
 	github.com/Luzifer/rconfig/v2 v2.6.0
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-git/go-git/v5 v5.16.0
+	github.com/go-git/go-git/v5 v5.16.1
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gofrs/uuid/v3 v3.1.2
