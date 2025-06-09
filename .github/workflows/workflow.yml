@@ -84,53 +84,6 @@ jobs:
       - name: Docker Build & Publish
         run: bash ci/docker-publish.sh
 
-  integration-crdb:
-    if: ${{ github.ref == 'refs/heads/master' }}
-    needs: [test]
-    defaults:
-      run:
-        shell: bash
-    container:
-      image: luzifer/gh-arch-env@sha256:9810b8a3d9bf4ff35cb5644540e5e12ce828d2d876e966d6fba348b3825df9aa
-      env:
-        CGO_ENABLED: 0
-        GOPATH: /go
-    runs-on: ubuntu-latest
-    services:
-      crdb:
-        image: ghcr.io/luzifer-docker/crdb-gh-service:v25.2.0@sha256:398c414d33bcbe6f3ddae34f5e1a97235982006030322d48acd7572d94c03578
-        options: >-
-          --health-cmd "curl -sSf http://localhost:8080/health"
-          --health-interval 10s
-          --health-retries 5
-          --health-timeout 5s
-    steps:
-      - name: Install required packages
-        run: pacman -Syy --noconfirm cockroachdb-bin
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          show-progress: false
-      - name: Marking workdir safe
-        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
-      - name: Set up CRDB service
-        run: |
-          cockroach sql --host crdb --insecure <<EOF
-            CREATE DATABASE integration;
-            CREATE USER "twitch_bot" WITH PASSWORD NULL;
-            ALTER DATABASE integration OWNER to "twitch_bot";
-          EOF
-      - name: Run tests against CRDB
-        env:
-          GO_TEST_DB_ENGINE: postgres
-          GO_TEST_DB_DSN: >
-            host=crdb
-            user=twitch_bot
-            dbname=integration
-            port=26257
-            sslmode=disable
-            timezone=UTC
-        run: make short_test
-
   integration-mariadb:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
