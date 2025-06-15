@@ -127,7 +127,6 @@ type (
 		BroadcasterUserID    string `json:"broadcaster_user_id"`
 		BroadcasterUserLogin string `json:"broadcaster_user_login"`
 		BroadcasterUserName  string `json:"broadcaster_user_name"`
-		Level                int64  `json:"level"`
 		Total                int64  `json:"total"`
 		Progress             int64  `json:"progress"` // Only Beginn, Progress
 		Goal                 int64  `json:"goal"`     // Only Beginn, Progress
@@ -138,17 +137,22 @@ type (
 			Type      string `json:"type"`
 			Total     int64  `json:"total"`
 		} `json:"top_contributions"`
-		LastContribution *struct { // Only Begin, Progress
-			UserID    string `json:"user_id"`
-			UserLogin string `json:"user_login"`
-			UserName  string `json:"user_name"`
-			Type      string `json:"type"`
-			Total     int64  `json:"total"`
-		} `json:"last_contribution,omitempty"`
-		StartedAt      time.Time  `json:"started_at"`
-		ExpiresAt      *time.Time `json:"expires_at,omitempty"`       // Only Begin, Progress
-		EndedAt        *time.Time `json:"ended_at,omitempty"`         // Only End
-		CooldownEndsAt *time.Time `json:"cooldown_ends_at,omitempty"` // Only End
+		Level            int64      `json:"level"`
+		AllTimeHighLevel int64      `json:"all_time_high_level"` // Only Begin
+		AllTimeHighTotal int64      `json:"all_time_high_total"` // Only Begin
+		StartedAt        time.Time  `json:"started_at"`
+		CooldownEndsAt   *time.Time `json:"cooldown_ends_at,omitempty"` // Only End
+		ExpiresAt        *time.Time `json:"expires_at,omitempty"`       // Only Begin, Progress
+		EndedAt          *time.Time `json:"ended_at,omitempty"`         // Only End
+		Type             string     `json:"type"`                       // treasure, golden_kappa, regular
+
+		// Feature: Shared Trains, all events
+		IsSharedTrain           bool `json:"is_shared_train"`
+		SharedTrainParticipants []struct {
+			BroadcasterUserID    string `json:"broadcaster_user_id"`
+			BroadcasterUserLogin string `json:"broadcaster_user_login"`
+			BroadcasterUserName  string `json:"broadcaster_user_name"`
+		} `json:"shared_train_participants"`
 	}
 
 	// EventSubEventPoll contains the payload for a poll change event

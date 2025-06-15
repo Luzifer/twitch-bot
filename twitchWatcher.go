@@ -133,7 +133,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelHypetrainBegin,
-			Version:        twitch.EventSubTopicVersion1,
+			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
 			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainBegin),
@@ -141,7 +141,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelHypetrainEnd,
-			Version:        twitch.EventSubTopicVersion1,
+			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
 			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainEnd),
@@ -149,7 +149,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 		},
 		{
 			Topic:          twitch.EventSubEventTypeChannelHypetrainProgress,
-			Version:        twitch.EventSubTopicVersion1,
+			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
 			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainProgress),
