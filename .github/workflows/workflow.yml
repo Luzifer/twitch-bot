@@ -240,7 +240,7 @@ jobs:
       - name: Extract changelog
         run: awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md
       - name: Release
-        uses: ncipollo/release-action@9128f238eeeeed39b82af6636303729079d51730 # v1
+        uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af # v1
         with:
           artifacts: .build/*
           bodyFile: release_changelog.md
