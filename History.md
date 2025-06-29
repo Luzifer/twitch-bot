@@ -1,3 +1,28 @@
+# 3.36.0 / 2025-06-29
+
+  * Improvements
+    * Use new `channel.hype_train.*` v2 events
+    * Drop support for CockroachDB
+
+  * Bugfixes
+    * Update alpine docker tag to v3.22
+    * Update dependency go to v1.24.4
+    * Update mariadb docker tag to v11.8.2
+    * Update mysql Docker tag to v9.3.0
+    * Update postgres Docker tag to v17.5
+    * Update dependency axios to v1.10.0
+    * Update dependency @babel/eslint-parser to v7.27.5
+    * Update dependency esbuild to v0.25.5
+    * Update module github.com/getsentry/sentry-go to v0.34.0
+    * Update module github.com/go-git/go-git/v5 to v5.16.2
+    * Update module github.com/go-sql-driver/mysql to v1.9.3
+    * Update module github.com/Luzifer/rconfig/v2 to v2.6.0
+    * Update module golang.org/x/net to v0.41.0
+    * Update module golang.org/x/oauth2 to v0.30.0
+    * Update module gorm.io/driver/mysql to v1.6.0
+    * Update module gorm.io/driver/postgres to v1.6.0
+    * Update module gorm.io/gorm to v1.30.0
+
 # 3.35.4 / 2025-04-12
 
   * Bugfixes
