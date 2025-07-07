@@ -12,7 +12,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -37,7 +37,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -91,7 +91,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -137,7 +137,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -181,7 +181,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -222,7 +222,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: luzifer/gh-arch-env@sha256:9ce14193c2c4f87ba31cfdc7e25617cb1a28ed37ae49edace2150c5430818900
+      image: luzifer/gh-arch-env@sha256:313666346521906521ecc14d86a88a731d42a4444f45af09d36230bd95bffc83
       env:
         CGO_ENABLED: 0
         GOPATH: /go
