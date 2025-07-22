@@ -188,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.5@sha256:3962158596daaef3682838cc8eb0e719ad1ce520f88e34596ce8d5de1b6330a1
+        image: postgres:17.5@sha256:4a04f628cf4cc68bb712bb6fcf0bf4feae731f120369592c1023ef812cf4b25a
         env:
           POSTGRES_PASSWORD: twitch-bot-pass
         options: >-
