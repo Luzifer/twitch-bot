@@ -9,7 +9,7 @@ require (
 	github.com/Luzifer/go_helpers/v2 v2.25.0
 	github.com/Luzifer/korvike/functions v1.0.2
 	github.com/Luzifer/rconfig/v2 v2.6.0
-	github.com/getsentry/sentry-go v0.34.1
+	github.com/getsentry/sentry-go v0.35.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/go-sql-driver/mysql v1.9.3
