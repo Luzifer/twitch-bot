@@ -111,7 +111,7 @@ jobs:
           --health-timeout 5s
     steps:
       - name: Install required packages
-        run: pacman -Syy --noconfirm mariadb-clients
+        run: apt-get install -y --no-install-recommends mariadb-client
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           show-progress: false
@@ -155,7 +155,7 @@ jobs:
           --health-timeout 5s
     steps:
       - name: Install required packages
-        run: pacman -Syy --noconfirm mariadb-clients
+        run: apt-get install -y --no-install-recommends mariadb-client
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           show-progress: false
