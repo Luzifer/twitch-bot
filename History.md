@@ -1,3 +1,18 @@
+# 3.36.1 / 2025-08-16
+
+  * Bugfixes
+    * fix(deps): update dependency axios to v1.11.0
+    * fix(deps): update module github.com/getsentry/sentry-go to v0.35.1
+    * fix(deps): update module golang.org/x/crypto to v0.41.0
+    * fix(deps): update module golang.org/x/net to v0.43.0
+    * fix(deps): update module gorm.io/gorm to v1.30.1
+    * chore(deps): update dependency @babel/eslint-parser to v7.28.0
+    * chore(deps): update dependency esbuild to v0.25.9
+    * chore(deps): update dependency go to v1.25.0
+    * chore(deps): update mariadb docker tag to v11.8.3
+    * chore(deps): update mysql docker tag to v9.4.0
+    * chore(deps): update postgres docker tag to v17.6
+
 # 3.36.0 / 2025-06-29
 
   * Improvements
