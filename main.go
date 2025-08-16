@@ -265,7 +265,7 @@ func main() {
 
 	if config.HTTPListen != "" {
 		// If listen address is configured start HTTP server
-		listener, err := net.Listen("tcp", config.HTTPListen)
+		listener, err := net.Listen("tcp", config.HTTPListen) //nolint:noctx // Would use background context
 		if err != nil {
 			log.WithError(err).Fatal("Unable to open http_listen port")
 		}

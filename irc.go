@@ -63,7 +63,7 @@ func newIRCHandler() (*ircHandler, error) {
 
 	h.ctx, h.ctxCancelFn = context.WithCancel(context.Background())
 
-	conn, err := tls.Dial("tcp", "irc.chat.twitch.tv:6697", nil)
+	conn, err := tls.Dial("tcp", "irc.chat.twitch.tv:6697", nil) //nolint:noctx // Would use background context
 	if err != nil {
 		return nil, errors.Wrap(err, "connect to IRC server")
 	}
