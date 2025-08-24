@@ -161,7 +161,7 @@ func TestScanForLinks(t *testing.T) {
 		{
 			Heuristic:     true,
 			Message:       "Hey btw. es kann sein, dass",
-			ExpectedLinks: []string{"https://trusted.evo-media.eu/btw.es"},
+			ExpectedLinks: []string{"https://trusted.domainseller.site/btw.es"},
 		},
 		// Case: Multiple spaces in the link
 		{
