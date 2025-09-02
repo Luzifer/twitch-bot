@@ -239,7 +239,7 @@ jobs:
       - name: Extract changelog
         run: awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md
       - name: Release
-        uses: ncipollo/release-action@98d25d4189e9b6cee19b8635b1ea5cc39c158a41 # v1
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1
         with:
           artifacts: .build/*
           bodyFile: release_changelog.md
