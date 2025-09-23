@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:9.4.0@sha256:94254b456a6db9b56c83525a86bff4c7f1e52335f934cbed686fe1ce763116a0
+        image: mysql:9.4.0@sha256:90a3b642725710b3a8093cd1bdd678f7c618aa38ea33afd4d5e5fca21c0b88b0
         env:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
