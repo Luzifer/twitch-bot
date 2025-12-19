@@ -11,7 +11,7 @@
         "docs/Makefile"
       ],
       "matchStrings": [
-        "HUGO_VERSION:=(?<currentValue>)\\s"
+        "HUGO_VERSION:=(?<currentValue>[0-9\\.]+)\\s"
       ],
       "packageNameTemplate": "gohugoio/hugo"
     }
