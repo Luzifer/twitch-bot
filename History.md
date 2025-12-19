@@ -1,3 +1,20 @@
+# 3.37.0 / 2025-12-19
+
+  * Improvements
+    * feat: add support for new `lead_moderator` badge
+
+  * Bugfixes
+    * fix(deps): update dependency axios to v1.13.2
+    * fix(deps): update module github.com/getsentry/sentry-go to v0.40.0
+    * fix(deps): update module github.com/go-git/go-git/v5 to v5.16.4
+    * fix(deps): update module github.com/itchyny/gojq to v0.12.18
+    * fix(deps): update module github.com/stretchr/testify to v1.11.1
+    * fix(deps): update module golang.org/x/crypto to v0.46.0
+    * fix(deps): update module golang.org/x/net to v0.48.0
+    * fix(deps): update module golang.org/x/oauth2 to v0.34.0
+    * fix(deps): update module gorm.io/gorm to v1.31.1
+    * fix(deps): update module gotest.tools/gotestsum to v1.13.0
+
 # 3.36.1 / 2025-08-16
 
   * Bugfixes
