@@ -3,6 +3,19 @@
   "extends": [
     "https://git.luzifer.io/luzifer/renovate-config/raw/branch/master/default.json"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "datasourceTemplate": "github-releases",
+      "managerFilePatterns": [
+        "docs/Makefile"
+      ],
+      "matchStrings": [
+        "HUGO_VERSION:=(?<currentValue>)\\s"
+      ],
+      "packageNameTemplate": "gohugoio/hugo"
+    }
+  ],
   "packageRules": [
     {
       "matchFileNames": [
