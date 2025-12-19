@@ -1,10 +1,9 @@
 ---
-title: "Rule Examples"
+title: Rule Examples
 ---
 
-{{< lead >}}
-These are only a few examples of rules. If you want to share your own rules and show what can be achieved with the bot, head over to the ["Share your Rules"](https://github.com/Luzifer/twitch-bot/discussions/categories/share-your-rules) discussion board and create a new discussion with the YAML definition and a description what your rule does.
-{{< /lead >}}
+> [!TIP]
+> These are only a few examples of rules. If you want to share your own rules and show what can be achieved with the bot, head over to the ["Share your Rules"](https://github.com/Luzifer/twitch-bot/discussions/categories/share-your-rules) discussion board and create a new discussion with the YAML definition and a description what your rule does.
 
 ## Chat-addable generic text-respond-commands
 

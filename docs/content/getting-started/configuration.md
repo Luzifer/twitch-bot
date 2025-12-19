@@ -1,11 +1,10 @@
 ---
-title: "Configuration"
+title: Configuration
 weight: 5
 ---
 
-{{< lead >}}
-After you finally can access your bot through the [External Access]({{< ref "external-access.md" >}}) you can start to configure it!
-{{< /lead >}}
+> [!TIP]
+> After you finally can access your bot through the [External Access]({{< ref "external-access.md" >}}), you can start to configure it!
 
 In order to gain access to the bot you need to add yourself as an editor to the configuration. To do so edit the configuration created during the [Service Setup]({{< ref "setup.md" >}}) (in our example `/var/lib/twitch-bot/config.yaml`) and modify the bot editors:
 

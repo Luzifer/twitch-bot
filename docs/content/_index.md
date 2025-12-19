@@ -1,10 +1,12 @@
 ---
 title: Twitch-Bot Documentation
+bookToC: false
 ---
 
-{{< lead >}}
-You are tired of all those cloud-bots working only sometimes, messing up at random times (always when you need them most) and limiting you to very little functionality while forcing you to give them every single possible permission available? Twitch-Bot is a **fully open-source** bot you can host yourself giving you **full control** over its functions and being **extensible** using custom scripts and commands any developer can build for you. Additionally you are in control which **permissions** to give to the bot and which you rather not want it to have.
-{{< /lead >}}
+> [!TIP]
+> You are tired of all those cloud-bots working only sometimes, messing up at random times (always when you need them most) and limiting you to very little functionality while forcing you to give them every single possible permission available?
+>
+> Twitch-Bot is a **fully open-source** bot you can host yourself giving you **full control** over its functions and being **extensible** using custom scripts and commands any developer can build for you. Additionally you are in control which **permissions** to give to the bot and which you rather not want it to have.
 
 ## Features
 

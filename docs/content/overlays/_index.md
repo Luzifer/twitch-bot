@@ -2,13 +2,11 @@
 title: Overlays
 ---
 
-{{< lead >}}
-Overlays in OBS are added as a **Browser Source** and while often graphical tooling to build them is available it's possible to build custom overlays with well-known web-technology like **HTML, Javascript, CSS**.
-{{< /lead >}}
+> [!TIP]
+> Overlays in OBS are added as a **Browser Source** and while often graphical tooling to build them is available it's possible to build custom overlays with well-known web-technology like **HTML, Javascript, CSS**.
 
-{{< alert style="info" >}}
-In the [Service Setup]({{< ref "../getting-started/setup.md" >}}) we configured an `OVERLAYS_DIR` which is used to serve the files for the overlays. Every file you put into that directory is available to the public at `https://your-bot.example.com/overlays/`. Therefore pay attention not to put any secrets into that directory!
-{{< /alert >}}
+> [!INFO]
+> In the [Service Setup]({{< ref "../getting-started/setup.md" >}}) we configured an `OVERLAYS_DIR` which is used to serve the files for the overlays. Every file you put into that directory is available to the public at `https://your-bot.example.com/overlays/`. Therefore pay attention not to put any secrets into that directory!
 
 The bot includes some files which are merged with the files you put into that directory. If you put a file with the same name as the included, your file will overwrite the included one! Therefore you can modify included templates by just copying them into your overlay directory and changing the stuff you want changed.
 

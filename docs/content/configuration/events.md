@@ -1,5 +1,5 @@
 ---
-title: "Available Events"
+title: Available Events
 ---
 
 ## `adbreak_begin`

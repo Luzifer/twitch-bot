@@ -1,11 +1,10 @@
 ---
-title: "Getting started"
+title: Getting started
 weight: 1
 ---
 
-{{< lead >}}
-Get started with the installation of the Twitch-Bot and get to the point you do have a working bot inside your channel.
-{{< /lead >}}
+> [!TIP]
+> Get started with the installation of the Twitch-Bot and get to the point you do have a working bot inside your channel.
 
 The majority of this sections assumes you are working on a **Linux Server** (systemd based, like Debian / Ubuntu) with direct internet access. If you are doing your setup on another system you might need to adapt steps or even replace them. The basic setup should be the same but some steps will differ.
 

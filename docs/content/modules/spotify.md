@@ -1,8 +1,9 @@
 ---
-title: "Spotify Integration"
+title: Spotify Integration
 ---
 
-You are using Spotify and are tired of not working third-party overlays and chat commands? The bot has you covered with its Spotify integration. The integration can retrieve the current playing track and show that in templating as for example through the [EventClient]({{< ref "../overlays/eventclient.md" >}}) and its `renderTemplate` function or the `respond` actor in a rule.
+> [!TIP]
+> You are using Spotify and are tired of not working third-party overlays and chat commands? The bot has you covered with its Spotify integration. The integration can retrieve the current playing track and show that in templating as for example through the [EventClient]({{< ref "../overlays/eventclient.md" >}}) and its `renderTemplate` function or the `respond` actor in a rule.
 
 ## Setting up
 
@@ -24,7 +25,8 @@ Start with going to the [Spotify for Developers Dashboard](https://developer.spo
 - From the "Settings" button of your app get the "Client ID" and note it down
 - Optional: If you need to authorize multiple channels (i.e. for multiple users of the bot instance) you can edit the "Redirect URIs" on the "Settings" page and add more.
 
-{{< alert style="info" >}}If you are managing a bot instance for multiple persons having their own Spotify accounts you need to invite them to the Spotify app as long as it is in development-mode. You can do that in the Spotify Developer Dashboard under "User Management" (up to 25 users). As an alternative every person can create an own Spotify app and you can enter their `clientId` into the config for their respective channel.{{< /alert >}}
+> [!INFO]
+> If you are managing a bot instance for multiple persons having their own Spotify accounts you need to invite them to the Spotify app as long as it is in development-mode. You can do that in the Spotify Developer Dashboard under "User Management" (up to 25 users). As an alternative every person can create an own Spotify app and you can enter their `clientId` into the config for their respective channel.
 
 Now head into the configuration file and configure the Spotify module:
 

@@ -1,14 +1,11 @@
 ---
-title: "Config-File Syntax"
+title: Config-File Syntax
 ---
 
-{{< lead >}}
-The YAML configuration file is the heart of the bot configuration. You can configure every aspect of the bot using the configuration file. The web-interface afterwards allows to modify the configuration file to assist you with the configuration.
-{{< /lead >}}
+> [!TIP]
+> The YAML configuration file is the heart of the bot configuration. You can configure every aspect of the bot using the configuration file. The web-interface afterwards allows to modify the configuration file to assist you with the configuration.
 
 ```yaml
----
-
 # This must be the config version you've used below. Current version
 # is version 2 so probably keep it at 2 until the bot tells you to
 # upgrade.
@@ -153,6 +150,4 @@ rules: # See below for examples
 
     # Disable the actions on this rule if one of these regular expression matches the chat message
     disable_on_match_messages: []
-
-...
 ```

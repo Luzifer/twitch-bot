@@ -1,17 +1,15 @@
 ---
-title: "Service Setup"
+title: Service Setup
 weight: 3
 ---
 
-{{< lead >}}
-In order to have your bot started automatically on system start we should set it up as a service.
-{{< /lead >}}
+> [!TIP]
+> In order to have your bot started automatically on system start we should set it up as a service.
 
 ## General preparation
 
-{{< alert style="info" >}}
-In order not to put confidential information into the configuration file we want to create a configuration file to hold these secrets. Also we will create a folder to put stored data and overlay files into. You can use other folders for those files, just remember to adjust the paths in all places. For this page I will assume the binary is placed in `/usr/local/bin/twitch-bot_linux_amd64`.
-{{< /alert >}}
+> [!INFO]
+> In order not to put confidential information into the configuration file we want to create a configuration file to hold these secrets. Also we will create a folder to put stored data and overlay files into. You can use other folders for those files, just remember to adjust the paths in all places. For this page I will assume the binary is placed in `/usr/local/bin/twitch-bot_linux_amd64`.
 
 ```console
 # First create a folder to hold our secret file(s)

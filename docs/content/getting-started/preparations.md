@@ -1,15 +1,13 @@
 ---
-title: "Preparations"
+title: Preparations
 weight: 2
 ---
 
-{{< lead >}}
-In order to communicate with Twitch you need to set up an application in the Twitch developers console.
-{{< /lead >}}
+> [!TIP]
+> In order to communicate with Twitch you need to set up an application in the Twitch developers console.
 
-{{< alert style="warning" >}}
-In case you are setting up multiple Twitch-Bot instances, create **one application per instance**! Re-using an existing application even for a test-instance will lead to unexpected results like randomly breaking bot-authorizations!
-{{< /alert >}}
+> [!WARNING]
+> In case you are setting up multiple Twitch-Bot instances, create **one application per instance**! Re-using an existing application even for a test-instance will lead to unexpected results like randomly breaking bot-authorizations!
 
 Registering your application is a relatively straight-forward process:
 

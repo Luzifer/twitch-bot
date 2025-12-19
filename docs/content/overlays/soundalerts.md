@@ -3,9 +3,8 @@ title: Sound-Alerts
 weight: 50
 ---
 
-{{< lead >}}
-The Sound-Alerts overlay provides you with a way to let your viewers trigger sounds through channel-points and chat commands.
-{{< /lead >}}
+> [!TIP]
+> The Sound-Alerts overlay provides you with a way to let your viewers trigger sounds through channel-points and chat commands.
 
 This overlay utilizes the custom events actor to generate events specific to the overlay in order to trigger sound alerts.
 

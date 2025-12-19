@@ -1,10 +1,9 @@
 ---
-title: "Templating"
+title: Templating
 ---
 
-{{< lead >}}
-Generally speaking the templating uses [Golang `text/template`](https://pkg.go.dev/text/template) template syntax. All fields with templating enabled do support the full synax from the `text/template` package.
-{{< /lead >}}
+> [!TIP]
+> Generally speaking the templating uses [Golang `text/template`](https://pkg.go.dev/text/template) template syntax. All fields with templating enabled do support the full synax from the `text/template` package.
 
 ## Variables
 
@@ -506,7 +505,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 24%
+< Your int this hour: 84%
 ```
 
 ### `spotifyCurrentPlaying`

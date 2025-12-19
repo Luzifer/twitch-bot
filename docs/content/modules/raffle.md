@@ -2,9 +2,8 @@
 title: Raffle
 ---
 
-{{< lead >}}
-Using the raffle module you can create giveaways with various settings, timers and pick one or multiple winners. You just have to send the good yourself…
-{{< /lead >}}
+> [!TIP]
+> Using the raffle module you can create giveaways with various settings, timers and pick one or multiple winners. You just have to send the good yourself…
 
 ## General Overview
 

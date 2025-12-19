@@ -1,15 +1,13 @@
 ---
-title: "External Access"
+title: External Access
 weight: 4
 ---
 
-{{< lead >}}
-In order to be able to access the bot through a web-browser and make configuration changes using the web-interface we need to securely expose the interface to the internet.
-{{< /lead >}}
+> [!TIP]
+> In order to be able to access the bot through a web-browser and make configuration changes using the web-interface we need to securely expose the interface to the internet.
 
-{{< alert style="info" >}}
-In case you did the installation of the bot on your **local machine**, skip this part. You can access the web-interface at `http://localhost:3000/` after you've continued with the [Configuration]({{< ref "configuration.md" >}}).
-{{< /alert >}}
+> [!INFO]
+> In case you did the installation of the bot on your **local machine**, skip this part. You can access the web-interface at `http://localhost:3000/` after you've continued with the [Configuration]({{< ref "configuration.md" >}}).
 
 ## Using nginx
 

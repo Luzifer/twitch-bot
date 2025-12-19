@@ -1,8 +1,9 @@
 ---
-title: "Ko-fi Event-Integration"
+title: Ko-fi Event-Integration
 ---
 
-If you are an active user of Ko-fi you probably want to have the Ko-fi events sent to your bot to trigger chat-messages, alerts in overlays or just to have the event registered in the bot for overlays or other purposes. To do so you can use the Ko-fi integration of the bot to receive events for donations and subscriptions (shop-orders currently are not supported).
+> [!TIP]
+> If you are an active user of Ko-fi you probably want to have the Ko-fi events sent to your bot to trigger chat-messages, alerts in overlays or just to have the event registered in the bot for overlays or other purposes. To do so you can use the Ko-fi integration of the bot to receive events for donations and subscriptions (shop-orders currently are not supported).
 
 ## Setting up
 
