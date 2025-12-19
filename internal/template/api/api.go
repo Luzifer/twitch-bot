@@ -1,5 +1,5 @@
 // Package api contains helpers to interact with remote APIs in templates
-package api
+package api //revive:disable-line:var-naming
 
 import "github.com/Luzifer/twitch-bot/v3/plugins"
 
