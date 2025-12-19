@@ -9,17 +9,19 @@ import (
 
 // Collection of known badges
 const (
-	BadgeBroadcaster = "broadcaster"
-	BadgeFounder     = "founder"
-	BadgeModerator   = "moderator"
-	BadgeSubscriber  = "subscriber"
-	BadgeVIP         = "vip"
+	BadgeBroadcaster   = "broadcaster"
+	BadgeFounder       = "founder"
+	BadgeLeadModerator = "lead_moderator"
+	BadgeModerator     = "moderator"
+	BadgeSubscriber    = "subscriber"
+	BadgeVIP           = "vip"
 )
 
 // KnownBadges contains a list of all known badges
 var KnownBadges = []string{
 	BadgeBroadcaster,
 	BadgeFounder,
+	BadgeLeadModerator,
 	BadgeModerator,
 	BadgeSubscriber,
 	BadgeVIP,
@@ -71,6 +73,15 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 	// when allowing actions for moderators now broadcasters
 	// ill also be included.
 	if out.Has(BadgeBroadcaster) && !out.Has(BadgeModerator) {
+		out.Add(BadgeModerator, 1)
+	}
+
+	// Twitch introduced Lead-Moderators which take the same
+	// badge slot as normal moderators. For simplicity sake
+	// we grant every lead-moderator also moderator badge so
+	// when a moderator can do stuff, the lead-mod can do the
+	// same.
+	if out.Has(BadgeLeadModerator) && !out.Has(BadgeModerator) {
 		out.Add(BadgeModerator, 1)
 	}
 
