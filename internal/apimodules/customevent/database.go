@@ -28,7 +28,7 @@ type (
 func cleanupStoredEvents(db database.Connector) error {
 	return errors.Wrap(
 		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Where("scheduled_at < ?", time.Now().Add(cleanupTimeout*-1).UTC()).
+			return tx.Where("scheduled_at < ?", time.Now().Truncate(time.Second).Add(cleanupTimeout*-1).UTC()).
 				Delete(&storedCustomEvent{}).
 				Error
 		}),
@@ -40,7 +40,7 @@ func getFutureEvents(db database.Connector) (out []storedCustomEvent, err error)
 	return out, errors.Wrap(
 		helpers.Retry(func() error {
 			return db.DB().
-				Where("scheduled_at >= ?", time.Now().UTC()).
+				Where("scheduled_at >= ?", time.Now().Truncate(time.Second).UTC()).
 				Find(&out).
 				Error
 		}),
@@ -60,7 +60,7 @@ func storeEvent(db database.Connector, scheduleAt time.Time, channel string, fie
 				ID:          uuid.Must(uuid.NewV4()).String(),
 				Channel:     channel,
 				Fields:      fieldBuf.String(),
-				ScheduledAt: scheduleAt,
+				ScheduledAt: scheduleAt.Truncate(time.Second),
 			}).Error
 		}),
 		"storing event",
