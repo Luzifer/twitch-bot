@@ -229,6 +229,15 @@ func main() {
 		log.WithError(err).Fatal("Missing required parameters")
 	}
 
+	// NOTE: Workaround for https://github.com/Luzifer/twitch-bot/issues/67
+	// Missing bot-username in CoreKV causes several errors preventing
+	// new users from setting up the bot.
+	if _, err = accessService.GetBotUsername(); errors.Is(err, database.ErrCoreMetaNotFound) {
+		if err = accessService.SetBotUsername("missing"); err != nil {
+			log.WithError(err).Fatal("setting initial bot username")
+		}
+	}
+
 	if twitchClient, err = accessService.GetBotTwitchClient(access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
 		TwitchClientSecret: cfg.TwitchClientSecret,
