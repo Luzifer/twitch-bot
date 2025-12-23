@@ -1,3 +1,11 @@
+# 3.37.1 / 2025-12-23
+
+* Improvements
+  * chore: port documentation to new theme
+
+* Bugfixes
+  * fix: add workaround for empty bot database preventing bootstrap
+
 # 3.37.0 / 2025-12-19
 
   * Improvements
