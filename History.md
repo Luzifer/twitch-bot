@@ -1,3 +1,8 @@
+# 3.37.2 / 2025-12-24
+
+* Bugfixes
+  * fix: timers not posting in chat when multiple of 5m
+
 # 3.37.1 / 2025-12-23
 
 * Improvements
