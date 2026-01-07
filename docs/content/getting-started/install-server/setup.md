@@ -1,6 +1,6 @@
 ---
 title: Service Setup
-weight: 3
+weight: 1
 ---
 
 > [!TIP]

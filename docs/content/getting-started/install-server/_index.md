@@ -1,6 +1,6 @@
 ---
-title: Installation
-weight: 1
+title: Install on a Server
+weight: 2
 ---
 
 > [!TIP]

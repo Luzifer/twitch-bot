@@ -1,6 +1,6 @@
 ---
 title: External Access
-weight: 4
+weight: 2
 ---
 
 > [!TIP]
