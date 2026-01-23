@@ -152,7 +152,7 @@ func TestScanForLinks(t *testing.T) {
 			Heuristic: false,
 			Message:   "https://bit.ly/3KHpJuy",
 			ExpectedLinks: []string{
-				"https://www.instagram.com/instagram/",
+				"https://www.instagram.com/instagram",
 			},
 		},
 		// Case: Heuristic enabled with a German sentence accidentally
