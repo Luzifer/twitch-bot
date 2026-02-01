@@ -3,7 +3,7 @@
     "@babel/eslint-parser": "7.28.6",
     "esbuild": "0.27.2",
     "esbuild-vue": "1.2.2",
-    "eslint": "8.57.1",
+    "eslint": "9.26.0",
     "eslint-plugin-vue": "9.33.0",
     "vue-template-compiler": "2.7.16"
   },
