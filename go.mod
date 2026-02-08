@@ -6,7 +6,7 @@ toolchain go1.25.7
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.4
-	github.com/Luzifer/go_helpers/v2 v2.25.0
+	github.com/Luzifer/go_helpers/v2 v2.25.2
 	github.com/Luzifer/korvike/functions v1.0.2
 	github.com/Luzifer/rconfig/v2 v2.6.1
 	github.com/getsentry/sentry-go v0.42.0
