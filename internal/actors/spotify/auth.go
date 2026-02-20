@@ -91,7 +91,7 @@ func oauthConfig(channel, redirectURL string) (conf *oauth2.Config, err error) {
 
 	return &oauth2.Config{
 		ClientID: clientID,
-		Endpoint: oauth2.Endpoint{
+		Endpoint: oauth2.Endpoint{ //#nosec:G101 // That's no credential but an OAuth config
 			AuthURL:  "https://accounts.spotify.com/authorize",
 			TokenURL: "https://accounts.spotify.com/api/token",
 		},

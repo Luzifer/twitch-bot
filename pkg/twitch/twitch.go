@@ -63,8 +63,8 @@ type (
 
 	// OAuthTokenResponse is used when requesting a token
 	OAuthTokenResponse struct {
-		AccessToken  string   `json:"access_token"`
-		RefreshToken string   `json:"refresh_token"`
+		AccessToken  string   `json:"access_token"`  //#nosec:G117 // Intended to handle secrets
+		RefreshToken string   `json:"refresh_token"` //#nosec:G117 // Intended to handle secrets
 		ExpiresIn    int      `json:"expires_in"`
 		Scope        []string `json:"scope"`
 		TokenType    string   `json:"token_type"`
@@ -283,8 +283,8 @@ func (c *Client) GetTwitchAppAccessToken(ctx context.Context) (string, error) {
 	}
 
 	var rData struct {
-		AccessToken  string        `json:"access_token"`
-		RefreshToken string        `json:"refresh_token"`
+		AccessToken  string        `json:"access_token"`  //#nosec:G117 // Intended to handle secrets
+		RefreshToken string        `json:"refresh_token"` //#nosec:G117 // Intended to handle secrets
 		ExpiresIn    int           `json:"expires_in"`
 		Scope        []interface{} `json:"scope"`
 		TokenType    string        `json:"token_type"`

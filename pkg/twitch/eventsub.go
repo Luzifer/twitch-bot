@@ -311,7 +311,7 @@ type (
 	eventSubTransport struct {
 		Method    string `json:"method"`
 		Callback  string `json:"callback"`
-		Secret    string `json:"secret"`
+		Secret    string `json:"secret"` //#nosec:G117 // Intended to handle secrets
 		SessionID string `json:"session_id"`
 	}
 )

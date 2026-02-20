@@ -216,7 +216,7 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 	}
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
-		tmpFile.Close() //nolint:errcheck,gosec
+		_ = tmpFile.Close()
 		return errors.Wrap(err, "encoding config")
 	}
 

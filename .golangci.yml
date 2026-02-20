@@ -2,6 +2,7 @@ version: '2'
 
 run:
   modules-download-mode: readonly
+  relative-path-mode: wd
 
 output:
   formats:
@@ -53,6 +54,16 @@ linters:
 
     gocyclo:
       min-complexity: 15
+
+    gosec:
+      excludes:
+        # Disable bullshit false-positives
+        - G701 # SQL injection via taint analysis
+        - G702 # Command injection via taint analysis
+        - G703 # Path traversal via taint analysis
+        - G704 # SSRF via taint analysis
+        - G705 # XSS via taint analysis
+        - G706 # Log injection via taint analysis
 
     mnd:
       ignored-functions:
@@ -120,6 +131,10 @@ linters:
         - name: useless-break
         - name: var-declaration
         - name: var-naming
+          arguments:
+            - ["ID"] # AllowList
+            - ["VM"] # DenyList
+            - - skip-package-name-checks: true
         - name: waitgroup-by-value
 
   exclusions:

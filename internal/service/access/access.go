@@ -34,8 +34,8 @@ type (
 
 	extendedPermission struct {
 		Channel      string `gorm:"primaryKey"`
-		AccessToken  string
-		RefreshToken string
+		AccessToken  string //#nosec:G117 // Intended to handle secrets
+		RefreshToken string //#nosec:G117 // Intended to handle secrets
 		Scopes       string
 	}
 
