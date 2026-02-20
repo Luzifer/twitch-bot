@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Luzifer/go_helpers/v2/cli"
+	"github.com/Luzifer/go_helpers/cli"
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

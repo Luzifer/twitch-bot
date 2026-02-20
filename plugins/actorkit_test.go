@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/stretchr/testify/assert"
 )
 

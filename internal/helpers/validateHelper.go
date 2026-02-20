@@ -3,7 +3,7 @@ package helpers
 import (
 	"fmt"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 )
 
 // SchemaValidateTemplateField contains a ValidateOpt for the

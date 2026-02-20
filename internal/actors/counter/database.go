@@ -2,6 +2,7 @@ package counter
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -105,10 +105,10 @@ func getCounterTopList(db database.Connector, prefix string, n int, orderBy ...s
 		dir = "ASC"
 	}
 
-	if !str.StringInSlice(col, validOrderCols) {
+	if !slices.Contains(validOrderCols, col) {
 		return nil, fmt.Errorf("invalid orderBy column")
 	}
-	if !str.StringInSlice(dir, validOrderDirs) {
+	if !slices.Contains(validOrderDirs, dir) {
 		return nil, fmt.Errorf("invalid orderBy direction")
 	}
 

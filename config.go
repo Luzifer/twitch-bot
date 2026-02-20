@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"time"
 
@@ -19,8 +20,7 @@ import (
 	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -400,7 +400,7 @@ func (c *configFile) runLoadChecks() (err error) {
 
 	var seen []string
 	for _, r := range c.Rules {
-		if r.UUID != "" && str.StringInSlice(r.UUID, seen) {
+		if r.UUID != "" && slices.Contains(seen, r.UUID) {
 			return errors.New("duplicate rule UUIDs found")
 		}
 		seen = append(seen, r.UUID)

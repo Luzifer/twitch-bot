@@ -6,6 +6,7 @@ package nuke
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,8 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -217,7 +217,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 			"$user", plugins.DeriveUser(stMsg.Msg, nil),
 		).Replace(actionName)
 
-		if str.StringInSlice(enforcement, executedEnforcement) {
+		if slices.Contains(executedEnforcement, enforcement) {
 			continue
 		}
 

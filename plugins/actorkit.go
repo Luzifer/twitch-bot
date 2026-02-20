@@ -3,7 +3,7 @@ package plugins
 import (
 	"reflect"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/pkg/errors"
 )
 

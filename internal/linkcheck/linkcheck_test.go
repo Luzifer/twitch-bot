@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"sort"
 	"strconv"
 	"testing"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
@@ -204,7 +204,7 @@ func TestScanForLinks(t *testing.T) {
 
 				var extraLinks []string
 				for _, link := range linksFound {
-					if !str.StringInSlice(link, testCase.ExpectedLinks) {
+					if !slices.Contains(testCase.ExpectedLinks, link) {
 						extraLinks = append(extraLinks, link)
 					}
 				}

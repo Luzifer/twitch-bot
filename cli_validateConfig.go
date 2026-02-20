@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Luzifer/go_helpers/v2/cli"
+	"github.com/Luzifer/go_helpers/cli"
 	"github.com/pkg/errors"
 )
 

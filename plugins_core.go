@@ -3,15 +3,15 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/v2/backoff"
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/backoff"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clip"
@@ -132,7 +132,7 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		PathPrefix(fmt.Sprintf("/%s/", route.Module)).
 		Subrouter()
 
-	if !str.StringInSlice(route.Module, knownModules) {
+	if !slices.Contains(knownModules, route.Module) {
 		knownModules = append(knownModules, route.Module)
 	}
 

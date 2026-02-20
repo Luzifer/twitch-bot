@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -13,8 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 )
 
 var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
@@ -49,7 +49,7 @@ func (a *autoMessage) CanSend() bool {
 	}
 
 	switch {
-	case !str.StringInSlice(a.Channel, config.Channels):
+	case !slices.Contains(config.Channels, a.Channel):
 		// Not an observed channel, auto-message is not valid
 		return false
 

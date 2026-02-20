@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

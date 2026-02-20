@@ -3,7 +3,7 @@ package plugins
 import (
 	"strings"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 )
 
 // DefaultConfigName is the name the default configuration must have

@@ -1,12 +1,15 @@
 module github.com/Luzifer/twitch-bot/v3
 
-go 1.24.0
+go 1.25.7
 
 toolchain go1.26.0
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.4
-	github.com/Luzifer/go_helpers/v2 v2.25.2
+	github.com/Luzifer/go_helpers/backoff v0.5.1
+	github.com/Luzifer/go_helpers/cli v0.3.1
+	github.com/Luzifer/go_helpers/fieldcollection v0.5.0
+	github.com/Luzifer/go_helpers/str v0.5.0
 	github.com/Luzifer/korvike/functions v1.0.2
 	github.com/Luzifer/rconfig/v2 v2.6.1
 	github.com/getsentry/sentry-go v0.42.0

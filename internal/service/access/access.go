@@ -3,14 +3,14 @@ package access
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/v2/backoff"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -150,7 +150,7 @@ func (s Service) HasAnyPermissionForChannel(channel string, scopes ...string) (b
 	}
 
 	for _, scope := range scopes {
-		if str.StringInSlice(scope, storedScopes) {
+		if slices.Contains(storedScopes, scope) {
 			return true, nil
 		}
 	}
@@ -167,7 +167,7 @@ func (s Service) HasPermissionsForChannel(channel string, scopes ...string) (boo
 	}
 
 	for _, scope := range scopes {
-		if !str.StringInSlice(scope, storedScopes) {
+		if !slices.Contains(storedScopes, scope) {
 			return false, nil
 		}
 	}

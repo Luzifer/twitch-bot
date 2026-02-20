@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,8 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -193,7 +193,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 			Fields: eventData,
 		}
 
-		if !str.StringInSlice(event, storeExemption) {
+		if !slices.Contains(storeExemption, event) {
 			if msg.EventID, err = addChannelEvent(db, plugins.DeriveChannel(nil, eventData), socketMessage{
 				IsLive: false,
 				Time:   time.Now(),

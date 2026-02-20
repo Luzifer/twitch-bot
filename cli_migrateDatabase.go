@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	"github.com/Luzifer/go_helpers/v2/cli"
+	"github.com/Luzifer/go_helpers/cli"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/pkg/errors"

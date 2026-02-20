@@ -6,10 +6,10 @@ package authcache
 import (
 	"crypto/sha256"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/pkg/errors"
 )
 
@@ -137,7 +137,7 @@ func (c CacheEntry) validateFor(modules []string) error {
 	}
 
 	for _, reqMod := range modules {
-		if !str.StringInSlice(reqMod, c.Modules) && !str.StringInSlice("*", c.Modules) {
+		if !slices.Contains(c.Modules, reqMod) && !slices.Contains(c.Modules, "*") {
 			return errors.New("missing module in auth")
 		}
 	}

@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"github.com/Luzifer/go_helpers/v2/backoff"
+	"github.com/Luzifer/go_helpers/backoff"
 	"gorm.io/gorm"
 )
 

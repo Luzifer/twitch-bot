@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"net/http"
+	"slices"
 	"time"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/pkg/errors"
@@ -35,7 +35,7 @@ func authBackendTwitchToken(token string) (modules []string, expiresAt time.Time
 	switch {
 	case err == nil:
 		// We got a valid user, continue check below
-		if !str.StringInSlice(user, config.BotEditors) && !str.StringInSlice(id, config.BotEditors) {
+		if !slices.Contains(config.BotEditors, user) && !slices.Contains(config.BotEditors, id) {
 			// That user is none of our editors: Deny access
 			return nil, time.Time{}, authcache.ErrUnauthorized
 		}

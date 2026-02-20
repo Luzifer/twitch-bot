@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -17,8 +18,7 @@ import (
 	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Luzifer/go_helpers/v2/fieldcollection"
-	"github.com/Luzifer/go_helpers/v2/str"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
@@ -308,7 +308,7 @@ func (r *Rule) allowExecuteChannelWhitelist(logger *logrus.Entry, m *irc.Message
 		return true
 	}
 
-	if DeriveChannel(m, evtData) == "" || (!str.StringInSlice(DeriveChannel(m, evtData), r.MatchChannels) && !str.StringInSlice(strings.TrimPrefix(DeriveChannel(m, evtData), "#"), r.MatchChannels)) {
+	if DeriveChannel(m, evtData) == "" || (!slices.Contains(r.MatchChannels, DeriveChannel(m, evtData)) && !slices.Contains(r.MatchChannels, strings.TrimPrefix(DeriveChannel(m, evtData), "#"))) {
 		logger.Trace("Non-Match: Channel")
 		return false
 	}
@@ -422,7 +422,7 @@ func (r *Rule) allowExecuteEventMatch(logger *logrus.Entry, _ *irc.Message, even
 		return true
 	}
 
-	if mE == "" && str.StringInSlice(gE, []string{"bits", "resub"}) {
+	if mE == "" && slices.Contains([]string{"bits", "resub"}, gE) {
 		// Additional message matchers - see explanation above
 		return true
 	}
@@ -541,7 +541,7 @@ func (r *Rule) allowExecuteUserWhitelist(logger *logrus.Entry, m *irc.Message, _
 		return true
 	}
 
-	if DeriveUser(m, evtData) == "" || !str.StringInSlice(strings.ToLower(DeriveUser(m, evtData)), r.MatchUsers) {
+	if DeriveUser(m, evtData) == "" || !slices.Contains(r.MatchUsers, strings.ToLower(DeriveUser(m, evtData))) {
 		logger.Trace("Non-Match: Users")
 		return false
 	}

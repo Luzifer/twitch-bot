@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/go_helpers/v2/str"
 	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
@@ -361,7 +361,7 @@ func main() {
 			}
 
 			for _, c := range previousChannels {
-				if !str.StringInSlice(c, config.Channels) {
+				if !slices.Contains(config.Channels, c) {
 					log.WithField("channel", c).Info("Leaving removed channel...")
 					ircHdl.ExecutePart(c)
 
