@@ -1,3 +1,22 @@
+# 3.38.0 / 2026-02-20
+
+* Bugfixes
+  * fix(deps): update dependency axios to v1.13.5 [security]
+  * fix(deps): update module github.com/getsentry/sentry-go to v0.42.0
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.16.5 [security]
+  * fix(deps): update module github.com/luzifer/rconfig/v2 to v2.6.1
+  * fix(deps): update module github.com/sirupsen/logrus to v1.9.4
+  * fix(deps): update module golang.org/x/crypto to v0.47.0
+  * fix(deps): update module golang.org/x/net to v0.50.0
+  * fix(deps): update module golang.org/x/oauth2 to v0.35.0
+  * fix(test): update redirect after upstream change
+  * chore: fix or disable linter errors
+  * chore: replace go\_helpers/v2 monolith
+
+* Documentation
+  * feat(docs): move installation into its own section
+
+
 # 3.37.2 / 2025-12-24
 
 * Bugfixes
