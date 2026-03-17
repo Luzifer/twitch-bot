@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mariadb:
-        image: mariadb:11.8.6@sha256:8164f184d16c30e2f159e30518113667b796306dff0fe558876ab1ff521a682f
+        image: mariadb:11.8.6@sha256:49a339bb7343f51035f9457a0af59b966024eea49f774f96d0c28648ca43b571
         env:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
