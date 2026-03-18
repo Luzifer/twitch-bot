@@ -129,7 +129,7 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 		vars    = mux.Vars(r)
 		channel = vars["channel"]
 		user    = vars["user"]
-		reason  = r.FormValue("reason")
+		reason  = r.FormValue("reason") //#nosec:G120 // Request body size is limited by API route registration middleware
 	)
 
 	if err := botTwitchClient().BanUser(r.Context(), channel, user, 0, reason); err != nil {

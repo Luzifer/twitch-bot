@@ -57,7 +57,7 @@ func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 
 	// The data is sent (posted) with a content type of application/x-www-form-urlencoded.
 	// A field named 'data' contains the payment information as a JSON string.
-	jsonData := r.FormValue("data")
+	jsonData := r.FormValue("data") //#nosec:G120 // Request body size is limited by API route registration middleware
 	if jsonData == "" {
 		// Well, no.
 		logrus.WithField("remote_addr", r.RemoteAddr).Warn("received KoFi hook without payload")

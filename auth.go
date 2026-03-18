@@ -46,8 +46,8 @@ func init() {
 
 func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 	var (
-		code  = r.FormValue("code")
-		state = r.FormValue("state")
+		code  = r.FormValue("code")  //#nosec:G120 // Request body size is limited by API route registration middleware
+		state = r.FormValue("state") //#nosec:G120 // Request body size is limited by API route registration middleware
 	)
 
 	if state != instanceState {
@@ -108,8 +108,8 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 
 func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 	var (
-		code  = r.FormValue("code")
-		state = r.FormValue("state")
+		code  = r.FormValue("code")  //#nosec:G120 // Request body size is limited by API route registration middleware
+		state = r.FormValue("state") //#nosec:G120 // Request body size is limited by API route registration middleware
 	)
 
 	if state != instanceState {

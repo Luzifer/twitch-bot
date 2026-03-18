@@ -42,7 +42,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 }
 
 func handleFormattedMessage(w http.ResponseWriter, r *http.Request) {
-	tpl := r.FormValue("template")
+	tpl := r.FormValue("template") //#nosec:G120 // Request body size is limited by API route registration middleware
 	if tpl == "" {
 		w.WriteHeader(http.StatusNoContent)
 		return

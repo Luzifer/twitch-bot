@@ -324,7 +324,7 @@ func (actorCounter) parseAttributeTemplateToNumber(
 }
 
 func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
-	template := r.FormValue("template")
+	template := r.FormValue("template") //#nosec:G120 // Request body size is limited by API route registration middleware
 	if template == "" {
 		template = "%d"
 	}
@@ -341,12 +341,12 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 
 func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 	var (
-		absolute = r.FormValue("absolute") == "true"
+		absolute = r.FormValue("absolute") == "true" //#nosec:G120 // Request body size is limited by API route registration middleware
 		err      error
 		value    int64
 	)
 
-	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil {
+	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
 		http.Error(w, errors.Wrap(err, "parsing value").Error(), http.StatusBadRequest)
 		return
 	}

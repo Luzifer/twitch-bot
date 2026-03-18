@@ -143,7 +143,7 @@ func configEditorGlobalGetModules(w http.ResponseWriter, _ *http.Request) {
 }
 
 func configEditorGlobalGetUser(w http.ResponseWriter, r *http.Request) {
-	usr, err := twitchClient.GetUserInformation(r.Context(), r.FormValue("user"))
+	usr, err := twitchClient.GetUserInformation(r.Context(), r.FormValue("user")) //#nosec:G120 // Request body size is limited by API route registration middleware
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -195,7 +195,7 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
-	sched, err := cronParser.Parse(r.FormValue("cron"))
+	sched, err := cronParser.Parse(r.FormValue("cron")) //#nosec:G120 // Request body size is limited by API route registration middleware
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -206,7 +206,7 @@ func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
 		out []time.Time
 	)
 
-	if id := r.FormValue("uuid"); id != "" {
+	if id := r.FormValue("uuid"); id != "" { //#nosec:G120 // Request body size is limited by API route registration middleware
 		for _, a := range config.AutoMessages {
 			if a.ID() != id {
 				continue
@@ -227,7 +227,7 @@ func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorGlobalValidateRegex(w http.ResponseWriter, r *http.Request) {
-	if _, err := regexp.Compile(r.FormValue("regexp")); err != nil {
+	if _, err := regexp.Compile(r.FormValue("regexp")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -236,7 +236,7 @@ func configEditorGlobalValidateRegex(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorGlobalValidateTemplate(w http.ResponseWriter, r *http.Request) {
-	if err := validateTemplate(r.FormValue("template")); err != nil {
+	if err := validateTemplate(r.FormValue("template")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

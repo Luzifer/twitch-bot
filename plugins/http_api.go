@@ -19,6 +19,7 @@ type (
 		Description         string
 		HandlerFunc         http.HandlerFunc
 		IsPrefix            bool
+		MaxBodyBytes        int64
 		Method              string
 		Module              string
 		Name                string

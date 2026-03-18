@@ -28,6 +28,7 @@ import (
 )
 
 const (
+	davMaxBodyBytes = 100 << 20 // 100 MiB
 	authTimeout     = 10 * time.Second
 	bufferSizeByte  = 1024
 	socketKeepAlive = 5 * time.Second
@@ -160,6 +161,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		HandlerFunc:       getDAVHandler(),
 		IsPrefix:          true,
 		Module:            "overlays",
+		MaxBodyBytes:      davMaxBodyBytes,
 		Name:              "WebDAV Overlays",
 		Path:              "/dav/",
 		RequiresWriteAuth: true,

@@ -199,7 +199,7 @@ func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func routeActorSetVarSetValue(w http.ResponseWriter, r *http.Request) {
-	if err := setVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil {
+	if err := setVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
 		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
 		return
 	}

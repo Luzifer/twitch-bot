@@ -123,7 +123,7 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	channel = "#" + strings.TrimLeft(channel, "#") // Sanitize
 
-	if err := triggerOrStoreEvent(channel, r.Body, r.FormValue("schedule_in")); err != nil {
+	if err := triggerOrStoreEvent(channel, r.Body, r.FormValue("schedule_in")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
 		http.Error(w, errors.Wrap(err, "creating event").Error(), http.StatusInternalServerError)
 		return
 	}

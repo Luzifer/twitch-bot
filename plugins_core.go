@@ -61,7 +61,10 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-const ircHandleWaitRetries = 10
+const (
+	defaultMaxBodyBytes  = 1 << 20 // 1 MiB
+	ircHandleWaitRetries = 10
+)
 
 var (
 	corePluginRegistrations = []plugins.RegisterFunc{
@@ -137,6 +140,14 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	}
 
 	var hdl http.Handler = route.HandlerFunc
+
+	// Apply fix for GoSec G120: Limit body size
+	if route.MaxBodyBytes == 0 {
+		route.MaxBodyBytes = defaultMaxBodyBytes
+	}
+	hdl = writeBodyLimitMiddleware(hdl, route.MaxBodyBytes)
+
+	// Apply auth in case it's configured
 	switch {
 	case route.RequiresEditorsAuth:
 		hdl = writeAuthMiddleware(hdl, moduleConfigEditor)
@@ -228,4 +239,14 @@ func sendMessage(m *irc.Message) error {
 	}
 
 	return ircHdl.SendMessage(m)
+}
+
+func writeBodyLimitMiddleware(h http.Handler, limit int64) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Body != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, limit)
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
