@@ -1,3 +1,15 @@
+# 3.38.1 / 2026-03-19
+
+* Bugfixes
+  * fix(deps): update dependency axios to v1.13.6
+  * fix(deps): update module github.com/getsentry/sentry-go to v0.43.0
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.17.0
+  * fix(deps): update module golang.org/x/crypto to v0.49.0
+  * fix(deps): update module golang.org/x/net to v0.52.0
+  * fix(deps): update module golang.org/x/oauth2 to v0.36.0
+  * fix(lint): ensure all paths do call the context cancellation
+  * fix(lint): limit body size of request to prevent mem exhaustion
+
 # 3.38.0 / 2026-02-20
 
 * Bugfixes
@@ -15,7 +27,6 @@
 
 * Documentation
   * feat(docs): move installation into its own section
-
 
 # 3.37.2 / 2025-12-24
 
