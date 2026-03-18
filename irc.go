@@ -61,7 +61,15 @@ func newIRCHandler() (*ircHandler, error) {
 		return nil, errors.Wrap(err, "fetching username")
 	}
 
-	h.ctx, h.ctxCancelFn = context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background()) //#nosec:G118 // Cancel is retained in the handler and called on constructor failure or handler shutdown
+	h.ctx, h.ctxCancelFn = ctx, cancel
+
+	handlerReady := false
+	defer func() {
+		if !handlerReady {
+			cancel()
+		}
+	}()
 
 	conn, err := tls.Dial("tcp", "irc.chat.twitch.tv:6697", nil) //nolint:noctx // Would use background context
 	if err != nil {
@@ -86,6 +94,7 @@ func newIRCHandler() (*ircHandler, error) {
 	h.conn = conn
 	h.user = username
 
+	handlerReady = true
 	return h, nil
 }
 
