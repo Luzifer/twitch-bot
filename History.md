@@ -1,3 +1,15 @@
+# 3.39.0 / 2026-03-22
+
+* Improvements
+  * feat: modernize frontend by eleminating old tech
+
+* Bugfixes
+  * fix: send proper content-type in JSON API routes
+  * fix(deps): update dependency bootstrap to v5
+  * fix(deps): update dependency codejar to v4 (#213)
+  * fix(deps): update dependency vue-router to v5.0.4
+  * fix(deps): update font awesome to v7
+
 # 3.38.1 / 2026-03-19
 
 * Bugfixes
