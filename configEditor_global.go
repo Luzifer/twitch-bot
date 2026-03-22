@@ -131,12 +131,14 @@ func configEditorGlobalGetActions(w http.ResponseWriter, _ *http.Request) {
 	availableActorDocsLock.Lock()
 	defer availableActorDocsLock.Unlock()
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(availableActorDocs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func configEditorGlobalGetModules(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(knownModules); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -149,6 +151,7 @@ func configEditorGlobalGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(usr); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -221,6 +224,7 @@ func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
 		out = append(out, lt)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

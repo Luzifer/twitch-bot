@@ -257,6 +257,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 
 	sort.Slice(msgs, func(i, j int) bool { return msgs[i].Time.Before(msgs[j].Time) })
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(msgs); err != nil {
 		http.Error(w, errors.Wrap(err, "encoding response").Error(), http.StatusInternalServerError)
 		return

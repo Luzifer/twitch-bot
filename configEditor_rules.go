@@ -148,6 +148,7 @@ func configEditorRulesDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func configEditorRulesGet(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(config.Rules); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

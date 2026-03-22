@@ -128,6 +128,7 @@ func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(payload); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -163,6 +164,7 @@ func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, _ *http.Request) {
 
 	out.UpdateChannelScopes = fmt.Sprintf("https://id.twitch.tv/oauth2/authorize?%s", params.Encode())
 
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(out); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -220,12 +222,14 @@ func configEditorHandleGeneralGet(w http.ResponseWriter, _ *http.Request) {
 	}
 	resp.BotName = &uName
 
+	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func configEditorHandleGeneralListAuthTokens(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(config.AuthTokens); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

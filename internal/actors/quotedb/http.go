@@ -193,6 +193,7 @@ func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(quotes); err != nil {
 		http.Error(w, errors.Wrap(err, "enocding quote list").Error(), http.StatusInternalServerError)
 		return

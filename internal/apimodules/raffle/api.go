@@ -301,7 +301,7 @@ func handleWrap(f func(http.ResponseWriter, *http.Request, map[string]uint64) (a
 			return
 		}
 
-		w.Header().Set("Content-Type", "applicatioh/json")
+		w.Header().Set("Content-Type", "application/json")
 		if err = json.NewEncoder(w).Encode(resp); err != nil {
 			logger.WithError(err).Error("serializing response")
 			http.Error(w, "something went wrong", http.StatusInternalServerError)

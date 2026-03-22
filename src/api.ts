@@ -15,13 +15,11 @@ let authToken: string | null = null
 async function parseResponse<TResponse>(resp: Response): Promise<TResponse> {
   const contentType = resp.headers.get('content-type') || ''
 
-  return resp.json() as Promise<TResponse> // FIXME: This needs to be properly handled in API
+  if (contentType.includes('application/json')) {
+    return resp.json() as Promise<TResponse>
+  }
 
-  // if (contentType.includes('application/json')) {
-  //   return resp.json()
-  // }
-
-  // return resp.text()
+  return resp.text() as Promise<TResponse>
 }
 
 export function createApiClient(getAuthToken: () => string | null) {

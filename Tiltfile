@@ -22,8 +22,10 @@ local_resource(
   'server',
   deps=[
     'go.mod',
+    'internal',
     'main.go',
     'pkg',
+    'plugins',
   ],
   ignore=[
     'ci',
