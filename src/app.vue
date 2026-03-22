@@ -1,285 +1,293 @@
 <template>
   <div>
-    <b-navbar
-      toggleable="lg"
-      type="dark"
-      variant="primary"
-      class="mb-3"
-    >
-      <b-navbar-brand :to="{ name: 'general-config' }">
-        <font-awesome-icon
-          fixed-width
-          class="mr-1"
-          :icon="['fas', 'robot']"
-        />
-        Twitch-Bot
-      </b-navbar-brand>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary mb-3">
+      <div class="container-fluid">
+        <RouterLink
+          class="navbar-brand"
+          :to="{ name: 'general-config' }"
+        >
+          <fa-icon
+            fixed-width
+            class="me-1"
+            :icon="['fas', 'robot']"
+          />
+          Twitch-Bot
+        </RouterLink>
 
-      <b-navbar-toggle target="nav-collapse" />
+        <button
+          class="navbar-toggler"
+          type="button"
+          @click="navbarOpen = !navbarOpen"
+        >
+          <span class="navbar-toggler-icon" />
+        </button>
 
-      <b-collapse
-        id="nav-collapse"
-        is-nav
-      >
-        <b-navbar-nav v-if="isAuthenticated">
-          <b-nav-item
-            :to="{ name: 'general-config' }"
+        <div
+          class="collapse navbar-collapse"
+          :class="{ show: navbarOpen }"
+        >
+          <ul
+            v-if="appStore.isAuthenticated"
+            class="navbar-nav"
           >
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'cog']"
-            />
-            General
-          </b-nav-item>
-          <b-nav-item
-            :to="{ name: 'edit-automessages' }"
-          >
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'envelope-open-text']"
-            />
-            Auto-Messages
-          </b-nav-item>
-          <b-nav-item
-            :to="{ name: 'edit-rules' }"
-          >
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'inbox']"
-            />
-            Rules
-          </b-nav-item>
-          <b-nav-item
-            :to="{ name: 'raffle' }"
-          >
-            <font-awesome-icon
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'dice']"
-            />
-            Raffle
-          </b-nav-item>
-        </b-navbar-nav>
-
-        <b-navbar-nav class="ml-auto">
-          <b-nav-text
-            v-if="loadingData"
-          >
-            <font-awesome-icon
-              fixed-width
-              class="text-warning"
-              :icon="['fas', 'spinner']"
-              pulse
-            />
-          </b-nav-text>
-
-          <b-nav-text
-            class="ml-2"
-          >
-            <template
-              v-for="check in status.checks"
-            >
-              <font-awesome-icon
-                :id="`statusCheck${check.name}`"
-                :key="check.key"
-                fixed-width
-                :class="{ 'text-danger': !check.success, 'text-success': check.success }"
-                :icon="['fas', 'question-circle']"
-              />
-              <b-tooltip
-                :key="check.key"
-                :target="`statusCheck${check.name}`"
-                triggers="hover"
+            <li class="nav-item">
+              <RouterLink
+                class="nav-link"
+                :to="{ name: 'general-config' }"
               >
-                {{ check.description }}
-              </b-tooltip>
-            </template>
-          </b-nav-text>
+                <fa-icon
+                  fixed-width
+                  class="me-1"
+                  :icon="['fas', 'cog']"
+                />
+                General
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink
+                class="nav-link"
+                :to="{ name: 'edit-automessages' }"
+              >
+                <fa-icon
+                  fixed-width
+                  class="me-1"
+                  :icon="['fas', 'envelope-open-text']"
+                />
+                Auto-Messages
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink
+                class="nav-link"
+                :to="{ name: 'edit-rules' }"
+              >
+                <fa-icon
+                  fixed-width
+                  class="me-1"
+                  :icon="['fas', 'inbox']"
+                />
+                Rules
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink
+                class="nav-link"
+                :to="{ name: 'raffle' }"
+              >
+                <fa-icon
+                  fixed-width
+                  class="me-1"
+                  :icon="['fas', 'dice']"
+                />
+                Raffle
+              </RouterLink>
+            </li>
+          </ul>
 
-          <b-nav-text class="ml-2">
-            <font-awesome-icon
-              v-if="configNotifySocketConnected"
-              id="socketConnectionStatus"
-              fixed-width
-              class="mr-1 text-success"
-              :icon="['fas', 'ethernet']"
-            />
-            <font-awesome-icon
-              v-else
-              id="socketConnectionStatus"
-              fixed-width
-              class="mr-1 text-danger"
-              :icon="['fas', 'ethernet']"
-            />
-            <b-tooltip
-              target="socketConnectionStatus"
-              triggers="hover"
+          <div class="navbar-nav ms-auto align-items-lg-center gap-2">
+            <span
+              v-if="appStore.loadingData"
+              class="navbar-text"
             >
-              <span v-if="configNotifySocketConnected">Connected to Bot</span>
-              <span v-else>Disconnected from Bot</span>
-            </b-tooltip>
-          </b-nav-text>
+              <fa-icon
+                fixed-width
+                class="text-warning"
+                :icon="['fas', 'spinner']"
+                spin-pulse
+              />
+            </span>
 
-          <b-nav-text class="ml-2">
-            <font-awesome-icon
-              id="botInfo"
-              fixed-width
-              class="mr-1"
-              :icon="['fas', 'info-circle']"
-            />
-            <b-tooltip
-              target="botInfo"
-              triggers="hover"
-            >
-              Version: <code>{{ $root.vars.Version }}</code>
-            </b-tooltip>
-          </b-nav-text>
-        </b-navbar-nav>
-      </b-collapse>
-    </b-navbar>
+            <span class="navbar-text">
+              <template
+                v-for="check in statusChecks"
+                :key="check.name"
+              >
+                <fa-icon
+                  :id="`statusCheck${check.name}`"
+                  fixed-width
+                  class="me-2"
+                  :class="{ 'text-danger': !check.success, 'text-success': check.success }"
+                  :icon="['fas', 'question-circle']"
+                />
+                <AppTooltip :target="`statusCheck${check.name}`">
+                  {{ check.description }}
+                </AppTooltip>
+              </template>
+            </span>
 
-    <b-container>
-      <!-- Error display -->
-      <b-row
-        v-if="error"
-        class="sticky-row"
+            <span class="navbar-text">
+              <fa-icon
+                id="socketConnectionStatus"
+                fixed-width
+                :class="configNotifySocketConnected ? 'text-success' : 'text-danger'"
+                :icon="['fas', 'ethernet']"
+              />
+              <AppTooltip target="socketConnectionStatus">
+                {{ configNotifySocketConnected ? 'Connected to Bot' : 'Disconnected from Bot' }}
+              </AppTooltip>
+            </span>
+
+            <span class="navbar-text">
+              <fa-icon
+                id="botInfo"
+                fixed-width
+                :icon="['fas', 'info-circle']"
+              />
+              <AppTooltip target="botInfo">
+                Version: {{ appStore.vars.Version || '-' }}
+              </AppTooltip>
+            </span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div
+        v-for="toast in appStore.toasts"
+        :key="toast.id"
+        class="toast show border-0"
+        :class="toastClass(toast.variant)"
       >
-        <b-col>
-          <b-alert
-            dismissible
-            show
-            variant="danger"
-            @dismissed="error = null"
-          >
-            <font-awesome-icon
+        <div class="toast-body">
+          {{ toast.message }}
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div
+        v-if="appStore.error"
+        class="row sticky-row"
+      >
+        <div class="col">
+          <div class="alert alert-danger alert-dismissible">
+            <fa-icon
               fixed-width
-              class="mr-1"
+              class="me-1"
               :icon="['fas', 'exclamation-circle']"
             />
-            {{ error }}
-          </b-alert>
-        </b-col>
-      </b-row>
+            {{ appStore.error }}
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              @click="appStore.setError(null)"
+            />
+          </div>
+        </div>
+      </div>
 
-      <!-- Working display -->
-      <b-row
-        v-if="changePending"
-        class="sticky-row"
+      <div
+        v-if="appStore.changePending"
+        class="row sticky-row"
       >
-        <b-col>
-          <b-alert
-            show
-            variant="info"
-          >
-            <font-awesome-icon
+        <div class="col">
+          <div class="alert alert-info">
+            <fa-icon
               fixed-width
-              class="mr-1"
+              class="me-1"
               :icon="['fas', 'spinner']"
-              pulse
+              spin-pulse
             />
             Your change was submitted and is pending, please wait for config to be updated!
-          </b-alert>
-        </b-col>
-      </b-row>
+          </div>
+        </div>
+      </div>
 
-      <!-- Logged-out state -->
-      <b-row
-        v-if="!isAuthenticated"
+      <div
+        v-if="!appStore.isAuthenticated"
+        class="row"
       >
-        <b-col
-          class="text-center"
-        >
-          <b-button
-            :disabled="!$root.vars.TwitchClientID"
+        <div class="col text-center">
+          <a
+            class="btn btn-twitch"
+            :class="{ disabled: !appStore.vars.TwitchClientID }"
             :href="authURL"
-            variant="twitch"
           >
-            <font-awesome-icon
+            <fa-icon
               fixed-width
-              class="mr-1"
+              class="me-1"
               :icon="['fab', 'twitch']"
             />
             Login with Twitch
-          </b-button>
-        </b-col>
-      </b-row>
+          </a>
+        </div>
+      </div>
 
-      <!-- Logged-in state -->
-      <router-view v-else />
-    </b-container>
+      <RouterView v-else />
+    </div>
+
+    <ConfirmModalHost />
   </div>
 </template>
 
-<script>
-import * as constants from './const.js'
+<script lang="ts">
+import * as constants from './lib/const'
+import { api, HttpError } from './api'
+import type { ConfigNotifyMessage, StatusResponse } from './types'
+import { RouterLink, RouterView } from 'vue-router'
+import AppTooltip from './components/AppTooltip'
+import ConfirmModalHost from './components/ConfirmModalHost'
+import { defineComponent } from 'vue'
+import { useAppStore } from './stores/app'
 
-import axios from 'axios'
+export default defineComponent({
+  components: {
+    AppTooltip,
+    ConfirmModalHost,
+    RouterLink,
+    RouterView,
+  },
 
-export default {
   computed: {
-    authURL() {
-      const scopes = []
-
+    authURL(): string {
       const params = new URLSearchParams()
-      params.set('client_id', this.$root.vars.TwitchClientID)
+      params.set('client_id', this.appStore.vars.TwitchClientID)
       params.set('redirect_uri', window.location.href.split('#')[0].split('?')[0])
       params.set('response_type', 'token')
-      params.set('scope', scopes.join(' '))
+      params.set('scope', '')
 
       return `https://id.twitch.tv/oauth2/authorize?${params.toString()}`
     },
-  },
 
-  created() {
-    this.$bus.$on(constants.NOTIFY_CHANGE_PENDING, p => {
-      this.changePending = Boolean(p)
-    })
-    this.$bus.$on(constants.NOTIFY_ERROR, err => {
-      this.error = err
-    })
-    this.$bus.$on(constants.NOTIFY_FETCH_ERROR, err => {
-      this.handleFetchError(err)
-    })
-    this.$bus.$on(constants.NOTIFY_LOADING_DATA, l => {
-      this.loadingData = Boolean(l)
-    })
+    statusChecks() {
+      return this.appStore.status?.checks || []
+    },
   },
 
   data() {
     return {
-      changePending: false,
+      appStore: useAppStore(),
       configNotifyBackoff: 100,
-      configNotifySocket: null,
+      configNotifySocket: null as WebSocket | null,
       configNotifySocketConnected: false,
-      error: null,
-      loadingData: false,
-      status: {},
+      navbarOpen: false,
     }
   },
 
   methods: {
-    fetchStatus() {
-      return axios.get('status/status.json?fail-status=200')
-        .then(resp => {
-          this.status = resp.data
-        })
-        .catch(err => this.$bus.$emit(constants.NOTIFY_FETCH_ERROR, err))
+    async fetchStatus() {
+      try {
+        this.appStore.setStatus(await api.get<StatusResponse>('status/status.json?fail-status=200', false) as StatusResponse)
+      } catch (err) {
+        this.$bus.emit(constants.NOTIFY_FETCH_ERROR, err)
+      }
     },
 
-    handleFetchError(err) {
-      switch (err.response.status) {
+    handleFetchError(err: unknown) {
+      const httpErr = err as HttpError
+
+      switch (httpErr.status) {
       case 403:
-        this.$root.authToken = null
-        this.error = 'This user is not authorized for the config editor'
+        this.appStore.setAuthToken(null)
+        this.appStore.setError('This user is not authorized for the config editor')
         break
       case 502:
-        this.error = 'Looks like the bot is currently not reachable. Please check it is running and refresh the interface.'
+        this.appStore.setError('Looks like the bot is currently not reachable. Please check it is running and refresh the interface.')
         break
       default:
-        this.error = `Something went wrong: ${err.response.data} (${err.response.status})`
+        this.appStore.setError(`Something went wrong: ${String(httpErr.data)} (${httpErr.status})`)
       }
     },
 
@@ -296,29 +304,46 @@ export default {
 
       this.configNotifySocket = new WebSocket(`${window.location.href.split('#')[0].replace(/^http/, 'ws')}config-editor/notify-config`)
       this.configNotifySocket.onopen = () => {
-        console.debug('[notify] Socket connected')
         this.configNotifySocketConnected = true
       }
       this.configNotifySocket.onmessage = evt => {
-        const msg = JSON.parse(evt.data)
-
-        console.debug(`[notify] Socket message received type=${msg.msg_type}`)
-        this.configNotifyBackoff = 100 // We've received a message, reset backoff
+        const msg = JSON.parse(evt.data) as ConfigNotifyMessage
+        this.configNotifyBackoff = 100
 
         if (msg.msg_type !== 'ping') {
-          this.$bus.$emit(msg.msg_type)
+          this.$bus.emit(msg.msg_type)
         }
       }
-      this.configNotifySocket.onclose = evt => {
-        console.debug(`[notify] Socket was closed wasClean=${evt.wasClean}`)
+      this.configNotifySocket.onclose = () => {
         this.configNotifySocketConnected = false
         updateBackoffAndReconnect()
+      }
+    },
+
+    toastClass(variant: string) {
+      return {
+        'bg-danger text-white': variant === 'danger',
+        'bg-info text-dark': variant === 'info',
+        'bg-success text-white': variant === 'success',
       }
     },
   },
 
   mounted() {
-    if (this.isAuthenticated) {
+    this.$bus.on(constants.NOTIFY_CHANGE_PENDING, payload => {
+      this.appStore.setChangePending(Boolean(payload))
+    })
+    this.$bus.on(constants.NOTIFY_ERROR, payload => {
+      this.appStore.setError(payload as string)
+    })
+    this.$bus.on(constants.NOTIFY_FETCH_ERROR, payload => {
+      this.handleFetchError(payload)
+    })
+    this.$bus.on(constants.NOTIFY_LOADING_DATA, payload => {
+      this.appStore.setLoadingData(Boolean(payload))
+    })
+
+    if (this.appStore.isAuthenticated) {
       this.openConfigNotifySocket()
     }
 
@@ -326,31 +351,54 @@ export default {
     this.fetchStatus()
   },
 
-  name: 'TwitchBotEditorApp',
-
-  props: {
-    isAuthenticated: {
-      required: true,
-      type: Boolean,
-    },
-  },
+  name: 'TwitchBotApp',
 
   watch: {
-    isAuthenticated(to) {
+    'appStore.isAuthenticated'(to: boolean) {
       if (to && !this.configNotifySocketConnected) {
         this.openConfigNotifySocket()
       }
     },
   },
-}
+})
 </script>
 
 <style>
+:root {
+  --bs-body-font-size: 0.9rem;
+}
+
 .btn-twitch {
   background-color: #6441a5;
+  color: #fff;
 }
+
+.btn-twitch:hover {
+  background-color: #7d5bbe;
+  color: #fff;
+}
+
 .sticky-row {
   position: sticky;
   top: 0;
+  z-index: 1020;
+}
+
+.app-tooltip .tooltip-inner {
+  max-width: 320px;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.app-tooltip-dark {
+  --bs-tooltip-bg: #111827;
+  --bs-tooltip-color: #f9fafb;
+}
+
+.badge {
+  align-items: center;
+  display: inline-flex;
+  line-height: 1.2;
+  vertical-align: middle;
 }
 </style>

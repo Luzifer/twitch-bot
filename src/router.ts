@@ -1,11 +1,9 @@
-/* eslint-disable sort-imports */
+import { createRouter, createWebHashHistory } from 'vue-router'
 
-import VueRouter from 'vue-router'
-
-import Automessages from './automessages.vue'
-import GeneralConfig from './generalConfig.vue'
-import Raffle from './raffle.vue'
-import Rules from './rules.vue'
+import Automessages from './views/automessages.vue'
+import GeneralConfig from './views/generalConfig.vue'
+import Raffle from './views/raffle.vue'
+import Rules from './views/rules.vue'
 
 const routes = [
   {
@@ -30,6 +28,7 @@ const routes = [
   },
 ]
 
-export default new VueRouter({
+export default createRouter({
+  history: createWebHashHistory(),
   routes,
 })

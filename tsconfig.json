@@ -1,0 +1,18 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "moduleResolution": "bundler",
+    "paths": {
+      "vue": [
+        "./node_modules/vue/dist/vue.d.ts"
+      ]
+    },
+    "types": []
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue"
+  ]
+}

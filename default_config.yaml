@@ -1,5 +1,3 @@
----
-
 # This must be the config version you've used below. Current version
 # is version 2 so probably keep it at 2 until the bot tells you to
 # upgrade.
@@ -25,5 +23,3 @@ auto_messages: []
 # List of rules. See documentation for details or use web-interface
 # to configure.
 rules: []
-
-...

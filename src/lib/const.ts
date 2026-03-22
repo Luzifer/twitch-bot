@@ -12,7 +12,7 @@ export const BUILTIN_TEMPLATE_FUNCTIONS = [
   'printf',
   'println',
   'urlquery',
-]
+] as const
 
 export const CRON_VALIDATION = /^(?:(?:@every (?:\d+(?:s|m|h))+)|(?:(?:(?:(?:\d+,)+\d+|(?:\d+(?:\/|-)\d+)|\d+|\*|\*\/\d+)(?: |$)){5}))$/
 export const NANO = 1000000000
