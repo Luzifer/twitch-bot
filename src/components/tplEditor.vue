@@ -15,12 +15,11 @@
 <script lang="ts">
 import * as constants from '../lib/const'
 import { api, HttpError } from '../api'
-import { CodeJar } from 'codejar/codejar.js'
-import type { CodeJar as CodeJarInstance } from 'codejar'
+import { CodeJar } from 'codejar'
 import { defineComponent } from 'vue'
 import Prism from 'prismjs'
 import { useAppStore } from '../stores/app'
-import { withLineNumbers } from 'codejar/linenumbers.js'
+import { withLineNumbers } from 'codejar-linenumbers'
 
 export default defineComponent({
   computed: {
@@ -62,7 +61,7 @@ export default defineComponent({
       appStore: useAppStore(),
       emittedCode: '',
       isValid: true,
-      jar: null as CodeJarInstance | null,
+      jar: null as CodeJar | null,
       validationError: '',
     }
   },
@@ -98,15 +97,21 @@ export default defineComponent({
   },
 
   mounted() {
-    this.jar = CodeJar(this.$refs.editor as HTMLElement, withLineNumbers((editor: HTMLElement) => this.highlight(editor)), {
-      indentOn: /[{(]$/,
-      tab: ' '.repeat(2),
-    })
+    this.jar = CodeJar(
+      this.$refs.editor as HTMLElement,
+      withLineNumbers((editor: HTMLElement) => this.highlight(editor)),
+      {
+        indentOn: /[{(]$/,
+        tab: ' '.repeat(2),
+      },
+    )
+
     this.jar.onUpdate((code: string) => {
       this.validateTemplate(code)
       this.emittedCode = code
       this.$emit('update:modelValue', code)
     })
+
     this.jar.updateCode(this.modelValue)
   },
 
@@ -156,19 +161,6 @@ export default defineComponent({
   color: #7c8aa5;
   padding-right: 0.5em;
   text-align: right;
-}
-
-.template-editor .codejar-linenumbers div {
-  padding-bottom: 0.5em;
-  padding-top: 0.5em;
-}
-
-.template-editor .codejar-linenumbers + div {
-  color: #d7dde7;
-  margin-left: 35px;
-  padding-bottom: 0.5em;
-  padding-left: 0.5em !important;
-  padding-top: 0.5em;
 }
 
 .template-editor .token.comment {

@@ -1,6 +1,7 @@
 /* eslint-disable sort-imports */
 
 import 'bootstrap/dist/css/bootstrap.min.css'
+import 'codejar-linenumbers/js/codejar-linenumbers.css'
 
 import { fab } from '@fortawesome/free-brands-svg-icons'
 import { fas } from '@fortawesome/free-solid-svg-icons'
