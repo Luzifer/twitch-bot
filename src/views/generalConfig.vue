@@ -302,7 +302,7 @@
               />
               Bot is missing {{ botMissingScopes }} of its required scopes which will cause features not to work properly. Please re-authorize the bot using the URL below.
             </p>
-            <div class="input-group">
+            <div class="input-group input-group-sm">
               <input
                 placeholder="Loading..."
                 class="form-control"
