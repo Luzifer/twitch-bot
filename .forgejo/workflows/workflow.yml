@@ -1,0 +1,39 @@
+name: CI Workflow
+
+on:
+  push: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:15b866b672c3ef6aa713ae8f1f444fb98d9b512230d30764aba9bedaf215b161
+      env:
+        CGO_ENABLED: 0
+        GOPATH: /go
+
+    runs-on: forgejo
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          show-progress: false
+
+      - name: Marking workdir safe
+        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
+      - name: Lint and test code
+        run: make lint test frontend_lint
+
+      - name: Build release (quick local for compile)
+        run: make build_prod
+
+      - name: Execute Trivy scan
+        run: make trivy
