@@ -118,7 +118,7 @@ export interface RaffleEntry {
   drawResponse?: string
   enteredAs: string
   enteredAt: string
-  id: number
+  id: string
   multiplier: number
   speakUpUntil?: string
   userDisplayName: string
@@ -138,7 +138,7 @@ export interface Raffle {
   closeAfter: number
   closeAt: string | null
   entries?: RaffleEntry[]
-  id: number
+  id: string
   keyword: string
   minFollowAge: number
   multiFollower: number

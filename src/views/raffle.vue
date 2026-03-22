@@ -828,7 +828,7 @@ export default defineComponent({
         }
 
         // Everything else: Order by ID DESC
-        return b.id - a.id
+        return Number(b.id) - Number(a.id)
       })
 
       return entries
@@ -843,7 +843,7 @@ export default defineComponent({
           return scores[a.status] - scores[b.status]
         }
 
-        return b.id - a.id
+        return Number(b.id) - Number(a.id)
       })
       return raffles
     },
@@ -864,7 +864,7 @@ export default defineComponent({
   },
 
   methods: {
-    async cloneRaffle(id: number | string) {
+    async cloneRaffle(id: string) {
       try {
         await api.put(`raffle/${id}/clone`, {})
         return this.appStore.toastSuccess('Raffle cloned')
@@ -878,7 +878,7 @@ export default defineComponent({
       this.showRaffleEntriesModal = false
     },
 
-    closeRaffle(id: number | string) {
+    closeRaffle(id: string) {
       confirmDialog('Do you really want to close entries for this raffle?', {
         buttonSize: 'sm',
         cancelTitle: 'NO',
@@ -899,7 +899,7 @@ export default defineComponent({
         })
     },
 
-    deleteRaffle(id: number | string) {
+    deleteRaffle(id: string) {
       confirmDialog('Do you really want to delete this raffle and all its entries?', {
         buttonSize: 'sm',
         cancelTitle: 'NO',
@@ -937,7 +937,7 @@ export default defineComponent({
     newRaffle() {
       this.models.raffle = {
         /* eslint-disable sort-keys */
-        id: 0,
+        id: '',
 
         channel: '',
         keyword: '!enter',
@@ -1009,7 +1009,7 @@ export default defineComponent({
       this.openedRaffleReloading = false
     },
 
-    reopenRaffle(raffleId: number | string) {
+    reopenRaffle(raffleId: string) {
       let duration = 10
 
       const content = h('div', {}, [
@@ -1051,7 +1051,7 @@ export default defineComponent({
         })
     },
 
-    async repickWinner(winnerId: number | string) {
+    async repickWinner(winnerId: string) {
       this.openedRaffleReloading = true
       try {
         await api.put(`raffle/${this.openedRaffle.id}/repick/${winnerId}`, {})
@@ -1061,7 +1061,7 @@ export default defineComponent({
       }
     },
 
-    resetRaffle(id: number | string) {
+    resetRaffle(id: string) {
       confirmDialog('Do you really want to reset this raffle?', {
         buttonSize: 'sm',
         cancelTitle: 'NO',
@@ -1100,13 +1100,13 @@ export default defineComponent({
       }
     },
 
-    async showEntryDialog(raffleId: number) {
+    async showEntryDialog(raffleId: string) {
       this.openedRaffle = { id: raffleId } as Raffle
       await this.refreshOpenendRaffle()
       this.showRaffleEntriesModal = true
     },
 
-    async startRaffle(id: number | string) {
+    async startRaffle(id: string) {
       try {
         await api.put(`raffle/${id}/start`, {})
         return this.appStore.toastSuccess('Raffle started')
@@ -1128,8 +1128,6 @@ export default defineComponent({
 
         channel: raffle.channel.replace(/^#/, ''),
 
-        id: raffle.id ? Number(raffle.id) : 0,
-
         // Transform durations
         closeAfter: raffle.closeAfter / ONE_MINUTE,
         minFollowAge: raffle.minFollowAge / ONE_MINUTE,
@@ -1149,6 +1147,7 @@ export default defineComponent({
         ...raffle,
 
         channel: `#${raffle.channel.replace(/^#/, '')}`,
+        id: raffle.id || '0',
 
         // Transform durations
         closeAfter: Number(raffle.closeAfter) * ONE_MINUTE,
