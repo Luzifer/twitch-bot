@@ -24,6 +24,6 @@
     "pinia": "3.0.4",
     "prismjs": "1.30.0",
     "vue": "3.5.30",
-    "vue-router": "5.0.3"
+    "vue-router": "5.0.4"
   }
 }
