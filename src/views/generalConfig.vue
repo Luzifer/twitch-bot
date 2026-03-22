@@ -287,7 +287,7 @@
             </p>
             <ul>
               <li>Copy the URL provided below</li>
-              <li><strong>Open an inkognito tab or different browser you are not logged into Twitch or are logged in with your bot account</strong></li>
+              <li><strong>Open an incognito tab or different browser you are not logged into Twitch or are logged in with your bot account</strong></li>
               <li>Open the copied URL, sign in with the bot account and accept the permissions</li>
               <li>You will see a message containing the authorized account. If this account is wrong, just start over, the token will be overwritten.</li>
             </ul>

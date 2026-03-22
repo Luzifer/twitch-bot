@@ -588,7 +588,7 @@
               <div class="form-text">
                 The base amount of tickets for <strong>Everyone</strong> is always <code>1.0</code>. You can
                 increase chances for certain user groups. Groups are checked from right to left: If the user
-                is VIP, Sub and Follower they are assigned <strong>VIPkeyword</strong> multiplier.
+                is VIP, Sub and Follower they are assigned <strong>VIP</strong> multiplier.
               </div>
             </div>
           </div>
