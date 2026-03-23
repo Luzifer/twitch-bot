@@ -20,7 +20,7 @@ export const useAppStore = defineStore('app', {
 
     setAuthToken(token: string | null) {
       this.authToken = token
-      setApiAuthToken(token)
+      setApiAuthToken(token ? `Twitch ${token}` : null)
     },
 
     setChangePending(value: boolean) {

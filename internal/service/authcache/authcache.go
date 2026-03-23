@@ -15,12 +15,17 @@ import (
 
 const negativeCacheTime = 5 * time.Minute
 
+// AuthBackendAny signals any backend can answer the validity of the
+// token and no specific backend is selected
+const AuthBackendAny = "*"
+
 type (
 	// Service manages the cached auth results
 	Service struct {
-		backends []AuthFunc
-		cache    map[string]*CacheEntry
-		lock     sync.RWMutex
+		backends     map[string]AuthFunc
+		backendOrder []string
+		cache        map[string]*CacheEntry
+		lock         sync.RWMutex
 	}
 
 	// CacheEntry represents an entry in the cache Service
@@ -29,6 +34,9 @@ type (
 		ExpiresAt  time.Time
 		Modules    []string
 	}
+
+	// CreateOpt supplies options to the creation of the cache
+	CreateOpt func(*Service)
 
 	// AuthFunc is a backend-function to resolve a token to a list of
 	// modules the token is authorized for, an expiry-time and an error.
@@ -44,21 +52,42 @@ var ErrUnauthorized = errors.New("unauthorized")
 
 // New creates a new Service with the given backend methods to
 // authenticate users
-func New(backends ...AuthFunc) *Service {
+func New(fns ...CreateOpt) *Service {
 	s := &Service{
-		backends: backends,
+		backends: make(map[string]AuthFunc),
 		cache:    make(map[string]*CacheEntry),
 	}
+
+	for _, fn := range fns {
+		fn(s)
+	}
+
 	go s.runCleanup()
 
 	return s
 }
 
+// WithAuthBackend adds a new auth backend which is tried in order of
+// begin added
+func WithAuthBackend(name string, fn AuthFunc) CreateOpt {
+	return func(s *Service) {
+		s.backendOrder = append(s.backendOrder, name)
+		s.backends[name] = fn
+	}
+}
+
 // ValidateTokenFor checks backends whether the given token has access
 // to the given modules and caches the result
 func (s *Service) ValidateTokenFor(token string, modules ...string) error {
+	return s.ValidateTokenForWithTokenType(token, AuthBackendAny, modules...)
+}
+
+// ValidateTokenForWithTokenType checks the configured backends whether the
+// given token has access to the given modules and caches the result for the
+// selected auth backend name.
+func (s *Service) ValidateTokenForWithTokenType(token string, authBackendName string, modules ...string) error {
 	s.lock.RLock()
-	cached := s.cache[s.cacheKey(token)]
+	cached := s.cache[s.cacheKey(token, authBackendName)]
 	s.lock.RUnlock()
 
 	if cached != nil && cached.ExpiresAt.After(time.Now()) {
@@ -67,10 +96,18 @@ func (s *Service) ValidateTokenFor(token string, modules ...string) error {
 	}
 
 	// No recent cache entry: We need to ask the expensive backends
-	var ce CacheEntry
+	var (
+		ce              CacheEntry
+		backendSelected bool
+	)
 backendLoop:
-	for _, fn := range s.backends {
-		ce.Modules, ce.ExpiresAt, ce.AuthResult = fn(token)
+	for _, backendName := range s.backendOrder {
+		if authBackendName != AuthBackendAny && backendName != authBackendName {
+			continue
+		}
+
+		backendSelected = true
+		ce.Modules, ce.ExpiresAt, ce.AuthResult = s.backends[backendName](token)
 		switch {
 		case ce.AuthResult == nil:
 			// Valid result & auth, the user was found
@@ -86,6 +123,10 @@ backendLoop:
 		}
 	}
 
+	if !backendSelected {
+		ce.AuthResult = ErrUnauthorized
+	}
+
 	// We got a final result: That might be ErrUnauthorized or a valid
 	// user. Both should be cached. The error for a static time, the
 	// valid result for the time given by the backend.
@@ -94,15 +135,15 @@ backendLoop:
 	}
 
 	s.lock.Lock()
-	s.cache[s.cacheKey(token)] = &ce
+	s.cache[s.cacheKey(token, authBackendName)] = &ce
 	s.lock.Unlock()
 
 	// Finally return the result for the requested modules
 	return ce.validateFor(modules)
 }
 
-func (*Service) cacheKey(token string) string {
-	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(token)))
+func (*Service) cacheKey(token string, backendName string) string {
+	return fmt.Sprintf("sha256:%s:%x", backendName, sha256.Sum256([]byte(token)))
 }
 
 func (s *Service) cleanup() {

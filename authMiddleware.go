@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/pkg/errors"
@@ -44,40 +43,13 @@ func fillAuthToken(token *configAuthToken) error {
 
 func writeAuthMiddleware(h http.Handler, module string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, pass, hasBasicAuth := r.BasicAuth()
-
-		var token string
-		switch {
-		case hasBasicAuth && pass != "":
-			token = pass
-
-		case r.Header.Get("Authorization") != "":
-			var (
-				tokenType string
-				hadPrefix bool
-			)
-
-			tokenType, token, hadPrefix = strings.Cut(r.Header.Get("Authorization"), " ")
-			switch {
-			case !hadPrefix:
-				// Legacy: Accept `Authorization: tokenhere`
-				token = tokenType
-
-			case strings.EqualFold(tokenType, "token"):
-				// This is perfect: `Authorization: Token tokenhere`
-
-			default:
-				// That was unexpected: `Authorization: Bearer tokenhere` or similar
-				http.Error(w, "invalid token type", http.StatusForbidden)
-				return
-			}
-
-		default:
+		tokenType, token, ok := getAuthorizationTokenFromRequest(r)
+		if !ok {
 			http.Error(w, "auth not successful", http.StatusForbidden)
 			return
 		}
 
-		err := authService.ValidateTokenFor(token, module)
+		err := authService.ValidateTokenForWithTokenType(token, tokenType.Backend(), module)
 		if err != nil {
 			http.Error(w, "auth not successful", http.StatusForbidden)
 			return

@@ -41,10 +41,10 @@ var (
 
 func init() {
 	secConfigEditor := spec.APIKeyAuth("Authorization", spec.InHeader)
-	secConfigEditor.Description = "Authorization token issued by Twitch"
+	secConfigEditor.Description = "Authorization token. Supported forms: `Twitch <token>` (preferred), `<token>` (legacy raw Twitch token)"
 
 	secWriteAuth := spec.APIKeyAuth("Authorization", spec.InHeader)
-	secWriteAuth.Description = "Authorization token stored in the config"
+	secWriteAuth.Description = "Authorization token. Supported forms: `Token <token>` (preferred internal token), `Twitch <token>`, `<token>` (legacy raw token)"
 
 	swaggerDoc.Components.SecuritySchemes = map[string]*spec.SecurityScheme{
 		"configEditor": secConfigEditor,

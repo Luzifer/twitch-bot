@@ -103,7 +103,7 @@ func registerEditorGeneralConfigRoutes() {
 }
 
 func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -171,7 +171,7 @@ func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, _ *http.Request) {
 }
 
 func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return
@@ -236,7 +236,7 @@ func configEditorHandleGeneralListAuthTokens(w http.ResponseWriter, _ *http.Requ
 }
 
 func configEditorHandleGeneralUpdate(w http.ResponseWriter, r *http.Request) {
-	user, _, err := getAuthorizationFromRequest(r)
+	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
 		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
 		return

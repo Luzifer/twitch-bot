@@ -136,8 +136,8 @@ func main() {
 	}
 
 	authService = authcache.New(
-		authBackendInternalToken,
-		authBackendTwitchToken,
+		authcache.WithAuthBackend(authTokenTypeInternal.Backend(), authBackendInternalToken),
+		authcache.WithAuthBackend(authTokenTypeTwitch.Backend(), authBackendTwitchToken),
 	)
 
 	cronService = cron.New(cron.WithSeconds())
