@@ -1,3 +1,8 @@
+# 3.40.0 / 2026-03-24
+
+* Improvements
+  * feat: increase frontend loading speed after login
+
 # 3.39.0 / 2026-03-22
 
 * Improvements
