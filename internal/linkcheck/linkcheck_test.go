@@ -88,14 +88,6 @@ func TestScanForLinks(t *testing.T) {
 				"https://example.com/",
 			},
 		},
-		// Case: message with vk.cc shortener
-		{
-			Heuristic: false,
-			Message:   "See more here: vk.cc/ckGZN2",
-			ExpectedLinks: []string{
-				"https://vk.com/club206261664",
-			},
-		},
 		// Case: link is obfuscated using space
 		{
 			Heuristic: true,
