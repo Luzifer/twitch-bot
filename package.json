@@ -24,7 +24,7 @@
     "codejar-linenumbers": "1.0.1",
     "pinia": "3.0.4",
     "prismjs": "1.30.0",
-    "vue": "3.5.31",
+    "vue": "3.5.32",
     "vue-router": "5.0.4"
   }
 }
