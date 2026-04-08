@@ -1054,7 +1054,7 @@ export default defineComponent({
     },
 
     fixDurationRepresentationToInt64(value: number | string) {
-      let match = null
+      let match: RegExpMatchArray | null
 
       switch (typeof value) {
       case 'string':
@@ -1260,7 +1260,7 @@ export default defineComponent({
         delete obj.user_cooldown
       }
 
-      let promise = null
+      let promise: Promise<unknown>
       if (obj.uuid) {
         promise = api.put(`config-editor/rules/${obj.uuid}`, obj)
       } else {

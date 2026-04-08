@@ -1,15 +1,15 @@
 # Install Node deps on change of package.json
 local_resource(
-  'npm',
-  cmd='npm i --include=dev',
+  'pnpm',
+  cmd='pnpm i',
   deps=['package.json'],
 )
 
 local_resource(
   'frontend',
   cmd='make frontend',
-  deps=['src'],
-  resource_deps=['npm'],
+  deps=['src', 'pnpm-lock.yaml'],
+  resource_deps=['pnpm'],
 )
 
 local_resource(

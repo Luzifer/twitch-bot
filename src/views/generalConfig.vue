@@ -620,7 +620,7 @@ export default defineComponent({
     },
 
     async copyAuthURL(type: 'botConnection' | 'channelPermission') {
-      let prom: Promise<void> | null = null
+      let prom: Promise<void> | null
       let btnField: 'botConnection' | 'channelPermission' | null = null
 
       switch (type) {

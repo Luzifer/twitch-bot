@@ -48,16 +48,15 @@ frontend_prod: export NODE_ENV=production
 frontend_prod: frontend ## Build frontend in production mode
 
 frontend: node_modules ## Build frontend
-	node ci/build.mjs
+	pnpm node ci/build.mjs
 
 frontend_lint: node_modules ## Lint frontend files
-	./node_modules/.bin/eslint \
-		--ext .js,.vue \
+	pnpm eslint \
 		--fix \
 		src
 
 node_modules: ## Install node modules
-	npm ci --include dev
+	pnpm i --frozen-lockfile
 
 ##@ Tooling
 
