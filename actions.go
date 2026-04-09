@@ -1,7 +1,6 @@
 package main
 
 import (
-	"path"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -81,11 +80,17 @@ func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *fiel
 }
 
 func handleMessageRuleExecution(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection) {
-	locker.LockByKey(path.Join("rule-execution", r.MatcherID()))
-	defer locker.UnlockByKey(path.Join("rule-execution", r.MatcherID()))
+	lockKey := r.CooldownLockKey(m, eventData)
+	locker.LockByKey(lockKey)
+	defer locker.UnlockByKey(lockKey)
+
+	if !r.CanExecuteCooldowns(m, timerService, eventData) {
+		return
+	}
 
 	var (
 		ruleEventData   = fieldcollection.NewFieldCollection()
+		executionError  bool
 		preventCooldown bool
 	)
 
@@ -118,12 +123,13 @@ ActionsLoop:
 			// Break execution for this rule when one action fails
 			// Lock command
 
+			executionError = true
 			log.WithError(err).Error("Unable to trigger action")
 			break ActionsLoop
 		}
 	}
 
-	if !preventCooldown {
+	if !preventCooldown && !executionError {
 		r.SetCooldown(timerService, m, eventData)
 	}
 }

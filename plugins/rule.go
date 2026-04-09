@@ -128,6 +128,46 @@ func (r *Rule) Matches(m *irc.Message, event *string, timerStore TimerStore, msg
 	return true
 }
 
+// CooldownLockKey derives the lock key to use for executing the rule.
+// The key is scoped to the narrowest cooldown dimension configured on the rule.
+func (r *Rule) CooldownLockKey(m *irc.Message, eventData *fieldcollection.FieldCollection) string {
+	key := path.Join("rule-execution", r.MatcherID())
+
+	switch {
+	case r.ChannelCooldown != nil && DeriveChannel(m, eventData) != "":
+		return path.Join(key, "channel", DeriveChannel(m, eventData))
+	case r.UserCooldown != nil && DeriveUser(m, eventData) != "":
+		return path.Join(key, "user", DeriveUser(m, eventData))
+	default:
+		return key
+	}
+}
+
+// CanExecuteCooldowns re-checks only the cooldown-related matchers for a rule.
+func (r *Rule) CanExecuteCooldowns(m *irc.Message, timerStore TimerStore, eventData *fieldcollection.FieldCollection) bool {
+	r.timerStore = timerStore
+
+	var (
+		badges = twitch.ParseBadgeLevels(m)
+		logger = logrus.WithFields(logrus.Fields{
+			"msg":  m,
+			"rule": r,
+		})
+	)
+
+	for _, matcher := range []func(*logrus.Entry, *irc.Message, *string, twitch.BadgeCollection, *fieldcollection.FieldCollection) bool{
+		r.allowExecuteRuleCooldown,
+		r.allowExecuteChannelCooldown,
+		r.allowExecuteUserCooldown,
+	} {
+		if !matcher(logger, m, nil, badges, eventData) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // GetMatchMessage returns the cached Regexp if available or compiles
 // the given match string into a Regexp
 func (r *Rule) GetMatchMessage() *regexp.Regexp {
