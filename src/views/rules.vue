@@ -192,6 +192,7 @@
 
     <AppModal
       v-if="showRuleEditModal"
+      :footer-message="ruleValidationHint"
       :model-value="showRuleEditModal"
       :ok-disabled="!validateRule()"
       ok-title="Save"
@@ -837,7 +838,7 @@
 
 <script lang="ts">
 import * as constants from '../lib/const'
-import type { ActionDocumentation, Rule } from '../types'
+import type { ActionDocumentation, ActionDocumentationField, Rule } from '../types'
 import { api } from '../api'
 import AppModal from '../components/AppModal.vue'
 import { confirmDialog } from '../lib/confirmModal'
@@ -860,6 +861,13 @@ type RuleModel = Omit<Rule, 'actions' | 'cooldown' | 'channel_cooldown' | 'user_
   user_cooldown?: string
   match_message__validation?: boolean
 }
+
+type RuleValidationReason =
+  | { kind: 'actionDefinitionMissing', actionType: string }
+  | { kind: 'actionFieldInvalid', actionType: string, fieldKey: string, issue: 'missing_required' | 'invalid_duration' }
+  | { kind: 'matcherRegexInvalid' }
+  | { kind: 'ruleDurationInvalid', field: 'cooldown' | 'user_cooldown' | 'channel_cooldown' }
+  | { kind: 'templateInvalid' }
 
 export default defineComponent({
   components: {
@@ -937,6 +945,53 @@ export default defineComponent({
       })
       return rules
     },
+
+    ruleValidationHint() {
+      if (this.validateReason === null) {
+        return ''
+      }
+
+      switch (this.validateReason.kind) {
+      case 'templateInvalid':
+        return 'A template field is invalid. Check the highlighted template editor.'
+
+      case 'matcherRegexInvalid':
+        return 'Match Message contains an invalid regular expression. Check the Matcher tab.'
+
+      case 'ruleDurationInvalid':
+        if (this.validateReason.field === 'cooldown') {
+          return 'Rule Cooldown is invalid. Check the Cooldown tab.'
+        }
+
+        if (this.validateReason.field === 'user_cooldown') {
+          return 'User Cooldown is invalid. Check the Cooldown tab.'
+        }
+
+        return 'Channel Cooldown is invalid. Check the Cooldown tab.'
+
+      case 'actionDefinitionMissing': {
+        const actionType = this.validateReason.actionType
+        const actionName = this.actions.find(action => action.type === actionType)?.name || actionType
+        return `Action "${actionName}" could not be validated because its definition is missing.`
+      }
+
+      case 'actionFieldInvalid': {
+        const { actionType, fieldKey, issue } = this.validateReason
+        const actionDef = this.actions.find(action => action.type === actionType)
+        const actionName = actionDef?.name || actionType
+        const fieldName = actionDef?.fields?.find(field => field.key === fieldKey)?.name || fieldKey
+
+        if (issue === 'missing_required') {
+          return `Action "${actionName}" is missing required field "${fieldName}".`
+        }
+
+        return `Action "${actionName}" has an invalid duration in "${fieldName}".`
+      }
+
+      default:
+        return 'Rule Cooldown is invalid. Check the Cooldown tab.'
+      }
+    },
   },
 
   data() {
@@ -958,11 +1013,12 @@ export default defineComponent({
       showRuleEditModal: false,
       showRuleSubscribeModal: false,
       templateValid: {} as Record<string, boolean>,
-      validateReason: null as string | null,
+      validateReason: null as RuleValidationReason | null,
     }
   },
 
   methods: {
+
     actionHasValidationError(idx: number): boolean {
       const action = this.models.rule.actions?.[idx]
       const def = this.getActionDefinitionByType(action?.type || '')
@@ -1150,6 +1206,49 @@ export default defineComponent({
       return def
     },
 
+    getActionFieldValidationState(action: RuleActionForm | undefined, field: ActionDocumentationField): { empty: boolean, valid: boolean } {
+      const value = action?.attributes[field.key]
+
+      switch (field.type) {
+      case 'bool':
+        return {
+          empty: typeof value !== 'boolean',
+          valid: typeof value === 'boolean',
+        }
+
+      case 'duration':
+        return {
+          empty: value === null || value === undefined || value === '',
+          valid: this.validateDuration(value as string | undefined, !field.optional),
+        }
+
+      case 'int64':
+        return {
+          empty: value === null || value === undefined || value === '',
+          valid: field.optional && (value === null || value === undefined || value === '')
+            || !(!value || isNaN(value as number)),
+        }
+
+      case 'string':
+        return {
+          empty: value === null || value === undefined || value === '',
+          valid: field.optional || !(value === null || value === undefined || value === ''),
+        }
+
+      case 'stringslice':
+        return {
+          empty: !Array.isArray(value) || value.length === 0,
+          valid: field.optional || Array.isArray(value) && value.length > 0,
+        }
+
+      default:
+        return {
+          empty: false,
+          valid: true,
+        }
+      }
+    },
+
     moveAction(idx: number, direction: number): void {
       const targetIdx = idx + direction
       const actions = this.models.rule.actions
@@ -1301,43 +1400,7 @@ export default defineComponent({
           continue
         }
 
-        switch (field.type) {
-        case 'bool':
-          if (!field.optional && typeof action?.attributes[field.key] !== 'boolean') {
-            return false
-          }
-          break
-
-        case 'duration':
-          if (!this.validateDuration(action.attributes[field.key] as string, !field.optional)) {
-            return false
-          }
-          break
-
-        case 'int64':
-          if (!field.optional && !action?.attributes[field.key]) {
-            return false
-          }
-
-          if (action?.attributes[field.key] && isNaN(action.attributes[field.key] as number)) {
-            return false
-          }
-
-          break
-
-        case 'string':
-          if (!field.optional && !action?.attributes[field.key]) {
-            return false
-          }
-          break
-
-        case 'stringslice':
-          if (!field.optional && !action?.attributes[field.key]) {
-            return false
-          }
-          break
-        }
-        break
+        return this.getActionFieldValidationState(action, field).valid
       }
 
       return true
@@ -1389,34 +1452,34 @@ export default defineComponent({
 
     validateRule() {
       if (Object.entries(this.templateValid).filter(e => !e[1]).length > 0) {
-        this.validateReason = 'templateValid'
+        this.validateReason = { kind: 'templateInvalid' }
         return false
       }
 
       if (!this.models.rule.match_message__validation) {
-        this.validateReason = 'rule.match_message__validation'
+        this.validateReason = { kind: 'matcherRegexInvalid' }
         return false
       }
 
       if (!this.validateDuration(this.models.rule.cooldown, false)) {
-        this.validateReason = 'rule.cooldown'
+        this.validateReason = { field: 'cooldown', kind: 'ruleDurationInvalid' }
         return false
       }
 
       if (!this.validateDuration(this.models.rule.user_cooldown, false)) {
-        this.validateReason = 'rule.user_cooldown'
+        this.validateReason = { field: 'user_cooldown', kind: 'ruleDurationInvalid' }
         return false
       }
 
       if (!this.validateDuration(this.models.rule.channel_cooldown, false)) {
-        this.validateReason = 'rule.channel_cooldown'
+        this.validateReason = { field: 'channel_cooldown', kind: 'ruleDurationInvalid' }
         return false
       }
 
       for (const action of this.models.rule.actions || []) {
         const def = this.getActionDefinitionByType(action.type)
         if (!def) {
-          this.validateReason = `nodef: ${action.type}`
+          this.validateReason = { actionType: action.type, kind: 'actionDefinitionMissing' }
           return false
         }
 
@@ -1426,18 +1489,21 @@ export default defineComponent({
         }
 
         for (const field of def.fields) {
-          if (!field.optional && action.attributes[field.key] === undefined) {
-            this.validateReason = `${action.type} -> ${field.key} -> opt`
+          const fieldValidation = this.getActionFieldValidationState(action, field)
+
+          if (!field.optional && fieldValidation.empty) {
+            this.validateReason = { actionType: action.type, fieldKey: field.key, issue: 'missing_required', kind: 'actionFieldInvalid' }
             return false
           }
 
-          if (field.type === 'duration' && !this.validateDuration(action.attributes[field.key] as string, !field.optional)) {
-            this.validateReason = `${action.type} -> ${field.key} -> duration`
+          if (field.type === 'duration' && !fieldValidation.valid) {
+            this.validateReason = { actionType: action.type, fieldKey: field.key, issue: 'invalid_duration', kind: 'actionFieldInvalid' }
             return false
           }
         }
       }
 
+      this.validateReason = null
       return true
     },
 

@@ -32,6 +32,12 @@
             class="modal-footer"
           >
             <slot name="footer">
+              <span
+                v-if="footerMessage"
+                class="me-auto text-danger small"
+              >
+                {{ footerMessage }}
+              </span>
               <button
                 type="button"
                 class="btn btn-secondary"
@@ -109,6 +115,11 @@ export default defineComponent({
     centered: {
       default: false,
       type: Boolean,
+    },
+
+    footerMessage: {
+      default: '',
+      type: String,
     },
 
     hideFooter: {
