@@ -1,3 +1,16 @@
+# 3.41.0 / 2026-04-09
+
+* Improvements
+  * feat: display reason of disabled save-button in rules editor
+
+* Bugfixes
+  * chore: remove tests for broken VK shortener
+  * fix: repair build, fix linter errors, switch to pnpm
+  * fix(deps): update dependency vue to v3.5.32
+  * fix(deps): update module github.com/getsentry/sentry-go to v0.44.1
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.17.2
+  * fix(deps): update module github.com/itchyny/gojq to v0.12.19
+
 # 3.40.0 / 2026-03-24
 
 * Improvements
