@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
-	"github.com/orandin/sentrus"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
@@ -96,16 +96,18 @@ func initApp() error {
 	log.SetLevel(l)
 
 	if cfg.SentryDSN != "" {
-		if err := sentry.Init(sentry.ClientOptions{
-			Dsn:         cfg.SentryDSN,
-			Environment: cfg.SentryEnvironment,
-			Release:     strings.Join([]string{"twitch-bot", version}, "@"),
-		}); err != nil {
-			return errors.Wrap(err, "initializing sentry sdk")
-		}
-		log.AddHook(sentrus.NewHook(
+		hook, err := sentrylogrus.NewLogHook(
 			[]log.Level{log.ErrorLevel, log.FatalLevel, log.PanicLevel},
-		))
+			sentry.ClientOptions{
+				Dsn:     cfg.SentryDSN,
+				Release: strings.Join([]string{"twitch-bot", version}, "@"),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("creating sentry log-hook: %w", err)
+		}
+
+		log.AddHook(hook)
 	}
 
 	if cfg.StorageEncryptionPass == "" {

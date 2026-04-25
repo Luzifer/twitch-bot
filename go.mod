@@ -13,6 +13,7 @@ require (
 	github.com/Luzifer/korvike/functions v1.0.2
 	github.com/Luzifer/rconfig/v2 v2.6.1
 	github.com/getsentry/sentry-go v0.46.0
+	github.com/getsentry/sentry-go/logrus v0.46.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.18.0
 	github.com/go-sql-driver/mysql v1.9.3
@@ -22,7 +23,6 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/itchyny/gojq v0.12.19
 	github.com/mitchellh/hashstructure/v2 v2.0.2
-	github.com/orandin/sentrus v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.4
