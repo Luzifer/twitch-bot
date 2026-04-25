@@ -99,8 +99,9 @@ func initApp() error {
 		hook, err := sentrylogrus.NewLogHook(
 			[]log.Level{log.ErrorLevel, log.FatalLevel, log.PanicLevel},
 			sentry.ClientOptions{
-				Dsn:     cfg.SentryDSN,
-				Release: strings.Join([]string{"twitch-bot", version}, "@"),
+				Dsn:        cfg.SentryDSN,
+				EnableLogs: true,
+				Release:    strings.Join([]string{"twitch-bot", version}, "@"),
 			},
 		)
 		if err != nil {
