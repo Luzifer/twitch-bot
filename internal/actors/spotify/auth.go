@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Luzifer/twitch-bot/v3/internal/locker"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+
+	"github.com/Luzifer/twitch-bot/v3/internal/locker"
 )
 
 const expiryGrace = 10 * time.Second

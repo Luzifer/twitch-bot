@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/backoff"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 )
 
@@ -31,12 +31,13 @@ type (
 
 // DeleteCoreMeta removes a core_kv table entry
 func (c connector) DeleteCoreMeta(key string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
-			return tx.Delete(&coreKV{}, "name = ?", key).Error
-		}),
-		"deleting key from database",
-	)
+	if err := helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+		return tx.Delete(&coreKV{}, "name = ?", key).Error
+	}); err != nil {
+		return fmt.Errorf("deleting key from database: %w", err)
+	}
+
+	return nil
 }
 
 // ReadCoreMeta reads an entry of the core_kv table specified by
@@ -63,12 +64,13 @@ func (c connector) ReadEncryptedCoreMeta(key string, value any) error {
 
 // ResetEncryptedCoreMeta removes all CoreKV entries from the database
 func (c connector) ResetEncryptedCoreMeta() error {
-	return errors.Wrap(
-		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
-			return tx.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error
-		}),
-		"removing encrypted meta entries",
-	)
+	if err := helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+		return tx.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error
+	}); err != nil {
+		return fmt.Errorf("removing encrypted meta entries: %w", err)
+	}
+
+	return nil
 }
 
 // StoreEncryptedCoreMeta works like StoreCoreMeta but encrypts the
@@ -99,26 +101,32 @@ func (c connector) ValidateEncryption() error {
 		return nil
 
 	case errors.Is(err, ErrCoreMetaNotFound):
-		return errors.Wrap(
-			c.StoreEncryptedCoreMeta(encryptionValidationKey, validationHash),
-			"initializing encryption validation",
-		)
+		if err = c.StoreEncryptedCoreMeta(encryptionValidationKey, validationHash); err != nil {
+			return fmt.Errorf("initializing encryption validation: %w", err)
+		}
+
+		return nil
 
 	default:
-		return errors.Wrap(err, "reading encryption-validation")
+		return fmt.Errorf("reading encryption-validation: %w", err)
 	}
 }
 
-//revive:disable-next-line:confusing-naming
+//revive:disable-next-line:confusing-naming // exported is for convenience and understandability
 func (c connector) readCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	var data coreKV
 
 	if err = helpers.Retry(func() error {
 		err = c.db.First(&data, "name = ?", key).Error
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return backoff.NewErrCannotRetry(ErrCoreMetaNotFound)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return backoff.NewErrCannotRetry(ErrCoreMetaNotFound)
+			}
+
+			return fmt.Errorf("querying core meta table: %w", err)
 		}
-		return errors.Wrap(err, "querying core meta table")
+
+		return nil
 	}); err != nil {
 		return err
 	}
@@ -129,39 +137,40 @@ func (c connector) readCoreMeta(key string, value any, processor func(string) (s
 
 	if processor != nil {
 		if data.Value, err = processor(data.Value); err != nil {
-			return errors.Wrap(err, "processing stored value")
+			return fmt.Errorf("processing stored value: %w", err)
 		}
 	}
 
 	if err := json.NewDecoder(strings.NewReader(data.Value)).Decode(value); err != nil {
-		return errors.Wrap(err, "JSON decoding value")
+		return fmt.Errorf("JSON decoding value: %w", err)
 	}
 
 	return nil
 }
 
-//revive:disable-next-line:confusing-naming
+//revive:disable-next-line:confusing-naming // exported is for convenience and understandability
 func (c connector) storeCoreMeta(key string, value any, processor func(string) (string, error)) (err error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(value); err != nil {
-		return errors.Wrap(err, "JSON encoding value")
+		return fmt.Errorf("JSON encoding value: %w", err)
 	}
 
 	encValue := strings.TrimSpace(buf.String())
 	if processor != nil {
 		if encValue, err = processor(encValue); err != nil {
-			return errors.Wrap(err, "processing value to store")
+			return fmt.Errorf("processing value to store: %w", err)
 		}
 	}
 
 	data := coreKV{Name: key, Value: encValue}
-	return errors.Wrap(
-		helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
-			return tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "name"}},
-				DoUpdates: clause.AssignmentColumns([]string{"value"}),
-			}).Create(data).Error
-		}),
-		"upserting core meta value",
-	)
+	if err = helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(data).Error
+	}); err != nil {
+		return fmt.Errorf("upserting core meta value: %w", err)
+	}
+
+	return nil
 }

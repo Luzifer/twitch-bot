@@ -2,16 +2,15 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-
 	"github.com/glebarez/sqlite"
-	mysqlDriver "github.com/go-sql-driver/mysql"
+	mysqldriver "github.com/go-sql-driver/mysql"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -43,7 +42,7 @@ func New(driverName, connString, encryptionSecret string) (c Connector, err erro
 
 	switch driverName {
 	case "mysql":
-		if err = mysqlDriver.SetLogger(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.ErrorLevel, driverName)); err != nil {
+		if err = mysqldriver.SetLogger(NewLogrusLogWriterWithLevel(logrus.StandardLogger(), logrus.ErrorLevel, driverName)); err != nil {
 			return nil, fmt.Errorf("setting logger on mysql driver: %w", err)
 		}
 		innerDB = mysql.Open(connString)
@@ -55,13 +54,13 @@ func New(driverName, connString, encryptionSecret string) (c Connector, err erro
 	case "sqlite":
 		var err error
 		if connString, err = patchSQLiteConnString(connString); err != nil {
-			return nil, errors.Wrap(err, "patching connection string")
+			return nil, fmt.Errorf("patching connection string: %w", err)
 		}
 		innerDB = sqlite.Open(connString)
 		dbTuner = tuneSQLiteDatabase
 
 	default:
-		return nil, errors.Errorf("unknown database driver %s", driverName)
+		return nil, fmt.Errorf("unknown database driver %s", driverName)
 	}
 
 	db, err := gorm.Open(innerDB, &gorm.Config{
@@ -75,12 +74,12 @@ func New(driverName, connString, encryptionSecret string) (c Connector, err erro
 		}),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "connecting database")
+		return nil, fmt.Errorf("connecting database: %w", err)
 	}
 
 	if dbTuner != nil {
 		if err = dbTuner(db.DB()); err != nil {
-			return nil, errors.Wrap(err, "tuning database")
+			return nil, fmt.Errorf("tuning database: %w", err)
 		}
 	}
 
@@ -88,7 +87,12 @@ func New(driverName, connString, encryptionSecret string) (c Connector, err erro
 		db:               db,
 		encryptionSecret: encryptionSecret,
 	}
-	return conn, errors.Wrap(conn.applyCoreSchema(), "applying core schema")
+
+	if err = conn.applyCoreSchema(); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 func (connector) Close() error {
@@ -104,13 +108,17 @@ func (c connector) DB() *gorm.DB {
 }
 
 func (c connector) applyCoreSchema() error {
-	return errors.Wrap(c.db.AutoMigrate(&coreKV{}), "applying coreKV schema")
+	if err := c.db.AutoMigrate(&coreKV{}); err != nil {
+		return fmt.Errorf("applying coreKV schema: %w", err)
+	}
+
+	return nil
 }
 
 func patchSQLiteConnString(connString string) (string, error) {
 	u, err := url.Parse(connString)
 	if err != nil {
-		return connString, errors.Wrap(err, "parsing connString")
+		return connString, fmt.Errorf("parsing connString: %w", err)
 	}
 
 	q := u.Query()
@@ -128,7 +136,7 @@ func patchSQLiteConnString(connString string) (string, error) {
 
 func tuneMySQLDatabase(db *sql.DB, err error) error {
 	if err != nil {
-		return errors.Wrap(err, "getting database")
+		return fmt.Errorf("getting database: %w", err)
 	}
 
 	// By default the package allows unlimited connections and the
@@ -147,7 +155,7 @@ func tuneMySQLDatabase(db *sql.DB, err error) error {
 
 func tuneSQLiteDatabase(db *sql.DB, err error) error {
 	if err != nil {
-		return errors.Wrap(err, "getting database")
+		return fmt.Errorf("getting database: %w", err)
 	}
 
 	db.SetConnMaxIdleTime(0)

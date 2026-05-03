@@ -21,7 +21,7 @@ func TestPunishmentRoundtrip(t *testing.T) {
 	)
 
 	pl, err := getPunishment(dbc, channel, user, uuid)
-	assert.NoError(t, err, "query non-existent punishment")
+	require.NoError(t, err, "query non-existent punishment")
 	assert.Equal(t, -1, pl.LastLevel, "check default level")
 	assert.Zero(t, pl.Executed, "check default time")
 	assert.Zero(t, pl.Cooldown, "check default cooldown")
@@ -31,16 +31,16 @@ func TestPunishmentRoundtrip(t *testing.T) {
 		Executed:  time.Now().UTC(),
 		LastLevel: 1,
 	})
-	assert.NoError(t, err, "setting punishment")
+	require.NoError(t, err, "setting punishment")
 
 	pl, err = getPunishment(dbc, channel, user, uuid)
-	assert.NoError(t, err, "query existent punishment")
+	require.NoError(t, err, "query existent punishment")
 	assert.Equal(t, 1, pl.LastLevel, "check level without cooldown")
 
 	time.Sleep(500 * time.Millisecond) // Wait for one cooldown to happen
 
 	pl, err = getPunishment(dbc, channel, user, uuid)
-	assert.NoError(t, err, "query existent punishment")
+	require.NoError(t, err, "query existent punishment")
 	assert.Equal(t, 0, pl.LastLevel, "check level after one cooldown")
 	assert.NotZero(t, pl.Executed, "check non-zero-time after one cooldown")
 	assert.Equal(t, 500*time.Millisecond, pl.Cooldown, "check non-zero-cooldown after one cooldown")
@@ -48,7 +48,7 @@ func TestPunishmentRoundtrip(t *testing.T) {
 	time.Sleep(500 * time.Millisecond) // Wait for one cooldown to happen
 
 	pl, err = getPunishment(dbc, channel, user, uuid)
-	assert.NoError(t, err, "query existent punishment")
+	require.NoError(t, err, "query existent punishment")
 	assert.Equal(t, -1, pl.LastLevel, "check level after two cooldown")
 	assert.Zero(t, pl.Executed, "check zero-time after two cooldown")
 	assert.Zero(t, pl.Cooldown, "check zero-cooldown after two cooldown")

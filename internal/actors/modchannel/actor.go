@@ -7,16 +7,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "modchannel"
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -69,8 +70,6 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		game  = attrs.MustString("game", helpers.Ptr(""))
@@ -85,13 +84,13 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 
 	channel, err := formatMessage(attrs.MustString("channel", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "parsing channel")
+		return false, fmt.Errorf("parsing channel: %w", err)
 	}
 
 	if game != "" {
 		parsedGame, err := formatMessage(game, m, r, eventData)
 		if err != nil {
-			return false, errors.Wrap(err, "parsing game")
+			return false, fmt.Errorf("parsing game: %w", err)
 		}
 
 		updGame = &parsedGame
@@ -100,7 +99,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	if title != "" {
 		parsedTitle, err := formatMessage(title, m, r, eventData)
 		if err != nil {
-			return false, errors.Wrap(err, "parsing title")
+			return false, fmt.Errorf("parsing title: %w", err)
 		}
 
 		updTitle = &parsedTitle
@@ -108,13 +107,19 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 
 	twitchClient, err := tcGetter(strings.TrimLeft(channel, "#"))
 	if err != nil {
-		return false, errors.Wrap(err, "getting Twitch client")
+		return false, fmt.Errorf("getting Twitch client: %w", err)
 	}
 
-	return false, errors.Wrap(
-		twitchClient.ModifyChannelInformation(context.Background(), strings.TrimLeft(channel, "#"), updGame, updTitle),
-		"updating channel info",
-	)
+	if err = twitchClient.ModifyChannelInformation(
+		context.Background(),
+		strings.TrimLeft(channel, "#"),
+		updGame,
+		updTitle,
+	); err != nil {
+		return false, fmt.Errorf("updating channel info: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }

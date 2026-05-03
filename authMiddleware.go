@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gofrs/uuid/v3"
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -27,7 +26,7 @@ func fillAuthToken(token *configAuthToken) error {
 
 	salt := make([]byte, argonSaltLength)
 	if _, err := rand.Read(salt); err != nil {
-		return errors.Wrap(err, "reading salt")
+		return fmt.Errorf("reading salt: %w", err)
 	}
 
 	token.Hash = fmt.Sprintf(

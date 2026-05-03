@@ -2,10 +2,10 @@ package twitch
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -26,7 +26,11 @@ func tplTwitchDisplayName(args plugins.RegistrationArguments) {
 			return v[0], nil //nolint:nilerr // Default value, no need to return error
 		}
 
-		return displayName, errors.Wrap(err, "getting display name")
+		if err != nil {
+			return displayName, fmt.Errorf("getting display name: %w", err)
+		}
+
+		return displayName, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the display name the specified user set for themselves",
 		Syntax:      "displayName <username> [fallback]",
@@ -40,7 +44,10 @@ func tplTwitchDisplayName(args plugins.RegistrationArguments) {
 func tplTwitchIDForUsername(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("idForUsername", plugins.GenericTemplateFunctionGetter(func(username string) (string, error) {
 		id, err := args.GetTwitchClient().GetIDForUsername(context.Background(), username)
-		return id, errors.Wrap(err, "getting ID for username")
+		if err != nil {
+			return id, fmt.Errorf("getting ID for username: %w", err)
+		}
+		return id, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the user-id for the given username",
 		Syntax:      "idForUsername <username>",
@@ -55,7 +62,7 @@ func tplTwitchProfileImage(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("profileImage", plugins.GenericTemplateFunctionGetter(func(username string) (string, error) {
 		user, err := args.GetTwitchClient().GetUserInformation(context.Background(), strings.TrimLeft(username, "#@"))
 		if err != nil {
-			return "", errors.Wrap(err, "getting user info")
+			return "", fmt.Errorf("getting user info: %w", err)
 		}
 
 		return user.ProfileImageURL, nil
@@ -91,7 +98,10 @@ func tplTwitchUserExists(args plugins.RegistrationArguments) {
 func tplTwitchUsernameForID(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("usernameForID", plugins.GenericTemplateFunctionGetter(func(id string) (string, error) {
 		username, err := args.GetTwitchClient().GetUsernameForID(context.Background(), id)
-		return username, errors.Wrap(err, "getting username for ID")
+		if err != nil {
+			return username, fmt.Errorf("getting username for ID: %w", err)
+		}
+		return username, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the current login name of an user-id",
 		Syntax:      "usernameForID <user-id>",

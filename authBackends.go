@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
-	"github.com/pkg/errors"
 )
 
 const internalTokenAuthCacheExpiry = 5 * time.Minute
@@ -42,7 +43,7 @@ func authBackendTwitchToken(token string) (modules []string, expiresAt time.Time
 
 		_, _, expiresAt, err = tc.GetTokenInfo(context.Background())
 		if err != nil {
-			return nil, time.Time{}, errors.Wrap(err, "getting token expiry")
+			return nil, time.Time{}, fmt.Errorf("getting token expiry: %w", err)
 		}
 
 		// Editors have full access: Return module "*"
@@ -55,10 +56,10 @@ func authBackendTwitchToken(token string) (modules []string, expiresAt time.Time
 			return nil, time.Time{}, authcache.ErrUnauthorized
 		}
 
-		return nil, time.Time{}, errors.Wrap(err, "validating Twitch token")
+		return nil, time.Time{}, fmt.Errorf("validating Twitch token: %w", err)
 
 	default:
 		// Something else went wrong
-		return nil, time.Time{}, errors.Wrap(err, "validating Twitch token")
+		return nil, time.Time{}, fmt.Errorf("validating Twitch token: %w", err)
 	}
 }

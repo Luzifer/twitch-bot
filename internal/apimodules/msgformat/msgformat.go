@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
-
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -50,7 +48,7 @@ func handleFormattedMessage(w http.ResponseWriter, r *http.Request) {
 
 	msg, err := formatMessage(tpl, nil, nil, nil)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "executing template").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("executing template: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -2,11 +2,11 @@ package twitch
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -20,7 +20,7 @@ func tplTwitchScheduleSegments(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("scheduleSegments", plugins.GenericTemplateFunctionGetter(func(channel string, n ...int) ([]twitch.ChannelStreamScheduleSegment, error) {
 		schedule, err := args.GetTwitchClient().GetChannelStreamSchedule(context.Background(), channel)
 		if err != nil {
-			return nil, errors.Wrap(err, "getting schedule")
+			return nil, fmt.Errorf("getting schedule: %w", err)
 		}
 
 		if len(n) > 0 {

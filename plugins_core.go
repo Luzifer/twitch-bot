@@ -1,17 +1,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
 
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/irc.v4"
-
 	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/go_helpers/fieldcollection"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/irc.v4"
+
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/announce"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/ban"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clip"
@@ -19,12 +19,12 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/commercial"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/counter"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/delay"
-	deleteactor "github.com/Luzifer/twitch-bot/v3/internal/actors/delete"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/deleteactor"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/eventmod"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/filesay"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/linkdetector"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/linkprotect"
-	logActor "github.com/Luzifer/twitch-bot/v3/internal/actors/log"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/logactor"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/marker"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/messagehook"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/modchannel"
@@ -52,9 +52,9 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/template/numeric"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/random"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/slice"
-	"github.com/Luzifer/twitch-bot/v3/internal/template/strings"
+	"github.com/Luzifer/twitch-bot/v3/internal/template/stringfns"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/subscriber"
-	twitchFns "github.com/Luzifer/twitch-bot/v3/internal/template/twitch"
+	twitchfns "github.com/Luzifer/twitch-bot/v3/internal/template/twitch"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/userstate"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -81,7 +81,7 @@ var (
 		filesay.Register,
 		linkdetector.Register,
 		linkprotect.Register,
-		logActor.Register,
+		logactor.Register,
 		marker.Register,
 		messagehook.Register,
 		modchannel.Register,
@@ -105,9 +105,9 @@ var (
 		random.Register,
 		slice.Register,
 		spotify.Register,
-		strings.Register,
+		stringfns.Register,
 		subscriber.Register,
-		twitchFns.Register,
+		twitchfns.Register,
 		userstate.Register,
 
 		// API-only modules
@@ -124,7 +124,7 @@ func initCorePlugins() error {
 	args := getRegistrationArguments()
 	for idx, rf := range corePluginRegistrations {
 		if err := rf(args); err != nil {
-			return errors.Wrapf(err, "registering core plugin %d", idx)
+			return fmt.Errorf("registering core plugin %d: %w", idx, err)
 		}
 	}
 	return nil
@@ -167,7 +167,9 @@ func registerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 	}
 
 	if !route.SkipDocumentation {
-		return errors.Wrap(registerSwaggerRoute(route), "registering documentation")
+		if err := registerSwaggerRoute(route); err != nil {
+			return fmt.Errorf("registering documentation: %w", err)
+		}
 	}
 
 	return nil
@@ -179,7 +181,7 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		FrontendNotify:             func(mt string) { frontendNotifyHooks.Ping(mt) },
 		GetBaseURL:                 func() string { return cfg.BaseURL },
 		GetDatabaseConnector:       func() database.Connector { return db },
-		GetLogger:                  func(moduleName string) *log.Entry { return log.WithField("module", moduleName) },
+		GetLogger:                  func(moduleName string) *logrus.Entry { return logrus.WithField("module", moduleName) },
 		GetTwitchClient:            func() *twitch.Client { return twitchClient },
 		HasAnyPermissionForChannel: accessService.HasAnyPermissionForChannel,
 		HasPermissionForChannel:    accessService.HasPermissionsForChannel,
@@ -226,7 +228,7 @@ func sendMessage(m *irc.Message) error {
 
 	default:
 		// Something in a chatcommand handler went wrong
-		return errors.Wrap(err, "handling chat commands")
+		return fmt.Errorf("handling chat commands: %w", err)
 	}
 
 	if err = backoff.NewBackoff().WithMaxIterations(ircHandleWaitRetries).Retry(func() error {
@@ -235,7 +237,7 @@ func sendMessage(m *irc.Message) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "waiting for IRC connection")
+		return fmt.Errorf("waiting for IRC connection: %w", err)
 	}
 
 	return ircHdl.SendMessage(m)

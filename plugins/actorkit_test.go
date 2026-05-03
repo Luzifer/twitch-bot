@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateRequireNonEmpty(t *testing.T) {
@@ -21,8 +21,8 @@ func TestValidateRequireNonEmpty(t *testing.T) {
 		errInval := ActorKit{}.ValidateRequireNonEmpty(attrs, field)
 		errValid := ActorKit{}.ValidateRequireNonEmpty(attrs, strings.Join([]string{field, "v"}, "_"))
 
-		assert.Error(t, errUnset)
-		assert.Error(t, errInval)
-		assert.NoError(t, errValid)
+		require.Error(t, errUnset)
+		require.Error(t, errInval)
+		require.NoError(t, errValid)
 	}
 }

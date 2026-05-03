@@ -1,15 +1,16 @@
 package raffle
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -17,6 +18,20 @@ import (
 const (
 	frontendNotifyEventRaffleChange      = "raffleChanged"
 	frontendNotifyEventRaffleEntryChange = "raffleEntryChanged"
+)
+
+const (
+	raffleMessageEventEntryFailed raffleMessageEvent = iota
+	raffleMessageEventEntry
+	raffleMessageEventReminder
+	raffleMessageEventWin
+	raffleMessageEventClose
+)
+
+const (
+	raffleStatusPlanned raffleStatus = "planned"
+	raffleStatusActive  raffleStatus = "active"
+	raffleStatusEnded   raffleStatus = "ended"
 )
 
 type (
@@ -94,20 +109,6 @@ type (
 	}
 )
 
-const (
-	raffleMessageEventEntryFailed raffleMessageEvent = iota
-	raffleMessageEventEntry
-	raffleMessageEventReminder
-	raffleMessageEventWin
-	raffleMessageEventClose
-)
-
-const (
-	raffleStatusPlanned raffleStatus = "planned"
-	raffleStatusActive  raffleStatus = "active"
-	raffleStatusEnded   raffleStatus = "ended"
-)
-
 var errRaffleNotFound = errors.New("raffle not found")
 
 func newDBClient(db database.Connector) *dbClient {
@@ -129,12 +130,12 @@ func (d *dbClient) AutoCloseExpired() (err error) {
 			Find(&rr).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "fetching raffles to close")
+		return fmt.Errorf("fetching raffles to close: %w", err)
 	}
 
 	for _, r := range rr {
 		if err = d.Close(r.ID); err != nil {
-			return errors.Wrapf(err, "closing raffle %d", r.ID)
+			return fmt.Errorf("closing raffle %d: %w", r.ID, err)
 		}
 	}
 
@@ -152,12 +153,12 @@ func (d *dbClient) AutoSendReminders() (err error) {
 			Find(&rr).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "fetching raffles to send reminders")
+		return fmt.Errorf("fetching raffles to send reminders: %w", err)
 	}
 
 	for _, r := range rr {
 		if err = r.SendEvent(raffleMessageEventReminder, nil); err != nil {
-			return errors.Wrapf(err, "sending reminder for raffle %d", r.ID)
+			return fmt.Errorf("sending reminder for raffle %d: %w", r.ID, err)
 		}
 	}
 
@@ -174,12 +175,12 @@ func (d *dbClient) AutoStart() (err error) {
 			Find(&rr).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "fetching raffles to start")
+		return fmt.Errorf("fetching raffles to start: %w", err)
 	}
 
 	for _, r := range rr {
 		if err = d.Start(r.ID); err != nil {
-			return errors.Wrapf(err, "starting raffle %d", r.ID)
+			return fmt.Errorf("starting raffle %d: %w", r.ID, err)
 		}
 	}
 
@@ -191,7 +192,7 @@ func (d *dbClient) AutoStart() (err error) {
 func (d *dbClient) Clone(raffleID uint64) error {
 	raffle, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting raffle")
+		return fmt.Errorf("getting raffle: %w", err)
 	}
 
 	raffle.AutoStartAt = nil
@@ -202,7 +203,7 @@ func (d *dbClient) Clone(raffleID uint64) error {
 	raffle.Title = strings.Join([]string{"Copy of", raffle.Title}, " ")
 
 	if err = d.Create(raffle); err != nil {
-		return errors.Wrap(err, "creating copy")
+		return fmt.Errorf("creating copy: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -214,7 +215,7 @@ func (d *dbClient) Clone(raffleID uint64) error {
 func (d *dbClient) Close(raffleID uint64) error {
 	r, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting raffle")
+		return fmt.Errorf("getting raffle: %w", err)
 	}
 
 	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
@@ -223,7 +224,7 @@ func (d *dbClient) Close(raffleID uint64) error {
 			Update("status", raffleStatusEnded).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "setting status closed")
+		return fmt.Errorf("setting status closed: %w", err)
 	}
 
 	d.lock.Lock()
@@ -232,10 +233,11 @@ func (d *dbClient) Close(raffleID uint64) error {
 
 	frontendNotify(frontendNotifyEventRaffleChange)
 
-	return errors.Wrap(
-		r.SendEvent(raffleMessageEventClose, nil),
-		"sending close-message",
-	)
+	if err = r.SendEvent(raffleMessageEventClose, nil); err != nil {
+		return fmt.Errorf("sending close-message: %w", err)
+	}
+
+	return nil
 }
 
 // Create creates a new raffle. The record will be written to
@@ -245,7 +247,7 @@ func (d *dbClient) Create(r raffle) error {
 	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
 		return tx.Create(&r).Error
 	}); err != nil {
-		return errors.Wrap(err, "creating database record")
+		return fmt.Errorf("creating database record: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -260,18 +262,18 @@ func (d *dbClient) Delete(raffleID uint64) (err error) {
 			Where("raffle_id = ?", raffleID).
 			Delete(&raffleEntry{}).
 			Error; err != nil {
-			return errors.Wrap(err, "deleting raffle entries")
+			return fmt.Errorf("deleting raffle entries: %w", err)
 		}
 
 		if err = tx.
 			Where("id = ?", raffleID).
 			Delete(&raffle{}).Error; err != nil {
-			return errors.Wrap(err, "creating database record")
+			return fmt.Errorf("creating database record: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "deleting raffle")
+		return fmt.Errorf("deleting raffle: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -283,7 +285,7 @@ func (d *dbClient) Delete(raffleID uint64) (err error) {
 // before calling this function
 func (d *dbClient) Enter(re raffleEntry) error {
 	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error { return tx.Create(&re).Error }); err != nil {
-		return errors.Wrap(err, "creating database record")
+		return fmt.Errorf("creating database record: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleEntryChange)
@@ -292,16 +294,17 @@ func (d *dbClient) Enter(re raffleEntry) error {
 
 // Get retrieves a raffle from the database
 func (d *dbClient) Get(raffleID uint64) (out raffle, err error) {
-	return out, errors.Wrap(
-		helpers.Retry(func() error {
-			return d.db.DB().
-				Where("raffles.id = ?", raffleID).
-				Preload("Entries").
-				First(&out).
-				Error
-		}),
-		"getting raffle from database",
-	)
+	if err = helpers.Retry(func() error {
+		return d.db.DB().
+			Where("raffles.id = ?", raffleID).
+			Preload("Entries").
+			First(&out).
+			Error
+	}); err != nil {
+		return out, fmt.Errorf("getting raffle from database: %w", err)
+	}
+
+	return out, nil
 }
 
 // GetByChannelAndKeyword resolves an active raffle through channel
@@ -321,30 +324,32 @@ func (d *dbClient) GetByChannelAndKeyword(channel, keyword string) (raffle, erro
 }
 
 // List returns a list of all known raffles
-func (d *dbClient) List() (raffles []raffle, _ error) {
-	return raffles, errors.Wrap(
-		helpers.Retry(func() error {
-			return d.db.DB().Model(&raffle{}).
-				Order("id DESC").
-				Find(&raffles).
-				Error
-		}),
-		"updating column",
-	)
+func (d *dbClient) List() (raffles []raffle, err error) {
+	if err = helpers.Retry(func() error {
+		return d.db.DB().Model(&raffle{}).
+			Order("id DESC").
+			Find(&raffles).
+			Error
+	}); err != nil {
+		return nil, fmt.Errorf("getting raffles: %w", err)
+	}
+
+	return raffles, nil
 }
 
 // PatchNextReminderSend updates the time another reminder shall be
 // sent for the given raffle ID. No other fields are modified
 func (d *dbClient) PatchNextReminderSend(raffleID uint64, next time.Time) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
-			return tx.Model(&raffle{}).
-				Where("id = ?", raffleID).
-				Update("text_reminder_next_send", next).
-				Error
-		}),
-		"updating column",
-	)
+	if err := helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
+		return tx.Model(&raffle{}).
+			Where("id = ?", raffleID).
+			Update("text_reminder_next_send", next).
+			Error
+	}); err != nil {
+		return fmt.Errorf("updating column: %w", err)
+	}
+
+	return nil
 }
 
 // PickWinner fetches the given raffle and picks a random winner
@@ -352,12 +357,12 @@ func (d *dbClient) PatchNextReminderSend(raffleID uint64, next time.Time) error 
 func (d *dbClient) PickWinner(raffleID uint64) error {
 	r, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting raffle")
+		return fmt.Errorf("getting raffle: %w", err)
 	}
 
 	winner, err := pickWinnerFromRaffle(r)
 	if err != nil {
-		return errors.Wrap(err, "picking winner")
+		return fmt.Errorf("picking winner: %w", err)
 	}
 
 	speakUpUntil := time.Now().UTC().Add(r.WaitForResponse)
@@ -367,7 +372,7 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 			Updates(map[string]any{"was_picked": true, "speak_up_until": speakUpUntil}).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "updating winner")
+		return fmt.Errorf("updating winner: %w", err)
 	}
 
 	d.lock.Lock()
@@ -382,10 +387,11 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 
 	frontendNotify(frontendNotifyEventRaffleEntryChange)
 
-	return errors.Wrap(
-		r.SendEvent(raffleMessageEventWin, fields),
-		"sending win-message",
-	)
+	if err = r.SendEvent(raffleMessageEventWin, fields); err != nil {
+		return fmt.Errorf("sending win-message: %w", err)
+	}
+
+	return nil
 }
 
 // RedrawWinner marks the previous winner as redrawn (and therefore
@@ -397,7 +403,7 @@ func (d *dbClient) RedrawWinner(raffleID, winnerID uint64) error {
 			Update("was_redrawn", true).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "updating previous winner")
+		return fmt.Errorf("updating previous winner: %w", err)
 	}
 
 	return d.PickWinner(raffleID)
@@ -411,7 +417,7 @@ func (d *dbClient) RefreshActiveRaffles() error {
 
 	var (
 		actives []raffle
-		tmp     = map[string]uint64{}
+		tmp     = make(map[string]uint64)
 	)
 
 	if err := helpers.Retry(func() error {
@@ -420,7 +426,7 @@ func (d *dbClient) RefreshActiveRaffles() error {
 			Find(&actives).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "fetching active raffles")
+		return fmt.Errorf("fetching active raffles: %w", err)
 	}
 
 	for _, r := range actives {
@@ -439,7 +445,7 @@ func (d *dbClient) RefreshSpeakUp() error {
 
 	var (
 		res []raffleEntry
-		tmp = map[string]*speakUpWait{}
+		tmp = make(map[string]*speakUpWait)
 	)
 
 	if err := helpers.Retry(func() error {
@@ -448,7 +454,7 @@ func (d *dbClient) RefreshSpeakUp() error {
 			Find(&res).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "querying active entries")
+		return fmt.Errorf("querying active entries: %w", err)
 	}
 
 	for _, e := range res {
@@ -459,7 +465,7 @@ func (d *dbClient) RefreshSpeakUp() error {
 				First(&r).
 				Error
 		}); err != nil {
-			return errors.Wrap(err, "fetching raffle for entry")
+			return fmt.Errorf("fetching raffle for entry: %w", err)
 		}
 		tmp[strings.Join([]string{r.Channel, e.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: e.ID, Until: *e.SpeakUpUntil}
 	}
@@ -489,7 +495,7 @@ func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
 			}).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "registering speak-up")
+		return fmt.Errorf("registering speak-up: %w", err)
 	}
 
 	d.lock.Lock()
@@ -505,7 +511,7 @@ func (d *dbClient) RegisterSpeakUp(channel, user, message string) error {
 func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 	r, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting specified raffle")
+		return fmt.Errorf("getting specified raffle: %w", err)
 	}
 
 	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
@@ -517,7 +523,7 @@ func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 			}).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "updating raffle")
+		return fmt.Errorf("updating raffle: %w", err)
 	}
 
 	// Store ID to active-raffle cache
@@ -534,7 +540,7 @@ func (d *dbClient) Reopen(raffleID uint64, duration time.Duration) error {
 func (d *dbClient) Reset(raffleID uint64) error {
 	raffle, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting raffle")
+		return fmt.Errorf("getting raffle: %w", err)
 	}
 
 	raffle.AutoStartAt = nil
@@ -544,12 +550,12 @@ func (d *dbClient) Reset(raffleID uint64) error {
 
 	if err = helpers.RetryTransaction(d.db.DB(), func(tx *gorm.DB) error {
 		if err = tx.Delete(&raffleEntry{}, "raffle_id = ?", raffleID).Error; err != nil {
-			return errors.Wrap(err, "deleting raffle entries")
+			return fmt.Errorf("deleting raffle entries: %w", err)
 		}
 
 		return tx.Save(raffle).Error
 	}); err != nil {
-		return errors.Wrap(err, "saving cleaned raffle")
+		return fmt.Errorf("saving cleaned raffle: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -563,7 +569,7 @@ func (d *dbClient) Reset(raffleID uint64) error {
 func (d *dbClient) Start(raffleID uint64) error {
 	r, err := d.Get(raffleID)
 	if err != nil {
-		return errors.Wrap(err, "getting specified raffle")
+		return fmt.Errorf("getting specified raffle: %w", err)
 	}
 
 	if r.CloseAt == nil {
@@ -573,7 +579,7 @@ func (d *dbClient) Start(raffleID uint64) error {
 
 	r.Status = raffleStatusActive
 	if err = d.Update(r); err != nil {
-		return errors.Wrap(err, "updating raffle")
+		return fmt.Errorf("updating raffle: %w", err)
 	}
 
 	// Store ID to active-raffle cache
@@ -583,10 +589,11 @@ func (d *dbClient) Start(raffleID uint64) error {
 
 	frontendNotify(frontendNotifyEventRaffleChange)
 
-	return errors.Wrap(
-		r.SendEvent(raffleMessageEventReminder, nil),
-		"sending first reminder",
-	)
+	if err = r.SendEvent(raffleMessageEventReminder, nil); err != nil {
+		return fmt.Errorf("sending first reminder: %w", err)
+	}
+
+	return nil
 }
 
 // Update stores the given raffle to the database. The ID within the
@@ -595,7 +602,7 @@ func (d *dbClient) Start(raffleID uint64) error {
 func (d *dbClient) Update(r raffle) error {
 	old, err := d.Get(r.ID)
 	if err != nil {
-		return errors.Wrap(err, "getting previous version")
+		return fmt.Errorf("getting previous version: %w", err)
 	}
 
 	// These information must not be changed after raffle has been started
@@ -627,7 +634,7 @@ func (d *dbClient) Update(r raffle) error {
 			Updates(&r).
 			Error
 	}); err != nil {
-		return errors.Wrap(err, "updating raffle")
+		return fmt.Errorf("updating raffle: %w", err)
 	}
 
 	frontendNotify(frontendNotifyEventRaffleChange)
@@ -670,7 +677,7 @@ func (r raffle) SendEvent(evt raffleMessageEvent, fields *fieldcollection.FieldC
 		}
 		sendTextTpl = r.TextReminder
 		if err = dbc.PatchNextReminderSend(r.ID, time.Now().UTC().Add(r.TextReminderInterval)); err != nil {
-			return errors.Wrap(err, "updating next reminder for raffle")
+			return fmt.Errorf("updating next reminder for raffle: %w", err)
 		}
 
 	case raffleMessageEventWin:
@@ -686,17 +693,18 @@ func (r raffle) SendEvent(evt raffleMessageEvent, fields *fieldcollection.FieldC
 
 	msg, err := formatMessage(sendTextTpl, nil, nil, fields)
 	if err != nil {
-		return errors.Wrap(err, "formatting message to send")
+		return fmt.Errorf("formatting message to send: %w", err)
 	}
 
-	return errors.Wrap(
-		send(&irc.Message{
-			Command: "PRIVMSG",
-			Params: []string{
-				"#" + strings.TrimLeft(r.Channel, "#"),
-				msg,
-			},
-		}),
-		"sending message",
-	)
+	if err = send(&irc.Message{
+		Command: "PRIVMSG",
+		Params: []string{
+			"#" + strings.TrimLeft(r.Channel, "#"),
+			msg,
+		},
+	}); err != nil {
+		return fmt.Errorf("sending message: %w", err)
+	}
+
+	return nil
 }

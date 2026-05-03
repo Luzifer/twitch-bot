@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateFuncDocs(t *testing.T) {
@@ -18,7 +19,7 @@ func TestTemplateFuncDocs(t *testing.T) {
 			}
 
 			out, err := generateTplDocsRender(fd.Example)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, fd.Example.ExpectedOutput, out)
 		})
 	}

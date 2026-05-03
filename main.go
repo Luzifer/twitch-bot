@@ -1,7 +1,10 @@
+// Twitch-Bot main process
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"net"
 	"net/http"
@@ -12,15 +15,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/rconfig/v2"
 	"github.com/getsentry/sentry-go"
 	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/rconfig/v2"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
@@ -81,17 +83,17 @@ var (
 func initApp() error {
 	rconfig.AutoEnv(true)
 	if err := rconfig.ParseAndValidate(&cfg); err != nil {
-		return errors.Wrap(err, "parsing cli options")
+		return fmt.Errorf("parsing cli options: %w", err)
 	}
 
 	if cfg.VersionAndExit {
-		fmt.Printf("twitch-bot %s\n", version) //nolint:forbidigo // Fine here
-		os.Exit(0)                             //revive:disable-line:deep-exit
+		// Skip remaining initialization
+		return nil
 	}
 
 	l, err := log.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		return errors.Wrap(err, "parsing log level")
+		return fmt.Errorf("parsing log level: %w", err)
 	}
 	log.SetLevel(l)
 
@@ -128,6 +130,11 @@ func main() {
 
 	if err = initApp(); err != nil {
 		log.WithError(err).Fatal("initializing application")
+	}
+
+	if cfg.VersionAndExit {
+		fmt.Printf("twitch-bot %s\n", version) //nolint:forbidigo // Fine here
+		os.Exit(0)
 	}
 
 	if db, err = database.New(cfg.StorageConnType, cfg.StorageConnString, cfg.StorageEncryptionPass); err != nil {
@@ -207,7 +214,7 @@ func main() {
 	}
 
 	if err = loadConfig(cfg.Config); err != nil {
-		if os.IsNotExist(errors.Cause(err)) {
+		if errors.Is(err, fs.ErrNotExist) {
 			if err = writeDefaultConfigFile(cfg.Config); err != nil {
 				log.WithError(err).Fatal("Initial config not found and not able to create example config")
 			}
@@ -346,7 +353,7 @@ func main() {
 				// Fine, reload
 			}
 
-			previousChannels := append([]string{}, config.Channels...)
+			previousChannels := append(([]string)(nil), config.Channels...)
 
 			if err := loadConfig(cfg.Config); err != nil {
 				log.WithError(err).Error("Unable to reload config")

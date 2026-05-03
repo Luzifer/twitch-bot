@@ -3,9 +3,8 @@ package raffle
 import (
 	"crypto/rand"
 	"encoding/binary"
-	mathRand "math/rand"
-
-	"github.com/pkg/errors"
+	"errors"
+	mathrand "math/rand"
 )
 
 type (
@@ -30,7 +29,7 @@ func pickWinnerFromRaffle(r raffle) (winner raffleEntry, err error) {
 		return winner, errNoCandidatesLeft
 	}
 
-	winnerPoint := mathRand.New(cryptRandSrc{}).Float64() * maxScore //#nosec:G404 - RNG is using a secure source
+	winnerPoint := mathrand.New(cryptRandSrc{}).Float64() * maxScore //#nosec:G404 - RNG is using a secure source
 
 	for i := range r.Entries {
 		re := r.Entries[i]

@@ -3,22 +3,24 @@
 package counter
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
+
+type actorCounter struct{}
 
 var (
 	db            database.Connector
@@ -33,7 +35,7 @@ var (
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&counter{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("counter", func(src, target *gorm.DB) error {
@@ -138,11 +140,11 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API route: %w", err)
 	}
 
-	args.RegisterTemplateFunction("channelCounter", func(_ *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("channelCounter", func(_ *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) any {
 		return func(name string) (string, error) {
 			channel, err := fields.String("channel")
 			if err != nil {
-				return "", errors.Wrap(err, "channel not available")
+				return "", fmt.Errorf("channel not available: %w", err)
 			}
 
 			return strings.Join([]string{channel, name}, ":"), nil
@@ -158,7 +160,10 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 	args.RegisterTemplateFunction("counterRank", plugins.GenericTemplateFunctionGetter(func(prefix, name string) (res struct{ Rank, Count int64 }, err error) {
 		res.Rank, res.Count, err = getCounterRank(db, prefix, name)
-		return res, errors.Wrap(err, "getting counter rank")
+		if err != nil {
+			return res, fmt.Errorf("getting counter rank: %w", err)
+		}
+		return res, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the rank of the given counter and the total number of counters in given counter prefix",
 		Syntax:      `counterRank <prefix> <name>`,
@@ -197,7 +202,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		}
 
 		if err := updateCounter(db, name, mod, false, time.Now()); err != nil {
-			return 0, errors.Wrap(err, "updating counter")
+			return 0, fmt.Errorf("updating counter: %w", err)
 		}
 
 		return getCounterValue(db, name)
@@ -213,12 +218,10 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-type actorCounter struct{}
-
 func (a actorCounter) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	counterName, err := formatMessage(attrs.MustString("counter", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "preparing response")
+		return false, fmt.Errorf("preparing response: %w", err)
 	}
 
 	// First lets look whether we shall set the counter (counter_set is
@@ -331,7 +334,7 @@ func routeActorCounterGetValue(w http.ResponseWriter, r *http.Request) {
 
 	cv, err := getCounterValue(db, mux.Vars(r)["name"])
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting value: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -347,12 +350,12 @@ func routeActorCounterSetValue(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if value, err = strconv.ParseInt(r.FormValue("value"), 10, 64); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
-		http.Error(w, errors.Wrap(err, "parsing value").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing value: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err = updateCounter(db, mux.Vars(r)["name"], value, absolute, time.Now()); err != nil {
-		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("updating value: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

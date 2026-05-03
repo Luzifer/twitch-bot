@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 
 	"github.com/Luzifer/go_helpers/cli"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -15,10 +15,10 @@ func init() {
 		Run: func([]string) error {
 			doc, err := generateActorDocs()
 			if err != nil {
-				return errors.Wrap(err, "generating actor docs")
+				return fmt.Errorf("generating actor docs: %w", err)
 			}
 			if _, err = os.Stdout.Write(append(bytes.TrimSpace(doc), '\n')); err != nil {
-				return errors.Wrap(err, "writing actor docs to stdout")
+				return fmt.Errorf("writing actor docs to stdout: %w", err)
 			}
 
 			return nil

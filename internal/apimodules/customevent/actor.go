@@ -1,13 +1,13 @@
 package customevent
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -17,7 +17,7 @@ type actor struct{}
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	fd, err := formatMessage(attrs.MustString("fields", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing fields template")
+		return false, fmt.Errorf("executing fields template: %w", err)
 	}
 
 	if fd == "" {
@@ -26,13 +26,14 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 
 	delayRaw, err := formatMessage(attrs.MustString("schedule_in", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing schedule_in template")
+		return false, fmt.Errorf("executing schedule_in template: %w", err)
 	}
 
-	return false, errors.Wrap(
-		triggerOrStoreEvent(plugins.DeriveChannel(m, eventData), strings.NewReader(fd), delayRaw),
-		"triggering event",
-	)
+	if err = triggerOrStoreEvent(plugins.DeriveChannel(m, eventData), strings.NewReader(fd), delayRaw); err != nil {
+		return false, fmt.Errorf("triggering event: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }

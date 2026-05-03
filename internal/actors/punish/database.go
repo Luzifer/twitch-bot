@@ -1,14 +1,15 @@
 package punish
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/backoff"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -26,7 +27,7 @@ type (
 func calculateCurrentPunishments(db database.Connector) (err error) {
 	var ps []punishLevel
 	if err = helpers.Retry(func() error { return db.DB().Find(&ps).Error }); err != nil {
-		return errors.Wrap(err, "querying punish_levels")
+		return fmt.Errorf("querying punish_levels: %w", err)
 	}
 
 	for _, p := range ps {
@@ -53,14 +54,14 @@ func calculateCurrentPunishments(db database.Connector) (err error) {
 		// Level 0 is the first punishment level, so only remove if it drops below 0
 		if lvl.LastLevel < 0 {
 			if err = deletePunishmentForKey(db, p.Key); err != nil {
-				return errors.Wrap(err, "cleaning up expired punishment")
+				return fmt.Errorf("cleaning up expired punishment: %w", err)
 			}
 			continue
 		}
 
 		if actUpdate {
 			if err = setPunishmentForKey(db, p.Key, lvl); err != nil {
-				return errors.Wrap(err, "updating punishment")
+				return fmt.Errorf("updating punishment: %w", err)
 			}
 		}
 	}
@@ -73,17 +74,18 @@ func deletePunishment(db database.Connector, channel, user, uuid string) error {
 }
 
 func deletePunishmentForKey(db database.Connector, key string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Delete(&punishLevel{}, "key = ?", key).Error
-		}),
-		"deleting punishment info",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Delete(&punishLevel{}, "key = ?", key).Error
+	}); err != nil {
+		return fmt.Errorf("deleting punishment info: %w", err)
+	}
+
+	return nil
 }
 
 func getPunishment(db database.Connector, channel, user, uuid string) (*levelConfig, error) {
 	if err := calculateCurrentPunishments(db); err != nil {
-		return nil, errors.Wrap(err, "updating punishment states")
+		return nil, fmt.Errorf("updating punishment states: %w", err)
 	}
 
 	var (
@@ -110,7 +112,7 @@ func getPunishment(db database.Connector, channel, user, uuid string) (*levelCon
 		return lc, nil
 
 	default:
-		return nil, errors.Wrap(err, "getting punishment from database")
+		return nil, fmt.Errorf("getting punishment from database: %w", err)
 	}
 }
 
@@ -123,20 +125,21 @@ func setPunishmentForKey(db database.Connector, key string, lc *levelConfig) err
 		return errors.New("nil levelConfig given")
 	}
 
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "key"}},
-				UpdateAll: true,
-			}).Create(punishLevel{
-				Key:       key,
-				LastLevel: lc.LastLevel,
-				Executed:  lc.Executed,
-				Cooldown:  lc.Cooldown,
-			}).Error
-		}),
-		"updating punishment info",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "key"}},
+			UpdateAll: true,
+		}).Create(punishLevel{
+			Key:       key,
+			LastLevel: lc.LastLevel,
+			Executed:  lc.Executed,
+			Cooldown:  lc.Cooldown,
+		}).Error
+	}); err != nil {
+		return fmt.Errorf("updating punishment info: %w", err)
+	}
+
+	return nil
 }
 
 func getDBKey(channel, user, uuid string) string {

@@ -18,22 +18,22 @@ func testGenerateRaffe() raffle {
 	}
 
 	// Now lets generate 132 non-followers taking part
-	for i := uint64(0); i < 132; i++ {
+	for i := range uint64(132) {
 		r.Entries = append(r.Entries, raffleEntry{ID: i, Multiplier: 1})
 	}
 
 	// Now lets generate 500 followers taking part
-	for i := uint64(0); i < 500; i++ {
+	for i := range uint64(500) {
 		r.Entries = append(r.Entries, raffleEntry{ID: 10000 + i, Multiplier: r.MultiFollower})
 	}
 
 	// Now lets generate 200 subscribers taking part
-	for i := uint64(0); i < 200; i++ {
+	for i := range uint64(200) {
 		r.Entries = append(r.Entries, raffleEntry{ID: 20000 + i, Multiplier: r.MultiSubscriber})
 	}
 
 	// Now lets generate 5 VIPs taking part
-	for i := uint64(0); i < 5; i++ {
+	for i := range uint64(5) {
 		r.Entries = append(r.Entries, raffleEntry{ID: 30000 + i, Multiplier: r.MultiVIP})
 	}
 
@@ -61,7 +61,7 @@ func TestPickWinnerFromRaffle(t *testing.T) {
 		tData   = testGenerateRaffe()
 	)
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		w, err := pickWinnerFromRaffle(tData)
 		require.NoError(t, err, "picking winner")
 		winners = append(winners, w.ID)
@@ -73,14 +73,14 @@ func TestPickWinnerFromRaffle(t *testing.T) {
 func TestPickWinnerFromRaffleSpecial(t *testing.T) {
 	r := raffle{}
 	_, err := pickWinnerFromRaffle(r)
-	assert.ErrorIs(t, errNoCandidatesLeft, err, "picking from 0 paricipants")
+	require.ErrorIs(t, errNoCandidatesLeft, err, "picking from 0 paricipants")
 
 	r.Entries = append(r.Entries, raffleEntry{ID: 1, Multiplier: 1.0})
 	winner, err := pickWinnerFromRaffle(r)
-	assert.NoError(t, err, "picking from set of 1")
+	require.NoError(t, err, "picking from set of 1")
 	assert.Equal(t, uint64(1), winner.ID, "expect the right winner")
 
 	r.Entries[0].WasPicked = true
 	_, err = pickWinnerFromRaffle(r)
-	assert.ErrorIs(t, errNoCandidatesLeft, err, "picking from 1 paricipant, which already won")
+	require.ErrorIs(t, errNoCandidatesLeft, err, "picking from 1 paricipant, which already won")
 }

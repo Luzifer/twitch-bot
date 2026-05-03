@@ -5,16 +5,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "whisper"
+
+type actor struct{}
 
 var (
 	botTwitchClient func() *twitch.Client
@@ -58,23 +59,22 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	to, err := formatMessage(attrs.MustString("to", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "preparing whisper receiver")
+		return false, fmt.Errorf("preparing whisper receiver: %w", err)
 	}
 
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "preparing whisper message")
+		return false, fmt.Errorf("preparing whisper message: %w", err)
 	}
 
-	return false, errors.Wrap(
-		botTwitchClient().SendWhisper(context.Background(), to, msg),
-		"sending whisper",
-	)
+	if err = botTwitchClient().SendWhisper(context.Background(), to, msg); err != nil {
+		return false, fmt.Errorf("sending whisper: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }

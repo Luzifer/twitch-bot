@@ -4,9 +4,10 @@ package announce
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"regexp"
 
-	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -37,7 +38,7 @@ func handleChatCommand(m *irc.Message) error {
 	}
 
 	if err := botTwitchClient().SendChatAnnouncement(context.Background(), channel, matches[1], matches[2]); err != nil {
-		return errors.Wrap(err, "sending announcement")
+		return fmt.Errorf("sending announcement: %w", err)
 	}
 
 	return plugins.ErrSkipSendingMessage

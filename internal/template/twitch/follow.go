@@ -2,11 +2,12 @@ package twitch
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -32,11 +33,11 @@ func tplTwitchDoesFollowLongerThan(args plugins.RegistrationArguments) {
 
 		case string:
 			if age, err = time.ParseDuration(v); err != nil {
-				return false, errors.Wrap(err, "parsing duration")
+				return false, fmt.Errorf("parsing duration: %w", err)
 			}
 
 		default:
-			return false, errors.Errorf("unexpected input for duration %t", t)
+			return false, fmt.Errorf("unexpected input for duration %t", t)
 		}
 
 		fd, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
@@ -48,7 +49,7 @@ func tplTwitchDoesFollowLongerThan(args plugins.RegistrationArguments) {
 			return false, nil
 
 		default:
-			return false, errors.Wrap(err, "getting follow date")
+			return false, fmt.Errorf("getting follow date: %w", err)
 		}
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns whether `from` follows `to` for more than `duration` (the bot must be moderator of `to` to read this)",
@@ -71,7 +72,7 @@ func tplTwitchDoesFollow(args plugins.RegistrationArguments) {
 			return false, nil
 
 		default:
-			return false, errors.Wrap(err, "getting follow date")
+			return false, fmt.Errorf("getting follow date: %w", err)
 		}
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns whether `from` follows `to` (the bot must be moderator of `to` to read this)",
@@ -86,7 +87,10 @@ func tplTwitchDoesFollow(args plugins.RegistrationArguments) {
 func tplTwitchFollowAge(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("followAge", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Duration, error) {
 		since, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
-		return time.Since(since), errors.Wrap(err, "getting follow date")
+		if err != nil {
+			return 0, fmt.Errorf("getting follow date: %w", err)
+		}
+		return time.Since(since), nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Looks up when `from` followed `to` and returns the duration between then and now (the bot must be moderator of `to` to read this)",
 		Syntax:      "followAge <from> <to>",
@@ -100,7 +104,10 @@ func tplTwitchFollowAge(args plugins.RegistrationArguments) {
 func tplTwitchFollowDate(args plugins.RegistrationArguments) {
 	args.RegisterTemplateFunction("followDate", plugins.GenericTemplateFunctionGetter(func(from, to string) (time.Time, error) {
 		fd, err := args.GetTwitchClient().GetFollowDate(context.Background(), from, to)
-		return fd, errors.Wrap(err, "getting follow date")
+		if err != nil {
+			return fd, fmt.Errorf("getting follow date: %w", err)
+		}
+		return fd, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Looks up when `from` followed `to` (the bot must be moderator of `to` to read this)",
 		Syntax:      "followDate <from> <to>",

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const subInfoCacheTimeout = 300 * time.Second
@@ -28,7 +26,7 @@ func (c *Client) GetBroadcasterSubscriptionCount(ctx context.Context, broadcaste
 
 	broadcaster, err := c.GetIDForUsername(ctx, broadcasterName)
 	if err != nil {
-		return 0, 0, errors.Wrap(err, "getting ID for broadcaster name")
+		return 0, 0, fmt.Errorf("getting ID for broadcaster name: %w", err)
 	}
 
 	var data subInfo
@@ -40,7 +38,7 @@ func (c *Client) GetBroadcasterSubscriptionCount(ctx context.Context, broadcaste
 		Out:      &data,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/subscriptions?broadcaster_id=%s", broadcaster),
 	}); err != nil {
-		return 0, 0, errors.Wrap(err, "executing request")
+		return 0, 0, fmt.Errorf("executing request: %w", err)
 	}
 
 	// Lets not annoy the API but only ask every 5m

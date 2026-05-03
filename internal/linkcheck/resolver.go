@@ -55,7 +55,7 @@ func newResolver(poolSize int, opts ...func(*resolver)) *resolver {
 		o(r)
 	}
 
-	for i := 0; i < poolSize; i++ {
+	for range poolSize {
 		go r.runResolver()
 	}
 
@@ -66,6 +66,7 @@ func withSkipVerify() func(*resolver) {
 	return func(r *resolver) { r.skipValidation = true }
 }
 
+//nolint:thelper // this is not a test helper
 func withTesting(t *testing.T) func(*resolver) {
 	return func(r *resolver) { r.t = t }
 }
@@ -83,7 +84,7 @@ func (resolver) getJar() *cookiejar.Jar {
 // resolveFinal takes a link and looks up the final destination of
 // that link after all redirects were followed
 //
-//nolint:gocyclo
+//nolint:gocyclo // splitting logic would make it harder to read IMO
 func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack *stack) string {
 	if !linkTest.MatchString(link) && !r.skipValidation {
 		return ""
@@ -151,9 +152,10 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 		}
 	}()
 
+	//revive:disable-next-line:add-constant // Single use and clear from use
 	if resp.StatusCode > 299 && resp.StatusCode < 400 {
 		// We got a redirect
-		tu, err := url.Parse(resp.Header.Get("location"))
+		tu, err := url.Parse(resp.Header.Get("Location"))
 		if err != nil {
 			return ""
 		}

@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 

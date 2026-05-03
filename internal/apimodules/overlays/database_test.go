@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
 
@@ -23,7 +23,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 	)
 
 	evts, err := getChannelEvents(dbc, channel)
-	assert.NoError(t, err, "getting events on empty db")
+	require.NoError(t, err, "getting events on empty db")
 	assert.Zero(t, evts, "expect no events on empty db")
 
 	evtID, err = addChannelEvent(dbc, channel, socketMessage{
@@ -33,7 +33,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(1), evtID)
-	assert.NoError(t, err, "adding second event")
+	require.NoError(t, err, "adding second event")
 
 	evtID, err = addChannelEvent(dbc, channel, socketMessage{
 		IsLive: true,
@@ -42,7 +42,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(2), evtID)
-	assert.NoError(t, err, "adding first event")
+	require.NoError(t, err, "adding first event")
 
 	evtID, err = addChannelEvent(dbc, "#otherchannel", socketMessage{
 		IsLive: true,
@@ -51,16 +51,16 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(3), evtID)
-	assert.NoError(t, err, "adding other channel event")
+	require.NoError(t, err, "adding other channel event")
 
 	evts, err = getChannelEvents(dbc, channel)
-	assert.NoError(t, err, "getting events")
+	require.NoError(t, err, "getting events")
 	assert.Len(t, evts, 2, "expect 2 events")
 
 	assert.Less(t, evts[0].Time, evts[1].Time, "expect sorting")
 
 	evt, err := getEventByID(dbc, 2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, socketMessage{
 		EventID: 2,
 		IsLive:  false,

@@ -5,12 +5,11 @@ package authcache
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const negativeCacheTime = 5 * time.Minute
@@ -119,7 +118,7 @@ backendLoop:
 
 		default:
 			// Something went wrong, bail out and do not cache
-			return errors.Wrap(ce.AuthResult, "querying authorization in backend")
+			return fmt.Errorf("querying authorization in backend: %w", ce.AuthResult)
 		}
 	}
 

@@ -9,14 +9,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
+
+type ircHandler struct {
+	c           *irc.Client
+	conn        *tls.Conn
+	ctx         context.Context //nolint:containedctx // just stored internally
+	ctxCancelFn func()
+	user        string
+}
 
 var (
 	rawMessageHandlers     []plugins.RawMessageHandlerFunc
@@ -29,7 +36,7 @@ func notifyRawMessageHandlers(m *irc.Message) error {
 
 	for _, fn := range rawMessageHandlers {
 		if err := fn(m); err != nil {
-			return errors.Wrap(err, "executing raw message handlers")
+			return fmt.Errorf("executing raw message handlers: %w", err)
 		}
 	}
 
@@ -45,20 +52,12 @@ func registerRawMessageHandler(fn plugins.RawMessageHandlerFunc) error {
 	return nil
 }
 
-type ircHandler struct {
-	c           *irc.Client
-	conn        *tls.Conn
-	ctx         context.Context //nolint:containedctx
-	ctxCancelFn func()
-	user        string
-}
-
 func newIRCHandler() (*ircHandler, error) {
 	h := new(ircHandler)
 
 	_, username, err := twitchClient.GetAuthorizedUser(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching username")
+		return nil, fmt.Errorf("fetching username: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background()) //#nosec:G118 // Cancel is retained in the handler and called on constructor failure or handler shutdown
@@ -73,12 +72,12 @@ func newIRCHandler() (*ircHandler, error) {
 
 	conn, err := tls.Dial("tcp", "irc.chat.twitch.tv:6697", nil) //nolint:noctx // Would use background context
 	if err != nil {
-		return nil, errors.Wrap(err, "connect to IRC server")
+		return nil, fmt.Errorf("connect to IRC server: %w", err)
 	}
 
 	token, err := twitchClient.GetToken(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "getting auth token")
+		return nil, fmt.Errorf("getting auth token: %w", err)
 	}
 
 	h.c = irc.NewClient(conn, irc.ClientConfig{
@@ -107,14 +106,12 @@ func (i ircHandler) Close() error {
 
 func (i ircHandler) ExecuteJoins(channels []string) {
 	for _, ch := range channels {
-		//nolint:errcheck,gosec
-		i.c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
+		_ = i.c.Write(fmt.Sprintf("JOIN #%s", strings.TrimLeft(ch, "#")))
 	}
 }
 
 func (i ircHandler) ExecutePart(channel string) {
-	//nolint:errcheck,gosec
-	i.c.Write(fmt.Sprintf("PART #%s", strings.TrimLeft(channel, "#")))
+	_ = i.c.Write(fmt.Sprintf("PART #%s", strings.TrimLeft(channel, "#")))
 }
 
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
@@ -133,8 +130,7 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 	switch m.Command {
 	case "001":
 		// 001 is a welcome event, so we join channels there
-		//nolint:errcheck,gosec
-		c.WriteMessage(&irc.Message{
+		_ = c.WriteMessage(&irc.Message{
 			Command: "CAP",
 			Params: []string{
 				"REQ",
@@ -214,7 +210,12 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 	}
 }
 
-func (i ircHandler) Run() error { return errors.Wrap(i.c.RunContext(i.ctx), "running IRC client") }
+func (i ircHandler) Run() error {
+	if err := i.c.RunContext(i.ctx); err != nil {
+		return fmt.Errorf("running IRC client: %w", err)
+	}
+	return nil
+}
 
 func (i ircHandler) SendMessage(m *irc.Message) (err error) {
 	if err = i.c.WriteMessage(m); err != nil {
@@ -268,7 +269,7 @@ func (i ircHandler) handleClearChat(m *irc.Message) {
 }
 
 func (i ircHandler) handleClearMessage(m *irc.Message) {
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		eventFieldChannel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		"message_id":      m.Tags["target-msg-id"],
 		"target_name":     m.Tags["login"],
@@ -280,7 +281,7 @@ func (i ircHandler) handleClearMessage(m *irc.Message) {
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
@@ -288,7 +289,7 @@ func (i ircHandler) handleJoin(m *irc.Message) {
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 	})
@@ -309,7 +310,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 	username := msgParts[1]
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
 		eventFieldUserID:   m.Tags["user-id"],
@@ -366,7 +367,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	}
 
 	if bits := i.tagToNumeric(m, "bits", 0); bits > 0 {
-		fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+		fields := fieldcollection.FieldCollectionFromData(map[string]any{
 			"bits":             bits,
 			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
 			"message":          m.Trailing(),
@@ -382,7 +383,7 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	go handleMessage(i.c, m, nil, nil)
 }
 
-//nolint:funlen
+//nolint:funlen // just a list of mappings
 func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 	logrus.WithFields(logrus.Fields{
 		eventFieldChannel: i.getChannel(m),
@@ -417,7 +418,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeAnnouncement, evtData)
 
 	case "giftpaidupgrade":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"gifter": m.Tags["msg-param-sender-login"],
 		})
 		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded to paid sub")
@@ -425,7 +426,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
 
 	case "raid":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"from":        m.Tags["login"],
 			"viewercount": i.tagToNumeric(m, "msg-param-viewerCount", 0),
 		})
@@ -434,7 +435,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeRaid, evtData)
 
 	case "resub":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"from":              m.Tags["login"],
 			"message":           message,
 			"multi_month":       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
@@ -446,7 +447,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeResub, evtData)
 
 	case "sub":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"from":        m.Tags["login"],
 			"multi_month": i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
 			"plan":        m.Tags["msg-param-sub-plan"],
@@ -456,7 +457,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeSub, evtData)
 
 	case "subgift", "anonsubgift":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"from":              m.Tags["login"],
 			"gifted_months":     i.tagToNumeric(m, "msg-param-gift-months", 1),
 			"multi_month":       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
@@ -471,7 +472,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		go handleMessage(i.c, m, eventTypeSubgift, evtData)
 
 	case "submysterygift":
-		evtData.SetFromData(map[string]interface{}{
+		evtData.SetFromData(map[string]any{
 			"from":         m.Tags["login"],
 			"multi_month":  i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
 			"number":       i.tagToNumeric(m, "msg-param-mass-gift-count", 0),

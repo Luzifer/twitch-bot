@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,7 +11,6 @@ import (
 	"plugin"
 	"strings"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -25,7 +25,7 @@ func loadPlugins(pluginDir string) error {
 			logger.Debug("Plugin directory not found, skipping")
 			return nil
 		}
-		return errors.Wrap(err, "getting plugin-dir info")
+		return fmt.Errorf("getting plugin-dir info: %w", err)
 	}
 
 	if !d.IsDir() {
@@ -34,7 +34,7 @@ func loadPlugins(pluginDir string) error {
 
 	args := getRegistrationArguments()
 
-	return errors.Wrap(filepath.Walk(pluginDir, func(currentPath string, _ os.FileInfo, err error) error {
+	if err = filepath.Walk(pluginDir, func(currentPath string, _ os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -63,5 +63,9 @@ func loadPlugins(pluginDir string) error {
 		}
 
 		return nil
-	}), "loading plugins")
+	}); err != nil {
+		return fmt.Errorf("loading plugins: %w", err)
+	}
+
+	return nil
 }

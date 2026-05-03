@@ -8,16 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/mitchellh/hashstructure/v2"
-	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
-
-	"github.com/Luzifer/go_helpers/fieldcollection"
 )
-
-var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 
 type autoMessage struct {
 	UUID string `hash:"-" json:"uuid,omitempty" yaml:"uuid,omitempty"`
@@ -39,6 +35,8 @@ type autoMessage struct {
 
 	lock sync.RWMutex
 }
+
+var cronParser = cron.NewParser(cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 
 func (a *autoMessage) CanSend() bool {
 	a.lock.RLock()
@@ -120,7 +118,7 @@ func (a *autoMessage) ID() string {
 
 	h, err := hashstructure.Hash(a, hashstructure.FormatV2, nil)
 	if err != nil {
-		panic(errors.Wrap(err, "hashing automessage"))
+		panic(fmt.Errorf("hashing automessage: %w", err))
 	}
 	return fmt.Sprintf("hashstructure:%x", h)
 }
@@ -145,7 +143,7 @@ func (a *autoMessage) Send(_ *irc.Client) error {
 
 	msg, err := formatMessage(a.Message, nil, nil, nil)
 	if err != nil {
-		return errors.Wrap(err, "preparing message")
+		return fmt.Errorf("preparing message: %w", err)
 	}
 
 	if a.UseAction {
@@ -159,7 +157,7 @@ func (a *autoMessage) Send(_ *irc.Client) error {
 			msg,
 		},
 	}); err != nil {
-		return errors.Wrap(err, "sending auto-message")
+		return fmt.Errorf("sending auto-message: %w", err)
 	}
 
 	a.lastMessageSent = time.Now()

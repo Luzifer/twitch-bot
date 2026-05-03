@@ -6,14 +6,16 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "delay"
+
+type actor struct{}
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
@@ -48,8 +50,6 @@ func Register(args plugins.RegistrationArguments) error {
 
 	return nil
 }
-
-type actor struct{}
 
 func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (

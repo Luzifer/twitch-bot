@@ -4,16 +4,16 @@ package punish
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -27,6 +27,17 @@ const (
 	oneWeek = 168 * time.Hour
 )
 
+type (
+	actorPunish      struct{}
+	actorResetPunish struct{}
+
+	levelConfig struct {
+		LastLevel int           `json:"last_level"`
+		Executed  time.Time     `json:"executed"`
+		Cooldown  time.Duration `json:"cooldown"`
+	}
+)
+
 var (
 	botTwitchClient func() *twitch.Client
 	db              database.Connector
@@ -37,7 +48,7 @@ var (
 func Register(args plugins.RegistrationArguments) error {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&punishLevel{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("punish", func(src, target *gorm.DB) error {
@@ -134,17 +145,6 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type (
-	actorPunish      struct{}
-	actorResetPunish struct{}
-
-	levelConfig struct {
-		LastLevel int           `json:"last_level"`
-		Executed  time.Time     `json:"executed"`
-		Cooldown  time.Duration `json:"cooldown"`
-	}
-)
-
 // Punish
 
 func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
@@ -157,16 +157,16 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 
 	levels, err := attrs.StringSlice("levels")
 	if err != nil {
-		return false, errors.Wrap(err, "getting level config")
+		return false, fmt.Errorf("getting level config: %w", err)
 	}
 
 	if user, err = formatMessage(user, m, r, eventData); err != nil {
-		return false, errors.Wrap(err, "preparing user")
+		return false, fmt.Errorf("preparing user: %w", err)
 	}
 
 	lvl, err := getPunishment(db, plugins.DeriveChannel(m, eventData), user, uuid)
 	if err != nil {
-		return false, errors.Wrap(err, "getting stored punishment")
+		return false, fmt.Errorf("getting stored punishment: %w", err)
 	}
 	nLvl := int(math.Min(float64(len(levels)-1), float64(lvl.LastLevel+1)))
 
@@ -179,7 +179,7 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 			0,
 			reason,
 		); err != nil {
-			return false, errors.Wrap(err, "executing user ban")
+			return false, fmt.Errorf("executing user ban: %w", err)
 		}
 
 	case "delete":
@@ -193,13 +193,13 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 			plugins.DeriveChannel(m, eventData),
 			msgID,
 		); err != nil {
-			return false, errors.Wrap(err, "deleting message")
+			return false, fmt.Errorf("deleting message: %w", err)
 		}
 
 	default:
 		to, err := time.ParseDuration(lt)
 		if err != nil {
-			return false, errors.Wrap(err, "parsing punishment level")
+			return false, fmt.Errorf("parsing punishment level: %w", err)
 		}
 
 		if err = botTwitchClient().BanUser(
@@ -209,7 +209,7 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 			to,
 			reason,
 		); err != nil {
-			return false, errors.Wrap(err, "executing user ban")
+			return false, fmt.Errorf("executing user ban: %w", err)
 		}
 	}
 
@@ -217,10 +217,11 @@ func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, event
 	lvl.Executed = time.Now().UTC()
 	lvl.LastLevel = nLvl
 
-	return false, errors.Wrap(
-		setPunishment(db, plugins.DeriveChannel(m, eventData), user, uuid, lvl),
-		"storing punishment level",
-	)
+	if err = setPunishment(db, plugins.DeriveChannel(m, eventData), user, uuid, lvl); err != nil {
+		return false, fmt.Errorf("storing punishment level: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actorPunish) IsAsync() bool { return false }
@@ -251,13 +252,14 @@ func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, 
 	)
 
 	if user, err = formatMessage(user, m, r, eventData); err != nil {
-		return false, errors.Wrap(err, "preparing user")
+		return false, fmt.Errorf("preparing user: %w", err)
 	}
 
-	return false, errors.Wrap(
-		deletePunishment(db, plugins.DeriveChannel(m, eventData), user, uuid),
-		"resetting punishment level",
-	)
+	if err = deletePunishment(db, plugins.DeriveChannel(m, eventData), user, uuid); err != nil {
+		return false, fmt.Errorf("resetting punishment level: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actorResetPunish) IsAsync() bool { return false }

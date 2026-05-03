@@ -12,7 +12,7 @@ const (
 // Retry contains a standard set of configuration parameters for an
 // exponential backoff to be used throughout the bot
 func Retry(fn func() error) error {
-	//nolint:wrapcheck
+	//nolint:wrapcheck // thin wrapper around backoff with no extra logic
 	return backoff.NewBackoff().
 		WithMaxIterations(maxRetries).
 		Retry(fn)

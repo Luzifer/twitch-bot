@@ -3,15 +3,15 @@ package commercial
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -22,6 +22,8 @@ const (
 
 	maxCommercialDuration = 180
 )
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -62,14 +64,12 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	durationStr, err := formatMessage(attrs.MustString("duration", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing duration template")
+		return false, fmt.Errorf("executing duration template: %w", err)
 	}
 
 	return false, startCommercial(strings.TrimLeft(plugins.DeriveChannel(m, eventData), "#"), durationStr)
@@ -108,7 +108,7 @@ func handleChatCommand(m *irc.Message) error {
 func startCommercial(channel, durationStr string) error {
 	duration, err := strconv.ParseInt(durationStr, 10, 64)
 	if err != nil {
-		return errors.Wrap(err, "parsing duration to integer")
+		return fmt.Errorf("parsing duration to integer: %w", err)
 	}
 
 	if duration > maxCommercialDuration {
@@ -117,20 +117,21 @@ func startCommercial(channel, durationStr string) error {
 
 	ok, err := permCheckFn(channel, twitch.ScopeChannelEditCommercial)
 	if err != nil {
-		return errors.Wrap(err, "checking for channel permissions")
+		return fmt.Errorf("checking for channel permissions: %w", err)
 	}
 
 	if !ok {
-		return errors.Errorf("channel %q is missing permission %s", channel, twitch.ScopeChannelEditCommercial)
+		return fmt.Errorf("channel %q is missing permission %s", channel, twitch.ScopeChannelEditCommercial)
 	}
 
 	tc, err := tcGetter(channel)
 	if err != nil {
-		return errors.Wrap(err, "getting channel twitch-client")
+		return fmt.Errorf("getting channel twitch-client: %w", err)
 	}
 
-	return errors.Wrap(
-		tc.RunCommercial(context.Background(), channel, duration),
-		"running commercial",
-	)
+	if err = tc.RunCommercial(context.Background(), channel, duration); err != nil {
+		return fmt.Errorf("running commercial: %w", err)
+	}
+
+	return nil
 }

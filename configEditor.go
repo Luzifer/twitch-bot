@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sort"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -21,7 +22,7 @@ const (
 )
 
 var (
-	availableActorDocs     = []plugins.ActionDocumentation{}
+	availableActorDocs     []plugins.ActionDocumentation
 	availableActorDocsLock sync.RWMutex
 
 	upgrader = websocket.Upgrader{}
@@ -49,11 +50,13 @@ func registerEditorFrontend() {
 	router.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		f, err := configEditorFrontend.Open("editor/index.html")
 		if err != nil {
-			http.Error(w, errors.Wrap(err, "opening index.html").Error(), http.StatusNotFound)
+			http.Error(w, fmt.Errorf("opening index.html: %w", err).Error(), http.StatusNotFound)
 			return
 		}
 
-		io.Copy(w, f) //nolint:errcheck,gosec
+		if _, err = io.Copy(w, f); err != nil {
+			logrus.WithError(err).Debug("writing frontend index response")
+		}
 	})
 
 	router.HandleFunc("/editor/vars.json", func(w http.ResponseWriter, _ *http.Request) {

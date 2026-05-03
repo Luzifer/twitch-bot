@@ -2,11 +2,10 @@ package twitch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const pollCacheTimeout = 10 * time.Second // Cache polls for a short moment to prevent multiple requests in one template
@@ -44,7 +43,7 @@ func (c *Client) GetLatestPoll(ctx context.Context, channel string) (*PollInfo, 
 
 	id, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting ID for username")
+		return nil, fmt.Errorf("getting ID for username: %w", err)
 	}
 
 	var payload struct {
@@ -58,7 +57,7 @@ func (c *Client) GetLatestPoll(ctx context.Context, channel string) (*PollInfo, 
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/polls?broadcaster_id=%s&first=1", id),
 	}); err != nil {
-		return nil, errors.Wrap(err, "request channel info")
+		return nil, fmt.Errorf("request channel info: %w", err)
 	}
 
 	if len(payload.Data) < 1 {

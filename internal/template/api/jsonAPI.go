@@ -1,15 +1,15 @@
-package api //revive:disable-line:var-naming
+package api
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/itchyny/gojq"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,12 +21,12 @@ const (
 func jsonAPI(uri, path string, fallback ...string) (string, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
-		return "", errors.Wrap(err, "parsing URL")
+		return "", fmt.Errorf("parsing URL: %w", err)
 	}
 
 	query, err := gojq.Parse(path)
 	if err != nil {
-		return "", errors.Wrap(err, "parsing JSON path")
+		return "", fmt.Errorf("parsing JSON path: %w", err)
 	}
 
 	reqCtx, cancel := context.WithTimeout(context.Background(), remoteRequestTimeout)
@@ -34,13 +34,13 @@ func jsonAPI(uri, path string, fallback ...string) (string, error) {
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, u.String(), nil)
 	if err != nil {
-		return "", errors.Wrap(err, "assembling request")
+		return "", fmt.Errorf("assembling request: %w", err)
 	}
 	req.Header.Set("User-Agent", "Luzifer/twitch-bot template/api/jsonAPI (https://github.com/Luzifer/twitch-bot)")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", errors.Wrap(err, "executing request")
+		return "", fmt.Errorf("executing request: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -56,10 +56,10 @@ func jsonAPI(uri, path string, fallback ...string) (string, error) {
 		if len(fallback) > 0 {
 			return fallback[0], nil
 		}
-		return "", errors.Errorf("unexpected HTTP status %d without fallback", resp.StatusCode)
+		return "", fmt.Errorf("unexpected HTTP status %d without fallback", resp.StatusCode)
 
 	default:
-		return "", errors.Errorf("unexpected HTTP status %d", resp.StatusCode)
+		return "", fmt.Errorf("unexpected HTTP status %d", resp.StatusCode)
 	}
 
 	execCtx, cancel := context.WithTimeout(context.Background(), jqQueryTimeout)
@@ -67,7 +67,7 @@ func jsonAPI(uri, path string, fallback ...string) (string, error) {
 
 	data := make(map[string]any)
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", errors.Wrap(err, "parsing response JSON")
+		return "", fmt.Errorf("parsing response JSON: %w", err)
 	}
 
 	iter := query.RunWithContext(execCtx, data)
@@ -81,7 +81,7 @@ func jsonAPI(uri, path string, fallback ...string) (string, error) {
 	}
 
 	if err, ok := v.(error); ok {
-		return "", errors.Wrap(err, "iterating path")
+		return "", fmt.Errorf("iterating path: %w", err)
 	}
 
 	return fmt.Sprintf("%v", v), nil

@@ -7,25 +7,27 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
+	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
-	korvike "github.com/Luzifer/korvike/functions"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
+)
+
+type (
+	templateFuncProvider struct {
+		docs  []plugins.TemplateFuncDocumentation
+		funcs map[string]plugins.TemplateFuncGetter
+		lock  *sync.RWMutex
+	}
 )
 
 var tplFuncs = newTemplateFuncProvider()
 
-type templateFuncProvider struct {
-	docs  []plugins.TemplateFuncDocumentation
-	funcs map[string]plugins.TemplateFuncGetter
-	lock  *sync.RWMutex
-}
-
 func newTemplateFuncProvider() *templateFuncProvider {
 	out := &templateFuncProvider{
-		funcs: map[string]plugins.TemplateFuncGetter{},
+		funcs: make(map[string]plugins.TemplateFuncGetter),
 		lock:  new(sync.RWMutex),
 	}
 

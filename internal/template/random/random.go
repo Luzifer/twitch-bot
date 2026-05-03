@@ -3,11 +3,10 @@ package random
 
 import (
 	"crypto/md5" // #nosec G501 // Unly used to convert a string into a numer, no need for cryptographic safety
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
-
-	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -45,7 +44,7 @@ func randomString(lst ...string) (string, error) {
 func stableRandomFromSeed(seed string) (float64, error) {
 	seedValue, err := stringToSeed(seed)
 	if err != nil {
-		return 0, errors.Wrap(err, "generating seed")
+		return 0, fmt.Errorf("generating seed: %w", err)
 	}
 
 	return rand.New(rand.NewSource(seedValue)).Float64(), nil // #nosec:G404 // Only used for generating a random number from static string, no need for cryptographic safety
@@ -54,7 +53,7 @@ func stableRandomFromSeed(seed string) (float64, error) {
 func stringToSeed(s string) (int64, error) {
 	hash := md5.New() // #nosec:G401 // Unly used to convert a string into a numer, no need for cryptographic safety
 	if _, err := fmt.Fprint(hash, s); err != nil {
-		return 0, errors.Wrap(err, "writing string to hasher")
+		return 0, fmt.Errorf("writing string to hasher: %w", err)
 	}
 
 	var (
@@ -62,7 +61,7 @@ func stringToSeed(s string) (int64, error) {
 		sum     int64
 	)
 
-	for i := 0; i < len(hashSum); i++ {
+	for i := range hashSum {
 		sum += int64(float64(hashSum[len(hashSum)-1-i]%10) * math.Pow(10, float64(i))) //nolint:mnd // No need to put the 10 of 10**i into a constant named "ten"
 	}
 

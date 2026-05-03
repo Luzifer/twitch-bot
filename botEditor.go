@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
@@ -21,5 +21,9 @@ func getAuthorizedUserFromRequest(r *http.Request) (string, *twitch.Client, erro
 	tc := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, token, "")
 
 	_, user, err := tc.GetAuthorizedUser(r.Context())
-	return user, tc, errors.Wrap(err, "getting authorized user")
+	if err != nil {
+		return user, tc, fmt.Errorf("getting authorized user: %w", err)
+	}
+
+	return user, tc, nil
 }

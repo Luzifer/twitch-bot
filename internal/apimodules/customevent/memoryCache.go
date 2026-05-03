@@ -1,10 +1,10 @@
 package customevent
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
@@ -28,7 +28,7 @@ func (m *memoryCache) PopEventsToExecute() ([]storedCustomEvent, error) {
 
 	if m.validUntil.Before(time.Now()) {
 		if err := m.refresh(); err != nil {
-			return nil, errors.Wrap(err, "refreshing stale cache")
+			return nil, fmt.Errorf("refreshing stale cache: %w", err)
 		}
 	}
 
@@ -57,10 +57,10 @@ func (m *memoryCache) Refresh() (err error) {
 	return m.refresh()
 }
 
-//revive:disable-next-line:confusing-naming
+//revive:disable-next-line:confusing-naming // okay in this case, the exposed is only a wrapper with locking
 func (m *memoryCache) refresh() (err error) {
 	if m.events, err = getFutureEvents(m.dbc); err != nil {
-		return errors.Wrap(err, "fetching events from database")
+		return fmt.Errorf("fetching events from database: %w", err)
 	}
 
 	m.validUntil = time.Now().Add(memoryCacheRefreshInterval)

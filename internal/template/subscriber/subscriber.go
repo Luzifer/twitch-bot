@@ -4,9 +4,8 @@ package subscriber
 
 import (
 	"context"
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -48,20 +47,23 @@ func getSubInfo(broadcasterName string) (subCount, subPoints int64, err error) {
 
 	ok, err := permCheckFn(broadcasterName, twitch.ScopeChannelReadSubscriptions)
 	if err != nil {
-		return 0, 0, errors.Wrap(err, "checking for channel permissions")
+		return 0, 0, fmt.Errorf("checking for channel permissions: %w", err)
 	}
 
 	if !ok {
-		return 0, 0, errors.Errorf("channel %q is missing permission %s", broadcasterName, twitch.ScopeChannelReadSubscriptions)
+		return 0, 0, fmt.Errorf("channel %q is missing permission %s", broadcasterName, twitch.ScopeChannelReadSubscriptions)
 	}
 
 	tc, err := tcGetter(broadcasterName)
 	if err != nil {
-		return 0, 0, errors.Wrap(err, "getting channel twitch-client")
+		return 0, 0, fmt.Errorf("getting channel twitch-client: %w", err)
 	}
 
 	sc, sp, err := tc.GetBroadcasterSubscriptionCount(context.Background(), broadcasterName)
-	return sc, sp, errors.Wrap(err, "fetching sub info")
+	if err != nil {
+		return sc, sp, fmt.Errorf("fetching sub info: %w", err)
+	}
+	return sc, sp, nil
 }
 
 func subCount(broadcasterName string) (int64, error) {

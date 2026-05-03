@@ -7,14 +7,14 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/service/authcache"
 )
 
-type authTokenType uint8
-
 const (
 	authTokenTypeUnknown authTokenType = iota
 	authTokenTypeLegacy
 	authTokenTypeInternal
 	authTokenTypeTwitch
 )
+
+type authTokenType uint8
 
 func getAuthorizationTokenFromRequest(r *http.Request) (tokenType authTokenType, token string, ok bool) {
 	_, pass, hasBasicAuth := r.BasicAuth()

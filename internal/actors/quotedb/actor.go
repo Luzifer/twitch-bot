@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -18,6 +17,10 @@ import (
 
 const (
 	actorName = "quotedb"
+)
+
+type (
+	actor struct{}
 )
 
 var (
@@ -34,7 +37,7 @@ var (
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&quote{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("quote", func(src, target *gorm.DB) error {
@@ -95,7 +98,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		return fmt.Errorf("registering API: %w", err)
 	}
 
-	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("lastQuoteIndex", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) any {
 		return func() (int, error) {
 			return getMaxQuoteIdx(db, plugins.DeriveChannel(m, nil))
 		}
@@ -111,10 +114,6 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-type (
-	actor struct{}
-)
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		action   = attrs.MustString("action", helpers.Ptr(""))
@@ -127,36 +126,38 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 
 	if indexStr, err = formatMessage(indexStr, m, r, eventData); err != nil {
-		return false, errors.Wrap(err, "formatting index")
+		return false, fmt.Errorf("formatting index: %w", err)
 	}
 
 	index, err := strconv.Atoi(indexStr)
 	if err != nil {
-		return false, errors.Wrap(err, "parsing index to number")
+		return false, fmt.Errorf("parsing index to number: %w", err)
 	}
 
 	switch action {
 	case "add":
 		quote, err = formatMessage(quote, m, r, eventData)
 		if err != nil {
-			return false, errors.Wrap(err, "formatting quote")
+			return false, fmt.Errorf("formatting quote: %w", err)
 		}
 
-		return false, errors.Wrap(
-			addQuote(db, plugins.DeriveChannel(m, eventData), quote),
-			"adding quote",
-		)
+		if err = addQuote(db, plugins.DeriveChannel(m, eventData), quote); err != nil {
+			return false, fmt.Errorf("adding quote: %w", err)
+		}
+
+		return false, nil
 
 	case "del":
-		return false, errors.Wrap(
-			delQuote(db, plugins.DeriveChannel(m, eventData), index),
-			"storing quote database",
-		)
+		if err = delQuote(db, plugins.DeriveChannel(m, eventData), index); err != nil {
+			return false, fmt.Errorf("storing quote database: %w", err)
+		}
+
+		return false, nil
 
 	case "get":
 		idx, quote, err := getQuote(db, plugins.DeriveChannel(m, eventData), index)
 		if err != nil {
-			return false, errors.Wrap(err, "getting quote")
+			return false, fmt.Errorf("getting quote: %w", err)
 		}
 
 		if idx == 0 {
@@ -171,19 +172,20 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		format := attrs.MustString("format", helpers.Ptr("Quote #{{ .index }}: {{ .quote }}"))
 		msg, err := formatMessage(format, m, r, fields)
 		if err != nil {
-			return false, errors.Wrap(err, "formatting output message")
+			return false, fmt.Errorf("formatting output message: %w", err)
 		}
 
-		return false, errors.Wrap(
-			send(&irc.Message{
-				Command: "PRIVMSG",
-				Params: []string{
-					plugins.DeriveChannel(m, eventData),
-					msg,
-				},
-			}),
-			"sending command",
-		)
+		if err = send(&irc.Message{
+			Command: "PRIVMSG",
+			Params: []string{
+				plugins.DeriveChannel(m, eventData),
+				msg,
+			},
+		}); err != nil {
+			return false, fmt.Errorf("sending command: %w", err)
+		}
+
+		return false, nil
 	}
 
 	return false, nil

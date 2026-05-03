@@ -4,17 +4,17 @@ package customevent
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -34,7 +34,7 @@ var (
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&storedCustomEvent{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("custom_event", func(src, target *gorm.DB) error {
@@ -107,7 +107,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 		"* * * * * *":                            scheduleSend,
 	} {
 		if _, err := args.RegisterCron(schedule, fn); err != nil {
-			return errors.Wrap(err, "registering cron function")
+			return fmt.Errorf("registering cron function: %w", err)
 		}
 	}
 
@@ -124,7 +124,7 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	channel = "#" + strings.TrimLeft(channel, "#") // Sanitize
 
 	if err := triggerOrStoreEvent(channel, r.Body, r.FormValue("schedule_in")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
-		http.Error(w, errors.Wrap(err, "creating event").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("creating event: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -135,7 +135,7 @@ func parseEvent(channel string, fieldData io.Reader) (*fieldcollection.FieldColl
 	payload := make(map[string]any)
 
 	if err := json.NewDecoder(fieldData).Decode(&payload); err != nil {
-		return nil, errors.Wrap(err, "parsing event payload")
+		return nil, fmt.Errorf("parsing event payload: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(payload)
@@ -147,20 +147,25 @@ func parseEvent(channel string, fieldData io.Reader) (*fieldcollection.FieldColl
 func triggerOrStoreEvent(channel string, fieldData io.Reader, rawDelay string) error {
 	fields, err := parseEvent(channel, fieldData)
 	if err != nil {
-		return errors.Wrap(err, "parsing fields")
+		return fmt.Errorf("parsing fields: %w", err)
 	}
 
 	if delay, err := time.ParseDuration(rawDelay); err == nil && delay > 0 {
 		// Delay set, store for later triggering
 		if err = storeEvent(db, time.Now().Add(delay).UTC(), channel, fields); err != nil {
-			return errors.Wrap(err, "storing event")
+			return fmt.Errorf("storing event: %w", err)
 		}
-		return errors.Wrap(mc.Refresh(), "refreshing memory cache")
+
+		if err = mc.Refresh(); err != nil {
+			return fmt.Errorf("refreshing memory cache: %w", err)
+		}
+
+		return nil
 	}
 
 	// No delay, trigger instantly
 	if err := eventCreatorFunc("custom", fields); err != nil {
-		return errors.Wrap(err, "creating event")
+		return fmt.Errorf("creating event: %w", err)
 	}
 
 	return nil

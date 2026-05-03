@@ -1,9 +1,10 @@
 package database
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -16,11 +17,11 @@ func CopyObjects(src, target *gorm.DB, objects ...any) (err error) {
 		copySlice := reflect.New(reflect.SliceOf(reflect.TypeOf(obj))).Elem().Addr().Interface()
 
 		if err = target.AutoMigrate(obj); err != nil {
-			return errors.Wrap(err, "applying migration to target")
+			return fmt.Errorf("applying migration to target: %w", err)
 		}
 
 		if err = target.Where("1 = 1").Delete(obj).Error; err != nil {
-			return errors.Wrap(err, "cleaning target table")
+			return fmt.Errorf("cleaning target table: %w", err)
 		}
 
 		if err = src.FindInBatches(copySlice, copyBatchSize, func(*gorm.DB, int) error {
@@ -29,12 +30,12 @@ func CopyObjects(src, target *gorm.DB, objects ...any) (err error) {
 					// That's fine and no reason to exit here
 					return nil
 				}
-				return errors.Wrap(err, "inserting collected elements")
+				return fmt.Errorf("inserting collected elements: %w", err)
 			}
 
 			return nil
 		}).Error; err != nil {
-			return errors.Wrap(err, "batch-copying data")
+			return fmt.Errorf("batch-copying data: %w", err)
 		}
 	}
 

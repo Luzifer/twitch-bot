@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "kofi"

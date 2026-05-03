@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"github.com/Luzifer/go_helpers/cli"
 	"github.com/gofrs/uuid/v3"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -17,7 +18,7 @@ func init() {
 		Params:      []string{"<token-name>", "<scope>", "[...scope]"},
 		Run: func(args []string) error {
 			if len(args) < 3 { //nolint:mnd // Just a count of parameters
-				return errors.New("Usage: twitch-bot api-token <token name> <scope> [...scope]")
+				return errors.New("usage: twitch-bot api-token <token name> <scope> [...scope]")
 			}
 
 			t := configAuthToken{
@@ -26,7 +27,7 @@ func init() {
 			}
 
 			if err := fillAuthToken(&t); err != nil {
-				return errors.Wrap(err, "generating token")
+				return fmt.Errorf("generating token: %w", err)
 			}
 
 			log.WithField("token", t.Token).Info("Token generated, add this to your config:")
@@ -35,7 +36,7 @@ func init() {
 					uuid.Must(uuid.NewV4()).String(): t,
 				},
 			}); err != nil {
-				return errors.Wrap(err, "printing token info")
+				return fmt.Errorf("printing token info: %w", err)
 			}
 
 			return nil

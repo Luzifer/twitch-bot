@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	availableChatcommands     = map[string]plugins.MsgModificationFunc{}
+	availableChatcommands     = make(map[string]plugins.MsgModificationFunc)
 	availableChatcommandsLock = new(sync.RWMutex)
 )
 
@@ -39,7 +39,7 @@ func handleChatcommandModifications(m *irc.Message) error {
 		}
 
 		if err := modFn(m); err != nil {
-			return errors.Wrap(err, "modifying message")
+			return fmt.Errorf("modifying message: %w", err)
 		}
 	}
 

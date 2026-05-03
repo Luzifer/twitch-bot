@@ -3,16 +3,18 @@ package deleteactor
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
-	"gopkg.in/irc.v4"
+	"fmt"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
+	"gopkg.in/irc.v4"
+
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "delete"
+
+type actor struct{}
 
 var botTwitchClient func() *twitch.Client
 
@@ -31,22 +33,21 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, _ *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	msgID, ok := m.Tags["id"]
 	if !ok || msgID == "" {
 		return false, nil
 	}
 
-	return false, errors.Wrap(
-		botTwitchClient().DeleteMessage(
-			context.Background(),
-			plugins.DeriveChannel(m, eventData),
-			msgID,
-		),
-		"deleting message",
-	)
+	if err = botTwitchClient().DeleteMessage(
+		context.Background(),
+		plugins.DeriveChannel(m, eventData),
+		msgID,
+	); err != nil {
+		return false, fmt.Errorf("deleting message: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }

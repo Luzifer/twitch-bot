@@ -17,7 +17,7 @@ type (
 	}
 
 	twitchAPICacheEntry struct {
-		Data       interface{}
+		Data       any
 		ValidUntil time.Time
 	}
 )
@@ -29,7 +29,7 @@ func newTwitchAPICache() *APICache {
 }
 
 // Get returns the stored data or nil for the given cache-key
-func (t *APICache) Get(key []string) interface{} {
+func (t *APICache) Get(key []string) any {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
@@ -42,7 +42,7 @@ func (t *APICache) Get(key []string) interface{} {
 }
 
 // Set sets the stored data for the given cache-key
-func (t *APICache) Set(key []string, valid time.Duration, data interface{}) {
+func (t *APICache) Set(key []string, valid time.Duration, data any) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 

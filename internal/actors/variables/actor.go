@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
+
+type actorSetVariable struct{}
 
 var (
 	db            database.Connector
@@ -31,7 +32,7 @@ var (
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&variable{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("variable", func(src, target *gorm.DB) error {
@@ -125,7 +126,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	args.RegisterTemplateFunction("variable", plugins.GenericTemplateFunctionGetter(func(name string, defVal ...string) (string, error) {
 		value, err := getVariable(db, name)
 		if err != nil {
-			return "", errors.Wrap(err, "getting variable")
+			return "", fmt.Errorf("getting variable: %w", err)
 		}
 
 		if value == "" && len(defVal) > 0 {
@@ -144,30 +145,30 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-type actorSetVariable struct{}
-
 func (actorSetVariable) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	varName, err := formatMessage(attrs.MustString("variable", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "preparing variable name")
+		return false, fmt.Errorf("preparing variable name: %w", err)
 	}
 
 	if attrs.MustBool("clear", ptrBoolFalse) {
-		return false, errors.Wrap(
-			removeVariable(db, varName),
-			"removing variable",
-		)
+		if err = removeVariable(db, varName); err != nil {
+			return false, fmt.Errorf("removing variable: %w", err)
+		}
+
+		return false, nil
 	}
 
 	value, err := formatMessage(attrs.MustString("set", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "preparing value")
+		return false, fmt.Errorf("preparing value: %w", err)
 	}
 
-	return false, errors.Wrap(
-		setVariable(db, varName, value),
-		"setting variable",
-	)
+	if err = setVariable(db, varName, value); err != nil {
+		return false, fmt.Errorf("setting variable: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actorSetVariable) IsAsync() bool { return false }
@@ -190,7 +191,7 @@ func (actorSetVariable) Validate(tplValidator plugins.TemplateValidatorFunc, att
 func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 	vc, err := getVariable(db, mux.Vars(r)["name"])
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting value").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting value: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -200,7 +201,7 @@ func routeActorSetVarGetValue(w http.ResponseWriter, r *http.Request) {
 
 func routeActorSetVarSetValue(w http.ResponseWriter, r *http.Request) {
 	if err := setVariable(db, mux.Vars(r)["name"], r.FormValue("value")); err != nil { //#nosec:G120 // Request body size is limited by API route registration middleware
-		http.Error(w, errors.Wrap(err, "updating value").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("updating value: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -3,17 +3,18 @@ package twitch
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 )
 
@@ -59,7 +60,7 @@ type (
 		conn    *websocket.Conn
 		newconn *websocket.Conn
 
-		runCtx       context.Context //nolint:containedctx
+		runCtx       context.Context //nolint:containedctx // internally held context for this client
 		runCtxCancel context.CancelFunc
 	}
 
@@ -211,7 +212,7 @@ func (e *EventSubSocketClient) Run() error {
 	)
 
 	if err := e.connect(e.socketDest, msgC, errC, "client init"); err != nil {
-		return errors.Wrap(err, "establishing initial connection")
+		return fmt.Errorf("establishing initial connection: %w", err)
 	}
 
 	defer func() {
@@ -237,7 +238,7 @@ func (e *EventSubSocketClient) Run() error {
 
 			socketTimeout = newKeepaliveTracker(timeoutC, socketInitialTimeout)
 			if err := e.connect(e.socketDest, msgC, errC, "socket timeout"); err != nil {
-				errC <- errors.Wrap(err, "re-connecting after timeout")
+				errC <- fmt.Errorf("re-connecting after timeout: %w", err)
 				continue
 			}
 
@@ -287,14 +288,14 @@ func (e *EventSubSocketClient) connect(url string, msgC chan eventSubSocketMessa
 
 	conn, _, err := websocket.DefaultDialer.DialContext(ctx, url, nil) //nolint:bodyclose // Close is implemented at other place
 	if err != nil {
-		return errors.Wrap(err, "dialing websocket")
+		return fmt.Errorf("dialing websocket: %w", err)
 	}
 
 	go func() {
 		for {
 			var msg eventSubSocketMessage
 			if err = conn.ReadJSON(&msg); err != nil {
-				errC <- errors.Wrap(err, "reading message")
+				errC <- fmt.Errorf("reading message: %w", err)
 				return
 			}
 
@@ -309,7 +310,7 @@ func (e *EventSubSocketClient) connect(url string, msgC chan eventSubSocketMessa
 func (e *EventSubSocketClient) handleNotificationMessage(msg eventSubSocketMessage) error {
 	var payload eventSubSocketPayloadNotification
 	if err := msg.Unmarshal(&payload); err != nil {
-		return errors.Wrap(err, "unmarshalling notification")
+		return fmt.Errorf("unmarshalling notification: %w", err)
 	}
 
 	for _, st := range e.subscriptionTypes {
@@ -334,7 +335,7 @@ func (e *EventSubSocketClient) handleReconnectMessage(msg eventSubSocketMessage,
 
 	var payload eventSubSocketPayloadSession
 	if err := msg.Unmarshal(&payload); err != nil {
-		return errors.Wrap(err, "unmarshalling reconnect message")
+		return fmt.Errorf("unmarshalling reconnect message: %w", err)
 	}
 
 	if payload.Session.ReconnectURL == nil {
@@ -342,19 +343,24 @@ func (e *EventSubSocketClient) handleReconnectMessage(msg eventSubSocketMessage,
 	}
 
 	if err := e.connect(*payload.Session.ReconnectURL, msgC, errC, "reconnect requested"); err != nil {
-		return errors.Wrap(err, "re-connecting after reconnect message")
+		return fmt.Errorf("re-connecting after reconnect message: %w", err)
 	}
 
 	return nil
 }
 
+//nolint:gocyclo // just reacting on websocket events
 func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSocketMessage, errC chan error) error {
 	var closeErr *websocket.CloseError
 	if errors.As(err, &closeErr) {
 		switch closeErr.Code {
 		case eventsubCloseCodeInternalServerError:
 			e.logger.Warn("websocket reported internal server error")
-			return errors.Wrap(e.connect(e.socketDest, msgC, errC, "internal-server-error"), "re-connecting after internal-server-error")
+			if err = e.connect(e.socketDest, msgC, errC, "internal-server-error"); err != nil {
+				return fmt.Errorf("re-connecting after internal-server-error: %w", err)
+			}
+
+			return nil
 
 		case eventsubCloseCodeClientSentTraffic:
 			e.logger.Error("wrong usage of websocket (client-sent-traffic)")
@@ -370,11 +376,19 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 
 		case eventsubCloseCodeNetworkTimeout:
 			e.logger.Warn("websocket reported network timeout")
-			return errors.Wrap(e.connect(e.socketDest, msgC, errC, "network-timeout"), "re-connecting after network-timeout")
+			if err = e.connect(e.socketDest, msgC, errC, "network-timeout"); err != nil {
+				return fmt.Errorf("re-connecting after network-timeout: %w", err)
+			}
+
+			return nil
 
 		case eventsubCloseCodeNetworkError:
 			e.logger.Warn("websocket reported network error")
-			return errors.Wrap(e.connect(e.socketDest, msgC, errC, "network-error"), "re-connecting after network-error")
+			if err = e.connect(e.socketDest, msgC, errC, "network-error"); err != nil {
+				return fmt.Errorf("re-connecting after network-error: %w", err)
+			}
+
+			return nil
 
 		case eventsubCloseCodeInvalidReconnect:
 			e.logger.Warn("websocket reported invalid reconnect url")
@@ -387,7 +401,11 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 
 		case websocket.CloseAbnormalClosure:
 			e.logger.Warn("websocket reported abnormal closure")
-			return errors.Wrap(e.connect(e.socketDest, msgC, errC, "network-error"), "re-connecting after abnormal closure")
+			if err = e.connect(e.socketDest, msgC, errC, "network-error"); err != nil {
+				return fmt.Errorf("re-connecting after abnormal closure: %w", err)
+			}
+
+			return nil
 
 		default:
 			// Some non-twitch close code we did not expect
@@ -407,7 +425,7 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (time.Duration, error) {
 	var payload eventSubSocketPayloadSession
 	if err := msg.Unmarshal(&payload); err != nil {
-		return socketInitialTimeout, errors.Wrap(err, "unmarshalling welcome message")
+		return socketInitialTimeout, fmt.Errorf("unmarshalling welcome message: %w", err)
 	}
 
 	// Close old connection if present
@@ -426,7 +444,7 @@ func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (
 	if e.socketID != payload.Session.ID {
 		e.socketID = payload.Session.ID
 		if err := e.subscribeAll(); err != nil {
-			return socketInitialTimeout, errors.Wrap(err, "subscribing to topics")
+			return socketInitialTimeout, fmt.Errorf("subscribing to topics: %w", err)
 		}
 	}
 
@@ -472,7 +490,7 @@ func (e *EventSubSocketClient) subscribe(st eventSubSocketSubscriptionType) erro
 		},
 	}); err != nil {
 		logger.WithError(err).Debug("subscribing to topic")
-		return errors.Wrapf(err, "subscribing to %s/%s", st.Event, st.Version)
+		return fmt.Errorf("subscribing to %s/%s: %w", st.Event, st.Version, err)
 	}
 
 	logger.
@@ -499,5 +517,9 @@ func (e *EventSubSocketClient) subscribeAll() (err error) {
 }
 
 func (e eventSubSocketMessage) Unmarshal(dest any) error {
-	return errors.Wrap(json.Unmarshal(e.Payload, dest), "unmarshalling payload")
+	if err := json.Unmarshal(e.Payload, dest); err != nil {
+		return fmt.Errorf("unmarshalling payload: %w", err)
+	}
+
+	return nil
 }

@@ -6,8 +6,6 @@ import (
 
 const (
 	chromeMajor = 128
-	webkitMajor = 537
-	webkitMinor = 36
 )
 
 // generateUserAgent resembles the Chrome user agent generation as

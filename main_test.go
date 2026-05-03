@@ -46,5 +46,5 @@ func TestMain(m *testing.M) {
 		log.WithError(err).Fatal("Unable to load core plugins")
 	}
 
-	os.Exit(m.Run())
+	m.Run()
 }

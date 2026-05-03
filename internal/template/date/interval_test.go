@@ -2,7 +2,6 @@ package date
 
 import (
 	_ "embed"
-	"fmt"
 	"testing"
 	"time"
 
@@ -121,7 +120,7 @@ func TestNewInterval(t *testing.T) {
 		assert.Equal(t,
 			tc.Exp,
 			NewInterval(tc.A, tc.B),
-			fmt.Sprintf("%d: %s -> %s", i, tc.A, tc.B))
+			"%d: %s -> %s", i, tc.A, tc.B)
 	}
 }
 

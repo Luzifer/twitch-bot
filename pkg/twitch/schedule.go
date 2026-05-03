@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -44,21 +42,22 @@ type (
 func (c *Client) GetChannelStreamSchedule(ctx context.Context, channel string) (*ChannelStreamSchedule, error) {
 	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
-		return nil, errors.Wrap(err, "getting channel user-id")
+		return nil, fmt.Errorf("getting channel user-id: %w", err)
 	}
 
 	var payload struct {
 		Data *ChannelStreamSchedule `json:"data"`
 	}
 
-	return payload.Data, errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeAppAccessToken,
-			Method:   http.MethodGet,
-			OKStatus: http.StatusOK,
-			Out:      &payload,
-			URL:      fmt.Sprintf("https://api.twitch.tv/helix/schedule?broadcaster_id=%s", channelID),
-		}),
-		"executing request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
+		Method:   http.MethodGet,
+		OKStatus: http.StatusOK,
+		Out:      &payload,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/schedule?broadcaster_id=%s", channelID),
+	}); err != nil {
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+
+	return payload.Data, nil
 }

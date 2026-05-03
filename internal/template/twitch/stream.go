@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -27,7 +26,11 @@ func tplTwitchRecentGame(args plugins.RegistrationArguments) {
 			return v[0], nil //nolint:nilerr // This is a default fallback
 		}
 
-		return game, errors.Wrap(err, "getting stream info")
+		if err != nil {
+			return game, fmt.Errorf("getting stream info: %w", err)
+		}
+
+		return game, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the last played game name of the specified user (see shoutout example) or the `fallback` if the game could not be fetched. If no fallback was supplied the message will fail and not be sent.",
 		Syntax:      "recentGame <username> [fallback]",
@@ -45,7 +48,11 @@ func tplTwitchRecentTitle(args plugins.RegistrationArguments) {
 			return v[0], nil //nolint:nilerr // This is a default fallback
 		}
 
-		return title, errors.Wrap(err, "getting stream info")
+		if err != nil {
+			return title, fmt.Errorf("getting stream info: %w", err)
+		}
+
+		return title, nil
 	}), plugins.TemplateFuncDocumentation{
 		Description: "Returns the last stream title of the specified user or the `fallback` if the title could not be fetched. If no fallback was supplied the message will fail and not be sent.",
 		Syntax:      "recentTitle <username> [fallback]",

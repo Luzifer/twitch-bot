@@ -3,21 +3,23 @@ package ban
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "ban"
+
+type actor struct{}
 
 var (
 	botTwitchClient func() *twitch.Client
@@ -87,26 +89,25 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing reason template")
+		return false, fmt.Errorf("executing reason template: %w", err)
 	}
 
-	return false, errors.Wrap(
-		botTwitchClient().BanUser(
-			context.Background(),
-			plugins.DeriveChannel(m, eventData),
-			plugins.DeriveUser(m, eventData),
-			0,
-			reason,
-		),
-		"executing ban",
-	)
+	if err = botTwitchClient().BanUser(
+		context.Background(),
+		plugins.DeriveChannel(m, eventData),
+		plugins.DeriveUser(m, eventData),
+		0,
+		reason,
+	); err != nil {
+		return false, fmt.Errorf("executing ban: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }
@@ -133,7 +134,7 @@ func handleAPIBan(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := botTwitchClient().BanUser(r.Context(), channel, user, 0, reason); err != nil {
-		http.Error(w, errors.Wrap(err, "issuing ban").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("issuing ban: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -149,7 +150,7 @@ func handleChatCommand(m *irc.Message) error {
 	}
 
 	if err := botTwitchClient().BanUser(context.Background(), channel, matches[1], 0, matches[2]); err != nil {
-		return errors.Wrap(err, "executing ban")
+		return fmt.Errorf("executing ban: %w", err)
 	}
 
 	return plugins.ErrSkipSendingMessage

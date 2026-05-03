@@ -2,6 +2,13 @@ package kofi
 
 import "time"
 
+const (
+	// hookTypeCommission   hookType = "Commission"
+	hookTypeDonation hookType = "Donation"
+	// hookTypeShopOrder    hookType = "Shop Order"
+	hookTypeSubscription hookType = "Subscription"
+)
+
 type (
 	hookPayload struct {
 		VerificationToken          string       `json:"verification_token"`
@@ -41,11 +48,4 @@ type (
 		VariationName  string `json:"variation_name"`
 		Quantity       int    `json:"quantity"`
 	}
-)
-
-const (
-	hookTypeCommission   hookType = "Commission"
-	hookTypeDonation     hookType = "Donation"
-	hookTypeShopOrder    hookType = "Shop Order"
-	hookTypeSubscription hookType = "Subscription"
 )

@@ -1,14 +1,15 @@
 package raffle
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
+
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 type (
@@ -31,9 +32,9 @@ func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, 
 	if err != nil {
 		if errors.Is(err, errRaffleNotFound) {
 			// We don't need to care, that was no raffle input
-			return false, errors.Errorf("specified keyword %q does not belong to active raffle", attrs.MustString("keyword", ptrStrEmpty))
+			return false, fmt.Errorf("specified keyword %q does not belong to active raffle", attrs.MustString("keyword", ptrStrEmpty))
 		}
-		return false, errors.Wrap(err, "fetching raffle")
+		return false, fmt.Errorf("fetching raffle: %w", err)
 	}
 
 	re := raffleEntry{
@@ -57,16 +58,22 @@ func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, 
 			"user_id": re.UserID,
 			"user":    re.UserLogin,
 		}).WithError(err).Error("creating raffle entry")
-		return false, errors.Wrap(
-			r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields),
-			"sending entry-failed chat message",
-		)
+
+		if err = r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields); err != nil {
+			return false, fmt.Errorf("sending entry-failed chat message: %w", err)
+		}
+
+		// Entry failed but we notified about that, so there is no need
+		// for us to error to the outside: This can happen on duplicate
+		// entries or other reasons.
+		return false, nil
 	}
 
-	return false, errors.Wrap(
-		r.SendEvent(raffleMessageEventEntry, raffleEventFields),
-		"sending entry chat message",
-	)
+	if err = r.SendEvent(raffleMessageEventEntry, raffleEventFields); err != nil {
+		return false, fmt.Errorf("sending entry chat message: %w", err)
+	}
+
+	return false, nil
 }
 
 func (enterRaffleActor) IsAsync() bool { return false }

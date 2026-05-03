@@ -1,10 +1,11 @@
 package quotedb
 
 import (
+	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
@@ -21,30 +22,32 @@ type (
 )
 
 func addQuote(db database.Connector, channel, quoteStr string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Create(&quote{
-				Channel:   channel,
-				CreatedAt: time.Now().UnixNano(),
-				Quote:     quoteStr,
-			}).Error
-		}),
-		"adding quote to database",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Create(&quote{
+			Channel:   channel,
+			CreatedAt: time.Now().UnixNano(),
+			Quote:     quoteStr,
+		}).Error
+	}); err != nil {
+		return fmt.Errorf("adding quote to database: %w", err)
+	}
+
+	return nil
 }
 
 func delQuote(db database.Connector, channel string, quoteIdx int) error {
 	_, createdAt, _, err := getQuoteRaw(db, channel, quoteIdx)
 	if err != nil {
-		return errors.Wrap(err, "fetching specified quote")
+		return fmt.Errorf("fetching specified quote: %w", err)
 	}
 
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Delete(&quote{}, "channel = ? AND created_at = ?", channel, createdAt).Error
-		}),
-		"deleting quote",
-	)
+	if err = helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Delete(&quote{}, "channel = ? AND created_at = ?", channel, createdAt).Error
+	}); err != nil {
+		return fmt.Errorf("deleting quote: %w", err)
+	}
+
+	return nil
 }
 
 func getChannelQuotes(db database.Connector, channel string) ([]string, error) {
@@ -52,7 +55,7 @@ func getChannelQuotes(db database.Connector, channel string) ([]string, error) {
 	if err := helpers.Retry(func() error {
 		return db.DB().Where("channel = ?", channel).Order("created_at").Find(&qs).Error
 	}); err != nil {
-		return nil, errors.Wrap(err, "querying quotes")
+		return nil, fmt.Errorf("querying quotes: %w", err)
 	}
 
 	var quotes []string
@@ -72,7 +75,7 @@ func getMaxQuoteIdx(db database.Connector, channel string) (int, error) {
 			Count(&count).
 			Error
 	}); err != nil {
-		return 0, errors.Wrap(err, "getting quote count")
+		return 0, fmt.Errorf("getting quote count: %w", err)
 	}
 
 	return int(count), nil
@@ -87,7 +90,7 @@ func getQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int6
 	if quoteIdx == 0 {
 		maxQuoteIdx, err := getMaxQuoteIdx(db, channel)
 		if err != nil {
-			return 0, 0, "", errors.Wrap(err, "getting max quote idx")
+			return 0, 0, "", fmt.Errorf("getting max quote idx: %w", err)
 		}
 		quoteIdx = rand.Intn(maxQuoteIdx) + 1 // #nosec G404 // no need for cryptographic safety
 	}
@@ -109,48 +112,50 @@ func getQuoteRaw(db database.Connector, channel string, quoteIdx int) (int, int6
 		return 0, 0, "", nil
 
 	default:
-		return 0, 0, "", errors.Wrap(err, "getting quote from DB")
+		return 0, 0, "", fmt.Errorf("getting quote from DB: %w", err)
 	}
 }
 
 func setQuotes(db database.Connector, channel string, quotes []string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			if err := tx.Where("channel = ?", channel).Delete(&quote{}).Error; err != nil {
-				return errors.Wrap(err, "deleting quotes for channel")
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		if err := tx.Where("channel = ?", channel).Delete(&quote{}).Error; err != nil {
+			return fmt.Errorf("deleting quotes for channel: %w", err)
+		}
+
+		t := time.Now()
+		for _, quoteStr := range quotes {
+			if err := tx.Create(&quote{
+				Channel:   channel,
+				CreatedAt: t.UnixNano(),
+				Quote:     quoteStr,
+			}).Error; err != nil {
+				return fmt.Errorf("adding quote: %w", err)
 			}
 
-			t := time.Now()
-			for _, quoteStr := range quotes {
-				if err := tx.Create(&quote{
-					Channel:   channel,
-					CreatedAt: t.UnixNano(),
-					Quote:     quoteStr,
-				}).Error; err != nil {
-					return errors.Wrap(err, "adding quote")
-				}
+			t = t.Add(time.Nanosecond) // Increase by one ns to adhere to unique index
+		}
 
-				t = t.Add(time.Nanosecond) // Increase by one ns to adhere to unique index
-			}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("replacing quotes: %w", err)
+	}
 
-			return nil
-		}),
-		"replacing quotes",
-	)
+	return nil
 }
 
 func updateQuote(db database.Connector, channel string, idx int, quoteStr string) error {
 	_, createdAt, _, err := getQuoteRaw(db, channel, idx)
 	if err != nil {
-		return errors.Wrap(err, "fetching specified quote")
+		return fmt.Errorf("fetching specified quote: %w", err)
 	}
 
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Where("channel = ? AND created_at = ?", channel, createdAt).
-				Update("quote", quoteStr).
-				Error
-		}),
-		"updating quote",
-	)
+	if err = helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Where("channel = ? AND created_at = ?", channel, createdAt).
+			Update("quote", quoteStr).
+			Error
+	}); err != nil {
+		return fmt.Errorf("updating quote: %w", err)
+	}
+
+	return nil
 }

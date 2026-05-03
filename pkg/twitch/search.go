@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -42,7 +40,7 @@ func (c *Client) SearchCategories(ctx context.Context, name string) ([]Category,
 			Out:      &resp,
 			URL:      fmt.Sprintf("https://api.twitch.tv/helix/search/categories?%s", params.Encode()),
 		}); err != nil {
-			return nil, errors.Wrap(err, "executing request")
+			return nil, fmt.Errorf("executing request: %w", err)
 		}
 
 		out = append(out, resp.Data...)

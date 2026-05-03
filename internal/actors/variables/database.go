@@ -1,11 +1,13 @@
 package variables
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
+	"github.com/Luzifer/go_helpers/backoff"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -34,27 +36,29 @@ func getVariable(db database.Connector, key string) (string, error) {
 		return "", nil // Compatibility to old behavior
 
 	default:
-		return "", errors.Wrap(err, "getting value from database")
+		return "", fmt.Errorf("getting value from database: %w", err)
 	}
 }
 
 func setVariable(db database.Connector, key, value string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "name"}},
-				DoUpdates: clause.AssignmentColumns([]string{"value"}),
-			}).Create(variable{Name: key, Value: value}).Error
-		}),
-		"updating value in database",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(variable{Name: key, Value: value}).Error
+	}); err != nil {
+		return fmt.Errorf("updating value in database: %w", err)
+	}
+
+	return nil
 }
 
 func removeVariable(db database.Connector, key string) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Delete(&variable{}, "name = ?", key).Error
-		}),
-		"deleting value in database",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Delete(&variable{}, "name = ?", key).Error
+	}); err != nil {
+		return fmt.Errorf("deleting value in database: %w", err)
+	}
+
+	return nil
 }

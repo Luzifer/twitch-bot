@@ -4,17 +4,19 @@ package eventmod
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "eventmod"
+
+type actor struct{}
 
 var formatMessage plugins.MsgFormatter
 
@@ -45,23 +47,21 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	fd, err := formatMessage(attrs.MustString("fields", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing fields template")
+		return false, fmt.Errorf("executing fields template: %w", err)
 	}
 
 	if fd == "" {
 		return false, errors.New("fields template evaluated to empty string")
 	}
 
-	fields := map[string]any{}
+	fields := make(map[string]any)
 	if err = json.Unmarshal([]byte(fd), &fields); err != nil {
-		return false, errors.Wrap(err, "parsing fields")
+		return false, fmt.Errorf("parsing fields: %w", err)
 	}
 
 	eventData.SetFromData(fields)

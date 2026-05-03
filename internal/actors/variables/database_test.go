@@ -19,18 +19,18 @@ func TestVariableRoundtrip(t *testing.T) {
 	)
 
 	v, err := getVariable(dbc, name)
-	assert.NoError(t, err, "getting unset variable")
-	assert.Zero(t, v, "checking zero state on unset variable")
+	require.NoError(t, err, "getting unset variable")
+	assert.Empty(t, v, "checking zero state on unset variable")
 
-	assert.NoError(t, setVariable(dbc, name, testValue), "setting variable")
-
-	v, err = getVariable(dbc, name)
-	assert.NoError(t, err, "getting set variable")
-	assert.NotZero(t, v, "checking non-zero state on set variable")
-
-	assert.NoError(t, removeVariable(dbc, name), "removing variable")
+	require.NoError(t, setVariable(dbc, name, testValue), "setting variable")
 
 	v, err = getVariable(dbc, name)
-	assert.NoError(t, err, "getting removed variable")
-	assert.Zero(t, v, "checking zero state on removed variable")
+	require.NoError(t, err, "getting set variable")
+	assert.NotEmpty(t, v, "checking non-zero state on set variable")
+
+	require.NoError(t, removeVariable(dbc, name), "removing variable")
+
+	v, err = getVariable(dbc, name)
+	require.NoError(t, err, "getting removed variable")
+	assert.Empty(t, v, "checking zero state on removed variable")
 }

@@ -1,10 +1,11 @@
 package plugins
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -21,11 +22,11 @@ func (ActorKit) ValidateRequireNonEmpty(attrs *fieldcollection.FieldCollection, 
 	for _, field := range fields {
 		v, err := attrs.Get(field)
 		if err != nil {
-			return errors.Wrapf(err, "getting field %s", field)
+			return fmt.Errorf("getting field %s: %w", field, err)
 		}
 
 		if reflect.ValueOf(v).IsZero() {
-			return errors.Errorf("field %s has zero-value", field)
+			return fmt.Errorf("field %s has zero-value", field)
 		}
 	}
 
@@ -39,11 +40,11 @@ func (ActorKit) ValidateRequireValidTemplate(tplValidator TemplateValidatorFunc,
 	for _, field := range fields {
 		v, err := attrs.String(field)
 		if err != nil {
-			return errors.Wrapf(err, "getting string field %s", field)
+			return fmt.Errorf("getting string field %s: %w", field, err)
 		}
 
 		if err = tplValidator(v); err != nil {
-			return errors.Wrapf(err, "validaging template field %s", field)
+			return fmt.Errorf("validaging template field %s: %w", field, err)
 		}
 	}
 
@@ -60,11 +61,11 @@ func (ActorKit) ValidateRequireValidTemplateIfSet(tplValidator TemplateValidator
 			if errors.Is(err, fieldcollection.ErrValueNotSet) {
 				continue
 			}
-			return errors.Wrapf(err, "getting string field %s", field)
+			return fmt.Errorf("getting string field %s: %w", field, err)
 		}
 
 		if err = tplValidator(v); err != nil {
-			return errors.Wrapf(err, "validaging template field %s", field)
+			return fmt.Errorf("validaging template field %s: %w", field, err)
 		}
 	}
 

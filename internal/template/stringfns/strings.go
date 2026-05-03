@@ -1,10 +1,9 @@
-// Package strings contains string manipulation helpers
-package strings
+// Package stringfns contains string manipulation helpers
+package stringfns
 
 import (
 	"encoding/base64"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -39,7 +38,7 @@ func base64URLEncode(v string) string {
 func base64URLDecode(v string) (string, error) {
 	data, err := base64.URLEncoding.DecodeString(v)
 	if err != nil {
-		return "", errors.Wrap(err, "decoding string")
+		return "", fmt.Errorf("decoding string: %w", err)
 	}
 	return string(data), nil
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -21,7 +20,7 @@ var (
 	listScript []byte
 )
 
-//nolint:funlen
+//nolint:funlen // just a list of API route registrations
 func registerAPI(register plugins.HTTPRouteRegistrationFunc) (err error) {
 	if err = register(plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc:       handleScript,
@@ -144,13 +143,13 @@ func handleAddQuotes(w http.ResponseWriter, r *http.Request) {
 
 	var quotes []string
 	if err := json.NewDecoder(r.Body).Decode(&quotes); err != nil {
-		http.Error(w, errors.Wrap(err, "parsing input").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing input: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	for _, q := range quotes {
 		if err := addQuote(db, channel, q); err != nil {
-			http.Error(w, errors.Wrap(err, "adding quote").Error(), http.StatusInternalServerError)
+			http.Error(w, fmt.Errorf("adding quote: %w", err).Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -166,12 +165,12 @@ func handleDeleteQuote(w http.ResponseWriter, r *http.Request) {
 
 	idx, err := strconv.Atoi(idxStr)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "parsing index").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing index: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err = delQuote(db, channel, idx); err != nil {
-		http.Error(w, errors.Wrap(err, "deleting quote").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("deleting quote: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -189,13 +188,13 @@ func handleListQuotes(w http.ResponseWriter, r *http.Request) {
 
 	quotes, err := getChannelQuotes(db, channel)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting quotes").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting quotes: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(quotes); err != nil {
-		http.Error(w, errors.Wrap(err, "enocding quote list").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("enocding quote list: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -205,12 +204,12 @@ func handleReplaceQuotes(w http.ResponseWriter, r *http.Request) {
 
 	var quotes []string
 	if err := json.NewDecoder(r.Body).Decode(&quotes); err != nil {
-		http.Error(w, errors.Wrap(err, "parsing input").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing input: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := setQuotes(db, channel, quotes); err != nil {
-		http.Error(w, errors.Wrap(err, "replacing quotes").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("replacing quotes: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -230,13 +229,13 @@ func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
 
 	idx, err := strconv.Atoi(idxStr)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "parsing index").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing index: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	var quotes []string
 	if err := json.NewDecoder(r.Body).Decode(&quotes); err != nil {
-		http.Error(w, errors.Wrap(err, "parsing input").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing input: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -246,7 +245,7 @@ func handleUpdateQuote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = updateQuote(db, channel, idx, quotes[0]); err != nil {
-		http.Error(w, errors.Wrap(err, "updating quote").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("updating quote: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

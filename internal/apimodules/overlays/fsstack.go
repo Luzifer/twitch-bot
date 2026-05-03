@@ -6,10 +6,20 @@ import (
 	"path"
 )
 
-// Compile-time assertion
-var _ http.FileSystem = httpFSStack{}
+type (
+	httpFSStack []http.FileSystem
 
-type httpFSStack []http.FileSystem
+	prefixedFS struct {
+		originFS http.FileSystem
+		prefix   string
+	}
+)
+
+// Compile-time assertion
+var (
+	_ http.FileSystem = httpFSStack{} //revive:disable-line:enforce-slice-style // needed for compile-time assertion
+	_ http.FileSystem = prefixedFS{}
+)
 
 func (h httpFSStack) Open(name string) (http.File, error) {
 	for _, stackedFS := range h {
@@ -21,18 +31,10 @@ func (h httpFSStack) Open(name string) (http.File, error) {
 	return nil, fs.ErrNotExist
 }
 
-// Compile-time assertion
-var _ http.FileSystem = prefixedFS{}
-
-type prefixedFS struct {
-	originFS http.FileSystem
-	prefix   string
-}
-
 func newPrefixedFS(prefix string, originFS http.FileSystem) *prefixedFS {
 	return &prefixedFS{originFS: originFS, prefix: prefix}
 }
 
 func (p prefixedFS) Open(name string) (http.File, error) {
-	return p.originFS.Open(path.Join(p.prefix, name)) //nolint:wrapcheck
+	return p.originFS.Open(path.Join(p.prefix, name)) //nolint:wrapcheck // pass through original error, we're just a thin wrapper
 }

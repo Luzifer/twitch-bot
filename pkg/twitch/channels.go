@@ -4,34 +4,34 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // AddChannelVIP adds the given user as a VIP in the given channel
 func (c *Client) AddChannelVIP(ctx context.Context, channel, userName string) error {
 	broadcaster, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for channel name")
+		return fmt.Errorf("getting ID for channel name: %w", err)
 	}
 
 	userID, err := c.GetIDForUsername(ctx, userName)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for user name")
+		return fmt.Errorf("getting ID for user name: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodPost,
-			OKStatus: http.StatusNoContent,
-			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
-		}),
-		"executing request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusNoContent,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
+	}); err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	return nil
 }
 
 // ModifyChannelInformation adjusts category and title for the given
@@ -43,7 +43,7 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, channel string, c
 
 	broadcaster, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for channel name")
+		return fmt.Errorf("getting ID for channel name: %w", err)
 	}
 
 	data := struct {
@@ -65,7 +65,7 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, channel string, c
 	default:
 		categories, err := c.SearchCategories(ctx, *category)
 		if err != nil {
-			return errors.Wrap(err, "searching for game")
+			return fmt.Errorf("searching for game: %w", err)
 		}
 
 		switch len(categories) {
@@ -94,49 +94,51 @@ func (c *Client) ModifyChannelInformation(ctx context.Context, channel string, c
 
 	body := new(bytes.Buffer)
 	if err := json.NewEncoder(body).Encode(data); err != nil {
-		return errors.Wrap(err, "encoding payload")
+		return fmt.Errorf("encoding payload: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Body:     body,
-			Method:   http.MethodPatch,
-			OKStatus: http.StatusNoContent,
-			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster),
-		}),
-		"executing request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Body:     body,
+		Method:   http.MethodPatch,
+		OKStatus: http.StatusNoContent,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", broadcaster),
+	}); err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	return nil
 }
 
 // RemoveChannelVIP removes the given user as a VIP in the given channel
 func (c *Client) RemoveChannelVIP(ctx context.Context, channel, userName string) error {
 	broadcaster, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for channel name")
+		return fmt.Errorf("getting ID for channel name: %w", err)
 	}
 
 	userID, err := c.GetIDForUsername(ctx, userName)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for user name")
+		return fmt.Errorf("getting ID for user name: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodDelete,
-			OKStatus: http.StatusNoContent,
-			URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
-		}),
-		"executing request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodDelete,
+		OKStatus: http.StatusNoContent,
+		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/vips?broadcaster_id=%s&user_id=%s", broadcaster, userID),
+	}); err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	return nil
 }
 
 // RunCommercial starts a commercial on the specified channel
 func (c *Client) RunCommercial(ctx context.Context, channel string, duration int64) error {
 	channelID, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return errors.Wrap(err, "getting ID for channel name")
+		return fmt.Errorf("getting ID for channel name: %w", err)
 	}
 
 	payload := struct {
@@ -149,17 +151,18 @@ func (c *Client) RunCommercial(ctx context.Context, channel string, duration int
 
 	body := new(bytes.Buffer)
 	if err := json.NewEncoder(body).Encode(payload); err != nil {
-		return errors.Wrap(err, "encoding payload")
+		return fmt.Errorf("encoding payload: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Body:     body,
-			Method:   http.MethodPost,
-			OKStatus: http.StatusOK,
-			URL:      "https://api.twitch.tv/helix/channels/commercial",
-		}),
-		"executing request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Body:     body,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		URL:      "https://api.twitch.tv/helix/channels/commercial",
+	}); err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+
+	return nil
 }

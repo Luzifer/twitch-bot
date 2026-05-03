@@ -18,24 +18,24 @@ func TestCounterStoreLoop(t *testing.T) {
 	counterName := "mytestcounter"
 
 	v, err := getCounterValue(dbc, counterName)
-	assert.NoError(t, err, "reading non-existent counter")
+	require.NoError(t, err, "reading non-existent counter")
 	assert.Equal(t, int64(0), v, "expecting 0 counter value on non-existent counter")
 
 	err = updateCounter(dbc, counterName, 5, true, time.Now())
-	assert.NoError(t, err, "inserting counter")
+	require.NoError(t, err, "inserting counter")
 
 	var rawCounter counter
-	assert.NoError(t, dbc.DB().First(&rawCounter, "name = ?", counterName).Error)
+	require.NoError(t, dbc.DB().First(&rawCounter, "name = ?", counterName).Error)
 	assert.Equal(t, rawCounter.FirstSeen, rawCounter.LastModified)
 
 	err = updateCounter(dbc, counterName, 1, false, time.Now())
-	assert.NoError(t, err, "updating counter")
+	require.NoError(t, err, "updating counter")
 
-	assert.NoError(t, dbc.DB().First(&rawCounter, "name = ?", counterName).Error)
+	require.NoError(t, dbc.DB().First(&rawCounter, "name = ?", counterName).Error)
 	assert.NotEqual(t, rawCounter.FirstSeen, rawCounter.LastModified)
 
 	v, err = getCounterValue(dbc, counterName)
-	assert.NoError(t, err, "reading existent counter")
+	require.NoError(t, err, "reading existent counter")
 	assert.Equal(t, int64(6), v, "expecting counter value on existing counter")
 }
 
@@ -46,7 +46,7 @@ func TestCounterTopListAndRank(t *testing.T) {
 	testTime := time.Now().UTC()
 
 	counterTemplate := `#example:test:%v`
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		require.NoError(
 			t,
 			updateCounter(dbc, fmt.Sprintf(counterTemplate, i), int64(i), true, testTime),
@@ -85,13 +85,13 @@ func TestCounterTopListAndRank(t *testing.T) {
 	}, cc)
 
 	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "foobar")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name foo")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	_, err = getCounterTopList(dbc, fmt.Sprintf(counterTemplate, ""), 3, "name ASC; DROP TABLE counters;")
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	rank, count, err := getCounterRank(dbc,
 		fmt.Sprintf(counterTemplate, ""),

@@ -4,15 +4,15 @@ package linkprotect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clipdetector"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -20,6 +20,17 @@ import (
 )
 
 const actorName = "linkprotect"
+
+const (
+	verdictAllFine verdict = iota
+	verdictMisbehave
+)
+
+type (
+	actor struct{}
+
+	verdict uint
+)
 
 var (
 	botTwitchClient func() *twitch.Client
@@ -116,27 +127,16 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type (
-	actor struct{}
-
-	verdict uint
-)
-
-const (
-	verdictAllFine verdict = iota
-	verdictMisbehave
-)
-
 //nolint:gocyclo // Minimum over the limit, makes no sense to split
 func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	// In case the clip detector did not run before, lets run it now
 	if preventCooldown, err = (clipdetector.Actor{}).Execute(c, m, r, eventData, attrs); err != nil {
-		return preventCooldown, errors.Wrap(err, "detecting links / clips")
+		return preventCooldown, fmt.Errorf("detecting links / clips: %w", err)
 	}
 
 	links, err := eventData.StringSlice("links")
 	if err != nil {
-		return preventCooldown, errors.Wrap(err, "getting links from event")
+		return preventCooldown, fmt.Errorf("getting links from event: %w", err)
 	}
 
 	if len(links) == 0 {
@@ -150,7 +150,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 
 	clipsInterface, err := eventData.Get("clips")
 	if err != nil {
-		return preventCooldown, errors.Wrap(err, "getting clips from event")
+		return preventCooldown, fmt.Errorf("getting clips from event: %w", err)
 	}
 	clips, ok := clipsInterface.([]twitch.ClipInfo)
 	if !ok {
@@ -174,7 +174,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			0,
 			attrs.MustString("reason", helpers.Ptr("")),
 		); err != nil {
-			return false, errors.Wrap(err, "executing user ban")
+			return false, fmt.Errorf("executing user ban: %w", err)
 		}
 
 	case "delete":
@@ -188,13 +188,13 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			plugins.DeriveChannel(m, eventData),
 			msgID,
 		); err != nil {
-			return false, errors.Wrap(err, "deleting message")
+			return false, fmt.Errorf("deleting message: %w", err)
 		}
 
 	default:
 		to, err := time.ParseDuration(lt)
 		if err != nil {
-			return false, errors.Wrap(err, "parsing punishment level")
+			return false, fmt.Errorf("parsing punishment level: %w", err)
 		}
 
 		if err = botTwitchClient().BanUser(
@@ -204,7 +204,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			to,
 			attrs.MustString("reason", helpers.Ptr("")),
 		); err != nil {
-			return false, errors.Wrap(err, "executing user ban")
+			return false, fmt.Errorf("executing user ban: %w", err)
 		}
 	}
 
@@ -231,10 +231,10 @@ func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.Fi
 		fieldcollection.CanHaveField(fieldcollection.SchemaField{Name: "stop_on_no_action", Type: fieldcollection.SchemaFieldTypeBool}),
 		fieldcollection.MustHaveNoUnknowFields,
 		func(attrs, _ *fieldcollection.FieldCollection) error {
-			if len(attrs.MustStringSlice("allowed_links", helpers.Ptr([]string{})))+
-				len(attrs.MustStringSlice("disallowed_links", helpers.Ptr([]string{})))+
-				len(attrs.MustStringSlice("allowed_clip_channels", helpers.Ptr([]string{})))+
-				len(attrs.MustStringSlice("disallowed_clip_channels", helpers.Ptr([]string{}))) == 0 {
+			if len(attrs.MustStringSlice("allowed_links", new([]string)))+
+				len(attrs.MustStringSlice("disallowed_links", new([]string)))+
+				len(attrs.MustStringSlice("allowed_clip_channels", new([]string)))+
+				len(attrs.MustStringSlice("disallowed_clip_channels", new([]string))) == 0 {
 				return errors.New("no conditions are provided")
 			}
 			return nil
@@ -247,21 +247,21 @@ func (actor) Validate(_ plugins.TemplateValidatorFunc, attrs *fieldcollection.Fi
 }
 
 func (a actor) check(links []string, clips []twitch.ClipInfo, attrs *fieldcollection.FieldCollection) (v verdict) {
-	hasClipDefinition := len(attrs.MustStringSlice("allowed_clip_channels", helpers.Ptr([]string{})))+len(attrs.MustStringSlice("disallowed_clip_channels", helpers.Ptr([]string{}))) > 0
+	hasClipDefinition := len(attrs.MustStringSlice("allowed_clip_channels", new([]string)))+len(attrs.MustStringSlice("disallowed_clip_channels", new([]string))) > 0
 
-	if v = a.checkLinkDenied(attrs.MustStringSlice("disallowed_links", helpers.Ptr([]string{})), links, hasClipDefinition); v == verdictMisbehave {
+	if v = a.checkLinkDenied(attrs.MustStringSlice("disallowed_links", new([]string)), links, hasClipDefinition); v == verdictMisbehave {
 		return verdictMisbehave
 	}
 
-	if v = a.checkAllLinksAllowed(attrs.MustStringSlice("allowed_links", helpers.Ptr([]string{})), links, hasClipDefinition); v == verdictMisbehave {
+	if v = a.checkAllLinksAllowed(attrs.MustStringSlice("allowed_links", new([]string)), links, hasClipDefinition); v == verdictMisbehave {
 		return verdictMisbehave
 	}
 
-	if v = a.checkClipChannelDenied(attrs.MustStringSlice("disallowed_clip_channels", helpers.Ptr([]string{})), clips); v == verdictMisbehave {
+	if v = a.checkClipChannelDenied(attrs.MustStringSlice("disallowed_clip_channels", new([]string)), clips); v == verdictMisbehave {
 		return verdictMisbehave
 	}
 
-	if v = a.checkAllClipChannelsAllowed(attrs.MustStringSlice("allowed_clip_channels", helpers.Ptr([]string{})), clips); v == verdictMisbehave {
+	if v = a.checkAllClipChannelsAllowed(attrs.MustStringSlice("allowed_clip_channels", new([]string)), clips); v == verdictMisbehave {
 		return verdictMisbehave
 	}
 
@@ -295,19 +295,7 @@ func (actor) checkAllClipChannelsAllowed(allowList []string, clips []twitch.Clip
 	return verdictMisbehave
 }
 
-func (actor) checkClipChannelDenied(denyList []string, clips []twitch.ClipInfo) verdict {
-	for _, clip := range clips {
-		for _, denied := range denyList {
-			if strings.EqualFold(clip.BroadcasterName, denied) {
-				return verdictMisbehave
-			}
-		}
-	}
-
-	return verdictAllFine
-}
-
-//revive:disable-next-line:flag-parameter
+//revive:disable-next-line:flag-parameter // not a flag parameter but a configured behavior
 func (actor) checkAllLinksAllowed(allowList, links []string, autoAllowClipLinks bool) verdict {
 	if len(allowList) == 0 {
 		// We're not explicitly allowing links, this method is a no-op
@@ -339,7 +327,19 @@ func (actor) checkAllLinksAllowed(allowList, links []string, autoAllowClipLinks 
 	return verdictMisbehave
 }
 
-//revive:disable-next-line:flag-parameter
+func (actor) checkClipChannelDenied(denyList []string, clips []twitch.ClipInfo) verdict {
+	for _, clip := range clips {
+		for _, denied := range denyList {
+			if strings.EqualFold(clip.BroadcasterName, denied) {
+				return verdictMisbehave
+			}
+		}
+	}
+
+	return verdictAllFine
+}
+
+//revive:disable-next-line:flag-parameter // not a flag parameter but a configured behavior
 func (actor) checkLinkDenied(denyList, links []string, ignoreClipLinks bool) verdict {
 	for _, link := range links {
 		if ignoreClipLinks && clipLink.MatchString(link) {

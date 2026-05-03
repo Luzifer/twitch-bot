@@ -2,20 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const statusIRCMessageReceivedTimeout = 5 * time.Minute
-
-var statusIRCMessageReceived time.Time
 
 type (
 	statusResponse struct {
@@ -32,6 +30,8 @@ type (
 		checkFn func() error
 	}
 )
+
+var statusIRCMessageReceived time.Time
 
 func init() {
 	if err := registerRoute(plugins.HTTPRouteRegistrationArgs{
@@ -87,7 +87,11 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 				}
 
 				_, _, err := twitchClient.GetAuthorizedUser(r.Context())
-				return errors.Wrap(err, "fetching username")
+				if err != nil {
+					return fmt.Errorf("fetching username: %w", err)
+				}
+
+				return nil
 			},
 		},
 	} {
@@ -107,7 +111,7 @@ func handleStatusRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(output); err != nil {
-		http.Error(w, errors.Wrap(err, "encoding output").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("encoding output: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 }

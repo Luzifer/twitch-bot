@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,10 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-
 	"github.com/Luzifer/go_helpers/backoff"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -92,7 +91,7 @@ type (
 		NoRetry         bool
 		NoValidateToken bool
 		OKStatus        int
-		Out             interface{}
+		Out             any
 		URL             string
 		ValidateFunc    func(ClientRequestOpts, *http.Response) error
 	}
@@ -153,13 +152,54 @@ func (c *Client) APICache() *APICache { return c.apiCache }
 func (c *Client) GetToken(ctx context.Context) (string, error) {
 	if err := c.ValidateToken(ctx, false); err != nil {
 		if err = c.RefreshToken(ctx); err != nil {
-			return "", errors.Wrap(err, "refreshing token after validation error")
+			return "", fmt.Errorf("refreshing token after validation error: %w", err)
 		}
 
 		// Token was refreshed, therefore should now be valid
 	}
 
 	return c.accessToken, nil
+}
+
+// GetTwitchAppAccessToken uses client-id and -secret to generate a
+// new app-access-token in case none is present or returns the cached
+// token.
+func (c *Client) GetTwitchAppAccessToken(ctx context.Context) (string, error) {
+	if c.appAccessToken != "" {
+		return c.appAccessToken, nil
+	}
+
+	var rData struct {
+		AccessToken  string `json:"access_token"`  //#nosec:G117 // Intended to handle secrets
+		RefreshToken string `json:"refresh_token"` //#nosec:G117 // Intended to handle secrets
+		ExpiresIn    int    `json:"expires_in"`
+		Scope        []any  `json:"scope"`
+		TokenType    string `json:"token_type"`
+	}
+
+	params := make(url.Values)
+	params.Set("client_id", c.clientID)
+	params.Set("client_secret", c.clientSecret)
+	params.Set("grant_type", "client_credentials")
+
+	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
+	u.RawQuery = params.Encode()
+
+	reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
+	defer cancel()
+
+	if err := c.Request(reqCtx, ClientRequestOpts{
+		AuthType: AuthTypeUnauthorized,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Out:      &rData,
+		URL:      u.String(),
+	}); err != nil {
+		return "", fmt.Errorf("fetching token response: %w", err)
+	}
+
+	c.appAccessToken = rData.AccessToken
+	return rData.AccessToken, nil
 }
 
 // RefreshToken takes the configured refresh-token and renews the
@@ -197,10 +237,10 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 				logrus.WithError(herr).Error("Unable to store token wipe after refresh failure")
 			}
 		}
-		return errors.Wrap(err, "executing request")
+		return fmt.Errorf("executing request: %w", err)
 
 	default:
-		return errors.Wrap(err, "executing request")
+		return fmt.Errorf("executing request: %w", err)
 	}
 
 	c.UpdateToken(resp.AccessToken, resp.RefreshToken)
@@ -211,7 +251,104 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 		return nil
 	}
 
-	return errors.Wrap(c.tokenUpdateHook(resp.AccessToken, resp.RefreshToken), "calling token update hook")
+	if err = c.tokenUpdateHook(resp.AccessToken, resp.RefreshToken); err != nil {
+		return fmt.Errorf("calling token update hook: %w", err)
+	}
+
+	return nil
+}
+
+// Request executes the request towards the Twitch API defined by the
+// ClientRequestOpts and takes care of token management and response
+// checking
+//
+//nolint:gocyclo,gocognit // Not gonna split to keep as a logical unit
+func (c *Client) Request(ctx context.Context, opts ClientRequestOpts) error {
+	logrus.WithFields(logrus.Fields{
+		"method": opts.Method,
+		"url":    c.replaceSecrets(opts.URL),
+	}).Trace("Execute Twitch API request")
+
+	var retries uint64 = twitchRequestRetries
+	if opts.Body != nil || opts.NoRetry {
+		// Body must be read only once, do not retry
+		retries = 1
+	}
+
+	if opts.ValidateFunc == nil {
+		opts.ValidateFunc = ValidateStatus
+	}
+
+	//nolint:wrapcheck // The backoff library returns our own errors
+	return backoff.NewBackoff().WithMaxIterations(retries).Retry(func() error {
+		reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(reqCtx, opts.Method, opts.URL, opts.Body)
+		if err != nil {
+			return fmt.Errorf("assemble request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		switch opts.AuthType {
+		case AuthTypeUnauthorized:
+			// Nothing to do
+
+		case AuthTypeAppAccessToken:
+			accessToken, err := c.GetTwitchAppAccessToken(ctx)
+			if err != nil {
+				return fmt.Errorf("getting app-access-token: %w", err)
+			}
+
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Header.Set("Client-Id", c.clientID)
+
+		case AuthTypeBearerToken:
+			accessToken := c.accessToken
+			if !opts.NoValidateToken {
+				accessToken, err = c.GetToken(reqCtx)
+				if err != nil {
+					return fmt.Errorf("getting bearer access token: %w", err)
+				}
+			}
+
+			req.Header.Set("Authorization", "Bearer "+accessToken)
+			req.Header.Set("Client-Id", c.clientID)
+
+		default:
+			return errors.New("invalid auth type specified")
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("execute request: %w", err)
+		}
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				logrus.WithError(err).Error("closing response body (leaked fd)")
+			}
+		}()
+
+		if opts.AuthType == AuthTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
+			// Seems our token was somehow revoked, clear the token and retry which will get a new token
+			c.appAccessToken = ""
+			return errors.New("app-access-token is invalid")
+		}
+
+		if err = opts.ValidateFunc(opts, resp); err != nil {
+			return err
+		}
+
+		if opts.Out == nil {
+			return nil
+		}
+
+		if err = json.NewDecoder(resp.Body).Decode(opts.Out); err != nil {
+			return fmt.Errorf("parsing user info: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // SetTokenUpdateHook registers a function to listen for token changes
@@ -231,7 +368,7 @@ func (c *Client) UpdateToken(accessToken, refreshToken string) {
 // the token is still valid. If the expiry is known and the force
 // parameter is not supplied, the request is omitted.
 //
-//revive:disable-next-line:flag-parameter
+//revive:disable-next-line:flag-parameter // not a behavior-switch but an cache-disabling override
 func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	if c.tokenValidity.After(time.Now()) && time.Since(c.tokenValidityChecked) < tokenValidityRecheckInterval && !force {
 		// We do have an expiration time and it's not expired
@@ -260,7 +397,7 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 		Out:             &resp,
 		URL:             "https://id.twitch.tv/oauth2/validate",
 	}); err != nil {
-		return errors.Wrap(err, "executing request")
+		return fmt.Errorf("executing request: %w", err)
 	}
 
 	if resp.ClientID != c.clientID {
@@ -274,137 +411,8 @@ func (c *Client) ValidateToken(ctx context.Context, force bool) error {
 	return nil
 }
 
-// GetTwitchAppAccessToken uses client-id and -secret to generate a
-// new app-access-token in case none is present or returns the cached
-// token.
-func (c *Client) GetTwitchAppAccessToken(ctx context.Context) (string, error) {
-	if c.appAccessToken != "" {
-		return c.appAccessToken, nil
-	}
-
-	var rData struct {
-		AccessToken  string        `json:"access_token"`  //#nosec:G117 // Intended to handle secrets
-		RefreshToken string        `json:"refresh_token"` //#nosec:G117 // Intended to handle secrets
-		ExpiresIn    int           `json:"expires_in"`
-		Scope        []interface{} `json:"scope"`
-		TokenType    string        `json:"token_type"`
-	}
-
-	params := make(url.Values)
-	params.Set("client_id", c.clientID)
-	params.Set("client_secret", c.clientSecret)
-	params.Set("grant_type", "client_credentials")
-
-	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
-	u.RawQuery = params.Encode()
-
-	reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
-	defer cancel()
-
-	if err := c.Request(reqCtx, ClientRequestOpts{
-		AuthType: AuthTypeUnauthorized,
-		Method:   http.MethodPost,
-		OKStatus: http.StatusOK,
-		Out:      &rData,
-		URL:      u.String(),
-	}); err != nil {
-		return "", errors.Wrap(err, "fetching token response")
-	}
-
-	c.appAccessToken = rData.AccessToken
-	return rData.AccessToken, nil
-}
-
-// Request executes the request towards the Twitch API defined by the
-// ClientRequestOpts and takes care of token management and response
-// checking
-//
-//nolint:gocyclo // Not gonna split to keep as a logical unit
-func (c *Client) Request(ctx context.Context, opts ClientRequestOpts) error {
-	logrus.WithFields(logrus.Fields{
-		"method": opts.Method,
-		"url":    c.replaceSecrets(opts.URL),
-	}).Trace("Execute Twitch API request")
-
-	var retries uint64 = twitchRequestRetries
-	if opts.Body != nil || opts.NoRetry {
-		// Body must be read only once, do not retry
-		retries = 1
-	}
-
-	if opts.ValidateFunc == nil {
-		opts.ValidateFunc = ValidateStatus
-	}
-
-	//nolint:wrapcheck // The backoff library returns our own errors
-	return backoff.NewBackoff().WithMaxIterations(retries).Retry(func() error {
-		reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
-		defer cancel()
-
-		req, err := http.NewRequestWithContext(reqCtx, opts.Method, opts.URL, opts.Body)
-		if err != nil {
-			return errors.Wrap(err, "assemble request")
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		switch opts.AuthType {
-		case AuthTypeUnauthorized:
-			// Nothing to do
-
-		case AuthTypeAppAccessToken:
-			accessToken, err := c.GetTwitchAppAccessToken(ctx)
-			if err != nil {
-				return errors.Wrap(err, "getting app-access-token")
-			}
-
-			req.Header.Set("Authorization", "Bearer "+accessToken)
-			req.Header.Set("Client-Id", c.clientID)
-
-		case AuthTypeBearerToken:
-			accessToken := c.accessToken
-			if !opts.NoValidateToken {
-				accessToken, err = c.GetToken(reqCtx)
-				if err != nil {
-					return errors.Wrap(err, "getting bearer access token")
-				}
-			}
-
-			req.Header.Set("Authorization", "Bearer "+accessToken)
-			req.Header.Set("Client-Id", c.clientID)
-
-		default:
-			return errors.New("invalid auth type specified")
-		}
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return errors.Wrap(err, "execute request")
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				logrus.WithError(err).Error("closing response body (leaked fd)")
-			}
-		}()
-
-		if opts.AuthType == AuthTypeAppAccessToken && resp.StatusCode == http.StatusUnauthorized {
-			// Seems our token was somehow revoked, clear the token and retry which will get a new token
-			c.appAccessToken = ""
-			return errors.New("app-access-token is invalid")
-		}
-
-		if err = opts.ValidateFunc(opts, resp); err != nil {
-			return err
-		}
-
-		if opts.Out == nil {
-			return nil
-		}
-
-		return errors.Wrap(
-			json.NewDecoder(resp.Body).Decode(opts.Out),
-			"parse user info",
-		)
-	})
+func (*Client) hashSecret(secret string) string {
+	return fmt.Sprintf("[sha256:%x]", sha256.Sum256([]byte(secret)))
 }
 
 func (c *Client) replaceSecrets(u string) string {
@@ -422,8 +430,4 @@ func (c *Client) replaceSecrets(u string) string {
 	}
 
 	return strings.NewReplacer(replacements...).Replace(u)
-}
-
-func (*Client) hashSecret(secret string) string {
-	return fmt.Sprintf("[sha256:%x]", sha256.Sum256([]byte(secret)))
 }

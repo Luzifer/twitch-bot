@@ -3,21 +3,23 @@ package respond
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "respond"
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -99,17 +101,15 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	msg, err := formatMessage(attrs.MustString("message", nil), m, r, eventData)
 	if err != nil {
 		if !attrs.CanString("fallback") || attrs.MustString("fallback", nil) == "" {
-			return false, errors.Wrap(err, "preparing response")
+			return false, fmt.Errorf("preparing response: %w", err)
 		}
 		log.WithError(err).Error("Response message processing caused error, trying fallback")
 		if msg, err = formatMessage(attrs.MustString("fallback", nil), m, r, eventData); err != nil {
-			return false, errors.Wrap(err, "preparing response fallback")
+			return false, fmt.Errorf("preparing response fallback: %w", err)
 		}
 	}
 
@@ -136,10 +136,11 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		}
 	}
 
-	return false, errors.Wrap(
-		send(ircMessage),
-		"sending response",
-	)
+	if err = send(ircMessage); err != nil {
+		return false, fmt.Errorf("sending response: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }
@@ -166,7 +167,7 @@ func handleAPISend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, errors.Wrap(err, "parsing payload").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing payload: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -182,7 +183,7 @@ func handleAPISend(w http.ResponseWriter, r *http.Request) {
 			strings.TrimSpace(payload.Message),
 		},
 	}); err != nil {
-		http.Error(w, errors.Wrap(err, "sending message").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("sending message: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

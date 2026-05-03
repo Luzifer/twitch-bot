@@ -3,7 +3,8 @@
 package raffle
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
@@ -25,7 +26,7 @@ var (
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err := db.DB().AutoMigrate(&raffle{}, &raffleEntry{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("raffle", func(src, target *gorm.DB) error {
@@ -34,10 +35,10 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 	dbc = newDBClient(db)
 	if err = dbc.RefreshActiveRaffles(); err != nil {
-		return errors.Wrap(err, "refreshing active raffle cache")
+		return fmt.Errorf("refreshing active raffle cache: %w", err)
 	}
 	if err = dbc.RefreshSpeakUp(); err != nil {
-		return errors.Wrap(err, "refreshing active speak-ups")
+		return fmt.Errorf("refreshing active speak-ups: %w", err)
 	}
 
 	formatMessage = args.FormatMessage
@@ -46,7 +47,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	tcGetter = args.GetTwitchClientForChannel
 
 	if err = registerAPI(args); err != nil {
-		return errors.Wrap(err, "registering API")
+		return fmt.Errorf("registering API: %w", err)
 	}
 
 	if _, err := args.RegisterCron("@every 10s", func() {
@@ -63,11 +64,11 @@ func Register(args plugins.RegistrationArguments) (err error) {
 			}
 		}
 	}); err != nil {
-		return errors.Wrap(err, "registering cron")
+		return fmt.Errorf("registering cron: %w", err)
 	}
 
 	if err := args.RegisterRawMessageHandler(rawMessageHandler); err != nil {
-		return errors.Wrap(err, "registering raw message handler")
+		return fmt.Errorf("registering raw message handler: %w", err)
 	}
 
 	args.RegisterActor(enterRaffleActor{}.Name(), func() plugins.Actor { return &enterRaffleActor{} })

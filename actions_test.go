@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -51,10 +51,10 @@ func testExecutionRule(actionName, uuid string) *plugins.Rule {
 }
 
 func TestHandleMessageRuleExecutionAppliesRuleCooldownOnce(t *testing.T) {
-	var executed int32
+	var executed atomic.Int32
 
 	actionName := registerTestExecutionActor(t, func(*irc.Message) (bool, error) {
-		atomic.AddInt32(&executed, 1)
+		executed.Add(1)
 		time.Sleep(50 * time.Millisecond)
 		return false, nil
 	})
@@ -75,7 +75,7 @@ func TestHandleMessageRuleExecutionAppliesRuleCooldownOnce(t *testing.T) {
 
 	wg.Wait()
 
-	require.Equal(t, int32(1), atomic.LoadInt32(&executed))
+	require.Equal(t, int32(1), executed.Load())
 
 	inCooldown, err := timerService.InCooldown(plugins.TimerTypeCooldown, "", rule.MatcherID())
 	require.NoError(t, err)
@@ -83,10 +83,10 @@ func TestHandleMessageRuleExecutionAppliesRuleCooldownOnce(t *testing.T) {
 }
 
 func TestHandleMessageRuleExecutionAppliesChannelCooldownOncePerChannel(t *testing.T) {
-	var executed int32
+	var executed atomic.Int32
 
 	actionName := registerTestExecutionActor(t, func(*irc.Message) (bool, error) {
-		atomic.AddInt32(&executed, 1)
+		executed.Add(1)
 		time.Sleep(50 * time.Millisecond)
 		return false, nil
 	})
@@ -107,7 +107,7 @@ func TestHandleMessageRuleExecutionAppliesChannelCooldownOncePerChannel(t *testi
 
 	wg.Wait()
 
-	require.Equal(t, int32(1), atomic.LoadInt32(&executed))
+	require.Equal(t, int32(1), executed.Load())
 
 	inCooldown, err := timerService.InCooldown(plugins.TimerTypeCooldown, "#mychannel", rule.MatcherID())
 	require.NoError(t, err)
@@ -115,10 +115,10 @@ func TestHandleMessageRuleExecutionAppliesChannelCooldownOncePerChannel(t *testi
 }
 
 func TestHandleMessageRuleExecutionAllowsChannelCooldownAcrossChannels(t *testing.T) {
-	var executed int32
+	var executed atomic.Int32
 
 	actionName := registerTestExecutionActor(t, func(*irc.Message) (bool, error) {
-		atomic.AddInt32(&executed, 1)
+		executed.Add(1)
 		time.Sleep(50 * time.Millisecond)
 		return false, nil
 	})
@@ -144,7 +144,7 @@ func TestHandleMessageRuleExecutionAllowsChannelCooldownAcrossChannels(t *testin
 
 	wg.Wait()
 
-	require.Equal(t, int32(2), atomic.LoadInt32(&executed))
+	require.Equal(t, int32(2), executed.Load())
 }
 
 func TestHandleMessageRuleExecutionSkipsCooldownWhenPrevented(t *testing.T) {

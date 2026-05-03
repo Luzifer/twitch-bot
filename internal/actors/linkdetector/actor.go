@@ -5,15 +5,18 @@ package linkdetector
 import (
 	"fmt"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/linkcheck"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "linkdetector"
+
+// Actor implements the actor interface
+type Actor struct{}
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
@@ -39,9 +42,6 @@ func Register(args plugins.RegistrationArguments) error {
 
 	return nil
 }
-
-// Actor implements the actor interface
-type Actor struct{}
 
 // Execute implements the actor interface
 func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {

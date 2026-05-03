@@ -29,7 +29,7 @@ func TestNewConnector(t *testing.T) {
 			row := dbc.DB().Raw("SELECT count(1) AS tables FROM sqlite_master WHERE type='table' AND name='core_kvs';")
 
 			var count int
-			assert.NoError(t, row.Scan(&count).Error, "reading table count result")
+			require.NoError(t, row.Scan(&count).Error, "reading table count result")
 
 			assert.Equal(t, 1, count)
 		})

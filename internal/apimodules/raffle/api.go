@@ -9,7 +9,6 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -22,7 +21,10 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		Description: "Lists all raffles known to the bot",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, _ map[string]uint64) (any, error) {
 			ras, err := dbc.List()
-			return ras, errors.Wrap(err, "fetching raffles from database")
+			if err != nil {
+				return ras, fmt.Errorf("fetching raffles from database: %w", err)
+			}
+			return ras, nil
 		}, nil),
 		Method:            http.MethodGet,
 		Module:            moduleName,
@@ -37,10 +39,14 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, r *http.Request, _ map[string]uint64) (any, error) {
 			var ra raffle
 			if err := json.NewDecoder(r.Body).Decode(&ra); err != nil {
-				return nil, errors.Wrap(err, "parsing raffle from body")
+				return nil, fmt.Errorf("parsing raffle from body: %w", err)
 			}
 
-			return nil, errors.Wrap(dbc.Create(ra), "creating raffle")
+			if err := dbc.Create(ra); err != nil {
+				return nil, fmt.Errorf("creating raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, nil),
 		Method:            http.MethodPost,
 		Module:            moduleName,
@@ -53,7 +59,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Deletes raffle by given ID including all entries",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.Delete(ids["id"]), "fetching raffle from database")
+			if err := dbc.Delete(ids["id"]); err != nil {
+				return nil, fmt.Errorf("fetching raffle from database: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodDelete,
 		Module:            moduleName,
@@ -73,7 +83,10 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		Description: "Gets raffle by given ID including all entries",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
 			ra, err := dbc.Get(ids["id"])
-			return ra, errors.Wrap(err, "fetching raffle from database")
+			if err != nil {
+				return ra, fmt.Errorf("fetching raffle from database: %w", err)
+			}
+			return ra, nil
 		}, []string{"id"}),
 		Method:            http.MethodGet,
 		Module:            moduleName,
@@ -94,14 +107,18 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, r *http.Request, ids map[string]uint64) (any, error) {
 			var ra raffle
 			if err := json.NewDecoder(r.Body).Decode(&ra); err != nil {
-				return nil, errors.Wrap(err, "parsing raffle from body")
+				return nil, fmt.Errorf("parsing raffle from body: %w", err)
 			}
 
 			if ra.ID != ids["id"] {
-				return nil, errors.New("raffle ID does not match")
+				return nil, fmt.Errorf("raffle ID does not match")
 			}
 
-			return nil, errors.Wrap(dbc.Update(ra), "updating raffle")
+			if err := dbc.Update(ra); err != nil {
+				return nil, fmt.Errorf("updating raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -120,7 +137,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Resets the raffle (remove entries, reset status & start/close time) given by its ID",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.Reset(ids["id"]), "resetting raffle")
+			if err := dbc.Reset(ids["id"]); err != nil {
+				return nil, fmt.Errorf("resetting raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -139,7 +160,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Duplicates the raffle given by its ID",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.Clone(ids["id"]), "cloning raffle")
+			if err := dbc.Clone(ids["id"]); err != nil {
+				return nil, fmt.Errorf("cloning raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -158,7 +183,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Closes the raffle given by its ID",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.Close(ids["id"]), "closing raffle")
+			if err := dbc.Close(ids["id"]); err != nil {
+				return nil, fmt.Errorf("closing raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -177,7 +206,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Picks a winner for the given raffle (this does NOT close the raffle, use only on closed raffle!)",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.PickWinner(ids["id"]), "picking winner")
+			if err := dbc.PickWinner(ids["id"]); err != nil {
+				return nil, fmt.Errorf("picking winner: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -198,10 +231,14 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, r *http.Request, ids map[string]uint64) (any, error) {
 			dur, err := strconv.ParseInt(r.URL.Query().Get("duration"), 10, 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "parsing duration")
+				return nil, fmt.Errorf("parsing duration: %w", err)
 			}
 
-			return nil, errors.Wrap(dbc.Reopen(ids["id"], time.Duration(dur)*time.Second), "reopening raffle")
+			if err := dbc.Reopen(ids["id"], time.Duration(dur)*time.Second); err != nil {
+				return nil, fmt.Errorf("reopening raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method: http.MethodPut,
 		Module: moduleName,
@@ -228,7 +265,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Starts a raffle making it available for entries",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.Start(ids["id"]), "starting raffle")
+			if err := dbc.Start(ids["id"]); err != nil {
+				return nil, fmt.Errorf("starting raffle: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -247,7 +288,11 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 	{
 		Description: "Dismisses a previously picked winner and picks a new one",
 		HandlerFunc: handleWrap(func(_ http.ResponseWriter, _ *http.Request, ids map[string]uint64) (any, error) {
-			return nil, errors.Wrap(dbc.RedrawWinner(ids["id"], ids["winner"]), "re-picking winner")
+			if err := dbc.RedrawWinner(ids["id"], ids["winner"]); err != nil {
+				return nil, fmt.Errorf("re-picking winner: %w", err)
+			}
+
+			return nil, nil //nolint:nilnil // This is no error but the fine state, we're just matching the interface
 		}, []string{"id", "winner"}),
 		Method:            http.MethodPut,
 		Module:            moduleName,
@@ -271,7 +316,7 @@ var apiRoutes = []plugins.HTTPRouteRegistrationArgs{
 func handleWrap(f func(http.ResponseWriter, *http.Request, map[string]uint64) (any, error), parseIDs []string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			ids     = map[string]uint64{}
+			ids     = make(map[string]uint64)
 			reqUUID = uuid.Must(uuid.NewV4()).String()
 			logger  = logrus.WithFields(logrus.Fields{
 				"path": r.URL.Path,
@@ -313,7 +358,7 @@ func handleWrap(f func(http.ResponseWriter, *http.Request, map[string]uint64) (a
 func registerAPI(args plugins.RegistrationArguments) (err error) {
 	for i, r := range apiRoutes {
 		if err = args.RegisterAPIRoute(r); err != nil {
-			return errors.Wrapf(err, "registering route %d", i)
+			return fmt.Errorf("registering route %d: %w", i, err)
 		}
 	}
 

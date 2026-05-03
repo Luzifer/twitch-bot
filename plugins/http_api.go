@@ -2,6 +2,14 @@ package plugins
 
 import "net/http"
 
+// Enum of known HTTPRouteResponseType
+const (
+	HTTPRouteResponseTypeNo200 HTTPRouteResponseType = iota
+	HTTPRouteResponseTypeTextPlain
+	HTTPRouteResponseTypeJSON
+	HTTPRouteResponseTypeMultiple
+)
+
 type (
 	// HTTPRouteParamDocumentation documents parameters expected by a
 	// HTTP route and to be documented in the API documentation
@@ -39,12 +47,4 @@ type (
 	// HTTPRouteRegistrationFunc is passed from the bot to the
 	// plugins RegisterFunc to register a new route in the API router
 	HTTPRouteRegistrationFunc func(HTTPRouteRegistrationArgs) error
-)
-
-// Enum of known HTTPRouteResponseType
-const (
-	HTTPRouteResponseTypeNo200 HTTPRouteResponseType = iota
-	HTTPRouteResponseTypeTextPlain
-	HTTPRouteResponseTypeJSON
-	HTTPRouteResponseTypeMultiple
 )

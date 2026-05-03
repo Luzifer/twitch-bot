@@ -5,6 +5,7 @@ package overlays
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,14 +16,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -34,6 +34,13 @@ const (
 	socketKeepAlive = 5 * time.Second
 
 	msgTypeRequestAuth = "_auth"
+)
+
+// Collection of SendReason entries
+const (
+	sendReasonLive         sendReason = "live-event"
+	sendReasonBulkReplay   sendReason = "bulk-replay"
+	sendReasonSingleReplay sendReason = "single-replay"
 )
 
 type (
@@ -52,13 +59,6 @@ type (
 	}
 )
 
-// Collection of SendReason entries
-const (
-	sendReasonLive         sendReason = "live-event"
-	sendReasonBulkReplay   sendReason = "bulk-replay"
-	sendReasonSingleReplay sendReason = "single-replay"
-)
-
 var (
 	//go:embed default/**
 	embeddedOverlays embed.FS
@@ -73,7 +73,7 @@ var (
 		"join", "part", // Those make no sense for replay
 	}
 
-	subscribers     = map[string]func(socketMessage){}
+	subscribers     = make(map[string]func(socketMessage))
 	subscribersLock sync.RWMutex
 
 	upgrader = websocket.Upgrader{
@@ -86,11 +86,11 @@ var (
 
 // Register provides the plugins.RegisterFunc
 //
-//nolint:funlen
+//nolint:funlen // just a list of registrations
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
-		return errors.Wrap(err, "applying schema migration")
+		return fmt.Errorf("applying schema migration: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("overlay_events", func(src, target *gorm.DB) error {
@@ -202,7 +202,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 				Type:   event,
 				Fields: eventData,
 			}); err != nil {
-				return errors.Wrap(err, "storing event")
+				return fmt.Errorf("storing event: %w", err)
 			}
 		}
 
@@ -242,7 +242,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 
 	events, err := getChannelEvents(db, "#"+strings.TrimLeft(channel, "#"))
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting channel events").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting channel events: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -259,7 +259,7 @@ func handleEventsReplay(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(msgs); err != nil {
-		http.Error(w, errors.Wrap(err, "encoding response").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("encoding response: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -271,13 +271,13 @@ func handleServeOverlayAsset(w http.ResponseWriter, r *http.Request) {
 func handleSingleEventReplay(w http.ResponseWriter, r *http.Request) {
 	eventID, err := strconv.ParseUint(mux.Vars(r)["event_id"], 10, 64)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "parsing event_id").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("parsing event_id: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	evt, err := getEventByID(db, eventID)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "fetching event").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("fetching event: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -327,7 +327,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				logger.WithError(err).Error("Unable to send ping message")
 				connLock.Unlock()
-				conn.Close() //nolint:errcheck,gosec
+				_ = conn.Close()
 				return
 			}
 
@@ -340,7 +340,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 		for {
 			messageType, p, err := conn.ReadMessage()
 			if err != nil {
-				errC <- errors.Wrap(err, "reading from socket")
+				errC <- fmt.Errorf("reading from socket: %w", err)
 				return
 			}
 
@@ -365,7 +365,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 			var recvMsg socketMessage
 			if err = json.Unmarshal(p, &recvMsg); err != nil {
-				errC <- errors.Wrap(err, "decoding message")
+				errC <- fmt.Errorf("decoding message: %w", err)
 				return
 			}
 
@@ -378,7 +378,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			switch recvMsg.Type {
 			case msgTypeRequestAuth:
 				if err := validateToken(recvMsg.Fields.MustString("token", ptrStringEmpty), "overlays"); err != nil {
-					errC <- errors.Wrap(err, "validating auth token")
+					errC <- fmt.Errorf("validating auth token: %w", err)
 					return
 				}
 
@@ -436,7 +436,7 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteJSON(msg); err != nil {
 				logger.WithError(err).Error("Unable to send socket message")
 				connLock.Unlock()
-				conn.Close() //nolint:errcheck,gosec
+				_ = conn.Close()
 			}
 			connLock.Unlock()
 		}

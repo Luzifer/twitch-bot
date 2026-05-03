@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -92,7 +91,7 @@ func (c *Client) GetCurrentStreamInfo(ctx context.Context, username string) (*St
 
 	id, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting ID for username")
+		return nil, fmt.Errorf("getting ID for username: %w", err)
 	}
 
 	var payload struct {
@@ -106,7 +105,7 @@ func (c *Client) GetCurrentStreamInfo(ctx context.Context, username string) (*St
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", id),
 	}); err != nil {
-		return nil, errors.Wrap(err, "request channel info")
+		return nil, fmt.Errorf("request channel info: %w", err)
 	}
 
 	switch l := len(payload.Data); l {
@@ -117,7 +116,7 @@ func (c *Client) GetCurrentStreamInfo(ctx context.Context, username string) (*St
 		// That's expected
 
 	default:
-		return nil, errors.Errorf("unexpected number of streams returned: %d", l)
+		return nil, fmt.Errorf("unexpected number of streams returned: %d", l)
 	}
 
 	// Stream-info can be changed at any moment, cache for a short period of time
@@ -136,7 +135,7 @@ func (c *Client) GetRecentStreamInfo(ctx context.Context, username string) (cate
 
 	id, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
-		return "", "", errors.Wrap(err, "getting ID for username")
+		return "", "", fmt.Errorf("getting ID for username: %w", err)
 	}
 
 	var payload struct {
@@ -155,11 +154,11 @@ func (c *Client) GetRecentStreamInfo(ctx context.Context, username string) (cate
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels?broadcaster_id=%s", id),
 	}); err != nil {
-		return "", "", errors.Wrap(err, "request channel info")
+		return "", "", fmt.Errorf("request channel info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", "", fmt.Errorf("unexpected number of users returned: %d", l)
 	}
 
 	// Stream-info can be changed at any moment, cache for a short period of time
@@ -190,7 +189,7 @@ func (c *Client) HasLiveStream(ctx context.Context, username string) (bool, erro
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", username),
 	}); err != nil {
-		return false, errors.Wrap(err, "request stream info")
+		return false, fmt.Errorf("request stream info: %w", err)
 	}
 
 	// Live status might change recently, cache for one minute

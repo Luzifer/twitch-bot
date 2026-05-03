@@ -3,10 +3,12 @@
 package userstate
 
 import (
+	"fmt"
+
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 	"gopkg.in/irc.v4"
+
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var userState = newTwitchUserStateStore()
@@ -14,10 +16,10 @@ var userState = newTwitchUserStateStore()
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
 	if err := args.RegisterRawMessageHandler(rawMessageHandler); err != nil {
-		return errors.Wrap(err, "registering raw message handler")
+		return fmt.Errorf("registering raw message handler: %w", err)
 	}
 
-	args.RegisterTemplateFunction("botHasBadge", func(m *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) interface{} {
+	args.RegisterTemplateFunction("botHasBadge", func(m *irc.Message, _ *plugins.Rule, fields *fieldcollection.FieldCollection) any {
 		return func(badge string) bool {
 			state := userState.Get(plugins.DeriveChannel(m, fields))
 			if state == nil {
@@ -44,7 +46,7 @@ func rawMessageHandler(m *irc.Message) error {
 
 	state, err := parseTwitchUserState(m)
 	if err != nil {
-		return errors.Wrap(err, "parsing state")
+		return fmt.Errorf("parsing state: %w", err)
 	}
 
 	userState.Set(plugins.DeriveChannel(m, nil), state)

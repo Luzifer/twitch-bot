@@ -9,13 +9,13 @@ import (
 
 const configChangeCheckInterval = time.Second
 
-type configChangeEvent uint8
-
 const (
 	configChangeEventUnkown configChangeEvent = iota
 	configChangeEventNotExist
 	configChangeEventModified
 )
+
+type configChangeEvent uint8
 
 func watchConfigChanges(filename string, evt chan configChangeEvent) {
 	var (

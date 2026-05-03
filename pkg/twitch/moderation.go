@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -41,56 +40,57 @@ func (c *Client) BanUser(ctx context.Context, channel, username string, duration
 
 	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting bot user-id")
+		return fmt.Errorf("getting bot user-id: %w", err)
 	}
 
 	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
-		return errors.Wrap(err, "getting channel user-id")
+		return fmt.Errorf("getting channel user-id: %w", err)
 	}
 
 	if payload.Data.UserID, err = c.GetIDForUsername(ctx, username); err != nil {
-		return errors.Wrap(err, "getting target user-id")
+		return fmt.Errorf("getting target user-id: %w", err)
 	}
 
 	body := new(bytes.Buffer)
 	if err = json.NewEncoder(body).Encode(payload); err != nil {
-		return errors.Wrap(err, "encoding payload")
+		return fmt.Errorf("encoding payload: %w", err)
 	}
 
-	return errors.Wrapf(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodPost,
-			OKStatus: http.StatusOK,
-			Body:     body,
-			URL: fmt.Sprintf(
-				"https://api.twitch.tv/helix/moderation/bans?broadcaster_id=%s&moderator_id=%s",
-				channelID, botID,
-			),
-			ValidateFunc: func(opts ClientRequestOpts, resp *http.Response) error {
-				if resp.StatusCode == http.StatusBadRequest {
-					// The user might already be banned, lets check the error in detail
-					body, err := io.ReadAll(resp.Body)
-					if err != nil {
-						return newHTTPError(resp.StatusCode, nil, err)
-					}
-
-					var payload ErrorResponse
-					if err = json.Unmarshal(body, &payload); err == nil && payload.Message == errMessageAlreadyBanned {
-						// The user is already banned, that's fine as that was
-						// our goal!
-						return nil
-					}
-
-					return newHTTPError(resp.StatusCode, body, nil)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Body:     body,
+		URL: fmt.Sprintf(
+			"https://api.twitch.tv/helix/moderation/bans?broadcaster_id=%s&moderator_id=%s",
+			channelID, botID,
+		),
+		ValidateFunc: func(opts ClientRequestOpts, resp *http.Response) error {
+			if resp.StatusCode == http.StatusBadRequest {
+				// The user might already be banned, lets check the error in detail
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					return newHTTPError(resp.StatusCode, nil, err)
 				}
 
-				return ValidateStatus(opts, resp)
-			},
-		}),
-		"executing ban request for %q in %q", username, channel,
-	)
+				var payload ErrorResponse
+				if err = json.Unmarshal(body, &payload); err == nil && payload.Message == errMessageAlreadyBanned {
+					// The user is already banned, that's fine as that was
+					// our goal!
+					return nil
+				}
+
+				return newHTTPError(resp.StatusCode, body, nil)
+			}
+
+			return ValidateStatus(opts, resp)
+		},
+	}); err != nil {
+		return fmt.Errorf("executing ban request for %q in %q: %w", username, channel, err)
+	}
+
+	return nil
 }
 
 // DeleteMessage deletes one or all messages from the specified chat.
@@ -100,12 +100,12 @@ func (c *Client) BanUser(ctx context.Context, channel, username string, duration
 func (c *Client) DeleteMessage(ctx context.Context, channel, messageID string) error {
 	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting bot user-id")
+		return fmt.Errorf("getting bot user-id: %w", err)
 	}
 
 	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
-		return errors.Wrap(err, "getting channel user-id")
+		return fmt.Errorf("getting channel user-id: %w", err)
 	}
 
 	params := make(url.Values)
@@ -115,81 +115,84 @@ func (c *Client) DeleteMessage(ctx context.Context, channel, messageID string) e
 		params.Set("message_id", messageID)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodDelete,
-			OKStatus: http.StatusNoContent,
-			URL: fmt.Sprintf(
-				"https://api.twitch.tv/helix/moderation/chat?%s",
-				params.Encode(),
-			),
-		}),
-		"executing delete request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodDelete,
+		OKStatus: http.StatusNoContent,
+		URL: fmt.Sprintf(
+			"https://api.twitch.tv/helix/moderation/chat?%s",
+			params.Encode(),
+		),
+	}); err != nil {
+		return fmt.Errorf("executing delete request: %w", err)
+	}
+
+	return nil
 }
 
 // UnbanUser removes a timeout or ban given to the user in the channel
 func (c *Client) UnbanUser(ctx context.Context, channel, username string) error {
 	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting bot user-id")
+		return fmt.Errorf("getting bot user-id: %w", err)
 	}
 
 	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
-		return errors.Wrap(err, "getting channel user-id")
+		return fmt.Errorf("getting channel user-id: %w", err)
 	}
 
 	userID, err := c.GetIDForUsername(ctx, username)
 	if err != nil {
-		return errors.Wrap(err, "getting target user-id")
+		return fmt.Errorf("getting target user-id: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodDelete,
-			OKStatus: http.StatusNoContent,
-			URL: fmt.Sprintf(
-				"https://api.twitch.tv/helix/moderation/bans?broadcaster_id=%s&moderator_id=%s&user_id=%s",
-				channelID, botID, userID,
-			),
-		}),
-		"executing unban request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodDelete,
+		OKStatus: http.StatusNoContent,
+		URL: fmt.Sprintf(
+			"https://api.twitch.tv/helix/moderation/bans?broadcaster_id=%s&moderator_id=%s&user_id=%s",
+			channelID, botID, userID,
+		),
+	}); err != nil {
+		return fmt.Errorf("executing unban request: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateShieldMode activates or deactivates the Shield Mode in the given channel
 func (c *Client) UpdateShieldMode(ctx context.Context, channel string, enable bool) error {
 	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting bot user-id")
+		return fmt.Errorf("getting bot user-id: %w", err)
 	}
 
 	channelID, err := c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
 	if err != nil {
-		return errors.Wrap(err, "getting channel user-id")
+		return fmt.Errorf("getting channel user-id: %w", err)
 	}
 
 	body := new(bytes.Buffer)
 	if err = json.NewEncoder(body).Encode(map[string]bool{
 		"is_active": enable,
 	}); err != nil {
-		return errors.Wrap(err, "encoding payload")
+		return fmt.Errorf("encoding payload: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodPut,
-			OKStatus: http.StatusOK,
-			Body:     body,
-			URL: fmt.Sprintf(
-				"https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=%s&moderator_id=%s",
-				channelID, botID,
-			),
-		}),
-		"executing update request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodPut,
+		OKStatus: http.StatusOK,
+		Body:     body,
+		URL: fmt.Sprintf(
+			"https://api.twitch.tv/helix/moderation/shield_mode?broadcaster_id=%s&moderator_id=%s",
+			channelID, botID,
+		),
+	}); err != nil {
+		return fmt.Errorf("executing update request: %w", err)
+	}
+
+	return nil
 }

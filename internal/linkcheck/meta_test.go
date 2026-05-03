@@ -37,5 +37,5 @@ func TestResolveMetaRedir(t *testing.T) {
 
 	redir, err = resolveMetaRedirect(testDoc)
 	require.ErrorIs(t, err, errNoMetaRedir)
-	assert.Equal(t, "", redir)
+	assert.Empty(t, redir)
 }

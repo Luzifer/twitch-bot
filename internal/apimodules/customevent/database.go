@@ -3,13 +3,13 @@ package customevent
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gofrs/uuid/v3"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -26,43 +26,46 @@ type (
 )
 
 func cleanupStoredEvents(db database.Connector) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Where("scheduled_at < ?", time.Now().Truncate(time.Second).Add(cleanupTimeout*-1).UTC()).
-				Delete(&storedCustomEvent{}).
-				Error
-		}),
-		"deleting past events",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Where("scheduled_at < ?", time.Now().Truncate(time.Second).Add(cleanupTimeout*-1).UTC()).
+			Delete(&storedCustomEvent{}).
+			Error
+	}); err != nil {
+		return fmt.Errorf("deleting past events: %w", err)
+	}
+
+	return nil
 }
 
 func getFutureEvents(db database.Connector) (out []storedCustomEvent, err error) {
-	return out, errors.Wrap(
-		helpers.Retry(func() error {
-			return db.DB().
-				Where("scheduled_at >= ?", time.Now().Truncate(time.Second).UTC()).
-				Find(&out).
-				Error
-		}),
-		"getting events from database",
-	)
+	if err := helpers.Retry(func() error {
+		return db.DB().
+			Where("scheduled_at >= ?", time.Now().Truncate(time.Second).UTC()).
+			Find(&out).
+			Error
+	}); err != nil {
+		return nil, fmt.Errorf("getting events from database: %w", err)
+	}
+
+	return out, nil
 }
 
 func storeEvent(db database.Connector, scheduleAt time.Time, channel string, fields *fieldcollection.FieldCollection) error {
 	fieldBuf := new(bytes.Buffer)
 	if err := json.NewEncoder(fieldBuf).Encode(fields); err != nil {
-		return errors.Wrap(err, "marshalling fields")
+		return fmt.Errorf("marshalling fields: %w", err)
 	}
 
-	return errors.Wrap(
-		helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
-			return tx.Create(storedCustomEvent{
-				ID:          uuid.Must(uuid.NewV4()).String(),
-				Channel:     channel,
-				Fields:      fieldBuf.String(),
-				ScheduledAt: scheduleAt.Truncate(time.Second),
-			}).Error
-		}),
-		"storing event",
-	)
+	if err := helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
+		return tx.Create(storedCustomEvent{
+			ID:          uuid.Must(uuid.NewV4()).String(),
+			Channel:     channel,
+			Fields:      fieldBuf.String(),
+			ScheduledAt: scheduleAt.Truncate(time.Second),
+		}).Error
+	}); err != nil {
+		return fmt.Errorf("storing event: %w", err)
+	}
+
+	return nil
 }

@@ -1,13 +1,14 @@
 package plugins
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 	"gorm.io/gorm"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )

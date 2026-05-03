@@ -3,13 +3,11 @@ package main
 import (
 	"sync"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
-
-func ptrStr(s string) *string { return &s }
 
 var (
 	registeredEventHandlers     []plugins.EventHandlerFunc
@@ -108,6 +106,8 @@ func notifyEventHandlers(event string, eventData *fieldcollection.FieldCollectio
 		}
 	}
 }
+
+func ptrStr(s string) *string { return &s }
 
 func registerEventHandlers(eh plugins.EventHandlerFunc) error {
 	registeredEventHandlersLock.Lock()

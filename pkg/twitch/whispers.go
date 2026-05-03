@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 // SendWhisper sends a whisper from the bot to the specified user.
@@ -23,30 +21,31 @@ func (c *Client) SendWhisper(ctx context.Context, toUser, message string) error 
 
 	botID, _, err := c.GetAuthorizedUser(ctx)
 	if err != nil {
-		return errors.Wrap(err, "getting bot user-id")
+		return fmt.Errorf("getting bot user-id: %w", err)
 	}
 
 	targetID, err := c.GetIDForUsername(ctx, toUser)
 	if err != nil {
-		return errors.Wrap(err, "getting target user-id")
+		return fmt.Errorf("getting target user-id: %w", err)
 	}
 
 	body := new(bytes.Buffer)
 	if err = json.NewEncoder(body).Encode(payload); err != nil {
-		return errors.Wrap(err, "encoding payload")
+		return fmt.Errorf("encoding payload: %w", err)
 	}
 
-	return errors.Wrap(
-		c.Request(ctx, ClientRequestOpts{
-			AuthType: AuthTypeBearerToken,
-			Method:   http.MethodPost,
-			OKStatus: http.StatusNoContent,
-			Body:     body,
-			URL: fmt.Sprintf(
-				"https://api.twitch.tv/helix/whispers?from_user_id=%s&to_user_id=%s",
-				botID, targetID,
-			),
-		}),
-		"executing whisper request",
-	)
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeBearerToken,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusNoContent,
+		Body:     body,
+		URL: fmt.Sprintf(
+			"https://api.twitch.tv/helix/whispers?from_user_id=%s&to_user_id=%s",
+			botID, targetID,
+		),
+	}); err != nil {
+		return fmt.Errorf("executing whisper request: %w", err)
+	}
+
+	return nil
 }

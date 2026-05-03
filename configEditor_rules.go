@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -80,7 +81,7 @@ func registerEditorRulesRoutes() {
 func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -119,7 +120,7 @@ func configEditorRulesAdd(w http.ResponseWriter, r *http.Request) {
 func configEditorRulesDelete(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -157,7 +158,7 @@ func configEditorRulesGet(w http.ResponseWriter, _ *http.Request) {
 func configEditorRulesUpdate(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -105,18 +104,18 @@ func registerEditorGeneralConfigRoutes() {
 func configEditorHandleGeneralAddAuthToken(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var payload configAuthToken
 	if err = json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, errors.Wrap(err, "reading payload").Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Errorf("reading payload: %w", err).Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err = fillAuthToken(&payload); err != nil {
-		http.Error(w, errors.Wrap(err, "hashing token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("hashing token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -173,7 +172,7 @@ func configEditorHandleGeneralAuthURLs(w http.ResponseWriter, _ *http.Request) {
 func configEditorHandleGeneralDeleteAuthToken(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -238,7 +237,7 @@ func configEditorHandleGeneralListAuthTokens(w http.ResponseWriter, _ *http.Requ
 func configEditorHandleGeneralUpdate(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -252,7 +251,7 @@ func configEditorHandleGeneralUpdate(w http.ResponseWriter, r *http.Request) {
 	for i := range payload.BotEditors {
 		usr, err := twitchClient.GetUserInformation(r.Context(), payload.BotEditors[i])
 		if err != nil {
-			http.Error(w, errors.Wrap(err, "getting bot editor profile").Error(), http.StatusInternalServerError)
+			http.Error(w, fmt.Errorf("getting bot editor profile: %w", err).Error(), http.StatusInternalServerError)
 			return
 		}
 

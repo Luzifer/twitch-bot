@@ -8,13 +8,16 @@ import (
 	"strings"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
+	"gopkg.in/irc.v4"
+
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"gopkg.in/irc.v4"
 )
 
 const actorName = "marker"
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -56,8 +59,6 @@ func Register(args plugins.RegistrationArguments) error {
 
 	return nil
 }
-
-type actor struct{}
 
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	channel := plugins.DeriveChannel(m, eventData)

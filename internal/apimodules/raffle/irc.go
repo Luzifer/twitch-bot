@@ -2,14 +2,15 @@ package raffle
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -64,12 +65,12 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 			// We don't need to care, that was no raffle input
 			return nil
 		}
-		return errors.Wrap(err, "fetching raffle")
+		return fmt.Errorf("fetching raffle: %w", err)
 	}
 
 	raffleChan, err := tcGetter(r.Channel)
 	if err != nil {
-		return errors.Wrap(err, "getting twitch client for raffle")
+		return fmt.Errorf("getting twitch client for raffle: %w", err)
 	}
 
 	since, err := raffleChan.GetFollowDate(context.Background(), user, strings.TrimLeft(channel, "#"))
@@ -81,7 +82,7 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 		doesFollow = false
 
 	default:
-		return errors.Wrap(err, "checking follow for user")
+		return fmt.Errorf("checking follow for user: %w", err)
 	}
 
 	re := raffleEntry{
@@ -120,10 +121,11 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 
 	default:
 		// Well. No luck, no entry.
-		return errors.Wrap(
-			r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields),
-			"sending entry-failed chat message",
-		)
+		if err = r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields); err != nil {
+			return fmt.Errorf("sending entry-failed chat message: %w", err)
+		}
+
+		return nil
 	}
 
 	// We have everything we need to create an entry
@@ -133,14 +135,17 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 			"user_id": re.UserID,
 			"user":    re.UserLogin,
 		}).WithError(err).Error("creating raffle entry")
-		return errors.Wrap(
-			r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields),
-			"sending entry-failed chat message",
-		)
+
+		if err = r.SendEvent(raffleMessageEventEntryFailed, raffleEventFields); err != nil {
+			return fmt.Errorf("sending entry-failed chat message: %w", err)
+		}
+
+		return nil
 	}
 
-	return errors.Wrap(
-		r.SendEvent(raffleMessageEventEntry, raffleEventFields),
-		"sending entry chat message",
-	)
+	if err = r.SendEvent(raffleMessageEventEntry, raffleEventFields); err != nil {
+		return fmt.Errorf("sending entry chat message: %w", err)
+	}
+
+	return nil
 }

@@ -1,18 +1,18 @@
 package main
 
 import (
+	"errors"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 func init() {
-	tplFuncs.Register("arg", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
+	tplFuncs.Register("arg", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) any {
 		return func(arg int) (string, error) {
 			msgParts := strings.Split(m.Trailing(), " ")
 			if len(msgParts) <= arg {
@@ -31,7 +31,7 @@ func init() {
 		},
 	})
 
-	tplFuncs.Register("chatterHasBadge", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
+	tplFuncs.Register("chatterHasBadge", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) any {
 		return func(badge string) bool {
 			badges := twitch.ParseBadgeLevels(m)
 			return badges.Has(badge)
@@ -58,7 +58,7 @@ func init() {
 		},
 	)
 
-	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
+	tplFuncs.Register("group", func(m *irc.Message, r *plugins.Rule, _ *fieldcollection.FieldCollection) any {
 		return func(idx int, fallback ...string) (string, error) {
 			fields := r.GetMatchMessage().FindStringSubmatch(m.Trailing())
 			if len(fields) <= idx {
@@ -95,7 +95,7 @@ func init() {
 		},
 	)
 
-	tplFuncs.Register("tag", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) interface{} {
+	tplFuncs.Register("tag", func(m *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection) any {
 		return func(tag string) string { return m.Tags[tag] }
 	}, plugins.TemplateFuncDocumentation{
 		Description: "Takes the message sent to the channel, returns the value of the tag specified",

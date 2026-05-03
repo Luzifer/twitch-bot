@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,13 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/mitchellh/hashstructure/v2"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
@@ -28,11 +28,6 @@ const (
 
 	remoteRuleFetchTimeout = 5 * time.Second
 )
-
-// ErrStopRuleExecution is a way for actions to terminate execution
-// of the current rule gracefully. No actions after this has been
-// returned will be executed and no error state will be set
-var ErrStopRuleExecution = errors.New("stop rule execution now")
 
 type (
 	// Rule represents a rule in the bot configuration
@@ -78,6 +73,66 @@ type (
 		Attributes *fieldcollection.FieldCollection `json:"attributes" yaml:"attributes,omitempty"`
 	}
 )
+
+// ErrStopRuleExecution is a way for actions to terminate execution
+// of the current rule gracefully. No actions after this has been
+// returned will be executed and no error state will be set
+var ErrStopRuleExecution = errors.New("stop rule execution now")
+
+// CanExecuteCooldowns re-checks only the cooldown-related matchers for a rule.
+func (r *Rule) CanExecuteCooldowns(m *irc.Message, timerStore TimerStore, eventData *fieldcollection.FieldCollection) bool {
+	r.timerStore = timerStore
+
+	var (
+		badges = twitch.ParseBadgeLevels(m)
+		logger = logrus.WithFields(logrus.Fields{
+			"msg":  m,
+			"rule": r,
+		})
+	)
+
+	for _, matcher := range []func(*logrus.Entry, *irc.Message, *string, twitch.BadgeCollection, *fieldcollection.FieldCollection) bool{
+		r.allowExecuteRuleCooldown,
+		r.allowExecuteChannelCooldown,
+		r.allowExecuteUserCooldown,
+	} {
+		if !matcher(logger, m, nil, badges, eventData) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// CooldownLockKey derives the lock key to use for executing the rule.
+// The key is scoped to the narrowest cooldown dimension configured on the rule.
+func (r *Rule) CooldownLockKey(m *irc.Message, eventData *fieldcollection.FieldCollection) string {
+	key := path.Join("rule-execution", r.MatcherID())
+
+	switch {
+	case r.ChannelCooldown != nil && DeriveChannel(m, eventData) != "":
+		return path.Join(key, "channel", DeriveChannel(m, eventData))
+	case r.UserCooldown != nil && DeriveUser(m, eventData) != "":
+		return path.Join(key, "user", DeriveUser(m, eventData))
+	default:
+		return key
+	}
+}
+
+// GetMatchMessage returns the cached Regexp if available or compiles
+// the given match string into a Regexp
+func (r *Rule) GetMatchMessage() *regexp.Regexp {
+	var err error
+
+	if r.matchMessage == nil {
+		if r.matchMessage, err = regexp.Compile(*r.MatchMessage); err != nil {
+			logrus.WithError(err).Error("Unable to compile expression")
+			return nil
+		}
+	}
+
+	return r.matchMessage
+}
 
 // MatcherID returns the rule UUID or a hash for the rule if no UUID
 // is available
@@ -128,61 +183,6 @@ func (r *Rule) Matches(m *irc.Message, event *string, timerStore TimerStore, msg
 	return true
 }
 
-// CooldownLockKey derives the lock key to use for executing the rule.
-// The key is scoped to the narrowest cooldown dimension configured on the rule.
-func (r *Rule) CooldownLockKey(m *irc.Message, eventData *fieldcollection.FieldCollection) string {
-	key := path.Join("rule-execution", r.MatcherID())
-
-	switch {
-	case r.ChannelCooldown != nil && DeriveChannel(m, eventData) != "":
-		return path.Join(key, "channel", DeriveChannel(m, eventData))
-	case r.UserCooldown != nil && DeriveUser(m, eventData) != "":
-		return path.Join(key, "user", DeriveUser(m, eventData))
-	default:
-		return key
-	}
-}
-
-// CanExecuteCooldowns re-checks only the cooldown-related matchers for a rule.
-func (r *Rule) CanExecuteCooldowns(m *irc.Message, timerStore TimerStore, eventData *fieldcollection.FieldCollection) bool {
-	r.timerStore = timerStore
-
-	var (
-		badges = twitch.ParseBadgeLevels(m)
-		logger = logrus.WithFields(logrus.Fields{
-			"msg":  m,
-			"rule": r,
-		})
-	)
-
-	for _, matcher := range []func(*logrus.Entry, *irc.Message, *string, twitch.BadgeCollection, *fieldcollection.FieldCollection) bool{
-		r.allowExecuteRuleCooldown,
-		r.allowExecuteChannelCooldown,
-		r.allowExecuteUserCooldown,
-	} {
-		if !matcher(logger, m, nil, badges, eventData) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// GetMatchMessage returns the cached Regexp if available or compiles
-// the given match string into a Regexp
-func (r *Rule) GetMatchMessage() *regexp.Regexp {
-	var err error
-
-	if r.matchMessage == nil {
-		if r.matchMessage, err = regexp.Compile(*r.MatchMessage); err != nil {
-			logrus.WithError(err).Error("Unable to compile expression")
-			return nil
-		}
-	}
-
-	return r.matchMessage
-}
-
 // SetCooldown uses the given TimerStore to set the cooldowns for the
 // Rule after execution
 func (r *Rule) SetCooldown(timerStore TimerStore, m *irc.Message, evtData *fieldcollection.FieldCollection) {
@@ -218,7 +218,7 @@ func (r *Rule) UpdateFromSubscription(ctx context.Context) (bool, error) {
 
 	remoteURL, err := url.Parse(*r.SubscribeFrom)
 	if err != nil {
-		return false, errors.Wrap(err, "parsing remote subscription url")
+		return false, fmt.Errorf("parsing remote subscription url: %w", err)
 	}
 
 	reqCtx, cancel := context.WithTimeout(ctx, remoteRuleFetchTimeout)
@@ -226,12 +226,12 @@ func (r *Rule) UpdateFromSubscription(ctx context.Context) (bool, error) {
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, remoteURL.String(), nil)
 	if err != nil {
-		return false, errors.Wrap(err, "assembling request")
+		return false, fmt.Errorf("assembling request: %w", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, errors.Wrap(err, "executing request")
+		return false, fmt.Errorf("executing request: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -240,12 +240,12 @@ func (r *Rule) UpdateFromSubscription(ctx context.Context) (bool, error) {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return false, errors.Errorf("unxpected HTTP status %d", resp.StatusCode)
+		return false, fmt.Errorf("unxpected HTTP status %d", resp.StatusCode)
 	}
 
 	inputType, err := r.fileTypeFromRequest(remoteURL, resp)
 	if err != nil {
-		return false, errors.Wrap(err, "detecting content type")
+		return false, fmt.Errorf("detecting content type: %w", err)
 	}
 
 	var newRule Rule
@@ -261,7 +261,7 @@ func (r *Rule) UpdateFromSubscription(ctx context.Context) (bool, error) {
 	}
 
 	if err != nil {
-		return false, errors.Wrap(err, "decoding remote rule")
+		return false, fmt.Errorf("decoding remote rule: %w", err)
 	}
 
 	if newRule.hash() == prevHash {
@@ -278,13 +278,13 @@ func (r *Rule) UpdateFromSubscription(ctx context.Context) (bool, error) {
 func (r Rule) Validate(tplValidate TemplateValidatorFunc) error {
 	if r.MatchMessage != nil {
 		if _, err := regexp.Compile(*r.MatchMessage); err != nil {
-			return errors.Wrap(err, "compiling match_message field regex")
+			return fmt.Errorf("compiling match_message field regex: %w", err)
 		}
 	}
 
 	if r.DisableOnTemplate != nil {
 		if err := tplValidate(*r.DisableOnTemplate); err != nil {
-			return errors.Wrap(err, "parsing disable_on_template template")
+			return fmt.Errorf("parsing disable_on_template template: %w", err)
 		}
 	}
 
@@ -308,13 +308,7 @@ func (r *Rule) allowExecuteBadgeWhitelist(_ *logrus.Entry, _ *irc.Message, _ *st
 		return true
 	}
 
-	for _, b := range r.EnableOn {
-		if badges.Has(b) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(r.EnableOn, badges.Has)
 }
 
 func (r *Rule) allowExecuteChannelCooldown(logger *logrus.Entry, m *irc.Message, _ *string, badges twitch.BadgeCollection, evtData *fieldcollection.FieldCollection) bool {
@@ -333,13 +327,7 @@ func (r *Rule) allowExecuteChannelCooldown(logger *logrus.Entry, m *irc.Message,
 		return true
 	}
 
-	for _, b := range r.SkipCooldownFor {
-		if badges.Has(b) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(r.SkipCooldownFor, badges.Has)
 }
 
 func (r *Rule) allowExecuteChannelWhitelist(logger *logrus.Entry, m *irc.Message, _ *string, _ twitch.BadgeCollection, evtData *fieldcollection.FieldCollection) bool {
@@ -541,13 +529,7 @@ func (r *Rule) allowExecuteRuleCooldown(logger *logrus.Entry, _ *irc.Message, _ 
 		return true
 	}
 
-	for _, b := range r.SkipCooldownFor {
-		if badges.Has(b) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(r.SkipCooldownFor, badges.Has)
 }
 
 func (r *Rule) allowExecuteUserCooldown(logger *logrus.Entry, m *irc.Message, _ *string, badges twitch.BadgeCollection, evtData *fieldcollection.FieldCollection) bool {
@@ -566,13 +548,7 @@ func (r *Rule) allowExecuteUserCooldown(logger *logrus.Entry, m *irc.Message, _ 
 		return true
 	}
 
-	for _, b := range r.SkipCooldownFor {
-		if badges.Has(b) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(r.SkipCooldownFor, badges.Has)
 }
 
 func (r *Rule) allowExecuteUserWhitelist(logger *logrus.Entry, m *irc.Message, _ *string, _ twitch.BadgeCollection, evtData *fieldcollection.FieldCollection) bool {
@@ -612,7 +588,7 @@ func (Rule) fileTypeFromRequest(remoteURL *url.URL, resp *http.Response) (string
 func (r Rule) hash() string {
 	h, err := hashstructure.Hash(r, hashstructure.FormatV2, nil)
 	if err != nil {
-		panic(errors.Wrap(err, "hashing rule"))
+		panic(fmt.Errorf("hashing rule: %w", err))
 	}
 	return fmt.Sprintf("hashstructure:%x", h)
 }

@@ -2,15 +2,15 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -53,13 +53,15 @@ func formatMessage(tplString string, m *irc.Message, r *plugins.Rule, fields *fi
 		Funcs(tplFuncs.GetFuncMap(m, r, compiledFields)).
 		Parse(tplString)
 	if err != nil {
-		return "", errors.Wrap(err, "parse template")
+		return "", fmt.Errorf("parse template: %w", err)
 	}
 
 	buf := new(bytes.Buffer)
-	err = tpl.Execute(buf, compiledFields.Data())
+	if err = tpl.Execute(buf, compiledFields.Data()); err != nil {
+		return "", fmt.Errorf("execute template: %w", err)
+	}
 
-	return strings.TrimSpace(buf.String()), errors.Wrap(err, "execute template")
+	return strings.TrimSpace(buf.String()), nil
 }
 
 func formatMessageFieldChannel(compiledFields *fieldcollection.FieldCollection, m *irc.Message, fields *fieldcollection.FieldCollection) {
@@ -92,9 +94,12 @@ func validateTemplate(tplString string) error {
 	// Template in frontend supports newlines, messages do not
 	tplString = stripNewline.ReplaceAllString(tplString, " ")
 
-	_, err := template.
+	if _, err := template.
 		New(tplString).
 		Funcs(tplFuncs.GetFuncMap(nil, nil, fieldcollection.NewFieldCollection())).
-		Parse(tplString)
-	return errors.Wrap(err, "parsing template")
+		Parse(tplString); err != nil {
+		return fmt.Errorf("parsing template: %w", err)
+	}
+
+	return nil
 }

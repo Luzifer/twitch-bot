@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -28,27 +27,30 @@ func newGitHelper(repoDir string) *gitHelper {
 func (g gitHelper) CommitChange(filename, authorName, authorEmail, summary string) error {
 	repo, err := git.PlainOpen(g.repoDir)
 	if err != nil {
-		return errors.Wrap(err, "opening git repo")
+		return fmt.Errorf("opening git repo: %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return errors.Wrap(err, "getting worktree")
+		return fmt.Errorf("getting worktree: %w", err)
 	}
 
 	if _, err = wt.Add(filename); err != nil {
-		return errors.Wrap(err, "adding file to index")
+		return fmt.Errorf("adding file to index: %w", err)
 	}
 
 	if authorEmail == "" {
 		authorEmail = authorCloak
 	}
 
-	_, err = wt.Commit(summary, &git.CommitOptions{
+	if _, err = wt.Commit(summary, &git.CommitOptions{
 		Author:    g.getSignature(authorName, authorEmail),
 		Committer: g.getSignature(fmt.Sprintf(committerName, version), committerEmail),
-	})
-	return errors.Wrap(err, "issuing commit")
+	}); err != nil {
+		return fmt.Errorf("issuing commit: %w", err)
+	}
+
+	return nil
 }
 
 func (g gitHelper) HasRepo() bool {

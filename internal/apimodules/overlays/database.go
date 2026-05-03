@@ -3,14 +3,15 @@ package overlays
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"gorm.io/gorm"
-
 	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/go_helpers/fieldcollection"
+	"gorm.io/gorm"
+
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 )
@@ -28,7 +29,7 @@ type (
 func addChannelEvent(db database.Connector, channel string, evt socketMessage) (evtID uint64, err error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(evt.Fields); err != nil {
-		return 0, errors.Wrap(err, "encoding fields")
+		return 0, fmt.Errorf("encoding fields: %w", err)
 	}
 
 	storEvt := &overlaysEvent{
@@ -41,7 +42,7 @@ func addChannelEvent(db database.Connector, channel string, evt socketMessage) (
 	if err = helpers.RetryTransaction(db.DB(), func(tx *gorm.DB) error {
 		return tx.Create(storEvt).Error
 	}); err != nil {
-		return 0, errors.Wrap(err, "storing event to database")
+		return 0, fmt.Errorf("storing event to database: %w", err)
 	}
 
 	return storEvt.ID, nil
@@ -53,14 +54,14 @@ func getChannelEvents(db database.Connector, channel string) ([]socketMessage, e
 	if err := helpers.Retry(func() error {
 		return db.DB().Where("channel = ?", channel).Order("created_at").Find(&evts).Error
 	}); err != nil {
-		return nil, errors.Wrap(err, "querying channel events")
+		return nil, fmt.Errorf("querying channel events: %w", err)
 	}
 
 	var out []socketMessage
 	for _, e := range evts {
 		sm, err := e.ToSocketMessage()
 		if err != nil {
-			return nil, errors.Wrap(err, "transforming event")
+			return nil, fmt.Errorf("transforming event: %w", err)
 		}
 
 		out = append(out, sm)
@@ -79,7 +80,7 @@ func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) 
 		}
 		return err
 	}); err != nil {
-		return socketMessage{}, errors.Wrap(err, "fetching event")
+		return socketMessage{}, fmt.Errorf("fetching event: %w", err)
 	}
 
 	return evt.ToSocketMessage()
@@ -88,7 +89,7 @@ func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) 
 func (o overlaysEvent) ToSocketMessage() (socketMessage, error) {
 	fields := new(fieldcollection.FieldCollection)
 	if err := json.NewDecoder(strings.NewReader(o.Fields)).Decode(fields); err != nil {
-		return socketMessage{}, errors.Wrap(err, "decoding fields")
+		return socketMessage{}, fmt.Errorf("decoding fields: %w", err)
 	}
 
 	return socketMessage{

@@ -6,12 +6,15 @@ import (
 	"regexp"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-const frontendNotifyTypeReload = "configReload"
+const (
+	cronValidationReturnSegments = 3
+	frontendNotifyTypeReload     = "configReload"
+)
 
 var frontendNotifyHooks = newHooker()
 
@@ -122,7 +125,7 @@ func registerEditorGlobalMethods() {
 		},
 	} {
 		if err := registerRoute(rd); err != nil {
-			log.WithError(err).Fatal("Unable to register config editor route")
+			logrus.WithError(err).Fatal("Unable to register config editor route")
 		}
 	}
 }
@@ -160,10 +163,14 @@ func configEditorGlobalGetUser(w http.ResponseWriter, r *http.Request) {
 func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.WithError(err).Error("Unable to initialize websocket")
+		logrus.WithError(err).Error("Unable to initialize websocket")
 		return
 	}
-	defer conn.Close() //nolint:errcheck
+	defer func() {
+		if err := conn.Close(); err != nil {
+			logrus.WithError(err).Trace("closing websocket connection")
+		}
+	}()
 
 	var (
 		frontendNotify = make(chan string, 1)
@@ -182,7 +189,7 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteJSON(socketMsg{
 				MsgType: msgType,
 			}); err != nil {
-				log.WithError(err).Debug("Unable to send websocket notification")
+				logrus.WithError(err).Debug("Unable to send websocket notification")
 				return
 			}
 
@@ -190,7 +197,7 @@ func configEditorGlobalSubscribe(w http.ResponseWriter, r *http.Request) {
 			if err := conn.WriteJSON(socketMsg{
 				MsgType: "ping",
 			}); err != nil {
-				log.WithError(err).Debug("Unable to send websocket ping")
+				logrus.WithError(err).Debug("Unable to send websocket ping")
 				return
 			}
 		}
@@ -219,7 +226,7 @@ func configEditorGlobalValidateCron(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	for i := 0; i < 3; i++ {
+	for range cronValidationReturnSegments {
 		lt = sched.Next(lt)
 		out = append(out, lt)
 	}

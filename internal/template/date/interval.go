@@ -40,15 +40,15 @@ func NewInterval(a, b time.Time) (i Interval) {
 	i.Seconds = u.Second() - l.Second()
 
 	if i.Seconds < 0 {
-		i.Minutes, i.Seconds = i.Minutes-1, i.Seconds+60 //nolint:mnd
+		i.Minutes, i.Seconds = i.Minutes-1, i.Seconds+60 //revive:disable-line:add-constant // single use, clear from usage
 	}
 
 	if i.Minutes < 0 {
-		i.Hours, i.Minutes = i.Hours-1, i.Minutes+60 //nolint:mnd
+		i.Hours, i.Minutes = i.Hours-1, i.Minutes+60 //revive:disable-line:add-constant // single use, clear from usage
 	}
 
 	if i.Hours < 0 {
-		i.Days, i.Hours = i.Days-1, i.Hours+24 //nolint:mnd
+		i.Days, i.Hours = i.Days-1, i.Hours+24 //revive:disable-line:add-constant // single use, clear from usage
 	}
 
 	if i.Days < 0 {
@@ -57,7 +57,7 @@ func NewInterval(a, b time.Time) (i Interval) {
 	}
 
 	if i.Months < 0 {
-		i.Years, i.Months = i.Years-1, i.Months+12 //nolint:mnd
+		i.Years, i.Months = i.Years-1, i.Months+12 //revive:disable-line:add-constant // single use, clear from usage
 	}
 
 	return i

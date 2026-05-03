@@ -2,13 +2,12 @@ package twitch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type (
@@ -38,11 +37,11 @@ func (c *Client) GetAuthorizedUser(ctx context.Context) (userID string, userName
 		Out:      &payload,
 		URL:      "https://api.twitch.tv/helix/users",
 	}); err != nil {
-		return "", "", errors.Wrap(err, "request channel info")
+		return "", "", fmt.Errorf("request channel info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", "", fmt.Errorf("unexpected number of users returned: %d", l)
 	}
 
 	return payload.Data[0].ID, payload.Data[0].Login, nil
@@ -68,11 +67,11 @@ func (c *Client) GetDisplayNameForUser(ctx context.Context, username string) (st
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
 	}); err != nil {
-		return "", errors.Wrap(err, "request channel info")
+		return "", fmt.Errorf("request channel info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", fmt.Errorf("unexpected number of users returned: %d", l)
 	}
 
 	// The DisplayName for an username will not change (often), cache for a decent time
@@ -91,11 +90,11 @@ func (c *Client) GetFollowDate(ctx context.Context, from, to string) (time.Time,
 
 	fromID, err := c.GetIDForUsername(ctx, from)
 	if err != nil {
-		return time.Time{}, errors.Wrap(err, "getting id for 'from' user")
+		return time.Time{}, fmt.Errorf("getting id for 'from' user: %w", err)
 	}
 	toID, err := c.GetIDForUsername(ctx, to)
 	if err != nil {
-		return time.Time{}, errors.Wrap(err, "getting id for 'to' user")
+		return time.Time{}, fmt.Errorf("getting id for 'to' user: %w", err)
 	}
 
 	var payload struct {
@@ -111,7 +110,7 @@ func (c *Client) GetFollowDate(ctx context.Context, from, to string) (time.Time,
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/channels/followers?broadcaster_id=%s&user_id=%s", toID, fromID),
 	}); err != nil {
-		return time.Time{}, errors.Wrap(err, "request follow info")
+		return time.Time{}, fmt.Errorf("request follow info: %w", err)
 	}
 
 	switch len(payload.Data) {
@@ -122,7 +121,7 @@ func (c *Client) GetFollowDate(ctx context.Context, from, to string) (time.Time,
 		// Handled below, no error
 
 	default:
-		return time.Time{}, errors.Errorf("unexpected number of records returned: %d", len(payload.Data))
+		return time.Time{}, fmt.Errorf("unexpected number of records returned: %d", len(payload.Data))
 	}
 
 	// Follow date will not change that often, cache for a long time
@@ -152,11 +151,11 @@ func (c *Client) GetIDForUsername(ctx context.Context, username string) (string,
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", username),
 	}); err != nil {
-		return "", errors.Wrap(err, "request channel info")
+		return "", fmt.Errorf("request channel info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", fmt.Errorf("unexpected number of users returned: %d", l)
 	}
 
 	// The ID for an username will not change (often), cache for a long time
@@ -184,11 +183,11 @@ func (c *Client) GetUsernameForID(ctx context.Context, id string) (string, error
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?id=%s", id),
 	}); err != nil {
-		return "", errors.Wrap(err, "request channel info")
+		return "", fmt.Errorf("request channel info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return "", errors.Errorf("unexpected number of users returned: %d", l)
+		return "", fmt.Errorf("unexpected number of users returned: %d", l)
 	}
 
 	// The username for an ID will not change (often), cache for a long time
@@ -227,11 +226,11 @@ func (c *Client) GetUserInformation(ctx context.Context, user string) (*User, er
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/users?%s=%s", param, user),
 	}); err != nil {
-		return nil, errors.Wrap(err, "request user info")
+		return nil, fmt.Errorf("request user info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return nil, errors.Errorf("unexpected number of records returned: %d", l)
+		return nil, fmt.Errorf("unexpected number of records returned: %d", l)
 	}
 
 	// User info will not change that often, cache for a long time

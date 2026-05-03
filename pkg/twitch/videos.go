@@ -11,6 +11,29 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 )
 
+// List of filters for GetVideoOpts.Period
+const (
+	GetVideoOptsPeriodAll   GetVideoOptsPeriod = "all"
+	GetVideoOptsPeriodDay   GetVideoOptsPeriod = "day"
+	GetVideoOptsPeriodMonth GetVideoOptsPeriod = "month"
+	GetVideoOptsPeriodWeek  GetVideoOptsPeriod = "week"
+)
+
+// List of sort options for GetVideoOpts.Sort
+const (
+	GetVideoOptsSortTime     GetVideoOptsSort = "time"
+	GetVideoOptsSortTrending GetVideoOptsSort = "trending"
+	GetVideoOptsSortViews    GetVideoOptsSort = "views"
+)
+
+// List of types for GetVideoOpts.Type
+const (
+	GetVideoOptsTypeAll       GetVideoOptsType = "all"
+	GetVideoOptsTypeArchive   GetVideoOptsType = "archive"
+	GetVideoOptsTypeHighlight GetVideoOptsType = "highlight"
+	GetVideoOptsTypeUpload    GetVideoOptsType = "upload"
+)
+
 type (
 	// GetVideoOpts contain the query parameter for the GetVideos query
 	//
@@ -60,29 +83,6 @@ type (
 			Offset   int64 `json:"offset"`
 		} `json:"muted_segments"`
 	}
-)
-
-// List of filters for GetVideoOpts.Period
-const (
-	GetVideoOptsPeriodAll   GetVideoOptsPeriod = "all"
-	GetVideoOptsPeriodDay   GetVideoOptsPeriod = "day"
-	GetVideoOptsPeriodMonth GetVideoOptsPeriod = "month"
-	GetVideoOptsPeriodWeek  GetVideoOptsPeriod = "week"
-)
-
-// List of sort options for GetVideoOpts.Sort
-const (
-	GetVideoOptsSortTime     GetVideoOptsSort = "time"
-	GetVideoOptsSortTrending GetVideoOptsSort = "trending"
-	GetVideoOptsSortViews    GetVideoOptsSort = "views"
-)
-
-// List of types for GetVideoOpts.Type
-const (
-	GetVideoOptsTypeAll       GetVideoOptsType = "all"
-	GetVideoOptsTypeArchive   GetVideoOptsType = "archive"
-	GetVideoOptsTypeHighlight GetVideoOptsType = "highlight"
-	GetVideoOptsTypeUpload    GetVideoOptsType = "upload"
 )
 
 // GetVideos fetches information about one or more published videos

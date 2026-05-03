@@ -13,7 +13,11 @@ type (
 	}
 )
 
-func newHooker() *hooker { return &hooker{hooks: map[string]func(any){}} }
+func newHooker() *hooker {
+	return &hooker{
+		hooks: make(map[string]func(any)),
+	}
+}
 
 func (h *hooker) Ping(payload any) {
 	h.lock.RLock()

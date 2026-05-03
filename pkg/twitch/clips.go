@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const clipCacheTimeout = 10 * time.Minute // Clips do not change that fast
@@ -46,7 +44,7 @@ type (
 func (c *Client) CreateClip(ctx context.Context, channel string, addDelay bool) (ccr CreateClipResponse, err error) {
 	id, err := c.GetIDForUsername(ctx, channel)
 	if err != nil {
-		return ccr, errors.Wrap(err, "getting ID for channel")
+		return ccr, fmt.Errorf("getting ID for channel: %w", err)
 	}
 
 	var payload struct {
@@ -60,11 +58,11 @@ func (c *Client) CreateClip(ctx context.Context, channel string, addDelay bool) 
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/clips?broadcaster_id=%s&has_delay=%v", id, addDelay),
 	}); err != nil {
-		return ccr, errors.Wrap(err, "triggering clip create")
+		return ccr, fmt.Errorf("triggering clip create: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return ccr, errors.Errorf("unexpected number of results returned: %d", l)
+		return ccr, fmt.Errorf("unexpected number of results returned: %d", l)
 	}
 
 	return payload.Data[0], nil
@@ -89,11 +87,11 @@ func (c *Client) GetClipByID(ctx context.Context, clipID string) (ClipInfo, erro
 		Out:      &payload,
 		URL:      fmt.Sprintf("https://api.twitch.tv/helix/clips?id=%s", clipID),
 	}); err != nil {
-		return ClipInfo{}, errors.Wrap(err, "getting clip info")
+		return ClipInfo{}, fmt.Errorf("getting clip info: %w", err)
 	}
 
 	if l := len(payload.Data); l != 1 {
-		return ClipInfo{}, errors.Errorf("unexpected number of clip info returned: %d", l)
+		return ClipInfo{}, fmt.Errorf("unexpected number of clip info returned: %d", l)
 	}
 
 	c.apiCache.Set(cacheKey, clipCacheTimeout, payload.Data[0])

@@ -4,7 +4,7 @@ package locker
 import "sync"
 
 var (
-	locks       = map[string]*sync.RWMutex{}
+	locks       = make(map[string]*sync.RWMutex)
 	locksOLocks sync.RWMutex
 )
 

@@ -11,11 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -26,11 +25,20 @@ const (
 	storeRetentionTime = 10 * time.Minute
 )
 
+type (
+	actor struct{}
+
+	storedMessage struct {
+		Time time.Time
+		Msg  *irc.Message
+	}
+)
+
 var (
 	botTwitchClient func() *twitch.Client
 	formatMessage   plugins.MsgFormatter
 
-	messageStore     = map[string][]*storedMessage{}
+	messageStore     = make(map[string][]*storedMessage)
 	messageStoreLock sync.RWMutex
 )
 
@@ -78,11 +86,11 @@ func Register(args plugins.RegistrationArguments) error {
 	})
 
 	if _, err := args.RegisterCron("@every 1m", cleanupMessageStore); err != nil {
-		return errors.Wrap(err, "registering cleanup cron")
+		return fmt.Errorf("registering cleanup cron: %w", err)
 	}
 
 	if err := args.RegisterRawMessageHandler(rawMessageHandler); err != nil {
-		return errors.Wrap(err, "registering raw message handler")
+		return fmt.Errorf("registering raw message handler: %w", err)
 	}
 
 	return nil
@@ -140,29 +148,20 @@ func rawMessageHandler(m *irc.Message) error {
 	return nil
 }
 
-type (
-	actor struct{}
-
-	storedMessage struct {
-		Time time.Time
-		Msg  *irc.Message
-	}
-)
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	rawMatch, err := formatMessage(attrs.MustString("match", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "formatting match")
+		return false, fmt.Errorf("formatting match: %w", err)
 	}
 	match := regexp.MustCompile(rawMatch)
 
 	rawScan, err := formatMessage(attrs.MustString("scan", helpers.Ptr("10m")), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "formatting scan duration")
+		return false, fmt.Errorf("formatting scan duration: %w", err)
 	}
 	scan, err := time.ParseDuration(rawScan)
 	if err != nil {
-		return false, errors.Wrap(err, "parsing scan duration")
+		return false, fmt.Errorf("parsing scan duration: %w", err)
 	}
 	scanTime := time.Now().Add(-scan)
 
@@ -172,7 +171,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	)
 	rawAction, err := formatMessage(attrs.MustString("action", helpers.Ptr("delete")), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "formatting action")
+		return false, fmt.Errorf("formatting action: %w", err)
 	}
 	switch rawAction {
 	case "delete":
@@ -184,7 +183,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	default:
 		to, err := time.ParseDuration(rawAction)
 		if err != nil {
-			return false, errors.Wrap(err, "parsing action duration")
+			return false, fmt.Errorf("parsing action duration: %w", err)
 		}
 		action = getActionTimeout(to)
 		actionName = "timeout $user"
@@ -222,7 +221,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		}
 
 		if err = action(channel, rawMatch, stMsg.Msg.Tags["id"], plugins.DeriveUser(stMsg.Msg, nil)); err != nil {
-			return false, errors.Wrap(err, "executing action")
+			return false, fmt.Errorf("executing action: %w", err)
 		}
 
 		executedEnforcement = append(executedEnforcement, enforcement)

@@ -6,16 +6,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "clip"
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -68,36 +69,34 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	channel := plugins.DeriveChannel(m, eventData)
 	if channel, err = formatMessage(attrs.MustString("channel", &channel), m, r, eventData); err != nil {
-		return false, errors.Wrap(err, "parsing channel")
+		return false, fmt.Errorf("parsing channel: %w", err)
 	}
 
 	creator := channel
 	if creator, err = formatMessage(attrs.MustString("creator", &creator), m, r, eventData); err != nil {
-		return false, errors.Wrap(err, "parsing creator")
+		return false, fmt.Errorf("parsing creator: %w", err)
 	}
 
 	canCreate, err := hasPerm(creator, twitch.ScopeClipsEdit)
 	if err != nil {
-		return false, errors.Wrap(err, "checking for required permission")
+		return false, fmt.Errorf("checking for required permission: %w", err)
 	}
 
 	if !canCreate {
-		return false, errors.Errorf("creator has not given %s permission", twitch.ScopeClipsEdit)
+		return false, fmt.Errorf("creator has not given %s permission", twitch.ScopeClipsEdit)
 	}
 
 	tc, err := tcGetter(creator)
 	if err != nil {
-		return false, errors.Wrapf(err, "getting Twitch client for %q", creator)
+		return false, fmt.Errorf("getting Twitch client for %q: %w", creator, err)
 	}
 
 	clipInfo, err := tc.CreateClip(context.TODO(), channel, attrs.MustBool("add_delay", helpers.Ptr(false)))
 	if err != nil {
-		return false, errors.Wrap(err, "creating clip")
+		return false, fmt.Errorf("creating clip: %w", err)
 	}
 
 	eventData.Set("create_clip_slug", clipInfo.ID)

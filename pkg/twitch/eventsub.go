@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure/v2"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -174,10 +173,10 @@ type (
 			AmountPerVote int  `json:"amount_per_vote"`
 		} `json:"channel_points_voting"`
 
-		StartedAt time.Time `json:"started_at"`         // begin, progress, end
-		EndsAt    time.Time `json:"ends_at,omitempty"`  // begin, progress
-		Status    string    `json:"status,omitempty"`   // end -- enum(completed, archived, terminated)
-		EndedAt   time.Time `json:"ended_at,omitempty"` // end
+		StartedAt time.Time `json:"started_at"`        // begin, progress, end
+		EndsAt    time.Time `json:"ends_at,omitzero"`  // begin, progress
+		Status    string    `json:"status,omitempty"`  // end -- enum(completed, archived, terminated)
+		EndedAt   time.Time `json:"ended_at,omitzero"` // end
 	}
 
 	// EventSubEventRaid contains the payload for a raid event
@@ -302,10 +301,10 @@ type (
 		Status    string            `json:"status,omitempty"` // READONLY
 		Type      string            `json:"type"`
 		Version   string            `json:"version"`
-		Cost      int64             `json:"cost,omitempty"` // READONLY
+		Cost      int64             `json:"cost,omitzero"` // READONLY
 		Condition EventSubCondition `json:"condition"`
 		Transport eventSubTransport `json:"transport"`
-		CreatedAt time.Time         `json:"created_at,omitempty"` // READONLY
+		CreatedAt time.Time         `json:"created_at,omitzero"` // READONLY
 	}
 
 	eventSubTransport struct {
@@ -320,7 +319,7 @@ type (
 func (e EventSubCondition) Hash() (string, error) {
 	h, err := hashstructure.Hash(e, hashstructure.FormatV2, &hashstructure.HashOptions{TagName: "json"})
 	if err != nil {
-		return "", errors.Wrap(err, "hashing struct")
+		return "", fmt.Errorf("hashing struct: %w", err)
 	}
 
 	return fmt.Sprintf("%x", h), nil
@@ -350,7 +349,7 @@ func (c *Client) createEventSubSubscription(ctx context.Context, auth AuthType, 
 	}
 
 	if err = json.NewEncoder(buf).Encode(sub); err != nil {
-		return nil, errors.Wrap(err, "assemble subscribe payload")
+		return nil, fmt.Errorf("assemble subscribe payload: %w", err)
 	}
 
 	if err = c.Request(ctx, ClientRequestOpts{

@@ -8,6 +8,8 @@ import (
 
 // GetTestDatabase returns a Connector to an in-mem SQLite DB
 func GetTestDatabase(t *testing.T) Connector {
+	t.Helper()
+
 	dbc, err := New("sqlite", "file::memory:?cache=shared", "encpass")
 	require.NoError(t, err, "creating database connector")
 	t.Cleanup(func() {

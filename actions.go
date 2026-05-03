@@ -1,19 +1,20 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/locker"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var (
-	availableActions     = map[string]plugins.ActorCreationFunc{}
+	availableActions     = make(map[string]plugins.ActorCreationFunc)
 	availableActionsLock = new(sync.RWMutex)
 )
 
@@ -26,7 +27,7 @@ func getActorByName(name string) (plugins.Actor, error) {
 
 	acf, ok := availableActions[name]
 	if !ok {
-		return nil, errors.Errorf("undefined actor %q called", name)
+		return nil, fmt.Errorf("undefined actor %q called", name)
 	}
 
 	return acf(), nil
@@ -49,7 +50,7 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 
 	a, err := getActorByName(ra.Type)
 	if err != nil {
-		return false, errors.Wrap(err, "getting actor")
+		return false, fmt.Errorf("getting actor: %w", err)
 	}
 
 	logger := log.WithField("actor", a.Name())
@@ -64,7 +65,11 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 	}
 
 	apc, err := a.Execute(c, m, rule, eventData, ra.Attributes)
-	return apc, errors.Wrap(err, "execute action")
+	if err != nil {
+		return apc, fmt.Errorf("execute action: %w", err)
+	}
+
+	return apc, nil
 }
 
 func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *fieldcollection.FieldCollection) {

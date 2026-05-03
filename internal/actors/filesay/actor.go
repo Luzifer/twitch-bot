@@ -5,16 +5,16 @@ package filesay
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -24,6 +24,8 @@ const (
 
 	httpTimeout = 5 * time.Second
 )
+
+type actor struct{}
 
 var (
 	formatMessage plugins.MsgFormatter
@@ -58,14 +60,12 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	ptrStringEmpty := func(v string) *string { return &v }("")
 
 	source, err := formatMessage(attrs.MustString("source", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing source template")
+		return false, fmt.Errorf("executing source template: %w", err)
 	}
 
 	if source == "" {
@@ -73,7 +73,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 
 	if _, err := url.Parse(source); err != nil {
-		return false, errors.Wrap(err, "parsing URL")
+		return false, fmt.Errorf("parsing URL: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
@@ -81,12 +81,12 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, source, nil)
 	if err != nil {
-		return false, errors.Wrap(err, "creating HTTP request")
+		return false, fmt.Errorf("creating HTTP request: %w", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, errors.Wrap(err, "executing HTTP request")
+		return false, fmt.Errorf("executing HTTP request: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -95,7 +95,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return false, errors.Errorf("http status %d", resp.StatusCode)
+		return false, fmt.Errorf("http status %d", resp.StatusCode)
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
@@ -107,7 +107,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 				scanner.Text(),
 			},
 		}); err != nil {
-			return false, errors.Wrap(err, "sending message")
+			return false, fmt.Errorf("sending message: %w", err)
 		}
 	}
 

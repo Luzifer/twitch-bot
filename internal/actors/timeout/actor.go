@@ -3,21 +3,23 @@ package timeout
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "timeout"
+
+type actor struct{}
 
 var (
 	botTwitchClient func() *twitch.Client
@@ -66,24 +68,23 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	reason, err := formatMessage(attrs.MustString("reason", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing reason template")
+		return false, fmt.Errorf("executing reason template: %w", err)
 	}
 
-	return false, errors.Wrap(
-		botTwitchClient().BanUser(
-			context.Background(),
-			plugins.DeriveChannel(m, eventData),
-			plugins.DeriveUser(m, eventData),
-			attrs.MustDuration("duration", nil),
-			reason,
-		),
-		"executing timeout",
-	)
+	if err = botTwitchClient().BanUser(
+		context.Background(),
+		plugins.DeriveChannel(m, eventData),
+		plugins.DeriveUser(m, eventData),
+		attrs.MustDuration("duration", nil),
+		reason,
+	); err != nil {
+		return false, fmt.Errorf("executing timeout: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }
@@ -116,11 +117,11 @@ func handleChatCommand(m *irc.Message) error {
 
 	duration, err := strconv.ParseInt(matches[2], 10, 64)
 	if err != nil {
-		return errors.Wrap(err, "parsing timeout duration")
+		return fmt.Errorf("parsing timeout duration: %w", err)
 	}
 
 	if err = botTwitchClient().BanUser(context.Background(), channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
-		return errors.Wrap(err, "executing timeout")
+		return fmt.Errorf("executing timeout: %w", err)
 	}
 
 	return plugins.ErrSkipSendingMessage

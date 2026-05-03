@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCoreMetaRoundtrip(t *testing.T) {
@@ -14,14 +15,14 @@ func TestCoreMetaRoundtrip(t *testing.T) {
 		testKey   = "arbitrary"
 	)
 
-	assert.ErrorIs(t, dbc.ReadCoreMeta(testKey, &arbitrary), ErrCoreMetaNotFound, "expected core_kv not to contain key after init")
+	require.ErrorIs(t, dbc.ReadCoreMeta(testKey, &arbitrary), ErrCoreMetaNotFound, "expected core_kv not to contain key after init")
 
 	checkWriteRead := func(testString string) {
 		arbitrary.A = testString
-		assert.NoError(t, dbc.StoreCoreMeta(testKey, arbitrary), "storing core_kv")
+		require.NoError(t, dbc.StoreCoreMeta(testKey, arbitrary), "storing core_kv")
 
 		arbitrary.A = "" // Clear to test unmarshal
-		assert.NoError(t, dbc.ReadCoreMeta(testKey, &arbitrary), "reading core_kv")
+		require.NoError(t, dbc.ReadCoreMeta(testKey, &arbitrary), "reading core_kv")
 
 		assert.Equal(t, testString, arbitrary.A, "metadata equals")
 	}
@@ -40,12 +41,12 @@ func TestCoreMetaEncryption(t *testing.T) {
 	)
 
 	arbitrary.A = testString
-	assert.NoError(t, dbc.StoreEncryptedCoreMeta(testKey, arbitrary), "storing encrypted core meta")
+	require.NoError(t, dbc.StoreEncryptedCoreMeta(testKey, arbitrary), "storing encrypted core meta")
 
-	assert.Error(t, dbc.ReadCoreMeta(testKey, &arbitrary), "reading encrypted meta without decryption succeeded")
+	require.Error(t, dbc.ReadCoreMeta(testKey, &arbitrary), "reading encrypted meta without decryption succeeded")
 
 	arbitrary.A = ""
 
-	assert.NoError(t, dbc.ReadEncryptedCoreMeta(testKey, &arbitrary), "reading encrypted meta")
+	require.NoError(t, dbc.ReadEncryptedCoreMeta(testKey, &arbitrary), "reading encrypted meta")
 	assert.Equal(t, testString, arbitrary.A, "unexpected value")
 }

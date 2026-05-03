@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,15 +13,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gofrs/uuid/v3"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/irc.v4"
 	"gopkg.in/yaml.v3"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -28,15 +28,6 @@ const (
 	expectedMinConfigVersion = 2
 	rawLogDirPerm            = 0o755
 	rawLogFilePerm           = 0o644
-)
-
-var (
-	//go:embed default_config.yaml
-	defaultConfigurationYAML []byte
-
-	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
-
-	errSaveNotRequired = errors.New("save not required")
 )
 
 type (
@@ -63,7 +54,7 @@ type (
 		RawLog               string                     `yaml:"raw_log"`
 		ModuleConfig         plugins.ModuleConfig       `yaml:"module_config"`
 		Rules                []*plugins.Rule            `yaml:"rules"`
-		Variables            map[string]interface{}     `yaml:"variables"`
+		Variables            map[string]any             `yaml:"variables"`
 
 		rawLogWriter io.WriteCloser
 
@@ -71,9 +62,18 @@ type (
 	}
 )
 
+var (
+	//go:embed default_config.yaml
+	defaultConfigurationYAML []byte
+
+	hashstructUUIDNamespace = uuid.Must(uuid.FromString("3a0ccc46-d3ba-46b5-ac07-27528c933174"))
+
+	errSaveNotRequired = errors.New("save not required")
+)
+
 func newConfigFile() *configFile {
 	return &configFile{
-		AuthTokens:    map[string]configAuthToken{},
+		AuthTokens:    make(map[string]configAuthToken),
 		PermitTimeout: time.Minute,
 	}
 }
@@ -86,19 +86,19 @@ func loadConfig(filename string) error {
 	)
 
 	if err = parseConfigFromYAML(filename, configVersion, false); err != nil {
-		return errors.Wrap(err, "parsing config version")
+		return fmt.Errorf("parsing config version: %w", err)
 	}
 
 	if configVersion.ConfigVersion < expectedMinConfigVersion {
-		return errors.Errorf("config version too old: %d < %d - Please have a look at the documentation", configVersion.ConfigVersion, expectedMinConfigVersion)
+		return fmt.Errorf("config version too old: %d < %d - Please have a look at the documentation", configVersion.ConfigVersion, expectedMinConfigVersion)
 	}
 
 	if err = parseConfigFromYAML(filename, tmpConfig, true); err != nil {
-		return errors.Wrap(err, "parsing config")
+		return fmt.Errorf("parsing config: %w", err)
 	}
 
 	if err = tmpConfig.runLoadChecks(); err != nil {
-		return errors.Wrap(err, "running load-checks on config")
+		return fmt.Errorf("running load-checks on config: %w", err)
 	}
 
 	configLock.Lock()
@@ -108,7 +108,7 @@ func loadConfig(filename string) error {
 	tmpConfig.fixDurations()
 	tmpConfig.fixMissingUUIDs()
 	if err = tmpConfig.fixTokenHashStorage(); err != nil {
-		return errors.Wrap(err, "applying token hash fixes")
+		return fmt.Errorf("applying token hash fixes: %w", err)
 	}
 
 	switch {
@@ -117,20 +117,20 @@ func loadConfig(filename string) error {
 
 	case tmpConfig.RawLog == "":
 		if err = config.CloseRawMessageWriter(); err != nil {
-			return errors.Wrap(err, "closing old raw log writer")
+			return fmt.Errorf("closing old raw log writer: %w", err)
 		}
 
 		tmpConfig.rawLogWriter = writeNoOpCloser{io.Discard}
 
 	default:
 		if err = config.CloseRawMessageWriter(); err != nil {
-			return errors.Wrap(err, "closing old raw log writer")
+			return fmt.Errorf("closing old raw log writer: %w", err)
 		}
 		if err = os.MkdirAll(path.Dir(tmpConfig.RawLog), rawLogDirPerm); err != nil {
-			return errors.Wrap(err, "creating directories for raw log")
+			return fmt.Errorf("creating directories for raw log: %w", err)
 		}
 		if tmpConfig.rawLogWriter, err = os.OpenFile(tmpConfig.RawLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, rawLogFilePerm); err != nil {
-			return errors.Wrap(err, "opening raw log for appending")
+			return fmt.Errorf("opening raw log for appending: %w", err)
 		}
 	}
 
@@ -149,10 +149,10 @@ func loadConfig(filename string) error {
 	return nil
 }
 
-func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
+func parseConfigFromYAML(filename string, obj any, strict bool) error {
 	f, err := os.Open(filename) //#nosec:G304 // This is intended to open a variable file
 	if err != nil {
-		return errors.Wrap(err, "open config file")
+		return fmt.Errorf("open config file: %w", err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -163,7 +163,11 @@ func parseConfigFromYAML(filename string, obj interface{}, strict bool) error {
 	decoder := yaml.NewDecoder(f)
 	decoder.KnownFields(strict)
 
-	return errors.Wrap(decoder.Decode(obj), "decode config file")
+	if err = decoder.Decode(obj); err != nil {
+		return fmt.Errorf("decoding config file: %w", err)
+	}
+
+	return nil
 }
 
 func patchConfig(filename, authorName, authorEmail, summary string, patcher func(*configFile) error) error {
@@ -173,12 +177,12 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 	)
 
 	if err = parseConfigFromYAML(filename, cfgFile, true); err != nil {
-		return errors.Wrap(err, "loading current config")
+		return fmt.Errorf("loading current config: %w", err)
 	}
 
 	cfgFile.fixMissingUUIDs()
 	if err = cfgFile.fixTokenHashStorage(); err != nil {
-		return errors.Wrap(err, "applying token hash fixes")
+		return fmt.Errorf("applying token hash fixes: %w", err)
 	}
 
 	err = patcher(cfgFile)
@@ -191,23 +195,24 @@ func patchConfig(filename, authorName, authorEmail, summary string, patcher func
 		return nil
 
 	default:
-		return errors.Wrap(err, "patching config")
+		return fmt.Errorf("patching config: %w", err)
 	}
 
 	if err = cfgFile.runLoadChecks(); err != nil {
-		return errors.Wrap(err, "checking config after patch")
+		return fmt.Errorf("checking config after patch: %w", err)
 	}
 
-	return errors.Wrap(
-		writeConfigToYAML(filename, authorName, authorEmail, summary, cfgFile),
-		"replacing config",
-	)
+	if err = writeConfigToYAML(filename, authorName, authorEmail, summary, cfgFile); err != nil {
+		return fmt.Errorf("replacing config: %w", err)
+	}
+
+	return nil
 }
 
 func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *configFile) error {
 	tmpFile, err := os.CreateTemp(path.Dir(filename), "twitch-bot-*.yaml")
 	if err != nil {
-		return errors.Wrap(err, "opening tempfile")
+		return fmt.Errorf("opening tempfile: %w", err)
 	}
 	tmpFileName := tmpFile.Name()
 
@@ -217,7 +222,7 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 
 	if err = yaml.NewEncoder(tmpFile).Encode(obj); err != nil {
 		_ = tmpFile.Close()
-		return errors.Wrap(err, "encoding config")
+		return fmt.Errorf("encoding config: %w", err)
 	}
 
 	if err = tmpFile.Close(); err != nil {
@@ -225,7 +230,7 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 	}
 
 	if err = os.Rename(tmpFileName, filename); err != nil {
-		return errors.Wrap(err, "moving config to location")
+		return fmt.Errorf("moving config to location: %w", err)
 	}
 
 	if !obj.GitTrackConfig {
@@ -238,16 +243,17 @@ func writeConfigToYAML(filename, authorName, authorEmail, summary string, obj *c
 		return nil
 	}
 
-	return errors.Wrap(
-		git.CommitChange(path.Base(filename), authorName, authorEmail, summary),
-		"committing config changes",
-	)
+	if err = git.CommitChange(path.Base(filename), authorName, authorEmail, summary); err != nil {
+		return fmt.Errorf("committing config changes: %w", err)
+	}
+
+	return nil
 }
 
 func writeDefaultConfigFile(filename string) error {
 	f, err := os.Create(filename) //#nosec:G304 // This is intended to open a variable file
 	if err != nil {
-		return errors.Wrap(err, "creating config file")
+		return fmt.Errorf("creating config file: %w", err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -255,17 +261,21 @@ func writeDefaultConfigFile(filename string) error {
 		}
 	}()
 
-	_, err = f.Write(defaultConfigurationYAML)
-	return errors.Wrap(err, "writing default config")
+	if _, err = f.Write(defaultConfigurationYAML); err != nil {
+		return fmt.Errorf("writing default config: %w", err)
+	}
+
+	return nil
 }
 
 func (c configAuthToken) validate(token string) error {
 	switch {
 	case strings.HasPrefix(c.Hash, "$2a$"):
-		return errors.Wrap(
-			bcrypt.CompareHashAndPassword([]byte(c.Hash), []byte(token)),
-			"validating bcrypt",
-		)
+		if err := bcrypt.CompareHashAndPassword([]byte(c.Hash), []byte(token)); err != nil {
+			return fmt.Errorf("validating bcrypt: %w", err)
+		}
+
+		return nil
 
 	case strings.HasPrefix(c.Hash, "$argon2id$"):
 		var (
@@ -275,14 +285,15 @@ func (c configAuthToken) validate(token string) error {
 		)
 
 		if _, err := fmt.Sscanf(flds[3], "m=%d,t=%d,p=%d", &m, &t, &p); err != nil {
-			return errors.Wrap(err, "scanning argon2id hash params")
+			return fmt.Errorf("scanning argon2id hash params: %w", err)
 		}
 
 		salt, err := base64.RawStdEncoding.DecodeString(flds[4])
 		if err != nil {
-			return errors.Wrap(err, "decoding salt")
+			return fmt.Errorf("decoding salt: %w", err)
 		}
 
+		//revive:disable-next-line:add-constant // single use field counter
 		if flds[5] == base64.RawStdEncoding.EncodeToString(argon2.IDKey([]byte(token), salt, t, m, p, argonHashLen)) {
 			return nil
 		}
@@ -322,8 +333,10 @@ func (c configFile) GetMatchingRules(m *irc.Message, event *string, eventData *f
 }
 
 func (c configFile) LogRawMessage(m *irc.Message) error {
-	_, err := fmt.Fprintln(c.rawLogWriter, m.String())
-	return errors.Wrap(err, "writing raw log message")
+	if _, err := fmt.Fprintln(c.rawLogWriter, m.String()); err != nil {
+		return fmt.Errorf("writing raw log message: %w", err)
+	}
+	return nil
 }
 
 func (c *configFile) fixDurations() {
@@ -336,21 +349,6 @@ func (c *configFile) fixDurations() {
 		r.Cooldown = c.fixedDurationPtr(r.Cooldown)
 		r.UserCooldown = c.fixedDurationPtr(r.UserCooldown)
 	}
-}
-
-func (configFile) fixedDuration(d time.Duration) time.Duration {
-	if d > time.Second {
-		return d
-	}
-	return d * time.Second //nolint:durationcheck // Error is handled before
-}
-
-func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
-	if d == nil || *d >= time.Second {
-		return d
-	}
-	fd := *d * time.Second //nolint:durationcheck // Error is handled before
-	return &fd
 }
 
 func (c *configFile) fixMissingUUIDs() {
@@ -379,7 +377,7 @@ func (c *configFile) fixTokenHashStorage() (err error) {
 
 		rawHash, err := hex.DecodeString(auth.Hash)
 		if err != nil {
-			return errors.Wrap(err, "reading hash")
+			return fmt.Errorf("reading hash: %w", err)
 		}
 
 		auth.Hash = string(rawHash)
@@ -387,6 +385,21 @@ func (c *configFile) fixTokenHashStorage() (err error) {
 	}
 
 	return nil
+}
+
+func (configFile) fixedDuration(d time.Duration) time.Duration {
+	if d > time.Second {
+		return d
+	}
+	return d * time.Second //nolint:durationcheck // Error is handled before
+}
+
+func (configFile) fixedDurationPtr(d *time.Duration) *time.Duration {
+	if d == nil || *d >= time.Second {
+		return d
+	}
+	fd := *d * time.Second //nolint:durationcheck // Error is handled before
+	return &fd
 }
 
 func (c *configFile) runLoadChecks() (err error) {
@@ -407,7 +420,7 @@ func (c *configFile) runLoadChecks() (err error) {
 	}
 
 	if err = c.validateRuleActions(); err != nil {
-		return errors.Wrap(err, "validating rule actions")
+		return fmt.Errorf("validating rule actions: %w", err)
 	}
 
 	return nil

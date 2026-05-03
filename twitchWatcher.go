@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -252,7 +253,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error {
 	var payload twitch.EventSubEventAdBreakBegin
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -271,10 +272,10 @@ func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error
 func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	var payload twitch.EventSubEventFollow
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"channel":     "#" + payload.BroadcasterUserLogin,
 		"followed_at": payload.FollowedAt,
 		"user_id":     payload.UserID,
@@ -287,13 +288,32 @@ func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 	return nil
 }
 
+func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error {
+	var payload twitch.EventSubEventRaid
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+		"channel": "#" + payload.FromBroadcasterUserLogin,
+		"to_id":   payload.ToBroadcasterUserID,
+		"to":      payload.ToBroadcasterUserLogin,
+		"viewers": payload.Viewers,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Outbound raid detected")
+	go handleMessage(ircHdl.Client(), nil, eventTypeOutboundRaid, fields)
+
+	return nil
+}
+
 func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json.RawMessage) error {
 	var payload twitch.EventSubEventChannelPointCustomRewardRedemptionAdd
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
+	fields := fieldcollection.FieldCollectionFromData(map[string]any{
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"reward_cost":  payload.Reward.Cost,
 		"reward_id":    payload.Reward.ID,
@@ -310,41 +330,11 @@ func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json
 	return nil
 }
 
-func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error {
-	var payload twitch.EventSubEventRaid
-	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
-	}
-
-	fields := fieldcollection.FieldCollectionFromData(map[string]interface{}{
-		"channel": "#" + payload.FromBroadcasterUserLogin,
-		"to_id":   payload.ToBroadcasterUserID,
-		"to":      payload.ToBroadcasterUserLogin,
-		"viewers": payload.Viewers,
-	})
-
-	log.WithFields(log.Fields(fields.Data())).Info("Outbound raid detected")
-	go handleMessage(ircHdl.Client(), nil, eventTypeOutboundRaid, fields)
-
-	return nil
-}
-
-func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
-	var payload twitch.EventSubEventChannelUpdate
-	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
-	}
-
-	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
-
-	return nil
-}
-
 func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.RawMessage) error {
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventPoll
 		if err := json.Unmarshal(m, &payload); err != nil {
-			return errors.Wrap(err, "unmarshalling event")
+			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
 		fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -377,11 +367,22 @@ func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.R
 	}
 }
 
+func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
+	var payload twitch.EventSubEventChannelUpdate
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	t.triggerUpdate(payload.BroadcasterUserLogin, &payload.Title, &payload.CategoryName, nil)
+
+	return nil
+}
+
 func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.RawMessage) error {
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventHypetrain
 		if err := json.Unmarshal(m, &payload); err != nil {
-			return errors.Wrap(err, "unmarshalling event")
+			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
 		fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -405,7 +406,7 @@ func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.
 func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 	var payload twitch.EventSubEventShoutoutCreated
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -424,7 +425,7 @@ func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 func (*twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
 	var payload twitch.EventSubEventShoutoutReceived
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -444,7 +445,7 @@ func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMe
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventFollow
 		if err := json.Unmarshal(m, &payload); err != nil {
-			return errors.Wrap(err, "unmarshalling event")
+			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
 		t.triggerUpdate(payload.BroadcasterUserLogin, nil, nil, &isOnline)
@@ -455,7 +456,7 @@ func (t *twitchWatcher) handleEventSubStreamOnOff(isOnline bool) func(json.RawMe
 func (*twitchWatcher) handleEventSubSusUserMessage(m json.RawMessage) (err error) {
 	var payload twitch.EventSubEventSuspiciousUserMessage
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -478,7 +479,7 @@ func (*twitchWatcher) handleEventSubSusUserMessage(m json.RawMessage) (err error
 func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error) {
 	var payload twitch.EventSubEventSuspiciousUserUpdated
 	if err := json.Unmarshal(m, &payload); err != nil {
-		return errors.Wrap(err, "unmarshalling event")
+		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
 	fields := fieldcollection.FieldCollectionFromData(map[string]any{
@@ -495,61 +496,6 @@ func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error)
 	return nil
 }
 
-func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-
-	var (
-		err          error
-		status       twitchChannelState
-		storedStatus = t.ChannelStatus[channel]
-	)
-
-	status.IsLive, err = twitchClient.HasLiveStream(context.Background(), channel)
-	if err != nil {
-		return errors.Wrap(err, "getting live status")
-	}
-
-	status.Category, status.Title, err = twitchClient.GetRecentStreamInfo(context.Background(), channel)
-	if err != nil {
-		return errors.Wrap(err, "getting stream info")
-	}
-
-	if storedStatus == nil {
-		storedStatus = &twitchChannelState{}
-		t.ChannelStatus[channel] = storedStatus
-	}
-
-	if storedStatus.isInitialized && !storedStatus.Equals(status) {
-		// Send updates only when we do have an update
-		t.triggerUpdate(channel, &status.Title, &status.Category, &status.IsLive)
-	}
-
-	storedStatus.Update(status)
-	storedStatus.isInitialized = true
-
-	if storedStatus.esc != nil {
-		// Do not register twice
-		return nil
-	}
-
-	if storedStatus.esc, err = t.registerEventSubCallbacks(channel); err != nil {
-		return errors.Wrap(err, "registering eventsub callbacks")
-	}
-
-	if storedStatus.esc != nil {
-		log.WithField("channel", channel).Info("watching for eventsub events")
-		go func(storedStatus *twitchChannelState) {
-			if err := storedStatus.esc.Run(); err != nil {
-				log.WithField("channel", channel).WithError(helpers.CleanNetworkAddressFromError(err)).Error("eventsub client caused error")
-			}
-			storedStatus.CloseESC()
-		}(storedStatus)
-	}
-
-	return nil
-}
-
 func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.EventSubSocketClient, error) {
 	tc, err := accessService.GetTwitchClientForChannel(channel, access.ClientConfig{
 		TwitchClient:       cfg.TwitchClient,
@@ -560,12 +506,12 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 			return nil, nil //nolint:nilnil // This is fine - not authorized cannot register callbacks
 		}
 
-		return nil, errors.Wrap(err, "getting twitch client for channel")
+		return nil, fmt.Errorf("getting twitch client for channel: %w", err)
 	}
 
 	userID, err := twitchClient.GetIDForUsername(context.Background(), channel)
 	if err != nil {
-		return nil, errors.Wrap(err, "resolving channel to user-id")
+		return nil, fmt.Errorf("resolving channel to user-id: %w", err)
 	}
 
 	var (
@@ -589,7 +535,7 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 
 			hasScopes, err := fn(channel, tr.RequiredScopes...)
 			if err != nil {
-				return nil, errors.Wrap(err, "checking granted scopes")
+				return nil, fmt.Errorf("checking granted scopes: %w", err)
 			}
 
 			if !hasScopes {
@@ -614,7 +560,7 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 		twitch.WithTwitchClient(tc),
 	)...)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting eventsub client for channel")
+		return nil, fmt.Errorf("getting eventsub client for channel: %w", err)
 	}
 
 	return esClient, nil
@@ -627,7 +573,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel":  channel,
 			"category": *category,
 		}).Info("Category updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FieldCollectionFromData(map[string]any{
 			"channel":  "#" + channel,
 			"category": *category,
 		}))
@@ -639,7 +585,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel": channel,
 			"title":   *title,
 		}).Info("Title updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FieldCollectionFromData(map[string]any{
 			"channel": "#" + channel,
 			"title":   *title,
 		}))
@@ -657,8 +603,63 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			evt = eventTypeTwitchStreamOffline
 		}
 
-		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FieldCollectionFromData(map[string]interface{}{
+		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FieldCollectionFromData(map[string]any{
 			"channel": "#" + channel,
 		}))
 	}
+}
+
+func (t *twitchWatcher) updateChannelFromAPI(channel string) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	var (
+		err          error
+		status       twitchChannelState
+		storedStatus = t.ChannelStatus[channel]
+	)
+
+	status.IsLive, err = twitchClient.HasLiveStream(context.Background(), channel)
+	if err != nil {
+		return fmt.Errorf("getting live status: %w", err)
+	}
+
+	status.Category, status.Title, err = twitchClient.GetRecentStreamInfo(context.Background(), channel)
+	if err != nil {
+		return fmt.Errorf("getting stream info: %w", err)
+	}
+
+	if storedStatus == nil {
+		storedStatus = &twitchChannelState{}
+		t.ChannelStatus[channel] = storedStatus
+	}
+
+	if storedStatus.isInitialized && !storedStatus.Equals(status) {
+		// Send updates only when we do have an update
+		t.triggerUpdate(channel, &status.Title, &status.Category, &status.IsLive)
+	}
+
+	storedStatus.Update(status)
+	storedStatus.isInitialized = true
+
+	if storedStatus.esc != nil {
+		// Do not register twice
+		return nil
+	}
+
+	if storedStatus.esc, err = t.registerEventSubCallbacks(channel); err != nil {
+		return fmt.Errorf("registering eventsub callbacks: %w", err)
+	}
+
+	if storedStatus.esc != nil {
+		log.WithField("channel", channel).Info("watching for eventsub events")
+		go func(storedStatus *twitchChannelState) {
+			if err := storedStatus.esc.Run(); err != nil {
+				log.WithField("channel", channel).WithError(helpers.CleanNetworkAddressFromError(err)).Error("eventsub client caused error")
+			}
+			storedStatus.CloseESC()
+		}(storedStatus)
+	}
+
+	return nil
 }

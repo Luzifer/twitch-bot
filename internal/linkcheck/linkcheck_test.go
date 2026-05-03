@@ -51,7 +51,7 @@ func TestMaxRedirects(t *testing.T) {
 	assert.Equal(t, []string{fmt.Sprintf("%s/%d", ts.URL, maxRedirects)}, c.ScanForLinks(msg))
 }
 
-//nolint:funlen
+//nolint:funlen // just a list of testcases
 func TestScanForLinks(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()

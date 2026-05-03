@@ -2,18 +2,16 @@
 package timer
 
 import (
-	"crypto/sha256"
+	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/Luzifer/go_helpers/backoff"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -42,59 +40,21 @@ func New(db database.Connector, cronService *cron.Cron) (*Service, error) {
 
 	if cronService != nil {
 		if _, err := cronService.AddFunc("@every 5m", s.cleanupTimers); err != nil {
-			return nil, errors.Wrap(err, "registering timer cleanup cron")
+			return nil, fmt.Errorf("registering timer cleanup cron: %w", err)
 		}
 	}
 
-	return s, errors.Wrap(s.db.DB().AutoMigrate(&timer{}), "applying migrations")
+	if err := s.db.DB().AutoMigrate(&timer{}); err != nil {
+		return nil, fmt.Errorf("applying migrations: %w", err)
+	}
+
+	return s, nil
 }
 
 // CopyDatabase enables the service to migrate to a new database
 func (*Service) CopyDatabase(src, target *gorm.DB) error {
 	return database.CopyObjects(src, target, &timer{}) //nolint:wrapcheck // Helper in own package
 }
-
-// UpdatePermitTimeout sets a new permit timeout for future permits
-func (s *Service) UpdatePermitTimeout(d time.Duration) {
-	s.permitTimeout = d
-}
-
-// Cooldown timer
-
-// AddCooldown adds a new cooldown timer
-func (s Service) AddCooldown(tt plugins.TimerType, limiter, ruleID string, expiry time.Time) error {
-	return s.SetTimer(s.getCooldownTimerKey(tt, limiter, ruleID), expiry)
-}
-
-// InCooldown checks whether the cooldown has expired
-func (s Service) InCooldown(tt plugins.TimerType, limiter, ruleID string) (bool, error) {
-	return s.HasTimer(s.getCooldownTimerKey(tt, limiter, ruleID))
-}
-
-func (Service) getCooldownTimerKey(tt plugins.TimerType, limiter, ruleID string) string {
-	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf("%d:%s:%s", tt, limiter, ruleID))))
-}
-
-// Permit timer
-
-// AddPermit adds a new permit timer
-func (s Service) AddPermit(channel, username string) error {
-	return s.SetTimer(s.getPermitTimerKey(channel, username), time.Now().Add(s.permitTimeout))
-}
-
-// HasPermit checks whether a valid permit is present
-func (s Service) HasPermit(channel, username string) (bool, error) {
-	return s.HasTimer(s.getPermitTimerKey(channel, username))
-}
-
-func (Service) getPermitTimerKey(channel, username string) string {
-	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(fmt.Sprintf(
-		"%d:%s:%s",
-		plugins.TimerTypePermit, channel, strings.ToLower(strings.TrimLeft(username, "@")),
-	))))
-}
-
-// Generic timer
 
 // HasTimer checks whether a timer with given ID is present
 func (s Service) HasTimer(id string) (bool, error) {
@@ -114,24 +74,30 @@ func (s Service) HasTimer(id string) (bool, error) {
 		return false, nil
 
 	default:
-		return false, errors.Wrap(err, "getting timer information")
+		return false, fmt.Errorf("getting timer information: %w", err)
 	}
 }
 
 // SetTimer sets a timer with given ID and expiry
 func (s Service) SetTimer(id string, expiry time.Time) error {
-	return errors.Wrap(
-		helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
-			return tx.Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "id"}},
-				DoUpdates: clause.AssignmentColumns([]string{"expires_at"}),
-			}).Create(timer{
-				ID:        id,
-				ExpiresAt: expiry.UTC(),
-			}).Error
-		}),
-		"storing counter in database",
-	)
+	if err := helpers.RetryTransaction(s.db.DB(), func(tx *gorm.DB) error {
+		return tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"expires_at"}),
+		}).Create(timer{
+			ID:        id,
+			ExpiresAt: expiry.UTC(),
+		}).Error
+	}); err != nil {
+		return fmt.Errorf("storing counter in database: %w", err)
+	}
+
+	return nil
+}
+
+// UpdatePermitTimeout sets a new permit timeout for future permits
+func (s *Service) UpdatePermitTimeout(d time.Duration) {
+	s.permitTimeout = d
 }
 
 func (s Service) cleanupTimers() {

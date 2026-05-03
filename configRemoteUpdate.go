@@ -9,6 +9,7 @@ import (
 )
 
 func updateConfigCron() string {
+	//revive:disable-next-line:add-constant // Single-use number with clear purpose
 	minute := rand.Intn(60) //nolint:mnd,gosec // Only used to distribute load
 	return fmt.Sprintf("0 %d * * * *", minute)
 }

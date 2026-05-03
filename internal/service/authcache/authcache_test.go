@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:funlen
+//nolint:funlen // just a list of testcases
 func TestValidateTokenForWithAuthBackend(t *testing.T) {
 	t.Parallel()
 

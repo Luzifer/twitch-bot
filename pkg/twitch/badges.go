@@ -17,6 +17,9 @@ const (
 	BadgeVIP           = "vip"
 )
 
+// BadgeCollection represents a collection of badges the user has set
+type BadgeCollection map[string]*int
+
 // KnownBadges contains a list of all known badges
 var KnownBadges = []string{
 	BadgeBroadcaster,
@@ -27,13 +30,10 @@ var KnownBadges = []string{
 	BadgeVIP,
 }
 
-// BadgeCollection represents a collection of badges the user has set
-type BadgeCollection map[string]*int
-
 // ParseBadgeLevels takes the badges from the irc.Message and returns
 // a BadgeCollection containing all badges the user has set
 func ParseBadgeLevels(m *irc.Message) BadgeCollection {
-	out := BadgeCollection{}
+	out := make(BadgeCollection)
 
 	if m == nil {
 		return out
@@ -44,8 +44,8 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 		return out
 	}
 
-	badges := strings.Split(badgeString, ",")
-	for _, b := range badges {
+	badges := strings.SplitSeq(badgeString, ",")
+	for b := range badges {
 		badgeParts := strings.Split(b, "/")
 		if len(badgeParts) != 2 { //nolint:mnd // This is not a magic number but just an expected count
 			continue

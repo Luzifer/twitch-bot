@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
@@ -80,7 +80,7 @@ func registerEditorAutoMessageRoutes() {
 func configEditorHandleAutoMessageAdd(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -106,7 +106,7 @@ func configEditorHandleAutoMessageAdd(w http.ResponseWriter, r *http.Request) {
 func configEditorHandleAutoMessageDelete(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -144,7 +144,7 @@ func configEditorHandleAutoMessagesGet(w http.ResponseWriter, _ *http.Request) {
 func configEditorHandleAutoMessageUpdate(w http.ResponseWriter, r *http.Request) {
 	user, _, err := getAuthorizedUserFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

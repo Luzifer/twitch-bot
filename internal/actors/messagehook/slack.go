@@ -1,13 +1,13 @@
 package messagehook
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -19,7 +19,7 @@ type slackCompatibleActor struct {
 func (s slackCompatibleActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	text, err := formatMessage(attrs.MustString("text", nil), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "parsing text")
+		return false, fmt.Errorf("parsing text: %w", err)
 	}
 
 	return sendPayload(
@@ -37,10 +37,10 @@ func (slackCompatibleActor) Name() string { return "slackhook" }
 
 func (s slackCompatibleActor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldcollection.FieldCollection) (err error) {
 	if err = s.ValidateRequireNonEmpty(attrs, "hook_url", "text"); err != nil {
-		return err //nolint:wrapcheck
+		return err //nolint:wrapcheck // error is expressive on its own
 	}
 
-	//nolint:wrapcheck
+	//nolint:wrapcheck // error is expressive on its own
 	return s.ValidateRequireValidTemplate(tplValidator, attrs, "text")
 }
 

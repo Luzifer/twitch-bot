@@ -1,18 +1,20 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/Luzifer/go_helpers/cli"
-	"github.com/Luzifer/twitch-bot/v3/pkg/database"
-	"github.com/Luzifer/twitch-bot/v3/plugins"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 var (
-	dbCopyFuncs     = map[string]plugins.DatabaseCopyFunc{}
+	dbCopyFuncs     = make(map[string]plugins.DatabaseCopyFunc)
 	dbCopyFuncsLock sync.Mutex
 )
 
@@ -23,7 +25,7 @@ func init() {
 		Params:      []string{"<target storage-type>", "<target DSN>"},
 		Run: func(args []string) error {
 			if len(args) < 3 { //nolint:mnd // Just a count of parameters
-				return errors.New("Usage: twitch-bot copy-database <target storage-type> <target DSN>")
+				return errors.New("usage: twitch-bot copy-database <target storage-type> <target DSN>")
 			}
 
 			// Core functions cannot register themselves, we take that for them
@@ -33,7 +35,7 @@ func init() {
 
 			targetDB, err := database.New(args[1], args[2], cfg.StorageEncryptionPass)
 			if err != nil {
-				return errors.Wrap(err, "connecting to target db")
+				return fmt.Errorf("connecting to target db: %w", err)
 			}
 			defer func() {
 				if err := targetDB.Close(); err != nil {
@@ -41,21 +43,22 @@ func init() {
 				}
 			}()
 
-			return errors.Wrap(
-				targetDB.DB().Transaction(func(tx *gorm.DB) (err error) {
-					for name, dbcf := range dbCopyFuncs {
-						logrus.WithField("name", name).Info("running migration")
-						if err = dbcf(db.DB(), tx); err != nil {
-							return errors.Wrapf(err, "running DatabaseCopyFunc %q", name)
-						}
+			if err := targetDB.DB().Transaction(func(tx *gorm.DB) (err error) {
+				for name, dbcf := range dbCopyFuncs {
+					logrus.WithField("name", name).Info("running migration")
+					if err = dbcf(db.DB(), tx); err != nil {
+						return fmt.Errorf("running DatabaseCopyFunc %q: %w", name, err)
 					}
+				}
 
-					logrus.Info("database has been copied successfully")
+				logrus.Info("database has been copied successfully")
 
-					return nil
-				}),
-				"copying database to target",
-			)
+				return nil
+			}); err != nil {
+				return fmt.Errorf("copying database to target: %w", err)
+			}
+
+			return nil
 		},
 	})
 }

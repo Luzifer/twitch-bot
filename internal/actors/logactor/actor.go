@@ -1,18 +1,18 @@
-// Package log contains an actor to write bot-log entries from a rule
-package log
+// Package logactor contains an actor to write bot-log entries from a rule
+package logactor
 
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/sirupsen/logrus"
-
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
+
+type actor struct{}
 
 var formatMessage plugins.MsgFormatter
 
@@ -43,12 +43,10 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	message, err := formatMessage(attrs.MustString("message", helpers.Ptr("")), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing message template")
+		return false, fmt.Errorf("executing message template: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{

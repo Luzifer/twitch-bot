@@ -4,11 +4,11 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzshiming/openapi/spec"
 
@@ -56,7 +56,7 @@ func handleSwaggerHTML(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	if _, err := io.Copy(w, bytes.NewReader(swaggerHTML)); err != nil {
-		http.Error(w, errors.Wrap(err, "writing frontend").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("writing frontend: %w", err).Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -64,7 +64,7 @@ func handleSwaggerRequest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(swaggerDoc); err != nil {
-		http.Error(w, errors.Wrap(err, "rendering documentation").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("rendering documentation: %w", err).Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -174,7 +174,7 @@ func registerSwaggerRoute(route plugins.HTTPRouteRegistrationArgs) error {
 		op.Responses["400"] = spec.RefResponse("inputErrorResponse")
 		pi.Put = op
 	default:
-		return errors.Errorf("assignment for %q is not implemented", route.Method)
+		return fmt.Errorf("assignment for %q is not implemented", route.Method)
 	}
 
 	return nil

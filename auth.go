@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid/v3"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
@@ -68,7 +67,7 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 	req, _ := http.NewRequestWithContext(r.Context(), http.MethodPost, fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()), nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting access token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting access token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 	defer func() {
@@ -79,25 +78,25 @@ func handleAuthUpdateBotToken(w http.ResponseWriter, r *http.Request) {
 
 	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
-		http.Error(w, errors.Wrap(err, "decoding access token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("decoding access token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	_, botUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser(r.Context())
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = accessService.SetBotUsername(botUser); err != nil {
-		http.Error(w, errors.Wrap(err, "storing bot username").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("storing bot username: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	twitchClient.UpdateToken(rData.AccessToken, rData.RefreshToken)
 
 	if err = accessService.SetExtendedTwitchCredentials(botUser, rData.AccessToken, rData.RefreshToken, rData.Scope); err != nil {
-		http.Error(w, errors.Wrap(err, "storing access scopes").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("storing access scopes: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -130,7 +129,7 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 	req, _ := http.NewRequestWithContext(r.Context(), http.MethodPost, fmt.Sprintf("https://id.twitch.tv/oauth2/token?%s", params.Encode()), nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting access token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting access token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 	defer func() {
@@ -141,18 +140,18 @@ func handleAuthUpdateChannelGrant(w http.ResponseWriter, r *http.Request) {
 
 	var rData twitch.OAuthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rData); err != nil {
-		http.Error(w, errors.Wrap(err, "decoding access token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("decoding access token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	_, grantUser, err := twitch.New(cfg.TwitchClient, cfg.TwitchClientSecret, rData.AccessToken, "").GetAuthorizedUser(r.Context())
 	if err != nil {
-		http.Error(w, errors.Wrap(err, "getting authorized user").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("getting authorized user: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = accessService.SetExtendedTwitchCredentials(grantUser, rData.AccessToken, rData.RefreshToken, rData.Scope); err != nil {
-		http.Error(w, errors.Wrap(err, "storing access token").Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Errorf("storing access token: %w", err).Error(), http.StatusInternalServerError)
 		return
 	}
 

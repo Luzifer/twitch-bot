@@ -4,19 +4,21 @@ package shoutout
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "shoutout"
+
+type actor struct{}
 
 var (
 	botTwitchClient func() *twitch.Client
@@ -56,22 +58,21 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	user, err := formatMessage(attrs.MustString("user", ptrStringEmpty), m, r, eventData)
 	if err != nil {
-		return false, errors.Wrap(err, "executing user template")
+		return false, fmt.Errorf("executing user template: %w", err)
 	}
 
-	return false, errors.Wrap(
-		botTwitchClient().SendShoutout(
-			context.Background(),
-			plugins.DeriveChannel(m, eventData),
-			user,
-		),
-		"executing shoutout",
-	)
+	if err = botTwitchClient().SendShoutout(
+		context.Background(),
+		plugins.DeriveChannel(m, eventData),
+		user,
+	); err != nil {
+		return false, fmt.Errorf("executing shoutout: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }
@@ -98,7 +99,7 @@ func handleChatCommand(m *irc.Message) error {
 	}
 
 	if err := botTwitchClient().SendShoutout(context.Background(), channel, matches[1]); err != nil {
-		return errors.Wrap(err, "executing shoutout")
+		return fmt.Errorf("executing shoutout: %w", err)
 	}
 
 	return plugins.ErrSkipSendingMessage

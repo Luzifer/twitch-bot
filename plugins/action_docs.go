@@ -1,5 +1,14 @@
 package plugins
 
+// Enum of available field types
+const (
+	ActionDocumentationFieldTypeBool        ActionDocumentationFieldType = "bool"
+	ActionDocumentationFieldTypeDuration    ActionDocumentationFieldType = "duration"
+	ActionDocumentationFieldTypeInt64       ActionDocumentationFieldType = "int64"
+	ActionDocumentationFieldTypeString      ActionDocumentationFieldType = "string"
+	ActionDocumentationFieldTypeStringSlice ActionDocumentationFieldType = "stringslice"
+)
+
 type (
 	// ActionDocumentation contains the documentation for a single actor
 	// to be rendered into the documentation site
@@ -26,13 +35,4 @@ type (
 
 	// ActionDocumentationFieldType defines known field types
 	ActionDocumentationFieldType string
-)
-
-// Enum of available field types
-const (
-	ActionDocumentationFieldTypeBool        ActionDocumentationFieldType = "bool"
-	ActionDocumentationFieldTypeDuration    ActionDocumentationFieldType = "duration"
-	ActionDocumentationFieldTypeInt64       ActionDocumentationFieldType = "int64"
-	ActionDocumentationFieldTypeString      ActionDocumentationFieldType = "string"
-	ActionDocumentationFieldTypeStringSlice ActionDocumentationFieldType = "stringslice"
 )

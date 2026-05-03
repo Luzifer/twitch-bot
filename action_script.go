@@ -8,13 +8,15 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
+
+// ActorScript contains an actor to execute arbitrary commands and scripts
+type ActorScript struct{}
 
 func init() {
 	registerAction("script", func() plugins.Actor { return &ActorScript{} })
@@ -47,20 +49,17 @@ func init() {
 	})
 }
 
-// ActorScript contains an actor to execute arbitrary commands and scripts
-type ActorScript struct{}
-
 // Execute implements actor interface
 func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	command, err := attrs.StringSlice("command")
 	if err != nil {
-		return false, errors.Wrap(err, "getting command")
+		return false, fmt.Errorf("getting command: %w", err)
 	}
 
 	for i := range command {
 		tmp, err := formatMessage(command[i], m, r, eventData)
 		if err != nil {
-			return false, errors.Wrap(err, "execute command argument template")
+			return false, fmt.Errorf("execute command argument template: %w", err)
 		}
 
 		command[i] = tmp
@@ -74,7 +73,7 @@ func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, event
 		stdout = new(bytes.Buffer)
 	)
 
-	scriptInput := map[string]interface{}{
+	scriptInput := map[string]any{
 		"badges":   twitch.ParseBadgeLevels(m),
 		"channel":  plugins.DeriveChannel(m, eventData),
 		"username": plugins.DeriveUser(m, eventData),
@@ -86,7 +85,7 @@ func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, event
 	}
 
 	if err := json.NewEncoder(stdin).Encode(scriptInput); err != nil {
-		return false, errors.Wrap(err, "encoding script input")
+		return false, fmt.Errorf("encoding script input: %w", err)
 	}
 
 	cmd := exec.CommandContext(ctx, command[0], command[1:]...) // #nosec G204 // This is expected to call a command with parameters
@@ -96,7 +95,7 @@ func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, event
 	cmd.Stdout = stdout
 
 	if err := cmd.Run(); err != nil {
-		return attrs.MustBool("skip_cooldown_on_error", ptrBoolFalse), errors.Wrapf(err, "running command in rule %s", r.UUID)
+		return attrs.MustBool("skip_cooldown_on_error", ptrBoolFalse), fmt.Errorf("running command in rule %s: %w", r.UUID, err)
 	}
 
 	if stdout.Len() == 0 {
@@ -111,13 +110,13 @@ func (ActorScript) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, event
 
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&actions); err != nil {
-		return false, errors.Wrap(err, "decoding actions output")
+		return false, fmt.Errorf("decoding actions output: %w", err)
 	}
 
 	for _, action := range actions {
 		apc, err := triggerAction(c, m, r, action, eventData)
 		if err != nil {
-			return preventCooldown, errors.Wrap(err, "execute returned action")
+			return preventCooldown, fmt.Errorf("execute returned action: %w", err)
 		}
 		preventCooldown = preventCooldown || apc
 	}
@@ -143,7 +142,7 @@ func (ActorScript) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *f
 
 	for i, el := range attrs.MustStringSlice("command", nil) {
 		if err = tplValidator(el); err != nil {
-			return errors.Wrapf(err, "validating cmd template (element %d)", i)
+			return fmt.Errorf("validating cmd template (element %d): %w", i, err)
 		}
 	}
 

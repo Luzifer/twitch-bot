@@ -6,16 +6,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "shield"
+
+type actor struct{}
 
 var botTwitchClient func() *twitch.Client
 
@@ -46,17 +47,16 @@ func Register(args plugins.RegistrationArguments) error {
 	return nil
 }
 
-type actor struct{}
-
 func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
-	return false, errors.Wrap(
-		botTwitchClient().UpdateShieldMode(
-			context.Background(),
-			plugins.DeriveChannel(m, eventData),
-			attrs.MustBool("enable", helpers.Ptr(false)),
-		),
-		"configuring shield mode",
-	)
+	if err = botTwitchClient().UpdateShieldMode(
+		context.Background(),
+		plugins.DeriveChannel(m, eventData),
+		attrs.MustBool("enable", helpers.Ptr(false)),
+	); err != nil {
+		return false, fmt.Errorf("configuring shield mode: %w", err)
+	}
+
+	return false, nil
 }
 
 func (actor) IsAsync() bool { return false }

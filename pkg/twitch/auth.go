@@ -2,10 +2,10 @@ package twitch
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // GetTokenInfo requests a validation for the token set within the
@@ -25,7 +25,7 @@ func (c *Client) GetTokenInfo(ctx context.Context) (user string, scopes []string
 		Out:      &payload,
 		URL:      "https://id.twitch.tv/oauth2/validate",
 	}); err != nil {
-		return "", nil, time.Time{}, errors.Wrap(err, "validating token")
+		return "", nil, time.Time{}, fmt.Errorf("validating token: %w", err)
 	}
 
 	return payload.Login, payload.Scopes, time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second), nil

@@ -25,7 +25,7 @@ func TestModuleConfigGet(t *testing.T) {
 
 	fields := m.GetChannelConfig("module_does_not_exist", "test")
 	require.NotNil(t, fields, "must always return a valid FieldCollection")
-	assert.Len(t, fields.Data(), 0)
+	assert.Empty(t, fields.Data())
 
 	fields = m.GetChannelConfig("test", "test")
 	assert.Equal(t, DefaultConfigName, fields.MustString("setindefault", strPtrEmpty))
@@ -34,6 +34,6 @@ func TestModuleConfigGet(t *testing.T) {
 
 	fields = m.GetChannelConfig("test", "channel_not_configured")
 	assert.Equal(t, DefaultConfigName, fields.MustString("setindefault", strPtrEmpty))
-	assert.Equal(t, "", fields.MustString("setinchannel", strPtrEmpty))
+	assert.Empty(t, fields.MustString("setinchannel", strPtrEmpty))
 	assert.Equal(t, DefaultConfigName, fields.MustString("setinboth", strPtrEmpty))
 }

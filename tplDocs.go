@@ -3,16 +3,16 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"runtime/debug"
 	"sort"
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -24,7 +24,7 @@ func generateTplDocs() ([]byte, error) {
 		"renderExample": generateTplDocsRender,
 	}).Parse(tplDocsTemplate)
 	if err != nil {
-		return nil, errors.Wrap(err, "parsing tplDocs template")
+		return nil, fmt.Errorf("parsing tplDocs template: %w", err)
 	}
 
 	sort.Slice(tplFuncs.docs, func(i, j int) bool { return tplFuncs.docs[i].Name < tplFuncs.docs[j].Name })
@@ -35,7 +35,7 @@ func generateTplDocs() ([]byte, error) {
 	}{
 		Funcs: tplFuncs.docs,
 	}); err != nil {
-		return nil, errors.Wrap(err, "rendering tplDocs template")
+		return nil, fmt.Errorf("rendering tplDocs template: %w", err)
 	}
 
 	return buf.Bytes(), nil
