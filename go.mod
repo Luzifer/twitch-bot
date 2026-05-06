@@ -6,10 +6,10 @@ toolchain go1.26.2
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.4
-	github.com/Luzifer/go_helpers/backoff v0.5.1
-	github.com/Luzifer/go_helpers/cli v0.3.1
-	github.com/Luzifer/go_helpers/fieldcollection v0.5.0
-	github.com/Luzifer/go_helpers/str v0.5.0
+	github.com/Luzifer/go_helpers/backoff v0.5.2
+	github.com/Luzifer/go_helpers/cli v0.3.2
+	github.com/Luzifer/go_helpers/fieldcollection v0.5.1
+	github.com/Luzifer/go_helpers/str v0.5.1
 	github.com/Luzifer/korvike/functions v1.0.2
 	github.com/Luzifer/rconfig/v2 v2.6.1
 	github.com/getsentry/sentry-go v0.46.1
@@ -85,7 +85,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pjbgf/sha1cd v0.5.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
