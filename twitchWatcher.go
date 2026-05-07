@@ -256,7 +256,7 @@ func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"duration":     payload.Duration,
 		"is_automatic": payload.IsAutomatic,
@@ -275,7 +275,7 @@ func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel":     "#" + payload.BroadcasterUserLogin,
 		"followed_at": payload.FollowedAt,
 		"user_id":     payload.UserID,
@@ -294,7 +294,7 @@ func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel": "#" + payload.FromBroadcasterUserLogin,
 		"to_id":   payload.ToBroadcasterUserID,
 		"to":      payload.ToBroadcasterUserLogin,
@@ -313,7 +313,7 @@ func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel":      "#" + payload.BroadcasterUserLogin,
 		"reward_cost":  payload.Reward.Cost,
 		"reward_id":    payload.Reward.ID,
@@ -337,7 +337,7 @@ func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.R
 			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
-		fields := fieldcollection.FieldCollectionFromData(map[string]any{
+		fields := fieldcollection.FromData(map[string]any{
 			"channel":               "#" + payload.BroadcasterUserLogin,
 			"hasChannelPointVoting": payload.ChannelPointsVoting.IsEnabled,
 			"title":                 payload.Title,
@@ -385,7 +385,7 @@ func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.
 			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
-		fields := fieldcollection.FieldCollectionFromData(map[string]any{
+		fields := fieldcollection.FromData(map[string]any{
 			"channel": "#" + payload.BroadcasterUserLogin,
 			"level":   payload.Level,
 		})
@@ -409,7 +409,7 @@ func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel": "#" + payload.BroadcasterUserLogin,
 		"to_id":   payload.ToBroadcasterUserID,
 		"to":      payload.ToBroadcasterUserLogin,
@@ -428,7 +428,7 @@ func (*twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel": "#" + payload.BroadcasterUserLogin,
 		"from_id": payload.FromBroadcasterUserID,
 		"from":    payload.FromBroadcasterUserLogin,
@@ -459,7 +459,7 @@ func (*twitchWatcher) handleEventSubSusUserMessage(m json.RawMessage) (err error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"ban_evasion":         payload.BanEvasionEvaluation,
 		"channel":             "#" + payload.BroadcasterUserLogin,
 		"message":             payload.Message.Text,
@@ -482,7 +482,7 @@ func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error)
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"channel":   "#" + payload.BroadcasterUserLogin,
 		"moderator": payload.ModeratorUserLogin,
 		"status":    payload.LowTrustStatus,
@@ -573,7 +573,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel":  channel,
 			"category": *category,
 		}).Info("Category updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FieldCollectionFromData(map[string]any{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FromData(map[string]any{
 			"channel":  "#" + channel,
 			"category": *category,
 		}))
@@ -585,7 +585,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			"channel": channel,
 			"title":   *title,
 		}).Info("Title updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FieldCollectionFromData(map[string]any{
+		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FromData(map[string]any{
 			"channel": "#" + channel,
 			"title":   *title,
 		}))
@@ -603,7 +603,7 @@ func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, o
 			evt = eventTypeTwitchStreamOffline
 		}
 
-		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FieldCollectionFromData(map[string]any{
+		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FromData(map[string]any{
 			"channel": "#" + channel,
 		}))
 	}

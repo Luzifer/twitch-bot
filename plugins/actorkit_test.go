@@ -9,7 +9,7 @@ import (
 )
 
 func TestValidateRequireNonEmpty(t *testing.T) {
-	attrs := fieldcollection.FieldCollectionFromData(map[string]any{
+	attrs := fieldcollection.FromData(map[string]any{
 		"str":   "",
 		"str_v": "valid",
 		"int":   0,

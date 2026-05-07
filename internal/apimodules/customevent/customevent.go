@@ -138,7 +138,7 @@ func parseEvent(channel string, fieldData io.Reader) (*fieldcollection.FieldColl
 		return nil, fmt.Errorf("parsing event payload: %w", err)
 	}
 
-	fields := fieldcollection.FieldCollectionFromData(payload)
+	fields := fieldcollection.FromData(payload)
 	fields.Set("channel", "#"+strings.TrimLeft(channel, "#"))
 
 	return fields, nil

@@ -46,7 +46,7 @@ func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, 
 		EnteredAt:       time.Now().UTC(),
 	}
 
-	raffleEventFields := fieldcollection.FieldCollectionFromData(map[string]any{
+	raffleEventFields := fieldcollection.FromData(map[string]any{
 		"user_id": re.UserID,
 		"user":    re.UserLogin,
 	})

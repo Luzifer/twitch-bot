@@ -30,7 +30,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		IsLive: true,
 		Time:   tEvent2,
 		Type:   "event 2",
-		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
+		Fields: fieldcollection.FromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(1), evtID)
 	require.NoError(t, err, "adding second event")
@@ -39,7 +39,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		IsLive: true,
 		Time:   tEvent1,
 		Type:   "event 1",
-		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
+		Fields: fieldcollection.FromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(2), evtID)
 	require.NoError(t, err, "adding first event")
@@ -48,7 +48,7 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		IsLive: true,
 		Time:   tEvent1,
 		Type:   "event",
-		Fields: fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
+		Fields: fieldcollection.FromData(map[string]any{"foo": "bar"}),
 	})
 	assert.Equal(t, uint64(3), evtID)
 	require.NoError(t, err, "adding other channel event")
@@ -66,6 +66,6 @@ func TestEventDatabaseRoundtrip(t *testing.T) {
 		IsLive:  false,
 		Time:    tEvent1,
 		Type:    "event 1",
-		Fields:  fieldcollection.FieldCollectionFromData(map[string]any{"foo": "bar"}),
+		Fields:  fieldcollection.FromData(map[string]any{"foo": "bar"}),
 	}, evt)
 }

@@ -12,11 +12,11 @@ func TestModuleConfigGet(t *testing.T) {
 	strPtrEmpty := func(v string) *string { return &v }("")
 	m := ModuleConfig{
 		"test": map[string]*fieldcollection.FieldCollection{
-			DefaultConfigName: fieldcollection.FieldCollectionFromData(map[string]any{
+			DefaultConfigName: fieldcollection.FromData(map[string]any{
 				"setindefault": DefaultConfigName,
 				"setinboth":    DefaultConfigName,
 			}),
-			"test": fieldcollection.FieldCollectionFromData(map[string]any{
+			"test": fieldcollection.FromData(map[string]any{
 				"setinchannel": "channel",
 				"setinboth":    "channel",
 			}),

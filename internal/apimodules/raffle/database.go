@@ -379,7 +379,7 @@ func (d *dbClient) PickWinner(raffleID uint64) error {
 	d.speakUp[strings.Join([]string{r.Channel, winner.UserLogin}, ":")] = &speakUpWait{RaffleEntryID: winner.ID, Until: speakUpUntil}
 	d.lock.Unlock()
 
-	fields := fieldcollection.FieldCollectionFromData(map[string]any{
+	fields := fieldcollection.FromData(map[string]any{
 		"user_id": winner.UserID,
 		"user":    winner.UserLogin,
 		"winner":  winner,

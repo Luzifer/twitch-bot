@@ -97,7 +97,7 @@ func handleRaffleEntry(m *irc.Message, channel, user string) error {
 		re.UserDisplayName = re.UserLogin
 	}
 
-	raffleEventFields := fieldcollection.FieldCollectionFromData(map[string]any{
+	raffleEventFields := fieldcollection.FromData(map[string]any{
 		"user_id": m.Tags["user-id"],
 		"user":    user,
 	})

@@ -89,7 +89,7 @@ func generateTplDocsRender(e *plugins.TemplateFuncDocumentationExample) (string,
 		rule.MatchMessage = &e.MatchMessage
 	}
 
-	return formatMessage(e.Template, msg, rule, fieldcollection.FieldCollectionFromData(map[string]any{
+	return formatMessage(e.Template, msg, rule, fieldcollection.FromData(map[string]any{
 		"testDuration": 5*time.Hour + 33*time.Minute + 12*time.Second,
 	}))
 }
