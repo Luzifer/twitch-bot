@@ -11,7 +11,7 @@ require (
 	github.com/Luzifer/go_helpers/fieldcollection v0.5.1
 	github.com/Luzifer/go_helpers/str v0.5.1
 	github.com/Luzifer/korvike/functions v1.0.2
-	github.com/Luzifer/rconfig/v2 v2.6.1
+	github.com/Luzifer/rconfig/v2 v2.6.2
 	github.com/getsentry/sentry-go v0.46.2
 	github.com/getsentry/sentry-go/logrus v0.46.2
 	github.com/glebarez/sqlite v1.11.0
