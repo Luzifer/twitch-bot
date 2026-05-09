@@ -10,7 +10,7 @@ require (
 	github.com/Luzifer/go_helpers/cli v0.3.2
 	github.com/Luzifer/go_helpers/fieldcollection v0.5.1
 	github.com/Luzifer/go_helpers/str v0.5.1
-	github.com/Luzifer/korvike/functions v1.0.2
+	github.com/Luzifer/korvike/functions v1.0.3
 	github.com/Luzifer/rconfig/v2 v2.6.2
 	github.com/getsentry/sentry-go v0.46.2
 	github.com/getsentry/sentry-go/logrus v0.46.2
@@ -41,7 +41,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
