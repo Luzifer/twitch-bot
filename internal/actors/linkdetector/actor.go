@@ -8,7 +8,6 @@ import (
 	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/linkcheck"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -50,7 +49,7 @@ func (Actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 		return false, nil
 	}
 
-	if attrs.MustBool("heuristic", helpers.Ptr(false)) {
+	if attrs.MustBool("heuristic", new(false)) {
 		eventData.Set("links", linkcheck.New().HeuristicScanForLinks(m.Trailing()))
 	} else {
 		eventData.Set("links", linkcheck.New().ScanForLinks(m.Trailing()))

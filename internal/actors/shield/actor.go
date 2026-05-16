@@ -9,7 +9,6 @@ import (
 	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -51,7 +50,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, eventData *
 	if err = botTwitchClient().UpdateShieldMode(
 		context.Background(),
 		plugins.DeriveChannel(m, eventData),
-		attrs.MustBool("enable", helpers.Ptr(false)),
+		attrs.MustBool("enable", new(false)),
 	); err != nil {
 		return false, fmt.Errorf("configuring shield mode: %w", err)
 	}

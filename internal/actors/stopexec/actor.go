@@ -46,7 +46,7 @@ func Register(args plugins.RegistrationArguments) error {
 }
 
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
-	when, err := formatMessage(attrs.MustString("when", helpers.Ptr("")), m, r, eventData)
+	when, err := formatMessage(attrs.MustString("when", new("")), m, r, eventData)
 	if err != nil {
 		return false, fmt.Errorf("executing when template: %w", err)
 	}

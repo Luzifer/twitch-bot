@@ -11,7 +11,7 @@ import (
 func SchemaValidateTemplateField(tplValidator func(string) error, fields ...string) fieldcollection.ValidateOpt {
 	return func(f, _ *fieldcollection.FieldCollection) (err error) {
 		for _, field := range fields {
-			if err = tplValidator(f.MustString(field, Ptr(""))); err != nil {
+			if err = tplValidator(f.MustString(field, new(""))); err != nil {
 				return fmt.Errorf("validating %s: %w", field, err)
 			}
 		}

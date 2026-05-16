@@ -126,7 +126,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		},
 	}
 
-	if attrs.MustBool("as_reply", helpers.Ptr(false)) {
+	if attrs.MustBool("as_reply", new(false)) {
 		id, ok := m.Tags["id"]
 		if ok {
 			if ircMessage.Tags == nil {

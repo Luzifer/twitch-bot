@@ -9,7 +9,6 @@ import (
 	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -53,8 +52,8 @@ func Register(args plugins.RegistrationArguments) error {
 
 func (actor) Execute(_ *irc.Client, _ *irc.Message, _ *plugins.Rule, _ *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		delay  = attrs.MustDuration("delay", helpers.Ptr(time.Duration(0)))
-		jitter = attrs.MustDuration("jitter", helpers.Ptr(time.Duration(0)))
+		delay  = attrs.MustDuration("delay", new(time.Duration(0)))
+		jitter = attrs.MustDuration("jitter", new(time.Duration(0)))
 	)
 
 	if delay == 0 && jitter == 0 {

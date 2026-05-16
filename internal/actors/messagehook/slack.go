@@ -8,7 +8,6 @@ import (
 	"github.com/Luzifer/go_helpers/fieldcollection"
 	"gopkg.in/irc.v4"
 
-	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -23,7 +22,7 @@ func (s slackCompatibleActor) Execute(_ *irc.Client, m *irc.Message, r *plugins.
 	}
 
 	return sendPayload(
-		s.fixHookURL(attrs.MustString("hook_url", helpers.Ptr(""))),
+		s.fixHookURL(attrs.MustString("hook_url", new(""))),
 		map[string]string{
 			"text": text,
 		},

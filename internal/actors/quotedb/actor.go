@@ -116,9 +116,9 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		action   = attrs.MustString("action", helpers.Ptr(""))
-		indexStr = attrs.MustString("index", helpers.Ptr("0"))
-		quote    = attrs.MustString("quote", helpers.Ptr(""))
+		action   = attrs.MustString("action", new(""))
+		indexStr = attrs.MustString("index", new("0"))
+		quote    = attrs.MustString("quote", new(""))
 	)
 
 	if indexStr == "" {
@@ -169,7 +169,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		fields.Set("index", idx)
 		fields.Set("quote", quote)
 
-		format := attrs.MustString("format", helpers.Ptr("Quote #{{ .index }}: {{ .quote }}"))
+		format := attrs.MustString("format", new("Quote #{{ .index }}: {{ .quote }}"))
 		msg, err := formatMessage(format, m, r, fields)
 		if err != nil {
 			return false, fmt.Errorf("formatting output message: %w", err)
@@ -206,7 +206,7 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 		return fmt.Errorf("validating attributes: %w", err)
 	}
 
-	action := attrs.MustString("action", helpers.Ptr(""))
+	action := attrs.MustString("action", new(""))
 
 	switch action {
 	case "add":

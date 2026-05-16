@@ -94,7 +94,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		return false, fmt.Errorf("getting Twitch client for %q: %w", creator, err)
 	}
 
-	clipInfo, err := tc.CreateClip(context.TODO(), channel, attrs.MustBool("add_delay", helpers.Ptr(false)))
+	clipInfo, err := tc.CreateClip(context.TODO(), channel, attrs.MustBool("add_delay", new(false)))
 	if err != nil {
 		return false, fmt.Errorf("creating clip: %w", err)
 	}

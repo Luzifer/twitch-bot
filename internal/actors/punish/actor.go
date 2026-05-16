@@ -149,10 +149,10 @@ func Register(args plugins.RegistrationArguments) error {
 
 func (actorPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		cooldown = attrs.MustDuration("cooldown", helpers.Ptr(oneWeek))
-		reason   = attrs.MustString("reason", helpers.Ptr(""))
+		cooldown = attrs.MustDuration("cooldown", new(oneWeek))
+		reason   = attrs.MustString("reason", new(""))
 		user     = attrs.MustString("user", nil)
-		uuid     = attrs.MustString("uuid", helpers.Ptr(""))
+		uuid     = attrs.MustString("uuid", new(""))
 	)
 
 	levels, err := attrs.StringSlice("levels")
@@ -248,7 +248,7 @@ func (actorPunish) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *f
 func (actorResetPunish) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
 		user = attrs.MustString("user", nil)
-		uuid = attrs.MustString("uuid", helpers.Ptr(""))
+		uuid = attrs.MustString("uuid", new(""))
 	)
 
 	if user, err = formatMessage(user, m, r, eventData); err != nil {

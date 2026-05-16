@@ -72,8 +72,8 @@ func Register(args plugins.RegistrationArguments) error {
 
 func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	var (
-		game  = attrs.MustString("game", helpers.Ptr(""))
-		title = attrs.MustString("title", helpers.Ptr(""))
+		game  = attrs.MustString("game", new(""))
+		title = attrs.MustString("title", new(""))
 	)
 
 	if game == "" && title == "" {

@@ -1,6 +1,6 @@
 module github.com/Luzifer/twitch-bot/v3
 
-go 1.25.7
+go 1.26.0
 
 toolchain go1.26.3
 

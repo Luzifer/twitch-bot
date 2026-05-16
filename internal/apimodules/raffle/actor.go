@@ -16,9 +16,7 @@ type (
 	enterRaffleActor struct{}
 )
 
-var ptrStrEmpty = ptrStr("")
-
-func ptrStr(v string) *string { return &v }
+var ptrStrEmpty = new("")
 
 func (enterRaffleActor) Execute(_ *irc.Client, m *irc.Message, _ *plugins.Rule, evtData *fieldcollection.FieldCollection, attrs *fieldcollection.FieldCollection) (preventCooldown bool, err error) {
 	if m != nil || evtData.MustString("reward_id", ptrStrEmpty) == "" {

@@ -155,7 +155,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 	}
 	match := regexp.MustCompile(rawMatch)
 
-	rawScan, err := formatMessage(attrs.MustString("scan", helpers.Ptr("10m")), m, r, eventData)
+	rawScan, err := formatMessage(attrs.MustString("scan", new("10m")), m, r, eventData)
 	if err != nil {
 		return false, fmt.Errorf("formatting scan duration: %w", err)
 	}
@@ -169,7 +169,7 @@ func (actor) Execute(_ *irc.Client, m *irc.Message, r *plugins.Rule, eventData *
 		action     actionFn
 		actionName string
 	)
-	rawAction, err := formatMessage(attrs.MustString("action", helpers.Ptr("delete")), m, r, eventData)
+	rawAction, err := formatMessage(attrs.MustString("action", new("delete")), m, r, eventData)
 	if err != nil {
 		return false, fmt.Errorf("formatting action: %w", err)
 	}

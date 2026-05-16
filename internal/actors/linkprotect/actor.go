@@ -14,7 +14,6 @@ import (
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/clipdetector"
-	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -142,7 +141,7 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	if len(links) == 0 {
 		// If there are no links there is nothing to protect and there
 		// are also no clips as they are parsed from the links
-		if attrs.MustBool("stop_on_no_action", helpers.Ptr(false)) {
+		if attrs.MustBool("stop_on_no_action", new(false)) {
 			return false, plugins.ErrStopRuleExecution
 		}
 		return false, nil
@@ -158,21 +157,21 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 	}
 
 	if a.check(links, clips, attrs) == verdictAllFine {
-		if attrs.MustBool("stop_on_no_action", helpers.Ptr(false)) {
+		if attrs.MustBool("stop_on_no_action", new(false)) {
 			return false, plugins.ErrStopRuleExecution
 		}
 		return false, nil
 	}
 
 	// That message misbehaved so we need to punish them
-	switch lt := attrs.MustString("action", helpers.Ptr("")); lt {
+	switch lt := attrs.MustString("action", new("")); lt {
 	case "ban":
 		if err = botTwitchClient().BanUser(
 			context.Background(),
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),
 			0,
-			attrs.MustString("reason", helpers.Ptr("")),
+			attrs.MustString("reason", new("")),
 		); err != nil {
 			return false, fmt.Errorf("executing user ban: %w", err)
 		}
@@ -202,13 +201,13 @@ func (a actor) Execute(c *irc.Client, m *irc.Message, r *plugins.Rule, eventData
 			plugins.DeriveChannel(m, eventData),
 			strings.TrimLeft(plugins.DeriveUser(m, eventData), "@"),
 			to,
-			attrs.MustString("reason", helpers.Ptr("")),
+			attrs.MustString("reason", new("")),
 		); err != nil {
 			return false, fmt.Errorf("executing user ban: %w", err)
 		}
 	}
 
-	if attrs.MustBool("stop_on_action", helpers.Ptr(false)) {
+	if attrs.MustBool("stop_on_action", new(false)) {
 		return false, plugins.ErrStopRuleExecution
 	}
 
