@@ -56,6 +56,17 @@ type (
 		EndsAt    *time.Time `json:"ends_at"`
 		UpdatedAt time.Time  `json:"updated_at"`
 	}
+
+	// SendChatMessageResult transports the result of the message sending
+	// call with its ID and possible reasons why the message was dropped
+	SendChatMessageResult struct {
+		MessageID  string `json:"message_id"`
+		IsSent     bool   `json:"is_sent"`
+		DropReason *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"drop_reason"`
+	}
 )
 
 // ErrNoPinnedChatMessage signals there was no pinned message returned
@@ -184,6 +195,83 @@ func (c *Client) SendChatAnnouncement(ctx context.Context, channel, color, messa
 	}
 
 	return nil
+}
+
+// SendChatMessage sends a message to the broadcaster’s chat room
+//
+// replyToID needs to be an ID of a valid message or blank string when
+// not sending a reply
+// pin can only be used when replyToID is not set and sendToSharedChat
+// is set to false
+//
+//revive:disable-next-line:flag-parameter // those are not flags but parameters for the API
+func (c *Client) SendChatMessage(ctx context.Context, channel, message, replyToID string, sendToSharedChat, pin bool) (out SendChatMessageResult, err error) {
+	if pin && replyToID != "" {
+		return out, fmt.Errorf("replyToID cannot be used with pin=true")
+	}
+
+	if pin && sendToSharedChat {
+		return out, fmt.Errorf("sendToSharedChat=true cannot be used with pin=true")
+	}
+
+	var payload struct {
+		BroadcasterID        string  `json:"broadcaster_id"`
+		SenderID             string  `json:"sender_id"`
+		Message              string  `json:"message"`
+		ReplyParentMessageID *string `json:"reply_parent_message_id,omitempty"`
+		ForSourceOnly        *bool   `json:"for_source_only,omitempty"`
+		Pin                  *bool   `json:"pin,omitempty"`
+	}
+
+	payload.Message = message
+
+	if pin {
+		payload.Pin = new(true)
+	} else {
+		if replyToID != "" {
+			payload.ReplyParentMessageID = new(replyToID)
+		}
+
+		if sendToSharedChat {
+			payload.ForSourceOnly = new(!sendToSharedChat)
+		}
+	}
+
+	payload.SenderID, _, err = c.GetAuthorizedUser(ctx)
+	if err != nil {
+		return out, fmt.Errorf("getting bot user-id: %w", err)
+	}
+
+	payload.BroadcasterID, err = c.GetIDForUsername(ctx, strings.TrimLeft(channel, "#@"))
+	if err != nil {
+		return out, fmt.Errorf("getting channel user-id: %w", err)
+	}
+
+	body := new(bytes.Buffer)
+	if err = json.NewEncoder(body).Encode(payload); err != nil {
+		return out, fmt.Errorf("encoding payload: %w", err)
+	}
+
+	var response struct {
+		Data []SendChatMessageResult `json:"data"`
+	}
+
+	if err = c.Request(ctx, ClientRequestOpts{
+		AuthType: AuthTypeAppAccessToken,
+		Method:   http.MethodPost,
+		OKStatus: http.StatusOK,
+		Body:     body,
+		Out:      &response,
+		URL:      "https://api.twitch.tv/helix/chat/messages",
+	}); err != nil {
+		return out, fmt.Errorf("executing request: %w", err)
+	}
+
+	if len(response.Data) != 1 {
+		return out, fmt.Errorf("unexpected number of results: %d", len(response.Data))
+	}
+
+	return response.Data[0], nil
 }
 
 // SendShoutout creates a Twitch-native shoutout in the given channel
