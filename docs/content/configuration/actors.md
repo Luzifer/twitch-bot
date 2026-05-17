@@ -389,6 +389,31 @@ Mass ban, delete, or timeout messages based on regex. Be sure you REALLY know wh
     match: ""
 ```
 
+## Pin Message
+
+Pin a message to the channel
+
+```yaml
+- type: pin
+  attributes:
+    # Message to pin
+    # Optional: true
+    # Type:     string (Supports Templating)
+    message: ""
+    # Message-ID to pin
+    # Optional: true
+    # Type:     string (Supports Templating)
+    message_id: ""
+    # Duration of the pin (between 30s and 30m; empty for "until end of stream")
+    # Optional: true
+    # Type:     duration
+    duration: 0s
+    # Override channel to pin the message in
+    # Optional: true
+    # Type:     string
+    channel: ""
+```
+
 ## Punish User
 
 Apply increasing punishments to user
@@ -612,6 +637,15 @@ Timeout user from chat
     # Optional: false
     # Type:     string (Supports Templating)
     reason: ""
+```
+
+## Unpin Message
+
+Unpins any currently pinned message in the channel
+
+```yaml
+- type: unpin
+  # Does not have configuration attributes
 ```
 
 ## Update Shield Mode

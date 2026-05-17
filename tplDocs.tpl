@@ -10,10 +10,11 @@ title: Templating
 There are certain variables available in the strings with templating enabled:
 
 - `channel` - Channel the message was sent to, only available for regular messages not events
+- `message_id` - ID of the chat message, when the rule was called from a matched chat message
 - `msg` - The message object, used in functions, should not be sent to chat
 - `permitTimeout` - Value of `permit_timeout` in seconds
+- `user_id` - Twitch user ID of the message author, when available
 - `username` - The username of the message author
-
 
 ## Functions
 
