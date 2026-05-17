@@ -38,6 +38,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/spotify"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/stopexec"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/timeout"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/unpin"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/variables"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/vip"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/whisper"
@@ -94,6 +95,7 @@ var (
 		shoutout.Register,
 		stopexec.Register,
 		timeout.Register,
+		unpin.Register,
 		variables.Register,
 		vip.Register,
 		whisper.Register,
