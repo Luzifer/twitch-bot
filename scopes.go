@@ -4,6 +4,7 @@ import "github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 
 var (
 	channelExtendedScopes = map[string]string{
+		twitch.ScopeChannelBot:                   "access chat without moderator status",
 		twitch.ScopeChannelEditCommercial:        "run commercial",
 		twitch.ScopeChannelManageBroadcast:       "modify category / title, create markers",
 		twitch.ScopeChannelManagePolls:           "manage polls",
@@ -30,6 +31,8 @@ var (
 		twitch.ScopeModeratorManageShieldMode,
 		twitch.ScopeModeratorManageShoutouts,
 		twitch.ScopeModeratorReadFollowers,
+		twitch.ScopeUserBot,
+		twitch.ScopeUserWriteChat,
 
 		// Chat Scopes
 		twitch.ScopeChatEdit,

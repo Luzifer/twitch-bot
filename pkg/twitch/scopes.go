@@ -33,6 +33,7 @@ const (
 	ScopeUserManageChatColor          = "user:manage:chat_color"
 	ScopeUserManageWhispers           = "user:manage:whispers"
 	ScopeUserReadChat                 = "user:read:chat"
+	ScopeUserWriteChat                = "user:write:chat"
 
 	// Deprecated v5 scope but used in chat
 	ScopeV5ChannelEditor = "channel_editor"
