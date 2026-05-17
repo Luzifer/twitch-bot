@@ -29,6 +29,7 @@ import (
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/messagehook"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/modchannel"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/nuke"
+	"github.com/Luzifer/twitch-bot/v3/internal/actors/pin"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/punish"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/quotedb"
 	"github.com/Luzifer/twitch-bot/v3/internal/actors/raw"
@@ -87,6 +88,7 @@ var (
 		messagehook.Register,
 		modchannel.Register,
 		nuke.Register,
+		pin.Register,
 		punish.Register,
 		quotedb.Register,
 		raw.Register,
