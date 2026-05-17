@@ -1,7 +1,8 @@
 package main
 
 const (
-	eventFieldChannel  = "channel"
-	eventFieldUserID   = "user_id"
-	eventFieldUserName = "user"
+	eventFieldChannel   = "channel"
+	eventFieldMessageID = "message_id"
+	eventFieldUserID    = "user_id"
+	eventFieldUserName  = "user"
 )

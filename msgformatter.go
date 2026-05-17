@@ -23,6 +23,7 @@ var (
 	formatMessageFieldSetters = []func(compiledFields *fieldcollection.FieldCollection, m *irc.Message, fields *fieldcollection.FieldCollection){
 		formatMessageFieldChannel,
 		formatMessageFieldMessage,
+		formatMessageFieldMessageID,
 		formatMessageFieldUserID,
 		formatMessageFieldUsername,
 	}
@@ -74,6 +75,16 @@ func formatMessageFieldMessage(compiledFields *fieldcollection.FieldCollection, 
 	}
 
 	compiledFields.Set("msg", m)
+}
+
+func formatMessageFieldMessageID(compiledFields *fieldcollection.FieldCollection, m *irc.Message, _ *fieldcollection.FieldCollection) {
+	if m == nil {
+		return
+	}
+
+	if uid := m.Tags["id"]; uid != "" {
+		compiledFields.Set(eventFieldMessageID, uid)
+	}
 }
 
 func formatMessageFieldUserID(compiledFields *fieldcollection.FieldCollection, m *irc.Message, _ *fieldcollection.FieldCollection) {
