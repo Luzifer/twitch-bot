@@ -65,7 +65,7 @@ func (c connector) ReadEncryptedCoreMeta(key string, value any) error {
 // ResetEncryptedCoreMeta removes all CoreKV entries from the database
 func (c connector) ResetEncryptedCoreMeta() error {
 	if err := helpers.RetryTransaction(c.db, func(tx *gorm.DB) error {
-		return tx.Delete(&coreKV{}, "value LIKE ?", "U2FsdGVkX1%").Error
+		return tx.Delete(&coreKV{}, "value LIKE ? OR value LIKE ?", "U2FsdGVkX1%", "cryptkv%").Error
 	}); err != nil {
 		return fmt.Errorf("removing encrypted meta entries: %w", err)
 	}
@@ -98,6 +98,12 @@ func (c connector) ValidateEncryption() error {
 			// Shouldn't happen: When decryption is possible it should match
 			return errors.New("mismatch between expected and stored hash")
 		}
+
+		// Force write-back to migrate encryption version in case it changed
+		if err = c.StoreEncryptedCoreMeta(encryptionValidationKey, validationHash); err != nil {
+			return fmt.Errorf("writing back validation hash: %w", err)
+		}
+
 		return nil
 
 	case errors.Is(err, ErrCoreMetaNotFound):

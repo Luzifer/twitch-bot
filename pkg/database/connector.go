@@ -26,6 +26,7 @@ type (
 	connector struct {
 		db               *gorm.DB
 		encryptionSecret string
+		instanceSalt     []byte
 	}
 )
 
@@ -90,6 +91,10 @@ func New(driverName, connString, encryptionSecret string) (c Connector, err erro
 
 	if err = conn.applyCoreSchema(); err != nil {
 		return nil, err
+	}
+
+	if err = conn.loadOrGenerateInstanceSalt(); err != nil {
+		return nil, fmt.Errorf("loading or generating instance salt: %w", err)
 	}
 
 	return conn, nil
