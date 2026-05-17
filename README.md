@@ -22,12 +22,12 @@ Usage of twitch-bot:
       --plugin-dir string                Where to find and load plugins (default "/usr/lib/twitch-bot")
       --rate-limit duration              How often to send a message (default: 20/30s=1500ms, if your bot is mod everywhere: 100/30s=300ms, different for known/verified bots) (default 1.5s)
       --sentry-dsn string                Sentry / GlitchTip DSN for error reporting
+      --sentry-environment string        Environment to submit to Sentry to distinguish bot instances
       --storage-conn-string string       Connection string for the database (default "./storage.db")
       --storage-conn-type string         One of: mysql, postgres, sqlite (default "sqlite")
       --storage-encryption-pass string   Passphrase to encrypt secrets inside storage (defaults to twitch-client:twitch-client-secret)
       --twitch-client string             Client ID to act as
       --twitch-client-secret string      Secret for the Client ID
-      --twitch-token string              OAuth token valid for client (fallback if no token was set in interface)
   -v, --validate-config                  Loads the config, logs any errors and quits with status 0 on success
       --version                          Prints current version and exits
       --wait-for-selfcheck duration      Maximum time to wait for the self-check to respond when behind load-balancers (default 1m0s)

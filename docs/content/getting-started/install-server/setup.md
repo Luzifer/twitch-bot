@@ -108,12 +108,12 @@ Requires=network-online.target
 [Service]
 EnvironmentFile=/etc/twitch-bot/environment
 ExecStartPre=-/usr/bin/docker rm -f %n
-ExecStartPre=/usr/bin/docker pull luzifer/twitch-bot:stable
+ExecStartPre=/usr/bin/docker pull ghcr.io/luzifer/twitch-bot:latest
 ExecStart=/usr/bin/docker run --rm --name %n \
             --env-file /etc/twitch-bot/environment \
             -v /var/lib/twitch-bot:/var/lib/twitch-bot \
             -p 127.0.0.1:3000:3000 \
-            luzifer/twitch-bot:stable
+            ghcr.io/luzifer/twitch-bot:latest
 Restart=Always
 RestartSecs=5
 

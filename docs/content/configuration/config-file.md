@@ -51,6 +51,9 @@ permit_allow_moderator: true
 # How long to permit on !permit command
 permit_timeout: 60s
 
+# Write raw IRC messages to this file for debugging.
+raw_log: ""
+
 # Variables are made available in templating (for example useful to disable several
 # rules at once using the `disable_on_template` directive)
 # Supported data types: Boolean, Float, Integer, String
@@ -91,11 +94,15 @@ rules: # See below for examples
 
   - actions: # Array of actions to take when this rule matches
 
-    # See the Actors page in the Wiki for available actors:
-    # https://github.com/Luzifer/twitch-bot/wiki/Actors
-    - type: "<actor type>"
-      attributes:
-        key: value
+      # See the Actors page in the Wiki for available actors:
+      # https://github.com/Luzifer/twitch-bot/wiki/Actors
+      - type: "<actor type>"
+        attributes:
+          key: value
+
+    # Optional URL to a remote YAML / JSON rule definition. When set the
+    # rule is periodically refreshed from there.
+    subscribe_from: ""
 
     # Add a cooldown to the rule in general (not to trigger counters twice, ...)
     # Using this will prevent the rule to be executed in all matching channels

@@ -13,6 +13,18 @@ Fields:
 - `is_automatic` _bool_ - Were the ads started by the ad-manager?
 - `started_at` _time.Time_ - When did the ad-break start
 
+## `announcement`
+
+An announcement was sent in chat.
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- `color` _string_ - The announcement color
+- `message` _string_ - The announcement text
+- `user_id` _string_ - The ID of the user who sent the announcement
+- `user` _string_ - The login-name of the user who sent the announcement
+
 ## `ban`
 
 Moderator action caused a user to be banned from chat.
@@ -33,6 +45,8 @@ Fields:
 
 - `bits` _int64_ - Total amount of bits spent in the message
 - `channel` _string_ - The channel the event occurred in
+- `message` _string_ - The chat message containing the bits
+- `user_id` _string_ - The ID of the user who spent the bits
 - `username` _string_ - The login-name of the user who spent the bits
 
 ## `category_update`
@@ -68,6 +82,15 @@ Note: This event does **not** contain the acting user! You cannot use the `{{.us
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+
+## `custom`
+
+A custom event was created through the `customevent` action or API.
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- All fields passed to the custom event
 
 ## `delete`
 
@@ -165,6 +188,7 @@ Fields:
 
 - `channel` _string_ - The channel the event occurred in
 - `user` _string_ - The login-name of the user who **gave** the permit
+- `user_id` _string_ - The ID of the user who gave the permit
 - `to` _string_ - The username who got the permit
 
 ## `poll_begin` / `poll_end` / `poll_progress`
@@ -174,6 +198,7 @@ A poll was started / was ended / had changes in the given channel.
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `hasChannelPointVoting` _bool_ - Whether the poll has channel-point voting enabled
 - `poll` _EventSubEventPoll_ - The poll object describing the poll, see schema in [`pkg/twitch/eventsub.go#L92`](https://github.com/Luzifer/twitch-bot/blob/master/pkg/twitch/eventsub.go#L152)
 - `status` _string_ - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
 - `title` _string_ - The title of the poll the event was generated for
@@ -223,7 +248,7 @@ Fields:
 
 ## `stream_offline`
 
-The channels stream went offline. (This event has some delay to the real category change!)
+The channels stream went offline. (This event has some delay to the real button-press to "stop stream"!)
 
 Fields:
 
@@ -231,7 +256,7 @@ Fields:
 
 ## `stream_online`
 
-The channels stream went offline. (This event has some delay to the real category change!)
+The channels stream went online. (This event has some delay to the real button-press to "start stream"!)
 
 Fields:
 
@@ -319,6 +344,18 @@ Fields:
 
 - `channel` _string_ - The channel the event occurred in
 - `title` _string_ - The title of the stream
+
+## `watch_streak`
+
+The user shared a watch-streak milestone.
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- `message` _string_ - The message the user shared with the milestone
+- `streak` _int64_ - The watch-streak value
+- `user` _string_ - The login-name of the user who shared the milestone
+- `user_id` _string_ - The ID of the user who shared the milestone
 
 ## `whisper`
 
