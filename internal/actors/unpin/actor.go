@@ -19,15 +19,11 @@ const actorName = "unpin"
 // Actor implements the actor interface
 type Actor struct{}
 
-var (
-	hasPerm  plugins.ChannelPermissionCheckFunc
-	tcGetter func(string) (*twitch.Client, error)
-)
+var tcGetter func() *twitch.Client
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) error {
-	hasPerm = args.HasPermissionForChannel
-	tcGetter = args.GetTwitchClientForChannel
+	tcGetter = args.GetTwitchClient
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &Actor{} })
 
@@ -48,21 +44,10 @@ func (Actor) Execute(
 	eventData *fieldcollection.FieldCollection,
 	_ *fieldcollection.FieldCollection,
 ) (preventCooldown bool, err error) {
-	channel := strings.TrimLeft(plugins.DeriveChannel(m, eventData), "#")
-
-	canModerate, err := hasPerm(channel, twitch.ScopeModeratorManageChatMessages)
-	if err != nil {
-		return false, fmt.Errorf("checking for required permission: %w", err)
-	}
-
-	if !canModerate {
-		return false, fmt.Errorf("creator has not given %s permission", twitch.ScopeModeratorManageChatMessages)
-	}
-
-	twitchClient, err := tcGetter(channel)
-	if err != nil {
-		return false, fmt.Errorf("getting Twitch client: %w", err)
-	}
+	var (
+		twitchClient = tcGetter()
+		channel      = strings.TrimLeft(plugins.DeriveChannel(m, eventData), "#")
+	)
 
 	pin, err := twitchClient.GetPinnedChatMessage(context.TODO(), channel)
 	if err != nil {
