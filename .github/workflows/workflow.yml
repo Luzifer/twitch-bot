@@ -11,7 +11,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -36,7 +36,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -90,7 +90,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -136,7 +136,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -180,7 +180,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
@@ -221,7 +221,7 @@ jobs:
       run:
         shell: bash
     container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:45c4398306f485d28722b7533828458d867c9534e2ec128e089aef6fc75b7993
+      image: ghcr.io/luzifer-docker/action-env:master@sha256:ba03ccbed9168c269b411c4319a79f66a36ab6c8cab46766b158c585156acece
       env:
         CGO_ENABLED: 0
         GOPATH: /go
