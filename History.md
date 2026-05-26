@@ -1,3 +1,28 @@
+# 3.42.0 / 2026-05-26
+
+* New Features
+  * feat: implement `pin` action
+  * feat: implement `unpin` action
+
+* Improvements
+  * feat: add support for pinned messages
+  * feat: add support for sending chat messages through API
+  * feat: replace old AES-256-CBC with modern encryption
+  * chore: provide `message_id` for templating
+
+* Bugfixes
+  * fix: introduce new locking and double cooldown check for rules
+  * fix(deps): update dependency vue to v3.5.34
+  * fix(deps): update dependency vue-router to v5.0.7 (#282)
+  * fix(deps): update github.com/getsentry/sentry-go/* to v0.46.2
+  * fix(deps): update luzifer/go_helpers
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.19.1 [security] (#286)
+  * fix(deps): update module github.com/go-sql-driver/mysql to v1.10.0
+  * fix(deps): update module github.com/luzifer/korvike/functions to v1.0.3
+  * fix(deps): update module github.com/luzifer/rconfig/v2 to v2.6.2
+  * fix(deps): update module golang.org/x/crypto to v0.52.0 [security] (#289)
+  * fix(deps): update module golang.org/x/net to v0.55.0 [security] (#290)
+
 # 3.41.0 / 2026-04-09
 
 * Improvements
