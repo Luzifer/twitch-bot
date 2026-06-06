@@ -1,4 +1,4 @@
-FROM debian:13.5 AS builder
+FROM debian:13.5@sha256:4ae67669760b807c19f23902a3fd7c121a6a70cf2ae709035674b23e712e4d62 AS builder
 
 # renovate: pkgName=Luzifer/gziphttp datasource=github-releases
 ENV GZIPHTTP_VERSION=0.1.4
