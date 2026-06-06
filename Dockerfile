@@ -28,7 +28,7 @@ FROM alpine:3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a50
 
 LABEL org.opencontainers.image.authors="Knut Ahlers <knut@ahlers.me>" \
       org.opencontainers.image.url="https://github.com/users/Luzifer/packages/container/package/twitch-bot" \
-      org.opencontainers.image.documentation="https://luzifer.github.io/twitch-bot/" \
+      org.opencontainers.image.documentation="https://twitch-bot-docs.luzifer.io/" \
       org.opencontainers.image.source="https://github.com/Luzifer/twitch-bot" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.title="Self-hosted alternative to one of the big Twitch bots managed by big companies"

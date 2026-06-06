@@ -10,91 +10,129 @@ jobs:
     defaults:
       run:
         shell: bash
+
     container:
       image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
+
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
       - name: Lint and test code
         run: make lint test frontend_lint
+
       - name: Build release (quick local for compile)
         run: make build_prod
+
       - name: Execute Trivy scan
         run: make trivy
 
   doc-generator:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' }}
     needs: [test]
+
     defaults:
       run:
         shell: bash
-    container:
-      image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
-      env:
-        CGO_ENABLED: 0
-        GOPATH: /go
+
     permissions:
       contents: read
-      pages: write
-      id-token: write
+      packages: write
+
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
           submodules: true
-      - name: Marking workdir safe
-        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
-      - name: Generate documentation
-        run: make render_docs DOCS_BASE_URL=https://luzifer.github.io/twitch-bot/
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: .rendered-docs
-      - name: Deploy artifact
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
 
-  docker-publish:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' }}
-    needs: [test]
-    defaults:
-      run:
-        shell: bash
-    permissions:
-      packages: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
-          show-progress: false
+          images: ghcr.io/luzifer/twitch-bot-docs
+
       - name: Log into registry
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Docker Build & Publish
-        run: bash ci/docker-publish.sh
+
+      - name: Build and push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: ./docs
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  docker-publish:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' }}
+    needs: [test]
+
+    defaults:
+      run:
+        shell: bash
+
+    permissions:
+      contents: read
+      packages: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          show-progress: false
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ghcr.io/luzifer/twitch-bot
+
+      - name: Log into registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
   integration-mariadb:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
+
     defaults:
       run:
         shell: bash
+
     container:
       image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+
     runs-on: ubuntu-latest
+
     services:
       mariadb:
         image: mariadb:12.3.2@sha256:b1c7bf836e64ed9406a8984af29509f40089d55cea14b32f12c4726a1f17104b
@@ -109,20 +147,25 @@ jobs:
           --health-interval 10s
           --health-retries 5
           --health-timeout 5s
+
     steps:
       - name: Install required packages
         run: apt-get install -y --no-install-recommends mariadb-client
+
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
+
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
       - name: Set up MariaDB service
         run: |
           mariadb -h mariadb -u root --password=root-pass <<EOF
             CREATE DATABASE integration DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
             GRANT ALL ON integration.* TO 'twitch-bot'@'%';
           EOF
+
       - name: Run tests against MariaDB
         env:
           GO_TEST_DB_ENGINE: mysql
@@ -132,15 +175,19 @@ jobs:
   integration-mysql:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
+
     defaults:
       run:
         shell: bash
+
     container:
       image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+
     runs-on: ubuntu-latest
+
     services:
       mysql:
         image: mysql:9.7.0@sha256:c11782aa2a96624c1efc121768641d96954faa136d6aa82751b032d8c426ffbc
@@ -153,20 +200,25 @@ jobs:
           --health-interval 10s
           --health-retries 5
           --health-timeout 5s
+
     steps:
       - name: Install required packages
         run: apt-get install -y --no-install-recommends mariadb-client
+
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
+
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
       - name: Set up MySQL service
         run: |
           mariadb --skip-ssl -h mysql -u root --password=root-pass <<EOF
             CREATE DATABASE integration DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
             GRANT ALL ON integration.* TO 'twitch-bot'@'%';
           EOF
+
       - name: Run tests against MySQL
         env:
           GO_TEST_DB_ENGINE: mysql
@@ -176,15 +228,19 @@ jobs:
   integration-postgres:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test]
+
     defaults:
       run:
         shell: bash
+
     container:
       image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:18.4@sha256:8ff36f3c66371cba71d20ceedccfc3de9669a68737607888c4ef0af93abe8e39
@@ -195,12 +251,15 @@ jobs:
           --health-interval 10s
           --health-retries 5
           --health-timeout 5s
+
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
+
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
       - name: Run tests against PostgreSQL
         env:
           GO_TEST_DB_ENGINE: postgres
@@ -217,27 +276,36 @@ jobs:
   release:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [test]
+
     defaults:
       run:
         shell: bash
+
     container:
       image: ghcr.io/luzifer-docker/action-env:master@sha256:156dd51825ec3d9ab0ac3be20cae8305fe4b1c25398ad9e6c2a190286f452d9c
       env:
         CGO_ENABLED: 0
         GOPATH: /go
+
     permissions:
       contents: write
+
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           show-progress: false
+
       - name: Marking workdir safe
         run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
+
       - name: Build release
         run: make publish
+
       - name: Extract changelog
         run: awk "/^#/ && ++c==2{exit}; /^#/f" "History.md" | tail -n +2 >release_changelog.md
+
       - name: Release
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:

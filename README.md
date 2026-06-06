@@ -10,7 +10,7 @@ At the moment it is a work-in-progress and does not yet implment all features it
 
 ## Configuration
 
-Please refer to the [Documentation](https://luzifer.github.io/twitch-bot/) how to setup and configure the bot.
+Please refer to the [Documentation](https://twitch-bot-docs.luzifer.io/) how to setup and configure the bot.
 
 ```console
 # twitch-bot --help

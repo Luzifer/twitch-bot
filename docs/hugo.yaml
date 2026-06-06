@@ -12,7 +12,7 @@ enableMissingTranslationPlaceholders: false
 
 cleanDestinationDir: true
 disableKinds: [rss, taxonomy, term]
-publishDir: "../.rendered-docs"
+publishDir: ".dist"
 
 params:
   # (Optional, default light) Sets color theme: light, dark or auto.

@@ -1,0 +1,4 @@
+/.dist
+/hugo_*
+/.hugo_build.lock
+/resources/_gen

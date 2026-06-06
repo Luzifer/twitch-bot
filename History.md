@@ -1,3 +1,11 @@
+# Unreleased
+
+> [!NOTE]
+> This release switches the tag for develop-images from `:develop` to `:master`. Release-images remain published to `:v1.2.3` and `:latest`.
+
+> [!NOTE]
+> Starting with this release the documentation is no longer found on Github Pages but on https://twitch-bot-docs.luzifer.io.
+
 # 3.42.0 / 2026-05-26
 
 * New Features
