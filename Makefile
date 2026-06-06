@@ -90,7 +90,13 @@ template_docs: ## Generate template function documentation
 
 eventclient_docs: ## Generate eventclient documentation
 	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md
-	docker run --rm -i -v $(CURDIR):$(CURDIR) -w $(CURDIR) node:18-alpine sh -ec 'npx --yes jsdoc-to-markdown --files ./internal/apimodules/overlays/default/eventclient.js' >>docs/content/overlays/eventclient.md
+	docker run --rm -i \
+		-v $(CURDIR):$(CURDIR) \
+		-w $(CURDIR) \
+		node:alpine \
+		npx --yes jsdoc-to-markdown \
+			--files ./internal/apimodules/overlays/default/eventclient.js \
+			>>docs/content/overlays/eventclient.md
 
 render_docs: ## Render documentation site
 	$(MAKE) -C docs
