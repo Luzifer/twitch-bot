@@ -123,6 +123,7 @@ Fields:
 
 - `channel` _string_ - The channel the event occurred in
 - `gifter` _string_ - The login-name of the user who gifted the subscription
+- `user_id` _string_ - The ID of the user who upgraded their subscription
 - `username` _string_ - The login-name of the user who upgraded their subscription
 
 ## `hypetrain_begin`, `hypetrain_end`, `hypetrain_progress`
@@ -210,6 +211,8 @@ The channel was raided by another user.
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `from` _string_ - The login-name of the user who raided the channel
+- `user_id` _string_ - The ID of the user who raided the channel
 - `username` _string_ - The login-name of the user who raided the channel
 - `viewercount` _int64_ - The amount of users who have been raided (this number is not fully accurate)
 
@@ -220,8 +223,12 @@ The user shared their resubscription. (This event is triggered manually by the u
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `from` _string_ - The login-name of the user who resubscribed
+- `message` _string_ - The message shared with the resubscription
+- `multi_month` _int64_ - Multi-month duration in months reported by Twitch (`0` when absent)
 - `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `subscribed_months` _int64_ - How long have they been subscribed
+- `user_id` _string_ - The ID of the user who resubscribed
 - `username` _string_ - The login-name of the user who resubscribed
 
 ## `shoutout_created`
@@ -269,7 +276,10 @@ The user newly subscribed on their own. (This event is triggered automatically a
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `from` _string_ - The login-name of the user who subscribed
+- `multi_month` _int64_ - Multi-month duration in months reported by Twitch (`0` when absent)
 - `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `user_id` _string_ - The ID of the user who subscribed
 - `username` _string_ - The login-name of the user who subscribed
 
 ## `subgift`
@@ -279,12 +289,15 @@ The user gifted the subscription to a specific user. (This event **DOES** occur 
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `from` _string_ - The login-name of the user who gifted the subscription
 - `gifted_months` _int64_ - Number of months the user gifted
+- `multi_month` _int64_ - Multi-month duration in months reported by Twitch (`0` when absent)
 - `origin_id` _string_ - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
 - `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
 - `subscribed_months` _int64_ - How long the recipient has been subscribed
 - `to` _string_ - The user who received the sub
 - `total_gifted` _int64_ - How many subs has the user given in total (might be zero due to users preferences)
+- `user_id` _string_ - The ID of the user who gifted the subscription
 - `username` _string_ - The login-name of the user who gifted the subscription
 
 ## `submysterygift`
@@ -294,9 +307,13 @@ The user gifted multiple subs to the community. (This event is followed by `numb
 Fields:
 
 - `channel` _string_ - The channel the event occurred in
+- `from` _string_ - The login-name of the user who gifted the subscription
+- `multi_month` _int64_ - Multi-month duration in months reported by Twitch (`0` when absent)
 - `number` _int64_ - The amount of gifted subs
 - `origin_id` _string_ - ID unique to the gift-event (can be used to match `subgift` events to corresponding `submysterygift` event)
 - `plan` _string_ - The sub-plan they are using (`1000` = T1, `2000` = T2, `3000` = T3, `Prime`)
+- `total_gifted` _int64_ - How many subs has the user given in total (might be zero due to users preferences)
+- `user_id` _string_ - The ID of the user who gifted the subscription
 - `username` _string_ - The login-name of the user who gifted the subscription
 
 ## `sus_user_message`
