@@ -9,7 +9,7 @@ title: Templating
 
 There are certain variables available in the strings with templating enabled:
 
-- `channel` - Channel the message was sent to, only available for regular messages not events
+- `channel` - Channel the message or event occurred in, when available
 - `message_id` - ID of the chat message, when the rule was called from a matched chat message
 - `msg` - The message object, used in functions, should not be sent to chat
 - `permitTimeout` - Value of `permit_timeout` in seconds
@@ -479,7 +479,7 @@ Syntax: `recentTitle <username> [fallback]`
 Example:
 
 ```
-# {{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}
+# {{ recentTitle "luziferus" "none" }} - {{ recentTitle "thisuserdoesnotexist123" "none" }}
 * Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none
 ```
 
@@ -506,7 +506,7 @@ Example:
 
 ```
 # Your int this hour: {{ printf "%.0f" (mulf (seededRandom (list "int" .username (now | date "2006-01-02 15") | join ":")) 100) }}%
-< Your int this hour: 7%
+< Your int this hour: 21%
 ```
 
 ### `spotifyCurrentPlaying`

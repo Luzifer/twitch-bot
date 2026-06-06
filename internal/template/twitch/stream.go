@@ -57,7 +57,7 @@ func tplTwitchRecentTitle(args plugins.RegistrationArguments) {
 		Description: "Returns the last stream title of the specified user or the `fallback` if the title could not be fetched. If no fallback was supplied the message will fail and not be sent.",
 		Syntax:      "recentTitle <username> [fallback]",
 		Example: &plugins.TemplateFuncDocumentationExample{
-			Template:    `{{ recentGame "luziferus" "none" }} - {{ recentGame "thisuserdoesnotexist123" "none" }}`,
+			Template:    `{{ recentTitle "luziferus" "none" }} - {{ recentTitle "thisuserdoesnotexist123" "none" }}`,
 			FakedOutput: "Die Oper haben wir überlebt, mal sehen was uns sonst noch alles töten möchte… - none",
 		},
 	})
