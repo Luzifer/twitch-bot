@@ -1,10 +1,21 @@
-# Unreleased
+# 3.42.1 / 2026-06-06
 
 > [!NOTE]
 > This release switches the tag for develop-images from `:develop` to `:master`. Release-images remain published to `:v1.2.3` and `:latest`.
 
 > [!NOTE]
-> Starting with this release the documentation is no longer found on Github Pages but on https://twitch-bot-docs.luzifer.io.
+> Starting with this release the documentation is no longer found on Github Pages but on https://twitch-bot-docs.luzifer.io
+
+* Bugfixes
+  * fix(deps): update dependency vue to v3.5.35 (#296)
+  * fix(deps): update dependency vue-router to v5.1.0 (#298)
+
+* Documentation
+  * chore: update theme
+  * chore(docs): add auto-shoutout example
+  * chore(docs): add missing parts of documentation
+  * chore(docs): move examples into their own pages
+  * fix(docs): add missing fields for event documentation
 
 # 3.42.0 / 2026-05-26
 
