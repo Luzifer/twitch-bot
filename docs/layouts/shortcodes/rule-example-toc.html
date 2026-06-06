@@ -1,0 +1,13 @@
+{{- $pages := .Page.RegularPages.ByTitle -}}
+{{- with $pages }}
+<dl>
+{{- range . }}
+  <dt>
+    <a href="{{ .RelPermalink }}">{{ partial "docs/title" . }}</a>
+  </dt>
+  <dd class="markdown-inner">
+    {{- or .Description .Summary | plainify | htmlUnescape -}}
+  </dd>
+{{- end }}
+</dl>
+{{- end }}
