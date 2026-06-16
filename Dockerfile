@@ -24,7 +24,7 @@ RUN set -ex \
       -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
 
 
-FROM alpine:3.24@sha256:f5064d3e5f88c467c714509f491853ab2d951932c5cad699c0cb969dcec6f3b4
+FROM alpine:3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 
 LABEL org.opencontainers.image.authors="Knut Ahlers <knut@ahlers.me>" \
       org.opencontainers.image.url="https://github.com/users/Luzifer/packages/container/package/twitch-bot" \
