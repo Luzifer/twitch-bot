@@ -190,7 +190,7 @@ jobs:
 
     services:
       mysql:
-        image: mysql:9.7.1@sha256:c109c421c81637a50209b57ec6af7dc0685e8b1ce7efdca0c0902a3d95df6574
+        image: mysql:9.7.1@sha256:cbade841779f1661300e705721f9d2ff159865cc7a8a291affbff43ac6ec7f1d
         env:
           MYSQL_PASSWORD: twitch-bot-pass
           MYSQL_ROOT_PASSWORD: root-pass
