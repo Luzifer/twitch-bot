@@ -1,3 +1,27 @@
+# 3.42.2 / 2026-08-02
+
+* Improvements
+  * chore(linkcheck): update chrome major version
+
+* Bugfixes
+  * fix: ignore shared-chat messages from other channels
+  * chore(sec): force-upgrade transitive dependencies
+  * fix(deps): update dependency pinia to v4 (#380)
+  * fix(deps): update dependency vue to v3.5.40 (#367)
+  * fix(deps): update dependency vue-router to v5.2.0 (#365)
+  * fix(deps): update font awesome to v7.3.1 (#366)
+  * fix(deps): update github.com/getsentry/sentry-go/* to v0.48.0 (#364)
+  * fix(deps): update module github.com/luzifer/go-openssl/v4 to v4.2.5 (#342)
+  * fix(deps): update module github.com/luzifer/korvike/functions to v1.2.0 (#347)
+  * fix(deps): update module golang.org/x/crypto to v0.53.0 (#313)
+  * fix(deps): update module golang.org/x/net to v0.57.0 (#359)
+  * fix(deps): update module gorm.io/driver/postgres to v1.6.1 (#383)
+  * fix(deps): update module gorm.io/gorm to v1.31.2 (#337)
+
+* Documentation
+  * chore(docs): add hint how to use the examples
+  * chore(docs): add more examples from Github Discussions
+
 # 3.42.1 / 2026-06-06
 
 > [!NOTE]
