@@ -114,6 +114,7 @@ func (i ircHandler) ExecutePart(channel string) {
 	_ = i.c.Write(fmt.Sprintf("PART #%s", strings.TrimLeft(channel, "#")))
 }
 
+//nolint:gocyclo // this is only a simple distribution-list without much logic
 func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 	// We've received a message, update status check
 	statusIRCMessageReceived = time.Now()
@@ -126,6 +127,15 @@ func (i ircHandler) Handle(c *irc.Client, m *irc.Message) {
 			logrus.WithError(err).Error("Unable to log raw message")
 		}
 	}(m)
+
+	if m.Tags["source-room-id"] != "" && m.Tags["source-room-id"] != m.Tags["room-id"] {
+		// Message has its `source-room-id` set, which signals it
+		// originates from a shared chat. Additionally its `source-room-id`
+		// does not match the `room-id` which we are listening to. So we
+		// shouldn't care about handling that message in order to prevent
+		// false bit alerts or reactions to `!so` or other "shared" commands.
+		return
+	}
 
 	switch m.Command {
 	case "001":
