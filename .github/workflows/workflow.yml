@@ -243,7 +243,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18.4@sha256:cfca8125dc0f78cfdb2088e49d8446aa58e2b2d7fefbf53dc1f04dc44f811a3a
+        image: postgres:18.4@sha256:d129b9577d274bb96cbd44d902bdeb1b935c89247d161241e9154cba64e13df4
         env:
           POSTGRES_PASSWORD: twitch-bot-pass
         options: >-
