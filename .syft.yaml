@@ -1,0 +1,20 @@
+check-for-app-update: false
+
+enrich: []
+
+exclude:
+  - './docs/**'
+  - './node_modules/**'
+
+file:
+  metadata:
+    selection: none
+
+format:
+  pretty: true
+
+output:
+  - "cyclonedx-json@1.6"
+
+source:
+  name: twitch-bot
