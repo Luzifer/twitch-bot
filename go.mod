@@ -24,7 +24,7 @@ require (
 	github.com/itchyny/gojq v0.12.19
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/stretchr/testify v1.11.1
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
 	golang.org/x/crypto v0.55.0
