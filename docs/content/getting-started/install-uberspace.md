@@ -58,7 +58,7 @@ $ nano ~/.config/twitch-bot/environment
 Let's put this into the file we've just opened (replace the brackets, don't leave them inside the file!):
 
 ```env
-BASE_URL=https://twitch-bot.[username].uber.space/
+BASE_URL=https://twitch-bot.luzifer.uber.space/
 
 CONFIG=/home/[username]/.config/twitch-bot/config.yaml
 LOG_LEVEL=info
@@ -140,7 +140,7 @@ $ uberspace web backend add twitch-bot.$USER.uber.space/ port 3000
 
 Those commands might take a moment as Uberspace needs to do some stuff in the background so everything works.
 
-When you've executed the second command, your bot will be available under `https://twitch-bot.[username].uber.space`! Now you can log in and follow the rest of the [Configuration]({{< ref "configuration.md" >}}).
+When you've executed the second command, your bot will be available under `https://twitch-bot.luzifer.uber.space`! Now you can log in and follow the rest of the [Configuration]({{< ref "configuration.md" >}}).
 
 In case the bot is not responding, have a look at the logs (see below) and check whether you followed all commands.
 
