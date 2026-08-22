@@ -4,20 +4,15 @@ on:
   push: {}
   workflow_dispatch: {}
 
-permissions:
-  contents: read
-
 jobs:
   test:
     defaults:
       run:
         shell: bash
 
-    container:
-      image: ghcr.io/luzifer-docker/action-env:2026.34.2@sha256:54ea1200ddf296553fa259709f2b6997eb20c23331c2e74d80586845422a0117
-      env:
-        CGO_ENABLED: 0
-        GOPATH: /go
+    env:
+      CGO_ENABLED: 0
+      GOPATH: /go
 
     runs-on: forgejo
 
@@ -25,9 +20,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           show-progress: false
-
-      - name: Marking workdir safe
-        run: git config --global --add safe.directory /__w/twitch-bot/twitch-bot
 
       - name: Lint and test code
         run: make lint test frontend_lint
