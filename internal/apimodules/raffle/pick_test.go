@@ -38,6 +38,7 @@ func testGenerateRaffe() raffle {
 	}
 
 	// They didn't join in order so lets shuffle them
+	//#nosec:G404 // Shuffling test data does not require cryptographic randomness
 	rand.Shuffle(len(r.Entries), func(i, j int) { r.Entries[i], r.Entries[j] = r.Entries[j], r.Entries[i] })
 
 	return r

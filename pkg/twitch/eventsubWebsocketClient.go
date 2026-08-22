@@ -351,8 +351,7 @@ func (e *EventSubSocketClient) handleReconnectMessage(msg eventSubSocketMessage,
 
 //nolint:gocyclo // just reacting on websocket events
 func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSocketMessage, errC chan error) error {
-	var closeErr *websocket.CloseError
-	if errors.As(err, &closeErr) {
+	if closeErr, ok := errors.AsType[*websocket.CloseError](err); ok {
 		switch closeErr.Code {
 		case eventsubCloseCodeInternalServerError:
 			e.logger.Warn("websocket reported internal server error")
