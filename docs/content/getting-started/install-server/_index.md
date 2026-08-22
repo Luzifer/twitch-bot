@@ -1,5 +1,6 @@
 ---
 title: Install on a Server
+bookCollapseSection: true
 weight: 2
 ---
 

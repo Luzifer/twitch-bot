@@ -60,7 +60,7 @@ Requires=network-online.target
 EnvironmentFile=/etc/twitch-bot/environment
 ExecStart=/usr/local/bin/twitch-bot_linux_amd64
 Restart=Always
-RestartSecs=5
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
