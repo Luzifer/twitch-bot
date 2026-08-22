@@ -1,3 +1,20 @@
+# 3.42.3 / 2026-08-22
+
+* Improvements
+  * docs: add instructions for installing the bot on Uberspace U8
+  * docs: update preparation with all redirect URLs and recent screenshot
+
+* Bugfixes
+  * chore(sec): update transitive dependencies to mitigate vulns
+  * fix(deps): update dependency pinia to v4.0.3 (#405)
+  * fix(deps): update dependency vue to v3.5.41 (#392)
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.19.2 (#384)
+  * fix(deps): update module github.com/sirupsen/logrus to v1.10.1 (#416)
+  * fix(deps): update module github.com/stretchr/testify to v1.12.1 (#414)
+  * fix(deps): update module golang.org/x/crypto to v0.55.0 (#400)
+  * fix(deps): update module golang.org/x/net to v0.58.0 (#407)
+  * fix(deps): update module gorm.io/driver/postgres to v1.6.2 (#387)
+
 # 3.42.2 / 2026-08-02
 
 * Improvements
