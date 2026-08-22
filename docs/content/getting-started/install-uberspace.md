@@ -14,7 +14,7 @@ weight: 2
 > 
 > When using the `nano` editor, press Ctrl+X to exit. It will ask whether you want to save. Press `Y` to confirm, then confirm the filename with `Enter`.
 
-This whole document assumes you want to install only one bot in your account and want to use `twitch-bot.<your-username>.uber.space` to access the bot. To make it a little easier to read the document will use the `twitch-bot.luzifer.uber.space` domain as an example. Therefore it assumes you registered these three redirects in the [Preparations](./preparations.md) step:
+This whole document assumes you want to install only one bot in your account and want to use `twitch-bot.<your-username>.uber.space` to access the bot. To make it a little easier to read the document will use the `twitch-bot.luzifer.uber.space` domain as an example. Therefore it assumes you registered these three redirects in the [Preparations]({{< ref "preparations.md" >}}) step:
 
 - `https://twitch-bot.luzifer.uber.space/`
 - `https://twitch-bot.luzifer.uber.space/auth/update-bot-token`
@@ -117,7 +117,7 @@ Look for the line `http_listen: "127.0.0.1:0"` and change it into this:
 http_listen: "0.0.0.0:3000"
 ```
 
-Also add your Twitch username to the `bot_editors` list (you don't need to do that again when doing the [Configuration](./configuration.md) later):
+Also add your Twitch username to the `bot_editors` list (you don't need to do that again when doing the [Configuration]({{< ref "configuration.md" >}}) later):
 
 ```yaml
 bot_editors: [ 'your-twitch-username' ]
@@ -140,11 +140,11 @@ $ uberspace web backend add twitch-bot.$USER.uber.space/ port 3000
 
 Those commands might take a moment as Uberspace needs to do some stuff in the background so everything works.
 
-When you've executed the second command, your bot will be available under `https://twitch-bot.[username].uber.space`! Now you can log in and follow the rest of the [Configuration](./configuration.md).
+When you've executed the second command, your bot will be available under `https://twitch-bot.[username].uber.space`! Now you can log in and follow the rest of the [Configuration]({{< ref "configuration.md" >}}).
 
 In case the bot is not responding, have a look at the logs (see below) and check whether you followed all commands.
 
-When you're set up and want to have a look at [Overlays](../overlays/_index.md) you need the directory you created at the beginning: `~/.local/share/twitch-bot/overlays` - that's where your overlays live.
+When you're set up and want to have a look at [Overlays]({{< ref "../overlays/_index.md" >}}) you need the directory you created at the beginning: `~/.local/share/twitch-bot/overlays` - that's where your overlays live.
 
 ## Updating the bot
 
