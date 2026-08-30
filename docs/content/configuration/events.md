@@ -383,6 +383,16 @@ Fields:
 - `channel` _string_ - The channel the event occurred in
 - `title` _string_ - The title of the stream
 
+## `vip_add`, `vip_remove`
+
+A user was added as a VIP to the channel or removed from its VIPs. (Only available when EventSub support is available and the streamer granted the required permission!)
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- `user_id` _string_ - The ID of the user whose VIP status changed
+- `user` _string_ - The login-name of the user whose VIP status changed
+
 ## `watch_streak`
 
 The user shared a watch-streak milestone.

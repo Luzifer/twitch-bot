@@ -49,6 +49,8 @@ var (
 	eventTypeSusUserMessage     = new("sus_user_message")
 	eventTypeSusUserUpdate      = new("sus_user_update")
 	eventTypeTimeout            = new("timeout")
+	eventTypeVIPAdd             = new("vip_add")
+	eventTypeVIPRemove          = new("vip_remove")
 	eventTypeWatchStreak        = new("watch_streak")
 	eventTypeWhisper            = new("whisper")
 
@@ -92,6 +94,8 @@ var (
 		eventTypeSusUserMessage,
 		eventTypeSusUserUpdate,
 		eventTypeTimeout,
+		eventTypeVIPAdd,
+		eventTypeVIPRemove,
 		eventTypeWatchStreak,
 		eventTypeWhisper,
 

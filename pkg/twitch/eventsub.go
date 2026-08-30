@@ -35,6 +35,8 @@ const (
 	EventSubEventTypeStreamOffline                         = "stream.offline"
 	EventSubEventTypeStreamOnline                          = "stream.online"
 	EventSubEventTypeUserAuthorizationRevoke               = "user.authorization.revoke"
+	EventSubEventTypeVIPAdd                                = "channel.vip.add"
+	EventSubEventTypeVIPRemove                             = "channel.vip.remove"
 )
 
 // Collection of topic versions known to the API
@@ -154,16 +156,6 @@ type (
 			BroadcasterUserLogin string `json:"broadcaster_user_login"`
 			BroadcasterUserName  string `json:"broadcaster_user_name"`
 		} `json:"shared_train_participants"`
-	}
-
-	// EventSubEventModeratorChange contains the payload for a moderator add / remove event
-	EventSubEventModeratorChange struct {
-		UserID               string `json:"user_id"`
-		UserLogin            string `json:"user_login"`
-		UserName             string `json:"user_name"`
-		BroadcasterUserID    string `json:"broadcaster_user_id"`
-		BroadcasterUserLogin string `json:"broadcaster_user_login"`
-		BroadcasterUserName  string `json:"broadcaster_user_name"`
 	}
 
 	// EventSubEventPoll contains the payload for a poll change event
@@ -306,6 +298,16 @@ type (
 		UserID    string `json:"user_id"`
 		UserLogin string `json:"user_login"`
 		UserName  string `json:"user_name"`
+	}
+
+	// EventSubEventUserRoleChange contains the payload for a moderator or VIP add / remove event
+	EventSubEventUserRoleChange struct {
+		UserID               string `json:"user_id"`
+		UserLogin            string `json:"user_login"`
+		UserName             string `json:"user_name"`
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
 	}
 
 	eventSubSubscription struct {

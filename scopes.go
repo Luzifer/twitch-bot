@@ -15,6 +15,7 @@ var (
 		twitch.ScopeChannelReadHypetrain:         "see Hype-Train events",
 		twitch.ScopeChannelReadRedemptions:       "see channel-point redemptions",
 		twitch.ScopeChannelReadSubscriptions:     "see subscribed users / sub count / points",
+		twitch.ScopeChannelReadVIPs:              "see changes in VIP roles",
 		twitch.ScopeClipsEdit:                    "create clips on behalf of this user",
 		twitch.ScopeModerationRead:               "see changes in moderator staff",
 		twitch.ScopeModeratorReadFollowers:       "see who follows this channel",

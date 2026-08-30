@@ -261,6 +261,22 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Hook:           t.handleEventSubSusUserUpdate,
 			Optional:       true,
 		},
+		{
+			Topic:          twitch.EventSubEventTypeVIPAdd,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadVIPs, twitch.ScopeChannelManageVIPS},
+			AnyScope:       true,
+			Hook:           t.handleEventSubVIPAdd,
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeVIPRemove,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeChannelReadVIPs, twitch.ScopeChannelManageVIPS},
+			AnyScope:       true,
+			Hook:           t.handleEventSubVIPRemove,
+			Optional:       true,
+		},
 	}
 }
 
@@ -418,7 +434,7 @@ func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.
 }
 
 func (*twitchWatcher) handleEventSubModeratorAdd(m json.RawMessage) error {
-	var payload twitch.EventSubEventModeratorChange
+	var payload twitch.EventSubEventUserRoleChange
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
@@ -436,7 +452,7 @@ func (*twitchWatcher) handleEventSubModeratorAdd(m json.RawMessage) error {
 }
 
 func (*twitchWatcher) handleEventSubModeratorRemove(m json.RawMessage) error {
-	var payload twitch.EventSubEventModeratorChange
+	var payload twitch.EventSubEventUserRoleChange
 	if err := json.Unmarshal(m, &payload); err != nil {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
@@ -542,6 +558,42 @@ func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error)
 
 	log.WithFields(log.Fields(fields.Data())).Info("user restriction updated")
 	go handleMessage(ircHdl.Client(), nil, eventTypeSusUserUpdate, fields)
+
+	return nil
+}
+
+func (*twitchWatcher) handleEventSubVIPAdd(m json.RawMessage) error {
+	var payload twitch.EventSubEventUserRoleChange
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	fields := fieldcollection.FromData(map[string]any{
+		"channel": "#" + payload.BroadcasterUserLogin,
+		"user_id": payload.UserID,
+		"user":    payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("VIP added")
+	go handleMessage(ircHdl.Client(), nil, eventTypeVIPAdd, fields)
+
+	return nil
+}
+
+func (*twitchWatcher) handleEventSubVIPRemove(m json.RawMessage) error {
+	var payload twitch.EventSubEventUserRoleChange
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	fields := fieldcollection.FromData(map[string]any{
+		"channel": "#" + payload.BroadcasterUserLogin,
+		"user_id": payload.UserID,
+		"user":    payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("VIP removed")
+	go handleMessage(ircHdl.Client(), nil, eventTypeVIPRemove, fields)
 
 	return nil
 }
