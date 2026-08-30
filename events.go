@@ -29,7 +29,9 @@ var (
 	eventTypeHypetrainEnd       = new("hypetrain_end")
 	eventTypeHypetrainProgress  = new("hypetrain_progress")
 	eventTypeJoin               = new("join")
-	eventKoFiDonation           = new("kofi_donation")
+	eventTypeKoFiDonation       = new("kofi_donation")
+	eventTypeModeratorAdd       = new("moderator_add")
+	eventTypeModeratorRemove    = new("moderator_remove")
 	eventTypeOutboundRaid       = new("outbound_raid")
 	eventTypePart               = new("part")
 	eventTypePermit             = new("permit")
@@ -70,7 +72,9 @@ var (
 		eventTypeHypetrainEnd,
 		eventTypeHypetrainProgress,
 		eventTypeJoin,
-		eventKoFiDonation,
+		eventTypeKoFiDonation,
+		eventTypeModeratorAdd,
+		eventTypeModeratorRemove,
 		eventTypeOutboundRaid,
 		eventTypePart,
 		eventTypePermit,

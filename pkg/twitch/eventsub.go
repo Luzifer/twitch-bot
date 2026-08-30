@@ -21,6 +21,8 @@ const (
 	EventSubEventTypeChannelHypetrainBegin                 = "channel.hype_train.begin"
 	EventSubEventTypeChannelHypetrainProgress              = "channel.hype_train.progress"
 	EventSubEventTypeChannelHypetrainEnd                   = "channel.hype_train.end"
+	EventSubEventTypeChannelModeratorAdd                   = "channel.moderator.add"
+	EventSubEventTypeChannelModeratorRemove                = "channel.moderator.remove"
 	EventSubEventTypeChannelRaid                           = "channel.raid"
 	EventSubEventTypeChannelShoutoutCreate                 = "channel.shoutout.create"
 	EventSubEventTypeChannelShoutoutReceive                = "channel.shoutout.receive"
@@ -152,6 +154,16 @@ type (
 			BroadcasterUserLogin string `json:"broadcaster_user_login"`
 			BroadcasterUserName  string `json:"broadcaster_user_name"`
 		} `json:"shared_train_participants"`
+	}
+
+	// EventSubEventModeratorChange contains the payload for a moderator add / remove event
+	EventSubEventModeratorChange struct {
+		UserID               string `json:"user_id"`
+		UserLogin            string `json:"user_login"`
+		UserName             string `json:"user_name"`
+		BroadcasterUserID    string `json:"broadcaster_user_id"`
+		BroadcasterUserLogin string `json:"broadcaster_user_login"`
+		BroadcasterUserName  string `json:"broadcaster_user_name"`
 	}
 
 	// EventSubEventPoll contains the payload for a poll change event

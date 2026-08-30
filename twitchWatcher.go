@@ -157,6 +157,20 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Optional:       true,
 		},
 		{
+			Topic:          twitch.EventSubEventTypeChannelModeratorAdd,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModerationRead},
+			Hook:           t.handleEventSubModeratorAdd,
+			Optional:       true,
+		},
+		{
+			Topic:          twitch.EventSubEventTypeChannelModeratorRemove,
+			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
+			RequiredScopes: []string{twitch.ScopeModerationRead},
+			Hook:           t.handleEventSubModeratorRemove,
+			Optional:       true,
+		},
+		{
 			Topic:          twitch.EventSubEventTypeChannelPointCustomRewardRedemptionAdd,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadRedemptions, twitch.ScopeChannelManageRedemptions},
@@ -401,6 +415,42 @@ func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.
 
 		return nil
 	}
+}
+
+func (*twitchWatcher) handleEventSubModeratorAdd(m json.RawMessage) error {
+	var payload twitch.EventSubEventModeratorChange
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	fields := fieldcollection.FromData(map[string]any{
+		"channel": "#" + payload.BroadcasterUserLogin,
+		"user_id": payload.UserID,
+		"user":    payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Moderator added")
+	go handleMessage(ircHdl.Client(), nil, eventTypeModeratorAdd, fields)
+
+	return nil
+}
+
+func (*twitchWatcher) handleEventSubModeratorRemove(m json.RawMessage) error {
+	var payload twitch.EventSubEventModeratorChange
+	if err := json.Unmarshal(m, &payload); err != nil {
+		return fmt.Errorf("unmarshalling event: %w", err)
+	}
+
+	fields := fieldcollection.FromData(map[string]any{
+		"channel": "#" + payload.BroadcasterUserLogin,
+		"user_id": payload.UserID,
+		"user":    payload.UserLogin,
+	})
+
+	log.WithFields(log.Fields(fields.Data())).Info("Moderator removed")
+	go handleMessage(ircHdl.Client(), nil, eventTypeModeratorRemove, fields)
+
+	return nil
 }
 
 func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {

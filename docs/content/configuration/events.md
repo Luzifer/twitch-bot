@@ -161,6 +161,16 @@ Fields:
 - `message` _string_ - The message entered by the donator (**not** present when donation was marked as private!)
 - `tier` _string_ - The tier the subscriber subscribed to (seems not to be filled on the first transaction?)
 
+## `moderator_add`, `moderator_remove`
+
+A user was added as a moderator to the channel or removed from its moderators. (Only available when EventSub support is available and the streamer granted the required permission!)
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- `user_id` _string_ - The ID of the user whose moderator status changed
+- `user` _string_ - The login-name of the user whose moderator status changed
+
 ## `outbound_raid`
 
 The channel has raided another channel. (The event is issued in the moment the raid is executed, not when the raid timer starts!)

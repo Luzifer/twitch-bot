@@ -16,6 +16,7 @@ var (
 		twitch.ScopeChannelReadRedemptions:       "see channel-point redemptions",
 		twitch.ScopeChannelReadSubscriptions:     "see subscribed users / sub count / points",
 		twitch.ScopeClipsEdit:                    "create clips on behalf of this user",
+		twitch.ScopeModerationRead:               "see changes in moderator staff",
 		twitch.ScopeModeratorReadFollowers:       "see who follows this channel",
 		twitch.ScopeModeratorReadShoutouts:       "see shoutouts created / received",
 		twitch.ScopeModeratorReadSuspiciousUsers: "see users marked suspicious / restricted",
