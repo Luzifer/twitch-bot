@@ -36,6 +36,7 @@ var (
 	eventTypePollBegin          = new("poll_begin")
 	eventTypePollEnd            = new("poll_end")
 	eventTypePollProgress       = new("poll_progress")
+	eventTypePrimePaidUpgrade   = new("primepaidupgrade")
 	eventTypeRaid               = new("raid")
 	eventTypeResub              = new("resub")
 	eventTypeShoutoutCreated    = new("shoutout_created")
@@ -76,6 +77,7 @@ var (
 		eventTypePollBegin,
 		eventTypePollEnd,
 		eventTypePollProgress,
+		eventTypePrimePaidUpgrade,
 		eventTypeRaid,
 		eventTypeResub,
 		eventTypeShoutoutCreated,

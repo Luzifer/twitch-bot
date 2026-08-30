@@ -431,9 +431,17 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		evtData.SetFromData(map[string]any{
 			"gifter": m.Tags["msg-param-sender-login"],
 		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded to paid sub")
+		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded from gift to paid sub")
 
 		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
+
+	case "primepaidupgrade":
+		evtData.SetFromData(map[string]any{
+			"plan": m.Tags["msg-param-sub-plan"],
+		})
+		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded from prime to paid sub")
+
+		go handleMessage(i.c, m, eventTypePrimePaidUpgrade, evtData)
 
 	case "raid":
 		evtData.SetFromData(map[string]any{

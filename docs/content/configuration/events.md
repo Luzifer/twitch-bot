@@ -204,6 +204,17 @@ Fields:
 - `status` _string_ - The status of the poll (one of `completed`, `terminated` or `archived`) - only available in `poll_end`
 - `title` _string_ - The title of the poll the event was generated for
 
+## `primepaidupgrade`
+
+User upgraded their Prime subscription into a paid one.
+
+Fields:
+
+- `channel` _string_ - The channel the event occurred in
+- `plan` _string_ - The paid sub-plan (`1000` = T1, `2000` = T2, `3000` = T3)
+- `user_id` _string_ - The ID of the user who upgraded their subscription
+- `username` _string_ - The login-name of the user who upgraded their subscription
+
 ## `raid`
 
 The channel was raided by another user.
