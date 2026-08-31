@@ -35,6 +35,7 @@ linters:
     - contextcheck
     - copyloopvar
     - decorder
+    - depguard
     - dogsled
     - dupword
     - durationcheck
@@ -98,11 +99,20 @@ linters:
       disable-dec-order-check: false
       disable-type-dec-num-check: false
 
+    depguard:
+      rules:
+        deprecated:
+          deny:
+            - pkg: github.com/pkg/errors
+              desc: Should be replaced by standard lib errors / fmt package
+        vulns:
+          deny:
+            - pkg: golang.org/x/crypto/openpgp
+              desc: GO-2026-5932 - openpgp must not be used
+
     forbidigo:
       forbid:
         - pattern: "^(fmt\\.Print(|f|ln)|print|println)$"
-        - pattern: "^(errors\\.Wrapf?)$"
-          msg: errors.Wrap(f) is no longer needed, use fmt.Errorf
 
     funcorder:
       alphabetical: true
