@@ -31,6 +31,7 @@ const defaultFilters = {
   hypetrain: { name: 'Hypetrains', visible: true },
   pollEnd: { name: 'Poll-Summary', visible: true },
   raid: { name: 'Raids', visible: true },
+  roleChange: { name: 'Role Change', visible: true },
   shoutout: { name: 'Shoutouts', visible: true },
   streamOffline: { name: 'Stream-Offline', visible: true },
   streamUpdate: { name: 'Stream-Update', visible: true },
@@ -145,7 +146,10 @@ const app = createApp({
         hypetrain_end: ({ event_id, fields, time }) => this.handleHypetrain(event_id, fields, time, 'end'),
         hypetrain_progress: ({ event_id, fields, time }) => this.handleHypetrain(event_id, fields, time, 'progress'),
         kofi_donation: ({ event_id, fields, time }) => this.handleKoFiDonation(event_id, fields, time),
+        moderator_add: ({ event_id, fields, time }) => this.handleRoleChange(event_id, fields, time, 'Moderator', true),
+        moderator_remove: ({ event_id, fields, time }) => this.handleRoleChange(event_id, fields, time, 'Moderator', false),
         poll_end: ({ event_id, fields, time }) => this.handlePollEnd(event_id, fields, time),
+        primepaidupgrade: ({ event_id, fields, time }) => this.handlePrimePaidUpgrade(event_id, fields, time),
         raid: ({ event_id, fields, time }) => this.handleRaid(event_id, fields, time),
         resub: ({ event_id, fields, reason, time, type }) => this.handleSub(type, event_id, fields, time, reason),
         shoutout_created: ({ event_id, fields, time }) => this.handleShoutoutCreated(event_id, fields, time),
@@ -156,6 +160,8 @@ const app = createApp({
         submysterygift: ({ event_id, fields, time, type }) => this.handleSubgift(type, event_id, fields, time),
         timeout: ({ event_id, fields, time }) => this.handleTimeout(event_id, fields, time),
         title_update: ({ event_id, fields, time }) => this.handleTitleUpdate(event_id, fields, time),
+        vip_add: ({ event_id, fields, time }) => this.handleRoleChange(event_id, fields, time, 'VIP', true),
+        vip_remove: ({ event_id, fields, time }) => this.handleRoleChange(event_id, fields, time, 'VIP', false),
         watch_streak: ({ event_id, fields, time }) => this.handleWatchStreak(event_id, fields, time),
       },
 
@@ -380,6 +386,18 @@ const app = createApp({
       })
     },
 
+    handlePrimePaidUpgrade(eventId, data, time) {
+      this.addEvent({
+        eventId,
+        extraData: { count: 0 }, // this is not a sub itself, just a change for the future but related to subs
+        filterKey: 'subs',
+        icon: 'fas fa-circle-up',
+        text: `${data.username} upgraded from Prime to paid sub`,
+        time: new Date(time),
+        title: 'Prime to Paid Upgrade',
+      })
+    },
+
     handleRaid(eventId, data, time) {
       this.addEvent({
         eventId,
@@ -390,6 +408,19 @@ const app = createApp({
         text: `${data.from} just raided with ${data.viewercount} raiders`,
         time: new Date(time),
         title: 'Incoming raid',
+      })
+    },
+
+    handleRoleChange(eventId, data, time, role, added = true) {
+      const action = added ? 'added to' : 'removed from'
+
+      this.addEvent({
+        eventId,
+        filterKey: 'roleChange',
+        icon: 'fas fa-user-tag',
+        text: `${data.user} got ${action} role ${role}`,
+        time: new Date(time),
+        title: 'User-role changed',
       })
     },
 
