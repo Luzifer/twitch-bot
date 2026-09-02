@@ -86,11 +86,22 @@ var (
 
 // Register provides the plugins.RegisterFunc
 //
-//nolint:funlen // just a list of registrations
+//nolint:funlen,gocyclo // just a list of registrations
 func Register(args plugins.RegistrationArguments) (err error) {
 	db = args.GetDatabaseConnector()
 	if err = db.DB().AutoMigrate(&overlaysEvent{}); err != nil {
 		return fmt.Errorf("applying schema migration: %w", err)
+	}
+
+	if _, err = args.RegisterCron("@hourly", func() {
+		if err := execCleanupCron(args); err != nil {
+			log.WithError(err).Error("running overlay-event cleanup")
+			return
+		}
+
+		log.Debug("successfully executed overlay-event cleanup")
+	}); err != nil {
+		return fmt.Errorf("registering cleanup cron: %w", err)
 	}
 
 	args.RegisterCopyDatabaseFunc("overlay_events", func(src, target *gorm.DB) error {

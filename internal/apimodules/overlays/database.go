@@ -48,6 +48,20 @@ func addChannelEvent(db database.Connector, channel string, evt socketMessage) (
 	return storEvt.ID, nil
 }
 
+func deleteEventsOlderThan(db database.Connector, channel string, olderThan time.Time) (err error) {
+	if err = helpers.Retry(func() error {
+		return db.DB().
+			Where("channel = ?", channel).
+			Where("created_at < ?", olderThan).
+			Delete(&overlaysEvent{}).
+			Error
+	}); err != nil {
+		return fmt.Errorf("deleting events for channel %q: %w", channel, err)
+	}
+
+	return nil
+}
+
 func getChannelEvents(db database.Connector, channel string) ([]socketMessage, error) {
 	var evts []overlaysEvent
 
@@ -68,6 +82,20 @@ func getChannelEvents(db database.Connector, channel string) ([]socketMessage, e
 	}
 
 	return out, nil
+}
+
+func getChannelsWithStoredEvents(db database.Connector) (channels []string, err error) {
+	if err = helpers.Retry(func() error {
+		return db.DB().
+			Model(&overlaysEvent{}).
+			Distinct("channel").
+			Find(&channels).
+			Error
+	}); err != nil {
+		return nil, fmt.Errorf("querying channels: %w", err)
+	}
+
+	return channels, nil
 }
 
 func getEventByID(db database.Connector, eventID uint64) (socketMessage, error) {

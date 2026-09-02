@@ -20,6 +20,37 @@ Currently the following files are available in the default distribution:
 
 You can see the sources for these included files in the [project repository](https://github.com/Luzifer/twitch-bot/tree/master/internal/apimodules/overlays/default).
 
+## Event Retention
+
+Stored events are retained indefinitely by default. To automatically remove old events, configure a positive retention duration through the `overlays` module configuration:
+
+```yaml
+# Module configuration by channel or defining bot-wide defaults. See
+# module specific documentation for options to configure in this
+# section.
+module_config:
+  overlays:
+    default:                # Optional, applies to all channels without an override
+      event_retention: 720h # Keep events for 30 days
+```
+
+The cleanup runs hourly and removes events older than the configured duration. The default can be overridden for individual channels:
+
+```yaml
+# Module configuration by channel or defining bot-wide defaults. See
+# module specific documentation for options to configure in this
+# section.
+module_config:
+  overlays:
+    default:                # Optional, this whole block can be omitted
+      event_retention: 720h # Keep events for 30 days by default
+
+    mychannel:              # Channel name without a leading #
+      event_retention: 168h # Override: keep its events for 7 days
+```
+
+The `default` block is not required: retention can be configured only for selected channels. When `event_retention` is neither set for a channel nor through `default`, stored events for that channel are not removed automatically.
+
 ## Configuring Secrets and Parameters
 
 As you shouldn't put secrets in a public place the [EventClient]({{< ref "eventclient.md" >}}) library provides a mechanism to fetch secrets from the URL hash through the `paramOptionFallback` method. This also is used for all configuration you can pass into the class options. Especially for the token you should use this mechaism.
