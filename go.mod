@@ -27,7 +27,7 @@ require (
 	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/wzshiming/openapi v0.0.0-20200703171632-c7220b3c9cfb
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/net v0.58.0
 	golang.org/x/oauth2 v0.36.0
 	gopkg.in/irc.v4 v4.0.0
