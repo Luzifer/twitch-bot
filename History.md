@@ -1,3 +1,18 @@
+# 3.43.0 / 2026-09-03
+
+* New Features
+  * feat: add support for `vip_add` and `vip_remove` events
+  * feat: add support for `moderator_add` and `moderator_remove`
+  * feat: add support for `primepaidupgrade` event type
+  * feat: add optional data retention for stored overlay events
+
+* Bugfixes
+  * fix(deps): update dependency vue-router to v5.3.0 (#426)
+  * fix(deps): update dependency vue to v3.5.42 (#425)
+  * fix(deps): update github.com/getsentry/sentry-go/* to v0.49.0 (#424)
+  * fix(deps): update module github.com/sirupsen/logrus to v1.10.2 (#423)
+  * fix(deps): update module golang.org/x/crypto to v0.56.0 [security] (#429)
+
 # 3.42.3 / 2026-08-22
 
 * Improvements
