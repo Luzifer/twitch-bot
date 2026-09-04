@@ -2,7 +2,7 @@ module tools
 
 go 1.26.0
 
-toolchain go1.27.0
+toolchain go1.27.1
 
 require gotest.tools/gotestsum v1.13.0
 
