@@ -6,10 +6,10 @@ toolchain go1.27.1
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.5
-	github.com/Luzifer/go_helpers/backoff v0.5.2
+	github.com/Luzifer/go_helpers/backoff v0.5.4
 	github.com/Luzifer/go_helpers/cli v0.3.2
-	github.com/Luzifer/go_helpers/fieldcollection v0.5.1
-	github.com/Luzifer/go_helpers/str v0.5.1
+	github.com/Luzifer/go_helpers/fieldcollection v0.5.4
+	github.com/Luzifer/go_helpers/str v0.5.3
 	github.com/Luzifer/korvike/functions v1.2.0
 	github.com/Luzifer/rconfig/v2 v2.6.2
 	github.com/getsentry/sentry-go v0.49.0
