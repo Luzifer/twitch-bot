@@ -1,0 +1,7 @@
+{
+  "gopls": {
+    "buildFlags": [
+      "-tags=docgen"
+    ]
+  }
+}

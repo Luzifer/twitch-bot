@@ -80,13 +80,10 @@ trivy: ## Run Trivy against the code
 
 ##@ Documentation
 
-docs: actor_docs eventclient_docs template_docs ## Generate all documentation
+docs: generate_docs eventclient_docs ## Generate all documentation
 
-actor_docs: ## Generate actor documentation
-	go run . --storage-conn-string $(shell mktemp).db actor-docs >docs/content/configuration/actors.md
-
-template_docs: ## Generate template function documentation
-	go run . --storage-conn-string $(shell mktemp).db tpl-docs >docs/content/configuration/templating.md
+generate_docs: ## Generate project documentation
+	go run -tags docgen . --storage-conn-string $(shell mktemp --suffix=.db) generate-docs
 
 eventclient_docs: ## Generate eventclient documentation
 	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md

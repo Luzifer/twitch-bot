@@ -1,54 +1,58 @@
-package main
+package docgen
 
 import (
 	"bytes"
+	"cmp"
 	_ "embed"
 	"fmt"
 	"runtime/debug"
-	"sort"
+	"slices"
 	"text/template"
 	"time"
 
 	"github.com/Luzifer/go_helpers/fieldcollection"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
-//go:embed tplDocs.tpl
+//go:embed tplDocs.md.gotmpl
 var tplDocsTemplate string
 
-func generateTplDocs() ([]byte, error) {
+// GenerateTplDocs writes the documentation for the given template functions
+func GenerateTplDocs(docs []plugins.TemplateFuncDocumentation, formatter plugins.MsgFormatter) error {
+	docs = slices.Clone(docs)
+	slices.SortFunc(docs, func(a, b plugins.TemplateFuncDocumentation) int { return cmp.Compare(a.Name, b.Name) })
+
 	tpl, err := template.New("tplDocs").Funcs(map[string]any{
-		"renderExample": generateTplDocsRender,
+		"renderExample": func(example *plugins.TemplateFuncDocumentationExample) (string, error) {
+			return renderTplDocsExample(example, formatter)
+		},
 	}).Parse(tplDocsTemplate)
 	if err != nil {
-		return nil, fmt.Errorf("parsing tplDocs template: %w", err)
+		return fmt.Errorf("parsing tplDocs template: %w", err)
 	}
-
-	sort.Slice(tplFuncs.docs, func(i, j int) bool { return tplFuncs.docs[i].Name < tplFuncs.docs[j].Name })
 
 	buf := new(bytes.Buffer)
-	if err := tpl.Execute(buf, struct {
+	if err = tpl.Execute(buf, struct {
 		Funcs []plugins.TemplateFuncDocumentation
 	}{
-		Funcs: tplFuncs.docs,
+		Funcs: docs,
 	}); err != nil {
-		return nil, fmt.Errorf("rendering tplDocs template: %w", err)
+		return fmt.Errorf("rendering tplDocs template: %w", err)
 	}
 
-	return buf.Bytes(), nil
+	return writeDocument(tplDocsPath, buf.Bytes())
 }
 
-func generateTplDocsRender(e *plugins.TemplateFuncDocumentationExample) (string, error) {
+func renderTplDocsExample(example *plugins.TemplateFuncDocumentationExample, formatter plugins.MsgFormatter) (out string, err error) {
 	defer func() {
-		if err := recover(); err != nil {
-			logrus.WithError(err.(error)).Fatalf("%s", debug.Stack())
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("rendering template example: %v\n%s", recovered, debug.Stack())
 		}
 	}()
 
-	content := e.MessageContent
+	content := example.MessageContent
 	if content == "" {
 		content = "Hello World"
 	}
@@ -85,11 +89,11 @@ func generateTplDocsRender(e *plugins.TemplateFuncDocumentationExample) (string,
 	}
 
 	rule := &plugins.Rule{}
-	if e.MatchMessage != "" {
-		rule.MatchMessage = &e.MatchMessage
+	if example.MatchMessage != "" {
+		rule.MatchMessage = &example.MatchMessage
 	}
 
-	return formatMessage(e.Template, msg, rule, fieldcollection.FromData(map[string]any{
+	return formatter(example.Template, msg, rule, fieldcollection.FromData(map[string]any{
 		"testDuration": 5*time.Hour + 33*time.Minute + 12*time.Second,
 	}))
 }
