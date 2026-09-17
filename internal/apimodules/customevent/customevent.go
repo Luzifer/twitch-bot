@@ -16,10 +16,13 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
 const actorName = "customevent"
+
+type customEvent struct{}
 
 var (
 	db               database.Connector
@@ -114,6 +117,14 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
+// Description implements event.DocumentedEvent
+func (customEvent) Description() string {
+	return "A custom event was created through the `customevent` action or API."
+}
+
+// Event implements event.Event
+func (customEvent) Event() *string { return new("custom") }
+
 func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	channel := mux.Vars(r)["channel"]
 
@@ -129,6 +140,12 @@ func handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func init() {
+	if err := event.RegisterDocumentedEvent(customEvent{}); err != nil {
+		panic(err)
+	}
 }
 
 func parseEvent(channel string, fieldData io.Reader) (*fieldcollection.FieldCollection, error) {

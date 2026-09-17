@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -63,8 +64,11 @@ func Register(args plugins.RegistrationArguments) (err error) {
 	return nil
 }
 
-// Event implements event.Event
-func (kofiDonationEvent) Event() *string { return new("kofi_donation") }
+func init() {
+	if err := event.RegisterDocumentedEvent(kofiDonationEvent{}); err != nil {
+		panic(err)
+	}
+}
 
 func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 	channel := mux.Vars(r)["channel"]
@@ -137,3 +141,11 @@ func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// Description implements event.DocumentedEvent
+func (kofiDonationEvent) Description() string {
+	return "A Ko-fi donation was received through the API-Webhook."
+}
+
+// Event implements event.Event
+func (kofiDonationEvent) Event() *string { return new("kofi_donation") }

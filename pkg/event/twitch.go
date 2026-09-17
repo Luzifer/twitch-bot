@@ -165,68 +165,178 @@ type (
 	}
 )
 
+// Description implements DocumentedEvent interface
+func (AdBreakBegin) Description() string {
+	return "Ad-break has begun and ads are playing now in mentioned channel."
+}
+
 // Event implements Event interface
 func (AdBreakBegin) Event() *string { return new("adbreak_begin") }
+
+// Description implements DocumentedEvent interface
+func (CategoryUpdate) Description() string {
+	return "The current category for the channel was changed. (This event has some delay to the real category change!)"
+}
 
 // Event implements Event interface
 func (CategoryUpdate) Event() *string { return new("category_update") }
 
+// Description implements DocumentedEvent interface
+func (ChannelPointRedeem) Description() string {
+	return "A custom channel-point reward was redeemed in the given channel. (Only available when EventSub support is available and streamer granted required permissions!)"
+}
+
 // Event implements Event interface
 func (ChannelPointRedeem) Event() *string { return new("channelpoint_redeem") }
+
+// Description implements DocumentedEvent interface
+func (Follow) Description() string {
+	return "User followed the channel. This event is not de-duplicated and therefore might be used to spam! (Only available when EventSub support is available!)"
+}
 
 // Event implements Event interface
 func (Follow) Event() *string { return new("follow") }
 
+// Description implements DocumentedEvent interface
+func (HypetrainBegin) Description() string {
+	return "An Hype-Train has begun, ended or progressed in the given channel."
+}
+
 // Event implements Event interface
 func (HypetrainBegin) Event() *string { return new("hypetrain_begin") }
+
+// Description implements DocumentedEvent interface
+func (HypetrainEnd) Description() string {
+	return "An Hype-Train has begun, ended or progressed in the given channel."
+}
 
 // Event implements Event interface
 func (HypetrainEnd) Event() *string { return new("hypetrain_end") }
 
+// Description implements DocumentedEvent interface
+func (HypetrainProgress) Description() string {
+	return "An Hype-Train has begun, ended or progressed in the given channel."
+}
+
 // Event implements Event interface
 func (HypetrainProgress) Event() *string { return new("hypetrain_progress") }
+
+// Description implements DocumentedEvent interface
+func (ModeratorAdd) Description() string {
+	return "A user was added as a moderator to the channel or removed from its moderators. (Only available when EventSub support is available and the streamer granted the required permission!)"
+}
 
 // Event implements Event interface
 func (ModeratorAdd) Event() *string { return new("moderator_add") }
 
+// Description implements DocumentedEvent interface
+func (ModeratorRemove) Description() string {
+	return "A user was added as a moderator to the channel or removed from its moderators. (Only available when EventSub support is available and the streamer granted the required permission!)"
+}
+
 // Event implements Event interface
 func (ModeratorRemove) Event() *string { return new("moderator_remove") }
+
+// Description implements DocumentedEvent interface
+func (OutboundRaid) Description() string {
+	return "The channel has raided another channel. (The event is issued in the moment the raid is executed, not when the raid timer starts!)"
+}
 
 // Event implements Event interface
 func (OutboundRaid) Event() *string { return new("outbound_raid") }
 
+// Description implements DocumentedEvent interface
+func (PollBegin) Description() string {
+	return "A poll was started / was ended / had changes in the given channel."
+}
+
 // Event implements Event interface
 func (PollBegin) Event() *string { return new("poll_begin") }
+
+// Description implements DocumentedEvent interface
+func (PollEnd) Description() string {
+	return "A poll was started / was ended / had changes in the given channel."
+}
 
 // Event implements Event interface
 func (PollEnd) Event() *string { return new("poll_end") }
 
+// Description implements DocumentedEvent interface
+func (PollProgress) Description() string {
+	return "A poll was started / was ended / had changes in the given channel."
+}
+
 // Event implements Event interface
 func (PollProgress) Event() *string { return new("poll_progress") }
+
+// Description implements DocumentedEvent interface
+func (ShoutoutCreated) Description() string {
+	return "The channel gave another streamer a (Twitch native) shoutout"
+}
 
 // Event implements Event interface
 func (ShoutoutCreated) Event() *string { return new("shoutout_created") }
 
+// Description implements DocumentedEvent interface
+func (ShoutoutReceived) Description() string {
+	return "The channel received a (Twitch native) shoutout by another channel."
+}
+
 // Event implements Event interface
 func (ShoutoutReceived) Event() *string { return new("shoutout_received") }
+
+// Description implements DocumentedEvent interface
+func (StreamOffline) Description() string {
+	return "The channels stream went offline. (This event has some delay to the real button-press to \"stop stream\"!)"
+}
 
 // Event implements Event interface
 func (StreamOffline) Event() *string { return new("stream_offline") }
 
+// Description implements DocumentedEvent interface
+func (StreamOnline) Description() string {
+	return "The channels stream went online. (This event has some delay to the real button-press to \"start stream\"!)"
+}
+
 // Event implements Event interface
 func (StreamOnline) Event() *string { return new("stream_online") }
+
+// Description implements DocumentedEvent interface
+func (SuspiciousUserMessage) Description() string {
+	return "A suspicious (monitored / restricted) user sent a message in the given channel"
+}
 
 // Event implements Event interface
 func (SuspiciousUserMessage) Event() *string { return new("sus_user_message") }
 
+// Description implements DocumentedEvent interface
+func (SuspiciousUserUpdate) Description() string {
+	return "The status of suspicious user was changed by a moderator"
+}
+
 // Event implements Event interface
 func (SuspiciousUserUpdate) Event() *string { return new("sus_user_update") }
+
+// Description implements DocumentedEvent interface
+func (TitleUpdate) Description() string {
+	return "The current title for the channel was changed. (This event has some delay to the real category change!)"
+}
 
 // Event implements Event interface
 func (TitleUpdate) Event() *string { return new("title_update") }
 
+// Description implements DocumentedEvent interface
+func (VIPAdd) Description() string {
+	return "A user was added as a VIP to the channel or removed from its VIPs. (Only available when EventSub support is available and the streamer granted the required permission!)"
+}
+
 // Event implements Event interface
 func (VIPAdd) Event() *string { return new("vip_add") }
+
+// Description implements DocumentedEvent interface
+func (VIPRemove) Description() string {
+	return "A user was added as a VIP to the channel or removed from its VIPs. (Only available when EventSub support is available and the streamer granted the required permission!)"
+}
 
 // Event implements Event interface
 func (VIPRemove) Event() *string { return new("vip_remove") }

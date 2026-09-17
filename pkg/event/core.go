@@ -160,23 +160,56 @@ type (
 	Whisper struct{}
 )
 
+// Description implements DocumentedEvent interface
+func (Announcement) Description() string { return "An announcement was sent in chat." }
+
 // Event implements Event interface
 func (Announcement) Event() *string { return new("announcement") }
+
+// Description implements DocumentedEvent interface
+func (Ban) Description() string {
+	return "Moderator action caused a user to be banned from chat.\n\nNote: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable."
+}
 
 // Event implements Event interface
 func (Ban) Event() *string { return new("ban") }
 
+// Description implements DocumentedEvent interface
+func (Bits) Description() string {
+	return "User spent bits in the channel. The full message is available like in a normal chat message, additionally the `{{ .bits }}` field is added with the total amount of bits spent."
+}
+
 // Event implements Event interface
 func (Bits) Event() *string { return new("bits") }
+
+// Description implements DocumentedEvent interface
+func (ClearChat) Description() string {
+	return "Moderator action caused chat to be cleared.\n\nNote: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable."
+}
 
 // Event implements Event interface
 func (ClearChat) Event() *string { return new("clearchat") }
 
+// Description implements DocumentedEvent interface
+func (ClearMessage) Description() string {
+	return "Moderator action caused a chat message to be deleted.\n\nNote: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable."
+}
+
 // Event implements Event interface
 func (ClearMessage) Event() *string { return new("delete") }
 
+// Description implements DocumentedEvent interface
+func (GiftPaidUpgrade) Description() string {
+	return "User upgraded their gifted subscription into a paid one. This event does not contain any details about the tier of the paid subscription."
+}
+
 // Event implements Event interface
 func (GiftPaidUpgrade) Event() *string { return new("giftpaidupgrade") }
+
+// Description implements DocumentedEvent interface
+func (Join) Description() string {
+	return "User joined the channel-chat. This is **NOT** an indicator they are viewing, the event is **NOT** reliably sent when the user really joined the chat. The event will be sent with some delay after they join the chat and is sometimes repeated multiple times during their stay. So **DO NOT** use this to greet users!"
+}
 
 // Event implements Event interface
 func (Join) Event() *string { return new("join") }
@@ -184,35 +217,86 @@ func (Join) Event() *string { return new("join") }
 // Event implements Event interface
 func (Message) Event() *string { return nil }
 
+// Description implements DocumentedEvent interface
+func (Part) Description() string {
+	return "User left the channel-chat. This is **NOT** an indicator they are no longer viewing, the event is **NOT** reliably sent when the user really leaves the chat. The event will be sent with some delay after they leave the chat and is sometimes repeated multiple times during their stay. So this does **NOT** mean they do no longer read the chat!"
+}
+
 // Event implements Event interface
 func (Part) Event() *string { return new("part") }
+
+// Description implements DocumentedEvent interface
+func (Permit) Description() string {
+	return "User received a permit, which means they are no longer affected by rules which are disabled on permit."
+}
 
 // Event implements Event interface
 func (Permit) Event() *string { return new("permit") }
 
+// Description implements DocumentedEvent interface
+func (PrimePaidUpgrade) Description() string {
+	return "User upgraded their Prime subscription into a paid one."
+}
+
 // Event implements Event interface
 func (PrimePaidUpgrade) Event() *string { return new("primepaidupgrade") }
+
+// Description implements DocumentedEvent interface
+func (Raid) Description() string { return "The channel was raided by another user." }
 
 // Event implements Event interface
 func (Raid) Event() *string { return new("raid") }
 
+// Description implements DocumentedEvent interface
+func (Resub) Description() string {
+	return "The user shared their resubscription. (This event is triggered manually by the user using the \"Share my Resub\" button and does not occur when the user does not actively share their sub!)"
+}
+
 // Event implements Event interface
 func (Resub) Event() *string { return new("resub") }
+
+// Description implements DocumentedEvent interface
+func (Sub) Description() string {
+	return "The user newly subscribed on their own. (This event is triggered automatically and does not need to be shared actively!)"
+}
 
 // Event implements Event interface
 func (Sub) Event() *string { return new("sub") }
 
+// Description implements DocumentedEvent interface
+func (SubGift) Description() string {
+	return "The user gifted the subscription to a specific user. (This event **DOES** occur multiple times after `submysterygift` events!)"
+}
+
 // Event implements Event interface
 func (SubGift) Event() *string { return new("subgift") }
+
+// Description implements DocumentedEvent interface
+func (SubMysteryGift) Description() string {
+	return "The user gifted multiple subs to the community. (This event is followed by `number x subgift` events.)"
+}
 
 // Event implements Event interface
 func (SubMysteryGift) Event() *string { return new("submysterygift") }
 
+// Description implements DocumentedEvent interface
+func (Timeout) Description() string {
+	return "Moderator action caused a user to be timed out from chat.\n\nNote: This event does **not** contain the acting user! You cannot use the `{{.user}}` variable."
+}
+
 // Event implements Event interface
 func (Timeout) Event() *string { return new("timeout") }
 
+// Description implements DocumentedEvent interface
+func (WatchStreak) Description() string { return "The user shared a watch-streak milestone." }
+
 // Event implements Event interface
 func (WatchStreak) Event() *string { return new("watch_streak") }
+
+// Description implements DocumentedEvent interface
+func (Whisper) Description() string {
+	return "The bot received a whisper message. (You can use `(.*)` as message match and `{{ group 1 }}` as template to get the content of the whisper.)"
+}
 
 // Event implements Event interface
 func (Whisper) Event() *string { return new("whisper") }
