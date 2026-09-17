@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/irc.v4"
 
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -244,66 +244,71 @@ func (ircHandler) getChannel(m *irc.Message) string {
 func (i ircHandler) handleClearChat(m *irc.Message) {
 	seconds, secondsErr := strconv.Atoi(m.Tags["ban-duration"])
 	targetUserID, hasTargetUserID := m.Tags["target-user-id"]
+	channel := i.getChannel(m) // Compatibility to plugins.DeriveChannel
 
-	var (
-		evt    *string
-		fields = fieldcollection.NewFieldCollection()
-	)
-
-	fields.Set(eventFieldChannel, i.getChannel(m)) // Compatibility to plugins.DeriveChannel
+	var evt event.Event
 
 	switch {
 	case secondsErr == nil && hasTargetUserID:
 		// User & Duration = Timeout
-		evt = eventTypeTimeout
-		fields.Set("duration", time.Duration(seconds)*time.Second)
-		fields.Set("seconds", seconds)
-		fields.Set("target_id", targetUserID)
-		fields.Set("target_name", m.Trailing())
-		logrus.WithFields(logrus.Fields(fields.Data())).Info("User was timed out")
+		evt = event.Timeout{
+			Channel:    channel,
+			Duration:   time.Duration(seconds) * time.Second,
+			Seconds:    seconds,
+			TargetID:   targetUserID,
+			TargetName: m.Trailing(),
+		}
+
+		logrus.WithFields(event.ToLogFields(evt)).Info("User was timed out")
 
 	case hasTargetUserID:
 		// User w/o Duration = Ban
-		evt = eventTypeBan
-		fields.Set("target_id", targetUserID)
-		fields.Set("target_name", m.Trailing())
-		logrus.WithFields(logrus.Fields(fields.Data())).Info("User was banned")
+		evt = event.Ban{
+			Channel:    channel,
+			TargetID:   targetUserID,
+			TargetName: m.Trailing(),
+		}
+
+		logrus.WithFields(event.ToLogFields(evt)).Info("User was banned")
 
 	default:
 		// No User = /clear
-		evt = eventTypeClearChat
-		logrus.WithFields(logrus.Fields(fields.Data())).Info("Chat was cleared")
+		evt = event.ClearChat{
+			Channel: channel,
+		}
+
+		logrus.WithFields(event.ToLogFields(evt)).Info("Chat was cleared")
 	}
 
-	go handleMessage(i.c, m, evt, fields)
+	go handleTypedMessage(i.c, m, evt)
 }
 
 func (i ircHandler) handleClearMessage(m *irc.Message) {
-	fields := fieldcollection.FromData(map[string]any{
-		eventFieldChannel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		"message_id":      m.Tags["target-msg-id"],
-		"target_name":     m.Tags["login"],
-	})
-	logrus.WithFields(logrus.Fields(fields.Data())).
+	evt := event.ClearMessage{
+		Channel:    i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		MessageID:  m.Tags["target-msg-id"],
+		TargetName: m.Tags["login"],
+	}
+
+	logrus.WithFields(event.ToLogFields(evt)).
 		WithField("message", m.Trailing()).
 		Info("Message was deleted")
-	go handleMessage(i.c, m, eventTypeDelete, fields)
+
+	go handleTypedMessage(i.c, m, evt)
 }
 
 func (i ircHandler) handleJoin(m *irc.Message) {
-	fields := fieldcollection.FromData(map[string]any{
-		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
+	go handleTypedMessage(i.c, m, event.Join{
+		Channel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		User:    m.User,          // Compatibility to plugins.DeriveUser
 	})
-	go handleMessage(i.c, m, eventTypeJoin, fields)
 }
 
 func (i ircHandler) handlePart(m *irc.Message) {
-	fields := fieldcollection.FromData(map[string]any{
-		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
+	go handleTypedMessage(i.c, m, event.Part{
+		Channel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		User:    m.User,          // Compatibility to plugins.DeriveUser
 	})
-	go handleMessage(i.c, m, eventTypePart, fields)
 }
 
 func (i ircHandler) handlePermit(m *irc.Message) {
@@ -320,19 +325,19 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 
 	username := msgParts[1]
 
-	fields := fieldcollection.FromData(map[string]any{
-		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		eventFieldUserName: m.User,          // Compatibility to plugins.DeriveUser
-		eventFieldUserID:   m.Tags["user-id"],
-		"to":               username,
-	})
+	evt := event.Permit{
+		Channel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		To:      username,
+		User:    m.User, // Compatibility to plugins.DeriveUser
+		UserID:  m.Tags["user-id"],
+	}
 
-	logrus.WithFields(fields.Data()).Debug("Added permit")
+	logrus.WithFields(event.ToLogFields(evt)).Debug("Added permit")
 	if err := timerService.AddPermit(m.Params[0], username); err != nil {
 		logrus.WithError(err).Error("adding permit")
 	}
 
-	go handleMessage(i.c, m, eventTypePermit, fields)
+	go handleTypedMessage(i.c, m, evt)
 }
 
 func (i ircHandler) handleTwitchNotice(m *irc.Message) {
@@ -377,20 +382,20 @@ func (i ircHandler) handleTwitchPrivmsg(m *irc.Message) {
 	}
 
 	if bits := i.tagToNumeric(m, "bits", 0); bits > 0 {
-		fields := fieldcollection.FromData(map[string]any{
-			"bits":             bits,
-			eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-			"message":          m.Trailing(),
-			eventFieldUserName: m.User, // Compatibility to plugins.DeriveUser
-			eventFieldUserID:   m.Tags["user-id"],
-		})
+		evt := event.Bits{
+			Bits:    bits,
+			Channel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+			Message: m.Trailing(),
+			User:    m.User, // Compatibility to plugins.DeriveUser
+			UserID:  m.Tags["user-id"],
+		}
 
-		logrus.WithFields(logrus.Fields(fields.Data())).Info("User spent bits in chat message")
+		logrus.WithFields(event.ToLogFields(evt)).Info("User spent bits in chat message")
 
-		go handleMessage(i.c, m, eventTypeBits, fields)
+		go handleTypedMessage(i.c, m, evt)
 	}
 
-	go handleMessage(i.c, m, nil, nil)
+	go handleTypedMessage(i.c, m, event.Message{})
 }
 
 //nolint:funlen // just a list of mappings
@@ -401,11 +406,15 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		"trailing":        m.Trailing(),
 	}).Trace("IRC USERNOTICE event")
 
-	evtData := fieldcollection.FromData(map[string]any{
-		eventFieldChannel:  i.getChannel(m), // Compatibility to plugins.DeriveChannel
-		eventFieldUserName: m.Tags["login"], // Compatibility to plugins.DeriveUser
-		eventFieldUserID:   m.Tags["user-id"],
-	})
+	var (
+		baseChannel = event.BaseChannel{
+			Channel: i.getChannel(m), // Compatibility to plugins.DeriveChannel
+		}
+		baseUser = event.BaseUser{
+			User:   m.Tags["login"], // Compatibility to plugins.DeriveUser
+			UserID: m.Tags["user-id"],
+		}
+	)
 
 	message := m.Trailing()
 	if message == i.getChannel(m) {
@@ -419,99 +428,117 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 		logrus.WithField("msg", m).Warn("Received usernotice without msg-id")
 
 	case "announcement":
-		evtData.SetFromData(map[string]any{
-			"color":   m.Tags["msg-param-color"],
-			"message": m.Trailing(),
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("Announcement was made")
+		evt := event.Announcement{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			Color:       m.Tags["msg-param-color"],
+			Message:     m.Trailing(),
+		}
 
-		go handleMessage(i.c, m, eventTypeAnnouncement, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("Announcement was made")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "giftpaidupgrade":
-		evtData.SetFromData(map[string]any{
-			"gifter": m.Tags["msg-param-sender-login"],
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded from gift to paid sub")
+		evt := event.GiftPaidUpgrade{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			Gifter:      m.Tags["msg-param-sender-login"],
+		}
 
-		go handleMessage(i.c, m, eventTypeGiftPaidUpgrade, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User upgraded from gift to paid sub")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "primepaidupgrade":
-		evtData.SetFromData(map[string]any{
-			"plan": m.Tags["msg-param-sub-plan"],
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User upgraded from prime to paid sub")
+		evt := event.PrimePaidUpgrade{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			Plan:        m.Tags["msg-param-sub-plan"],
+		}
 
-		go handleMessage(i.c, m, eventTypePrimePaidUpgrade, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User upgraded from prime to paid sub")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "raid":
-		evtData.SetFromData(map[string]any{
-			"from":        m.Tags["login"],
-			"viewercount": i.tagToNumeric(m, "msg-param-viewerCount", 0),
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("Incoming raid")
+		evt := event.Raid{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			From:        m.Tags["login"],
+			ViewerCount: i.tagToNumeric(m, "msg-param-viewerCount", 0),
+		}
 
-		go handleMessage(i.c, m, eventTypeRaid, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("Incoming raid")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "resub":
-		evtData.SetFromData(map[string]any{
-			"from":              m.Tags["login"],
-			"message":           message,
-			"multi_month":       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
-			"subscribed_months": i.tagToNumeric(m, "msg-param-cumulative-months", 0),
-			"plan":              m.Tags["msg-param-sub-plan"],
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User re-subscribed")
+		evt := event.Resub{
+			BaseChannel:      baseChannel,
+			BaseUser:         baseUser,
+			From:             m.Tags["login"],
+			Message:          message,
+			MultiMonth:       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
+			Plan:             m.Tags["msg-param-sub-plan"],
+			SubscribedMonths: i.tagToNumeric(m, "msg-param-cumulative-months", 0),
+		}
 
-		go handleMessage(i.c, m, eventTypeResub, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User re-subscribed")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "sub":
-		evtData.SetFromData(map[string]any{
-			"from":        m.Tags["login"],
-			"multi_month": i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
-			"plan":        m.Tags["msg-param-sub-plan"],
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User subscribed")
+		evt := event.Sub{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			From:        m.Tags["login"],
+			MultiMonth:  i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
+			Plan:        m.Tags["msg-param-sub-plan"],
+		}
 
-		go handleMessage(i.c, m, eventTypeSub, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User subscribed")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "subgift", "anonsubgift":
-		evtData.SetFromData(map[string]any{
-			"from":              m.Tags["login"],
-			"gifted_months":     i.tagToNumeric(m, "msg-param-gift-months", 1),
-			"multi_month":       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
-			"origin_id":         m.Tags["msg-param-origin-id"],
-			"plan":              m.Tags["msg-param-sub-plan"],
-			"subscribed_months": i.tagToNumeric(m, "msg-param-months", 0),
-			"to":                m.Tags["msg-param-recipient-user-name"],
-			"total_gifted":      i.tagToNumeric(m, "msg-param-sender-count", 0),
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User gifted a sub")
+		evt := event.SubGift{
+			BaseChannel:      baseChannel,
+			BaseUser:         baseUser,
+			From:             m.Tags["login"],
+			GiftedMonths:     i.tagToNumeric(m, "msg-param-gift-months", 1),
+			MultiMonth:       i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
+			OriginID:         m.Tags["msg-param-origin-id"],
+			Plan:             m.Tags["msg-param-sub-plan"],
+			SubscribedMonths: i.tagToNumeric(m, "msg-param-months", 0),
+			To:               m.Tags["msg-param-recipient-user-name"],
+			TotalGifted:      i.tagToNumeric(m, "msg-param-sender-count", 0),
+		}
 
-		go handleMessage(i.c, m, eventTypeSubgift, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User gifted a sub")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "submysterygift":
-		evtData.SetFromData(map[string]any{
-			"from":         m.Tags["login"],
-			"multi_month":  i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
-			"number":       i.tagToNumeric(m, "msg-param-mass-gift-count", 0),
-			"origin_id":    m.Tags["msg-param-origin-id"],
-			"plan":         m.Tags["msg-param-sub-plan"],
-			"total_gifted": i.tagToNumeric(m, "msg-param-sender-count", 0),
-		})
-		logrus.WithFields(logrus.Fields(evtData.Data())).Info("User gifted subs to the community")
+		evt := event.SubMysteryGift{
+			BaseChannel: baseChannel,
+			BaseUser:    baseUser,
+			From:        m.Tags["login"],
+			MultiMonth:  i.tagToNumeric(m, "msg-param-multimonth-duration", 0),
+			Number:      i.tagToNumeric(m, "msg-param-mass-gift-count", 0),
+			OriginID:    m.Tags["msg-param-origin-id"],
+			Plan:        m.Tags["msg-param-sub-plan"],
+			TotalGifted: i.tagToNumeric(m, "msg-param-sender-count", 0),
+		}
 
-		go handleMessage(i.c, m, eventTypeSubmysterygift, evtData)
+		logrus.WithFields(event.ToLogFields(evt)).Info("User gifted subs to the community")
+		go handleTypedMessage(i.c, m, evt)
 
 	case "viewermilestone":
 		switch m.Tags["msg-param-category"] {
 		case "watch-streak":
-			evtData.SetFromData(map[string]any{
-				"message": message,
-				"streak":  i.tagToNumeric(m, "msg-param-value", 0),
-			})
-			logrus.WithFields(logrus.Fields(evtData.Data())).Info("User shared a watch-streak")
+			evt := event.WatchStreak{
+				BaseChannel: baseChannel,
+				BaseUser:    baseUser,
+				Message:     message,
+				Streak:      i.tagToNumeric(m, "msg-param-value", 0),
+			}
 
-			go handleMessage(i.c, m, eventTypeWatchStreak, evtData)
+			logrus.WithFields(event.ToLogFields(evt)).Info("User shared a watch-streak")
+			go handleTypedMessage(i.c, m, evt)
 
 		default:
 			logrus.WithField("category", m.Tags["msg-param-category"]).Debug("found unhandled viewermilestone category")
@@ -520,7 +547,7 @@ func (i ircHandler) handleTwitchUsernotice(m *irc.Message) {
 }
 
 func (i ircHandler) handleTwitchWhisper(m *irc.Message) {
-	go handleMessage(i.c, m, eventTypeWhisper, nil)
+	go handleTypedMessage(i.c, m, event.Whisper{})
 }
 
 func (ircHandler) tagToNumeric(m *irc.Message, tag string, fallback int64) int64 {

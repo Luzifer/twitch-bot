@@ -1,0 +1,218 @@
+package event
+
+import "time"
+
+type (
+	// Announcement represents an announcement sent in chat
+	Announcement struct {
+		BaseChannel
+		BaseUser
+		Color   string `field:"color" description:"Announcement color"`
+		Message string `field:"message" description:"Announcement text"`
+	}
+
+	// BaseChannel is a mixin to provide the definition for the Channel field
+	BaseChannel struct {
+		Channel string `field:"channel" description:"Channel the event occurred in"`
+	}
+
+	// BaseUser is a mixin to provide the definitions of user related fields
+	BaseUser struct {
+		User   string `field:"user" description:"Login name of the user associated with the event"`
+		UserID string `field:"user_id,omitzero" description:"ID of the user associated with the event"`
+	}
+
+	// Ban represents a user being banned from chat
+	Ban struct {
+		BaseChannel
+		TargetID   string `field:"target_id" description:"ID of the user being banned"`
+		TargetName string `field:"target_name" description:"Login name of the user being banned"`
+	}
+
+	// Bits represents a user spending bits in a chat message
+	Bits struct {
+		BaseChannel
+		BaseUser
+		Bits    int64  `field:"bits" description:"Total amount of bits spent in the message"`
+		Message string `field:"message" description:"Chat message containing the bits"`
+	}
+
+	// ClearChat represents a channel chat being cleared
+	ClearChat struct {
+		BaseChannel
+	}
+
+	// ClearMessage represents a message deletion event
+	ClearMessage struct {
+		BaseChannel
+		MessageID  string `field:"message_id" description:"UUID of the message being deleted"`
+		TargetName string `field:"target_name" description:"Login name of the author of the deleted message"`
+	}
+
+	// GiftPaidUpgrade represents a user upgrading a gifted subscription to a paid subscription
+	GiftPaidUpgrade struct {
+		BaseChannel
+		BaseUser
+		Gifter string `field:"gifter" description:"Login name of the user who gifted the subscription"`
+	}
+
+	// Join represents a user joining a channel chat
+	Join struct {
+		BaseChannel
+		BaseUser
+	}
+
+	// Message represents a normal chat message
+	Message struct{}
+
+	// Part represents a user leaving a channel chat
+	Part struct {
+		BaseChannel
+		BaseUser
+	}
+
+	// Permit represents a user receiving a permit
+	Permit struct {
+		BaseChannel
+		BaseUser
+		To string `field:"to" description:"Login name of the user who received the permit"`
+	}
+
+	// PrimePaidUpgrade represents a user upgrading a Prime subscription to a paid subscription
+	PrimePaidUpgrade struct {
+		BaseChannel
+		BaseUser
+		Plan string `field:"plan" description:"Paid subscription plan"`
+	}
+
+	// Raid represents an incoming raid
+	Raid struct {
+		BaseChannel
+		BaseUser
+		From        string `field:"from" description:"Login name of the user who raided the channel"`
+		ViewerCount int64  `field:"viewercount" description:"Number of viewers included in the raid"`
+	}
+
+	// Resub represents a user sharing their resubscription
+	Resub struct {
+		BaseChannel
+		BaseUser
+		From             string `field:"from" description:"Login name of the user who resubscribed"`
+		Message          string `field:"message" description:"Message shared with the resubscription"`
+		MultiMonth       int64  `field:"multi_month" description:"Multi-month duration in months reported by Twitch"`
+		Plan             string `field:"plan" description:"Subscription plan"`
+		SubscribedMonths int64  `field:"subscribed_months" description:"Number of months the user has been subscribed"`
+	}
+
+	// Sub represents a new subscription
+	Sub struct {
+		BaseChannel
+		BaseUser
+		From       string `field:"from" description:"Login name of the user who subscribed"`
+		MultiMonth int64  `field:"multi_month" description:"Multi-month duration in months reported by Twitch"`
+		Plan       string `field:"plan" description:"Subscription plan"`
+	}
+
+	// SubGift represents a subscription gifted to a specific user
+	SubGift struct {
+		BaseChannel
+		BaseUser
+		From             string `field:"from" description:"Login name of the user who gifted the subscription"`
+		GiftedMonths     int64  `field:"gifted_months" description:"Number of months the user gifted"`
+		MultiMonth       int64  `field:"multi_month" description:"Multi-month duration in months reported by Twitch"`
+		OriginID         string `field:"origin_id" description:"ID unique to the gift event"`
+		Plan             string `field:"plan" description:"Subscription plan"`
+		SubscribedMonths int64  `field:"subscribed_months" description:"Number of months the recipient has been subscribed"`
+		To               string `field:"to" description:"Login name of the user who received the subscription"`
+		TotalGifted      int64  `field:"total_gifted" description:"Total number of subscriptions gifted by the user"`
+	}
+
+	// SubMysteryGift represents multiple subscriptions gifted to the community
+	SubMysteryGift struct {
+		BaseChannel
+		BaseUser
+		From        string `field:"from" description:"Login name of the user who gifted the subscriptions"`
+		MultiMonth  int64  `field:"multi_month" description:"Multi-month duration in months reported by Twitch"`
+		Number      int64  `field:"number" description:"Number of gifted subscriptions"`
+		OriginID    string `field:"origin_id" description:"ID unique to the gift event"`
+		Plan        string `field:"plan" description:"Subscription plan"`
+		TotalGifted int64  `field:"total_gifted" description:"Total number of subscriptions gifted by the user"`
+	}
+
+	// Timeout represents a user being timed out from chat
+	Timeout struct {
+		BaseChannel
+		Duration   time.Duration `field:"duration" description:"Timeout duration in nanoseconds"`
+		Seconds    int           `field:"seconds" description:"Timeout duration in seconds"`
+		TargetID   string        `field:"target_id" description:"ID of the user being timed out"`
+		TargetName string        `field:"target_name" description:"Login name of the user being timed out"`
+	}
+
+	// WatchStreak represents a user sharing a watch-streak milestone
+	WatchStreak struct {
+		BaseChannel
+		BaseUser
+		Message string `field:"message" description:"Message shared with the milestone"`
+		Streak  int64  `field:"streak" description:"Watch-streak value"`
+	}
+
+	// Whisper represents an incoming whisper message
+	Whisper struct{}
+)
+
+// Event implements Event interface
+func (Announcement) Event() *string { return new("announcement") }
+
+// Event implements Event interface
+func (Ban) Event() *string { return new("ban") }
+
+// Event implements Event interface
+func (Bits) Event() *string { return new("bits") }
+
+// Event implements Event interface
+func (ClearChat) Event() *string { return new("clearchat") }
+
+// Event implements Event interface
+func (ClearMessage) Event() *string { return new("delete") }
+
+// Event implements Event interface
+func (GiftPaidUpgrade) Event() *string { return new("giftpaidupgrade") }
+
+// Event implements Event interface
+func (Join) Event() *string { return new("join") }
+
+// Event implements Event interface
+func (Message) Event() *string { return nil }
+
+// Event implements Event interface
+func (Part) Event() *string { return new("part") }
+
+// Event implements Event interface
+func (Permit) Event() *string { return new("permit") }
+
+// Event implements Event interface
+func (PrimePaidUpgrade) Event() *string { return new("primepaidupgrade") }
+
+// Event implements Event interface
+func (Raid) Event() *string { return new("raid") }
+
+// Event implements Event interface
+func (Resub) Event() *string { return new("resub") }
+
+// Event implements Event interface
+func (Sub) Event() *string { return new("sub") }
+
+// Event implements Event interface
+func (SubGift) Event() *string { return new("subgift") }
+
+// Event implements Event interface
+func (SubMysteryGift) Event() *string { return new("submysterygift") }
+
+// Event implements Event interface
+func (Timeout) Event() *string { return new("timeout") }
+
+// Event implements Event interface
+func (WatchStreak) Event() *string { return new("watch_streak") }
+
+// Event implements Event interface
+func (Whisper) Event() *string { return new("whisper") }

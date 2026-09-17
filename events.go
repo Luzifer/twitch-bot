@@ -6,6 +6,7 @@ import (
 	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -15,103 +16,62 @@ var (
 )
 
 var (
-	eventTypeAdBreakBegin       = new("adbreak_begin")
-	eventTypeAnnouncement       = new("announcement")
-	eventTypeBan                = new("ban")
-	eventTypeBits               = new("bits")
-	eventTypeCustom             = new("custom")
-	eventTypeChannelPointRedeem = new("channelpoint_redeem")
-	eventTypeClearChat          = new("clearchat")
-	eventTypeDelete             = new("delete")
-	eventTypeFollow             = new("follow")
-	eventTypeGiftPaidUpgrade    = new("giftpaidupgrade")
-	eventTypeHypetrainBegin     = new("hypetrain_begin")
-	eventTypeHypetrainEnd       = new("hypetrain_end")
-	eventTypeHypetrainProgress  = new("hypetrain_progress")
-	eventTypeJoin               = new("join")
-	eventTypeKoFiDonation       = new("kofi_donation")
-	eventTypeModeratorAdd       = new("moderator_add")
-	eventTypeModeratorRemove    = new("moderator_remove")
-	eventTypeOutboundRaid       = new("outbound_raid")
-	eventTypePart               = new("part")
-	eventTypePermit             = new("permit")
-	eventTypePollBegin          = new("poll_begin")
-	eventTypePollEnd            = new("poll_end")
-	eventTypePollProgress       = new("poll_progress")
-	eventTypePrimePaidUpgrade   = new("primepaidupgrade")
-	eventTypeRaid               = new("raid")
-	eventTypeResub              = new("resub")
-	eventTypeShoutoutCreated    = new("shoutout_created")
-	eventTypeShoutoutReceived   = new("shoutout_received")
-	eventTypeSubgift            = new("subgift")
-	eventTypeSubmysterygift     = new("submysterygift")
-	eventTypeSub                = new("sub")
-	eventTypeSusUserMessage     = new("sus_user_message")
-	eventTypeSusUserUpdate      = new("sus_user_update")
-	eventTypeTimeout            = new("timeout")
-	eventTypeVIPAdd             = new("vip_add")
-	eventTypeVIPRemove          = new("vip_remove")
-	eventTypeWatchStreak        = new("watch_streak")
-	eventTypeWhisper            = new("whisper")
-
-	eventTypeTwitchCategoryUpdate = new("category_update")
-	eventTypeTwitchStreamOffline  = new("stream_offline")
-	eventTypeTwitchStreamOnline   = new("stream_online")
-	eventTypeTwitchTitleUpdate    = new("title_update")
+	eventTypeCustom       = new("custom")
+	eventTypeKoFiDonation = new("kofi_donation")
 
 	knownEvents = []*string{
-		eventTypeAdBreakBegin,
-		eventTypeAnnouncement,
-		eventTypeBan,
-		eventTypeBits,
+		event.AdBreakBegin{}.Event(),
+		event.Announcement{}.Event(),
+		event.Ban{}.Event(),
+		event.Bits{}.Event(),
 		eventTypeCustom,
-		eventTypeChannelPointRedeem,
-		eventTypeClearChat,
-		eventTypeDelete,
-		eventTypeFollow,
-		eventTypeGiftPaidUpgrade,
-		eventTypeHypetrainBegin,
-		eventTypeHypetrainEnd,
-		eventTypeHypetrainProgress,
-		eventTypeJoin,
+		event.ChannelPointRedeem{}.Event(),
+		event.ClearChat{}.Event(),
+		event.ClearMessage{}.Event(),
+		event.Follow{}.Event(),
+		event.GiftPaidUpgrade{}.Event(),
+		event.HypetrainBegin{}.Event(),
+		event.HypetrainEnd{}.Event(),
+		event.HypetrainProgress{}.Event(),
+		event.Join{}.Event(),
 		eventTypeKoFiDonation,
-		eventTypeModeratorAdd,
-		eventTypeModeratorRemove,
-		eventTypeOutboundRaid,
-		eventTypePart,
-		eventTypePermit,
-		eventTypePollBegin,
-		eventTypePollEnd,
-		eventTypePollProgress,
-		eventTypePrimePaidUpgrade,
-		eventTypeRaid,
-		eventTypeResub,
-		eventTypeShoutoutCreated,
-		eventTypeShoutoutReceived,
-		eventTypeSub,
-		eventTypeSubgift,
-		eventTypeSubmysterygift,
-		eventTypeSusUserMessage,
-		eventTypeSusUserUpdate,
-		eventTypeTimeout,
-		eventTypeVIPAdd,
-		eventTypeVIPRemove,
-		eventTypeWatchStreak,
-		eventTypeWhisper,
+		event.ModeratorAdd{}.Event(),
+		event.ModeratorRemove{}.Event(),
+		event.OutboundRaid{}.Event(),
+		event.Part{}.Event(),
+		event.Permit{}.Event(),
+		event.PollBegin{}.Event(),
+		event.PollEnd{}.Event(),
+		event.PollProgress{}.Event(),
+		event.PrimePaidUpgrade{}.Event(),
+		event.Raid{}.Event(),
+		event.Resub{}.Event(),
+		event.ShoutoutCreated{}.Event(),
+		event.ShoutoutReceived{}.Event(),
+		event.Sub{}.Event(),
+		event.SubGift{}.Event(),
+		event.SubMysteryGift{}.Event(),
+		event.SuspiciousUserMessage{}.Event(),
+		event.SuspiciousUserUpdate{}.Event(),
+		event.Timeout{}.Event(),
+		event.VIPAdd{}.Event(),
+		event.VIPRemove{}.Event(),
+		event.WatchStreak{}.Event(),
+		event.Whisper{}.Event(),
 
-		eventTypeTwitchCategoryUpdate,
-		eventTypeTwitchStreamOffline,
-		eventTypeTwitchStreamOnline,
-		eventTypeTwitchTitleUpdate,
+		event.CategoryUpdate{}.Event(),
+		event.StreamOffline{}.Event(),
+		event.StreamOnline{}.Event(),
+		event.TitleUpdate{}.Event(),
 	}
 )
 
-func notifyEventHandlers(event string, eventData *fieldcollection.FieldCollection) {
+func notifyEventHandlers(evt string, eventData *fieldcollection.FieldCollection) {
 	registeredEventHandlersLock.Lock()
 	defer registeredEventHandlersLock.Unlock()
 
 	for _, fn := range registeredEventHandlers {
-		if err := fn(event, eventData); err != nil {
+		if err := fn(evt, eventData); err != nil {
 			log.WithError(err).Error("EventHandler caused error")
 		}
 	}

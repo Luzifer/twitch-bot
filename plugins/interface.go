@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
@@ -109,7 +110,12 @@ type (
 	// and can use to interact with the bot instance
 	RegistrationArguments struct {
 		// CreateEvent allows to create an event handed out to all modules to handle
+		//
+		// Deprecated: Use CreateTypedEvent instead
 		CreateEvent EventHandlerFunc
+		// CreateTypedEvent allows to create an event handed out to all
+		// modules to handle by using a typed event definition
+		CreateTypedEvent TypedEventHandlerFunc
 		// FormatMessage is a method to convert templates into strings using internally known variables / configs
 		FormatMessage MsgFormatter
 		// FrontendNotify is a way to send a notification to the frontend
@@ -171,6 +177,10 @@ type (
 	// plugins RegisterFunc to validate templates considering all
 	// registered template functions
 	TemplateValidatorFunc func(raw string) error
+
+	// TypedEventHandlerFunc defines the type of function required to
+	// listen for typed events
+	TypedEventHandlerFunc func(evt event.Event) error
 
 	// ValidateTokenFunc is passed from the bot to the
 	// plugins RegisterFunc to validate tokens and their access

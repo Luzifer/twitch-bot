@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/helpers"
 	"github.com/Luzifer/twitch-bot/v3/internal/service/access"
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 )
 
@@ -137,7 +137,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
-			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainBegin),
+			Hook:           t.handleEventSubHypetrainEvent(*event.HypetrainBegin{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -145,7 +145,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
-			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainEnd),
+			Hook:           t.handleEventSubHypetrainEvent(*event.HypetrainEnd{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -153,7 +153,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Version:        twitch.EventSubTopicVersion2,
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadHypetrain},
-			Hook:           t.handleEventSubHypetrainEvent(eventTypeHypetrainProgress),
+			Hook:           t.handleEventSubHypetrainEvent(*event.HypetrainProgress{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -183,7 +183,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
-			Hook:           t.handleEventSubChannelPollChange(eventTypePollBegin),
+			Hook:           t.handleEventSubChannelPollChange(*event.PollBegin{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -191,7 +191,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
-			Hook:           t.handleEventSubChannelPollChange(eventTypePollEnd),
+			Hook:           t.handleEventSubChannelPollChange(*event.PollEnd{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -199,7 +199,7 @@ func (t *twitchWatcher) getTopicRegistrations(userID string) []topicRegistration
 			Condition:      twitch.EventSubCondition{BroadcasterUserID: userID},
 			RequiredScopes: []string{twitch.ScopeChannelReadPolls, twitch.ScopeChannelManagePolls},
 			AnyScope:       true,
-			Hook:           t.handleEventSubChannelPollChange(eventTypePollProgress),
+			Hook:           t.handleEventSubChannelPollChange(*event.PollProgress{}.Event()),
 			Optional:       true,
 		},
 		{
@@ -286,15 +286,15 @@ func (*twitchWatcher) handleEventSubChannelAdBreakBegin(m json.RawMessage) error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel":      "#" + payload.BroadcasterUserLogin,
-		"duration":     payload.Duration,
-		"is_automatic": payload.IsAutomatic,
-		"started_at":   payload.StartedAt,
-	})
+	evt := event.AdBreakBegin{
+		Channel:     "#" + payload.BroadcasterUserLogin,
+		Duration:    payload.Duration,
+		IsAutomatic: payload.IsAutomatic,
+		StartedAt:   payload.StartedAt,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Ad-Break started")
-	go handleMessage(ircHdl.Client(), nil, eventTypeAdBreakBegin, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Ad-Break started")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -305,15 +305,15 @@ func (*twitchWatcher) handleEventSubChannelFollow(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel":     "#" + payload.BroadcasterUserLogin,
-		"followed_at": payload.FollowedAt,
-		"user_id":     payload.UserID,
-		"user":        payload.UserLogin,
-	})
+	evt := event.Follow{
+		Channel:    "#" + payload.BroadcasterUserLogin,
+		FollowedAt: payload.FollowedAt,
+		User:       payload.UserLogin,
+		UserID:     payload.UserID,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("User followed")
-	go handleMessage(ircHdl.Client(), nil, eventTypeFollow, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("User followed")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -324,15 +324,15 @@ func (*twitchWatcher) handleEventSubChannelOutboundRaid(m json.RawMessage) error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.FromBroadcasterUserLogin,
-		"to_id":   payload.ToBroadcasterUserID,
-		"to":      payload.ToBroadcasterUserLogin,
-		"viewers": payload.Viewers,
-	})
+	evt := event.OutboundRaid{
+		Channel: "#" + payload.FromBroadcasterUserLogin,
+		To:      payload.ToBroadcasterUserLogin,
+		ToID:    payload.ToBroadcasterUserID,
+		Viewers: payload.Viewers,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Outbound raid detected")
-	go handleMessage(ircHdl.Client(), nil, eventTypeOutboundRaid, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Outbound raid detected")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -343,56 +343,66 @@ func (*twitchWatcher) handleEventSubChannelPointCustomRewardRedemptionAdd(m json
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel":      "#" + payload.BroadcasterUserLogin,
-		"reward_cost":  payload.Reward.Cost,
-		"reward_id":    payload.Reward.ID,
-		"reward_title": payload.Reward.Title,
-		"status":       payload.Status,
-		"user_id":      payload.UserID,
-		"user_input":   payload.UserInput,
-		"user":         payload.UserLogin,
-	})
+	evt := event.ChannelPointRedeem{
+		Channel:     "#" + payload.BroadcasterUserLogin,
+		RewardCost:  payload.Reward.Cost,
+		RewardID:    payload.Reward.ID,
+		RewardTitle: payload.Reward.Title,
+		Status:      payload.Status,
+		User:        payload.UserLogin,
+		UserID:      payload.UserID,
+		UserInput:   payload.UserInput,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("ChannelPoint reward was redeemed")
-	go handleMessage(ircHdl.Client(), nil, eventTypeChannelPointRedeem, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("ChannelPoint reward was redeemed")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
 
-func (*twitchWatcher) handleEventSubChannelPollChange(event *string) func(json.RawMessage) error {
+func (*twitchWatcher) handleEventSubChannelPollChange(eventType string) func(json.RawMessage) error {
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventPoll
 		if err := json.Unmarshal(m, &payload); err != nil {
 			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
-		fields := fieldcollection.FromData(map[string]any{
-			"channel":               "#" + payload.BroadcasterUserLogin,
-			"hasChannelPointVoting": payload.ChannelPointsVoting.IsEnabled,
-			"title":                 payload.Title,
-		})
-
-		logger := log.WithFields(log.Fields(fields.Data()))
-
-		switch event {
-		case eventTypePollBegin:
-			logger.Info("Poll started")
-
-		case eventTypePollEnd:
-			fields.Set("status", payload.Status)
-			logger.WithField("status", payload.Status).Info("Poll ended")
-
-		case eventTypePollProgress:
-			// Lets not spam the info-level-log with every single vote but
-			// provide them for bots with debug-level-logging
-			logger.Debug("Poll changed")
+		poll := event.Poll{
+			Channel:               "#" + payload.BroadcasterUserLogin,
+			HasChannelPointVoting: payload.ChannelPointsVoting.IsEnabled,
+			Poll:                  payload,
+			Title:                 payload.Title,
 		}
 
-		// Set after logging not to spam logs with full payload
-		fields.Set("poll", payload)
+		var evt event.Event
 
-		go handleMessage(ircHdl.Client(), nil, event, fields)
+		switch eventType {
+		case *event.PollBegin{}.Event():
+			evt = event.PollBegin{
+				Poll: poll,
+			}
+
+			log.WithFields(event.ToLogFields(evt)).Info("Poll started")
+
+		case *event.PollEnd{}.Event():
+			evt = event.PollEnd{
+				Poll:   poll,
+				Status: payload.Status,
+			}
+
+			log.WithFields(event.ToLogFields(evt)).Info("Poll ended")
+
+		case *event.PollProgress{}.Event():
+			evt = event.PollProgress{
+				Poll: poll,
+			}
+
+			// Lets not spam the info-level-log with every single vote but
+			// provide them for bots with debug-level-logging
+			log.WithFields(event.ToLogFields(evt)).Debug("Poll changed")
+		}
+
+		go handleTypedMessage(ircHdl.Client(), nil, evt)
 		return nil
 	}
 }
@@ -408,26 +418,46 @@ func (t *twitchWatcher) handleEventSubChannelUpdate(m json.RawMessage) error {
 	return nil
 }
 
-func (*twitchWatcher) handleEventSubHypetrainEvent(eventType *string) func(json.RawMessage) error {
+func (*twitchWatcher) handleEventSubHypetrainEvent(eventType string) func(json.RawMessage) error {
 	return func(m json.RawMessage) error {
 		var payload twitch.EventSubEventHypetrain
 		if err := json.Unmarshal(m, &payload); err != nil {
 			return fmt.Errorf("unmarshalling event: %w", err)
 		}
 
-		fields := fieldcollection.FromData(map[string]any{
-			"channel": "#" + payload.BroadcasterUserLogin,
-			"level":   payload.Level,
-		})
-
-		if payload.Goal > 0 {
-			fields.Set("levelProgress", float64(payload.Progress)/float64(payload.Goal))
+		hypetrain := event.Hypetrain{
+			Channel: "#" + payload.BroadcasterUserLogin,
+			Event:   payload,
+			Level:   payload.Level,
 		}
 
-		log.WithFields(log.Fields(fields.Data())).Info("Hypetrain event")
+		var levelProgress float64
+		if payload.Goal > 0 {
+			levelProgress = float64(payload.Progress) / float64(payload.Goal)
+		}
 
-		fields.Set("event", payload)
-		go handleMessage(ircHdl.Client(), nil, eventType, fields)
+		var evt event.Event
+		switch eventType {
+		case *event.HypetrainBegin{}.Event():
+			evt = event.HypetrainBegin{
+				Hypetrain:     hypetrain,
+				LevelProgress: levelProgress,
+			}
+
+		case *event.HypetrainEnd{}.Event():
+			evt = event.HypetrainEnd{
+				Hypetrain: hypetrain,
+			}
+
+		case *event.HypetrainProgress{}.Event():
+			evt = event.HypetrainProgress{
+				Hypetrain:     hypetrain,
+				LevelProgress: levelProgress,
+			}
+		}
+
+		log.WithFields(event.ToLogFields(evt)).Info("Hypetrain event")
+		go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 		return nil
 	}
@@ -439,14 +469,14 @@ func (*twitchWatcher) handleEventSubModeratorAdd(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"user_id": payload.UserID,
-		"user":    payload.UserLogin,
-	})
+	evt := event.ModeratorAdd{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		User:    payload.UserLogin,
+		UserID:  payload.UserID,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Moderator added")
-	go handleMessage(ircHdl.Client(), nil, eventTypeModeratorAdd, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Moderator added")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -457,14 +487,14 @@ func (*twitchWatcher) handleEventSubModeratorRemove(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"user_id": payload.UserID,
-		"user":    payload.UserLogin,
-	})
+	evt := event.ModeratorRemove{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		User:    payload.UserLogin,
+		UserID:  payload.UserID,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Moderator removed")
-	go handleMessage(ircHdl.Client(), nil, eventTypeModeratorRemove, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Moderator removed")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -475,15 +505,15 @@ func (*twitchWatcher) handleEventSubShoutoutCreated(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"to_id":   payload.ToBroadcasterUserID,
-		"to":      payload.ToBroadcasterUserLogin,
-		"viewers": payload.ViewerCount,
-	})
+	evt := event.ShoutoutCreated{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		To:      payload.ToBroadcasterUserLogin,
+		ToID:    payload.ToBroadcasterUserID,
+		Viewers: payload.ViewerCount,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Shoutout created")
-	go handleMessage(ircHdl.Client(), nil, eventTypeShoutoutCreated, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Shoutout created")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -494,15 +524,15 @@ func (*twitchWatcher) handleEventSubShoutoutReceived(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"from_id": payload.FromBroadcasterUserID,
-		"from":    payload.FromBroadcasterUserLogin,
-		"viewers": payload.ViewerCount,
-	})
+	evt := event.ShoutoutReceived{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		From:    payload.FromBroadcasterUserLogin,
+		FromID:  payload.FromBroadcasterUserID,
+		Viewers: payload.ViewerCount,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("Shoutout received")
-	go handleMessage(ircHdl.Client(), nil, eventTypeShoutoutReceived, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("Shoutout received")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -525,19 +555,19 @@ func (*twitchWatcher) handleEventSubSusUserMessage(m json.RawMessage) (err error
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"ban_evasion":         payload.BanEvasionEvaluation,
-		"channel":             "#" + payload.BroadcasterUserLogin,
-		"message":             payload.Message.Text,
-		"shared_ban_channels": payload.SharedBanChannelIDs,
-		"status":              payload.LowTrustStatus,
-		"user_id":             payload.UserID,
-		"user_type":           payload.Types,
-		"username":            payload.UserLogin,
-	})
+	evt := event.SuspiciousUserMessage{
+		BanEvasion:        payload.BanEvasionEvaluation,
+		Channel:           "#" + payload.BroadcasterUserLogin,
+		Message:           payload.Message.Text,
+		SharedBanChannels: payload.SharedBanChannelIDs,
+		Status:            payload.LowTrustStatus,
+		UserID:            payload.UserID,
+		Username:          payload.UserLogin,
+		UserType:          payload.Types,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("restricted user message")
-	go handleMessage(ircHdl.Client(), nil, eventTypeSusUserMessage, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("restricted user message")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -548,16 +578,16 @@ func (*twitchWatcher) handleEventSubSusUserUpdate(m json.RawMessage) (err error)
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel":   "#" + payload.BroadcasterUserLogin,
-		"moderator": payload.ModeratorUserLogin,
-		"status":    payload.LowTrustStatus,
-		"user_id":   payload.UserID,
-		"username":  payload.UserLogin,
-	})
+	evt := event.SuspiciousUserUpdate{
+		Channel:   "#" + payload.BroadcasterUserLogin,
+		Moderator: payload.ModeratorUserLogin,
+		Status:    payload.LowTrustStatus,
+		UserID:    payload.UserID,
+		Username:  payload.UserLogin,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("user restriction updated")
-	go handleMessage(ircHdl.Client(), nil, eventTypeSusUserUpdate, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("user restriction updated")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -568,14 +598,14 @@ func (*twitchWatcher) handleEventSubVIPAdd(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"user_id": payload.UserID,
-		"user":    payload.UserLogin,
-	})
+	evt := event.VIPAdd{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		User:    payload.UserLogin,
+		UserID:  payload.UserID,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("VIP added")
-	go handleMessage(ircHdl.Client(), nil, eventTypeVIPAdd, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("VIP added")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -586,14 +616,14 @@ func (*twitchWatcher) handleEventSubVIPRemove(m json.RawMessage) error {
 		return fmt.Errorf("unmarshalling event: %w", err)
 	}
 
-	fields := fieldcollection.FromData(map[string]any{
-		"channel": "#" + payload.BroadcasterUserLogin,
-		"user_id": payload.UserID,
-		"user":    payload.UserLogin,
-	})
+	evt := event.VIPRemove{
+		Channel: "#" + payload.BroadcasterUserLogin,
+		User:    payload.UserLogin,
+		UserID:  payload.UserID,
+	}
 
-	log.WithFields(log.Fields(fields.Data())).Info("VIP removed")
-	go handleMessage(ircHdl.Client(), nil, eventTypeVIPRemove, fields)
+	log.WithFields(event.ToLogFields(evt)).Info("VIP removed")
+	go handleTypedMessage(ircHdl.Client(), nil, evt)
 
 	return nil
 }
@@ -671,43 +701,42 @@ func (t *twitchWatcher) registerEventSubCallbacks(channel string) (*twitch.Event
 func (t *twitchWatcher) triggerUpdate(channel string, title, category *string, online *bool) {
 	if category != nil && t.ChannelStatus[channel].Category != *category {
 		t.ChannelStatus[channel].Category = *category
-		log.WithFields(log.Fields{
-			"channel":  channel,
-			"category": *category,
-		}).Info("Category updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchCategoryUpdate, fieldcollection.FromData(map[string]any{
-			"channel":  "#" + channel,
-			"category": *category,
-		}))
+
+		evt := event.CategoryUpdate{
+			Category: *category,
+			Channel:  "#" + channel,
+		}
+
+		log.WithFields(event.ToLogFields(evt)).Info("Category updated")
+		go handleTypedMessage(ircHdl.Client(), nil, evt)
 	}
 
 	if title != nil && t.ChannelStatus[channel].Title != *title {
 		t.ChannelStatus[channel].Title = *title
-		log.WithFields(log.Fields{
-			"channel": channel,
-			"title":   *title,
-		}).Info("Title updated")
-		go handleMessage(ircHdl.Client(), nil, eventTypeTwitchTitleUpdate, fieldcollection.FromData(map[string]any{
-			"channel": "#" + channel,
-			"title":   *title,
-		}))
+
+		evt := event.TitleUpdate{
+			Channel: "#" + channel,
+			Title:   *title,
+		}
+
+		log.WithFields(event.ToLogFields(evt)).Info("Title updated")
+		go handleTypedMessage(ircHdl.Client(), nil, evt)
 	}
 
 	if online != nil && t.ChannelStatus[channel].IsLive != *online {
 		t.ChannelStatus[channel].IsLive = *online
+
 		log.WithFields(log.Fields{
 			"channel": channel,
 			"isLive":  *online,
 		}).Info("Live-status updated")
 
-		evt := eventTypeTwitchStreamOnline
+		var evt event.Event = event.StreamOnline{Channel: "#" + channel}
 		if !*online {
-			evt = eventTypeTwitchStreamOffline
+			evt = event.StreamOffline{Channel: "#" + channel}
 		}
 
-		go handleMessage(ircHdl.Client(), nil, evt, fieldcollection.FromData(map[string]any{
-			"channel": "#" + channel,
-		}))
+		go handleTypedMessage(ircHdl.Client(), nil, evt)
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Luzifer/go_helpers/fieldcollection"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -18,8 +17,21 @@ import (
 
 const actorName = "kofi"
 
+type (
+	kofiDonationEvent struct {
+		Amount            float64 `field:"amount" description:"Amount donated as submitted by Ko-fi"`
+		Channel           string  `field:"channel" description:"Channel the event occurred for"`
+		Currency          string  `field:"currency" description:"Currency of the donated amount"`
+		From              string  `field:"from" description:"Name submitted by the donor"`
+		IsFirstSubPayment bool    `field:"isFirstSubPayment" description:"Whether this is the first subscription payment"`
+		IsSubscription    bool    `field:"isSubscription" description:"Whether this is a subscription payment"`
+		Message           *string `field:"message,omitzero" description:"Message entered by the donor"`
+		Tier              *string `field:"tier,omitzero" description:"Subscription tier"`
+	}
+)
+
 var (
-	eventCreatorFunc plugins.EventHandlerFunc
+	eventCreatorFunc plugins.TypedEventHandlerFunc
 	getModuleConfig  plugins.ModuleConfigGetterFunc
 
 	ptrStringEmpty = func(s string) *string { return &s }("")
@@ -27,7 +39,7 @@ var (
 
 // Register provides the plugins.RegisterFunc
 func Register(args plugins.RegistrationArguments) (err error) {
-	eventCreatorFunc = args.CreateEvent
+	eventCreatorFunc = args.CreateTypedEvent
 	getModuleConfig = args.GetModuleConfigForChannel
 
 	if err = args.RegisterAPIRoute(plugins.HTTPRouteRegistrationArgs{
@@ -50,6 +62,9 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 	return nil
 }
+
+// Event implements event.Event
+func (kofiDonationEvent) Event() *string { return new("kofi_donation") }
 
 func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 	channel := mux.Vars(r)["channel"]
@@ -89,27 +104,27 @@ func handleKoFiPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fields := fieldcollection.NewFieldCollection()
-	fields.Set("channel", "#"+strings.TrimLeft(channel, "#"))
-
 	switch payload.Type {
 	case hookTypeDonation, hookTypeSubscription:
 		// Single or Recurring Donation
-		fields.Set("from", payload.FromName)
-		fields.Set("amount", payload.Amount)
-		fields.Set("currency", payload.Currency)
-		fields.Set("isSubscription", payload.IsSubscriptionPayment)
-		fields.Set("isFirstSubPayment", payload.IsFirstSubscriptionPayment)
+		evt := kofiDonationEvent{
+			Amount:            payload.Amount,
+			Channel:           "#" + strings.TrimLeft(channel, "#"),
+			Currency:          payload.Currency,
+			From:              payload.FromName,
+			IsFirstSubPayment: payload.IsFirstSubscriptionPayment,
+			IsSubscription:    payload.IsSubscriptionPayment,
+		}
 
 		if payload.IsPublic && payload.Message != nil {
-			fields.Set("message", *payload.Message)
+			evt.Message = payload.Message
 		}
 
 		if payload.IsSubscriptionPayment && payload.TierName != nil {
-			fields.Set("tier", *payload.TierName)
+			evt.Tier = payload.TierName
 		}
 
-		if err = eventCreatorFunc("kofi_donation", fields); err != nil {
+		if err = eventCreatorFunc(evt); err != nil {
 			logrus.WithError(err).Error("creating kofi_donation event")
 			http.Error(w, "ehm, that didn't work, I'm sorry", http.StatusInternalServerError)
 			return

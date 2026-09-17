@@ -43,7 +43,7 @@ func Register(args plugins.RegistrationArguments) (err error) {
 
 	mc = &memoryCache{dbc: db}
 
-	eventCreatorFunc = args.CreateEvent
+	eventCreatorFunc = args.CreateEvent //nolint:staticcheck // Required in this case, can't use typed events
 	formatMessage = args.FormatMessage
 
 	args.RegisterActor(actorName, func() plugins.Actor { return &actor{} })

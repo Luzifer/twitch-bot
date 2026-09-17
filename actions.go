@@ -10,6 +10,7 @@ import (
 	"gopkg.in/irc.v4"
 
 	"github.com/Luzifer/twitch-bot/v3/internal/locker"
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
 
@@ -72,13 +73,13 @@ func triggerAction(c *irc.Client, m *irc.Message, rule *plugins.Rule, ra *plugin
 	return apc, nil
 }
 
-func handleMessage(c *irc.Client, m *irc.Message, event *string, eventData *fieldcollection.FieldCollection) {
+func handleMessage(c *irc.Client, m *irc.Message, evt *string, eventData *fieldcollection.FieldCollection) {
 	// Send events to registered handlers
-	if event != nil {
-		go notifyEventHandlers(*event, eventData)
+	if evt != nil {
+		go notifyEventHandlers(*evt, eventData)
 	}
 
-	matchingRules := config.GetMatchingRules(m, event, eventData)
+	matchingRules := config.GetMatchingRules(m, evt, eventData)
 	for i := range matchingRules {
 		go handleMessageRuleExecution(c, m, matchingRules[i], eventData)
 	}
@@ -137,4 +138,13 @@ ActionsLoop:
 	if !preventCooldown && !executionError {
 		r.SetCooldown(timerService, m, eventData)
 	}
+}
+
+func handleTypedMessage(c *irc.Client, m *irc.Message, evt event.Event) {
+	var evtType *string
+	if evt != nil {
+		evtType = evt.Event()
+	}
+
+	handleMessage(c, m, evtType, event.ToFieldCollection(evt))
 }

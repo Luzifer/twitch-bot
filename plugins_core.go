@@ -59,6 +59,7 @@ import (
 	twitchfns "github.com/Luzifer/twitch-bot/v3/internal/template/twitch"
 	"github.com/Luzifer/twitch-bot/v3/internal/template/userstate"
 	"github.com/Luzifer/twitch-bot/v3/pkg/database"
+	"github.com/Luzifer/twitch-bot/v3/pkg/event"
 	"github.com/Luzifer/twitch-bot/v3/pkg/twitch"
 	"github.com/Luzifer/twitch-bot/v3/plugins"
 )
@@ -201,8 +202,14 @@ func getRegistrationArguments() plugins.RegistrationArguments {
 		SendMessage:                sendMessage,
 		ValidateToken:              authService.ValidateTokenFor,
 
+		//nolint:staticcheck // Must be defined as long as the function is still supported
 		CreateEvent: func(evt string, eventData *fieldcollection.FieldCollection) error {
 			handleMessage(ircHdl.Client(), nil, &evt, eventData)
+			return nil
+		},
+
+		CreateTypedEvent: func(evt event.Event) error {
+			handleTypedMessage(ircHdl.Client(), nil, evt)
 			return nil
 		},
 
