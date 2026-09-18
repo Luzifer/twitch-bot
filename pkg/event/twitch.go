@@ -199,7 +199,7 @@ func (Follow) Event() *string { return new("follow") }
 
 // Description implements DocumentedEvent interface
 func (HypetrainBegin) Description() string {
-	return "An Hype-Train has begun, ended or progressed in the given channel."
+	return "A Hype-Train has begun in the given channel."
 }
 
 // Event implements Event interface
@@ -207,7 +207,7 @@ func (HypetrainBegin) Event() *string { return new("hypetrain_begin") }
 
 // Description implements DocumentedEvent interface
 func (HypetrainEnd) Description() string {
-	return "An Hype-Train has begun, ended or progressed in the given channel."
+	return "A Hype-Train has ended in the given channel."
 }
 
 // Event implements Event interface
@@ -215,7 +215,7 @@ func (HypetrainEnd) Event() *string { return new("hypetrain_end") }
 
 // Description implements DocumentedEvent interface
 func (HypetrainProgress) Description() string {
-	return "An Hype-Train has begun, ended or progressed in the given channel."
+	return "A Hype-Train has progressed in the given channel."
 }
 
 // Event implements Event interface
@@ -223,7 +223,7 @@ func (HypetrainProgress) Event() *string { return new("hypetrain_progress") }
 
 // Description implements DocumentedEvent interface
 func (ModeratorAdd) Description() string {
-	return "A user was added as a moderator to the channel or removed from its moderators. (Only available when EventSub support is available and the streamer granted the required permission!)"
+	return "A user was added as a moderator to the channel. (Only available when EventSub support is available and the streamer granted the required permission!)"
 }
 
 // Event implements Event interface
@@ -231,7 +231,7 @@ func (ModeratorAdd) Event() *string { return new("moderator_add") }
 
 // Description implements DocumentedEvent interface
 func (ModeratorRemove) Description() string {
-	return "A user was added as a moderator to the channel or removed from its moderators. (Only available when EventSub support is available and the streamer granted the required permission!)"
+	return "A user was removed as a moderator from the channel. (Only available when EventSub support is available and the streamer granted the required permission!)"
 }
 
 // Event implements Event interface
@@ -247,7 +247,7 @@ func (OutboundRaid) Event() *string { return new("outbound_raid") }
 
 // Description implements DocumentedEvent interface
 func (PollBegin) Description() string {
-	return "A poll was started / was ended / had changes in the given channel."
+	return "A poll was started in the given channel."
 }
 
 // Event implements Event interface
@@ -255,7 +255,7 @@ func (PollBegin) Event() *string { return new("poll_begin") }
 
 // Description implements DocumentedEvent interface
 func (PollEnd) Description() string {
-	return "A poll was started / was ended / had changes in the given channel."
+	return "A poll ended in the given channel."
 }
 
 // Event implements Event interface
@@ -263,7 +263,7 @@ func (PollEnd) Event() *string { return new("poll_end") }
 
 // Description implements DocumentedEvent interface
 func (PollProgress) Description() string {
-	return "A poll was started / was ended / had changes in the given channel."
+	return "A poll changed in the given channel."
 }
 
 // Event implements Event interface
@@ -327,7 +327,7 @@ func (TitleUpdate) Event() *string { return new("title_update") }
 
 // Description implements DocumentedEvent interface
 func (VIPAdd) Description() string {
-	return "A user was added as a VIP to the channel or removed from its VIPs. (Only available when EventSub support is available and the streamer granted the required permission!)"
+	return "A user was added as a VIP to the channel. (Only available when EventSub support is available and the streamer granted the required permission!)"
 }
 
 // Event implements Event interface
@@ -335,7 +335,7 @@ func (VIPAdd) Event() *string { return new("vip_add") }
 
 // Description implements DocumentedEvent interface
 func (VIPRemove) Description() string {
-	return "A user was added as a VIP to the channel or removed from its VIPs. (Only available when EventSub support is available and the streamer granted the required permission!)"
+	return "A user was removed as a VIP from the channel. (Only available when EventSub support is available and the streamer granted the required permission!)"
 }
 
 // Event implements Event interface

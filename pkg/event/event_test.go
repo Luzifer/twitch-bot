@@ -17,6 +17,11 @@ type (
 		Value *string `field:"value,omitzero"`
 	}
 
+	pointerEmbeddedEvent struct {
+		*BaseChannel
+		Value *string `field:"value,omitzero" description:"Pointer value"`
+	}
+
 	pointerZero struct {
 		Zero bool
 	}
@@ -31,6 +36,8 @@ type (
 )
 
 func (pointerEvent) Event() *string { return new("pointer") }
+
+func (pointerEmbeddedEvent) Event() *string { return new("pointer_embedded") }
 
 func (testEvent) Event() *string { return new("test") }
 
@@ -88,6 +95,22 @@ func TestIsZero(t *testing.T) {
 			assert.Equal(t, testCase.Expected, isZero(testCase.Value))
 		})
 	}
+}
+
+func TestDescribeFields(t *testing.T) {
+	fields := DescribeFields(pointerEmbeddedEvent{})
+	require.Len(t, fields, 2)
+	assert.Equal(t, "channel", fields[0].Name)
+	assert.Equal(t, reflect.TypeFor[string](), fields[0].Type)
+	assert.False(t, fields[0].Optional)
+	assert.Equal(t, "value", fields[1].Name)
+	assert.Equal(t, reflect.TypeFor[*string](), fields[1].Type)
+	assert.True(t, fields[1].Optional)
+	assert.Equal(t, "Pointer value", fields[1].Description)
+}
+
+func TestToFieldCollectionHandlesNilEmbeddedPointer(t *testing.T) {
+	assert.Nil(t, ToFieldCollection(pointerEmbeddedEvent{}))
 }
 
 func TestToFieldCollection(t *testing.T) {

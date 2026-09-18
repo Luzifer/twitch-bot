@@ -1,11 +1,22 @@
 import globals from 'globals'
 import js from '@eslint/js'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import typescriptParser from '@typescript-eslint/parser'
 import vue from 'eslint-plugin-vue'
 
 export default [
   js.configs.recommended,
   ...vue.configs['flat/recommended'],
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error'],
+      'no-unused-vars': ['off'],
+    },
+  },
   {
     languageOptions: {
       ecmaVersion: 'latest',

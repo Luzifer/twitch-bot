@@ -1,27 +1,178 @@
-/**
- * @typedef {Object} Event
- * @property {number} eventId ID of the event as returned by the server
- * @property {Object|undefined} extraData Any additional data specific to this event type
- * @property {string} filterKey Event-Type key
- * @property {string|undefined} originId ID from the Twitch server for de-duplication
- * @property {string|function|undefined} subtext Additional text, usually user-message
- * @property {string|undefined} text Descriptive text of the event
- * @property {Date} time The moment the event occurred
- * @property {string} title The title of the event
- * @property {boolean} hasReplay Whether the replay button should be shown
- * @property {boolean} isMeta Whether not to display event in frontend
- */
+<overlay-title>Event-Feed</overlay-title>
 
+<template>
+  <div class="container-fluid py-3">
+    <div class="row">
+      <div class="col">
+        <!-- Stream-Summary -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+              <span
+                v-for="item in sortedStats"
+                :key="item.key"
+                class="me-2 d-inline-flex align-items-center"
+              >
+                <i :class="`fa-fw ${item.icon}`" />
+                <span class="badge rounded-pill text-bg-primary ms-1">
+                  {{ item.value }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event-List -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            Recent events
+            <div class="btn-group btn-group-sm">
+              <div class="btn-group btn-group-sm">
+                <button
+                  type="button"
+                  class="btn btn-secondary dropdown-toggle"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <i class="fas fa-filter fa-fw me-1" />
+                  Filters ({{ filterCount }})
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li
+                    v-for="(filter, filterKey) in filters"
+                    :key="filterKey"
+                  >
+                    <a
+                      :class="{'dropdown-item': true, 'active': filter.visible}"
+                      href="#"
+                      @click.prevent="toggleFilterVisibility(filterKey)"
+                    >
+                      {{ filter.name }}
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                class="btn btn-secondary"
+                @click="markRead"
+              >
+                <i class="fas fa-eye fa-fw me-1" />
+                Mark read
+              </button>
+            </div>
+          </div>
+
+          <div class="list-group list-group-flush">
+            <!-- Active Hypetrain pin -->
+            <div
+              v-if="hypetrain.active"
+              class="list-group-item"
+            >
+              <div class="d-flex w-100 align-items-center">
+                <h5 class="mb-0">
+                  <i :class="`fas fa-train fa-fw me-2`" />
+                  Hypetrain in progress towards Level {{ hypetrain.level }}…
+                </h5>
+              </div>
+
+              <div class="progress my-3">
+                <div
+                  class="progress-bar progress-bar-striped"
+                  :style="`width: ${(hypetrain.progress * 100).toFixed(2)}%`"
+                />
+              </div>
+            </div>
+
+            <!-- Event-Item -->
+            <div
+              v-for="event in recentEvents"
+              :key="event.time.getTime()"
+              :class="eventClass(event)"
+            >
+              <div class="d-flex w-100 align-items-center">
+                <h5 class="mb-0 me-auto">
+                  <i :class="`${event.icon} fa-fw me-2`" /> {{ event.title }}
+                </h5>
+                <button
+                  v-if="event.hasReplay"
+                  class="btn btn-sm me-1"
+                  title="Re-Play Event"
+                  @click="repeatEvent(event.eventId)"
+                >
+                  <i class="fas fa-share fa-fw" />
+                </button>
+                <small :title="timeDisplay(event.time)">
+                  {{ timeSince(event.time) }}
+                </small>
+              </div>
+
+              <div
+                v-if="event.text"
+                class="d-flex my-1 w-100 justify-content-between align-items-start premono"
+              >
+                {{ event.text }}
+              </div>
+              <p
+                v-if="resolveSubtext(event.subtext)"
+                class="mb-1"
+              >
+                <small>
+                  <span class="premono">{{ resolveSubtext(event.subtext) }}</span>
+                </small>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import 'bootstrap'
+import 'bootstrap/dist/css/bootstrap.min.css'
+
+import type { AdbreakBeginFields, BanFields, BitsFields, CategoryUpdateFields, ChannelpointRedeemFields, CustomSocketMessage, FollowFields, HypetrainBeginFields, HypetrainEndFields, HypetrainProgressFields, KofiDonationFields, ModeratorAddFields, ModeratorRemoveFields, PollEndFields, PrimepaidupgradeFields, RaidFields, ResubFields, ShoutoutCreatedFields, ShoutoutReceivedFields, SubFields, SubgiftFields, SubmysterygiftFields, TimeoutFields, TitleUpdateFields, VipAddFields, VipRemoveFields, WatchStreakFields } from './eventTypes.js'
+import { createApp, defineComponent } from 'vue'
 import { customFilters, customHandler } from './eventfeed.custom.js'
-import { createApp } from 'https://cdn.jsdelivr.net/npm/vue@3.4/dist/vue.esm-browser.prod.js'
-import dayjs from 'https://cdn.jsdelivr.net/npm/dayjs@1.11/+esm'
-import dayjsLocalizedFormat from 'https://cdn.jsdelivr.net/npm/dayjs@1.11/plugin/localizedFormat.js/+esm'
-import dayjsRelativeTime from 'https://cdn.jsdelivr.net/npm/dayjs@1.11/plugin/relativeTime.js/+esm'
-import EventClient from './eventclient.mjs'
+import { dom, library } from '@fortawesome/fontawesome-svg-core'
+import dayjs from 'dayjs'
+import dayjsLocalizedFormat from 'dayjs/plugin/localizedFormat.js'
+import dayjsRelativeTime from 'dayjs/plugin/relativeTime.js'
+import EventClient from './eventclient.js'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+
+export type Event = {
+  eventId: string
+  extraData?: Record<string, any>
+  filterKey: string
+  hasReplay?: boolean
+  icon: string
+  isMeta?: boolean
+  originId?: string
+  subtext?: string | (() => string | undefined)
+  text?: string
+  time: Date
+  title: string
+}
+
+export type Filter = {
+  name: string
+  visible: boolean
+}
+
+type StoredData = {
+  filters: Record<string, Filter>
+  readDate: number
+}
 
 const STORAGE_KEY = 'io.luzifer.eventfeed'
 
-const defaultFilters = {
+library.add(fas)
+dom.watch()
+
+const defaultFilters: Record<string, Filter> = {
   adbreak: { name: 'Adbreaks', visible: true },
   ban: { name: 'Bans / Timeouts', visible: true },
   bits: { name: 'Bits', visible: true },
@@ -42,21 +193,21 @@ const defaultFilters = {
 const userAnonSubgifter = 'ananonymousgifter'
 const userAnonCheerer = 'ananonymouscheerer'
 
-const app = createApp({
+const component = defineComponent({
   computed: {
     filterCount() {
-      const filters = Object.values(this.filters)
+      const filters = Object.values(this.filters as Record<string, Filter>)
       return `${filters.filter(f => f.visible).length} / ${filters.length}`
     },
 
-    filters() {
+    filters(): Record<string, Filter> {
       return Object.fromEntries(Object.entries({
         ...defaultFilters,
         ...customFilters(),
         ...this.storedData.filters || {},
       })
         .filter(e => Object.keys(defaultFilters).includes(e[0]) || Object.keys(customFilters()).includes(e[0]))
-        .sort((a, b) => a[1].name.localeCompare(b[1].name)))
+        .sort((a, b) => (a[1] as Filter).name.localeCompare((b[1] as Filter).name))) as Record<string, Filter>
     },
 
     hypetrain() {
@@ -70,14 +221,14 @@ const app = createApp({
         }
       }
 
-      return evts[0].extraData
+      return evts[0].extraData!
     },
 
     recentEvents() {
       return [...this.events]
         .filter(evt => !evt.isMeta)
         .filter(evt => this.filters[evt.filterKey]?.visible !== false)
-        .filter(evt => !this.knownMultiGiftIDs.includes(evt.originId))
+        .filter(evt => !evt.originId || !this.knownMultiGiftIDs.includes(evt.originId))
         .sort((b, a) => a.time.getTime() - b.time.getTime())
     },
 
@@ -92,14 +243,14 @@ const app = createApp({
           key: 'bits',
           value: evts
             .filter(evt => evt.filterKey === 'bits')
-            .reduce((sum, evt) => sum + evt.extraData.bits, 0),
+            .reduce((sum, evt) => sum + evt.extraData!.bits, 0),
         },
         {
           icon: 'fas fa-circle-dollar-to-slot',
           key: 'donation',
           value: evts
             .filter(evt => evt.filterKey === 'donation')
-            .reduce((sum, evt) => sum + evt.extraData.amount, 0)
+            .reduce((sum, evt) => sum + evt.extraData!.amount, 0)
             .toFixed(2),
         },
         {
@@ -121,8 +272,8 @@ const app = createApp({
           key: 'sub',
           value: evts
             .filter(evt => evt.filterKey === 'subs')
-            .filter(evt => !this.knownMultiGiftIDs.includes(evt.originId))
-            .reduce((sum, evt) => sum + evt.extraData.count, 0),
+            .filter(evt => !evt.originId || !this.knownMultiGiftIDs.includes(evt.originId))
+            .reduce((sum, evt) => sum + evt.extraData!.count, 0),
         },
       ]
     },
@@ -151,7 +302,7 @@ const app = createApp({
         poll_end: ({ event_id, fields, time }) => this.handlePollEnd(event_id, fields, time),
         primepaidupgrade: ({ event_id, fields, time }) => this.handlePrimePaidUpgrade(event_id, fields, time),
         raid: ({ event_id, fields, time }) => this.handleRaid(event_id, fields, time),
-        resub: ({ event_id, fields, reason, time, type }) => this.handleSub(type, event_id, fields, time, reason),
+        resub: ({ event_id, fields, time, type }) => this.handleSub(type, event_id, fields, time),
         shoutout_created: ({ event_id, fields, time }) => this.handleShoutoutCreated(event_id, fields, time),
         shoutout_received: ({ event_id, fields, time }) => this.handleShoutoutReceived(event_id, fields, time),
         stream_offline: ({ event_id, time }) => this.handleStreamOffline(event_id, time),
@@ -182,17 +333,20 @@ const app = createApp({
 
   data() {
     return {
-      eventClient: null,
-      events: [],
+      eventClient: null as null | EventClient,
+      events: [] as Event[],
       now: new Date(),
-      storedData: {},
+      storedData: {
+        filters: {},
+        readDate: 0,
+      } as StoredData,
 
       // Workaround for Twitch not sending hypetrain progress in end-event
       // eslint-disable-next-line sort-keys
       hypetrainProgress: 0,
-      knownMultiGiftIDs: [],
+      knownMultiGiftIDs: [] as string[],
       streamOfflineTime: new Date(0),
-      subgiftRecipients: {},
+      subgiftRecipients: {} as Record<string, string[]>,
     }
   },
 
@@ -200,7 +354,7 @@ const app = createApp({
     /**
      * @param {Event} event
      */
-    addEvent(event) {
+    addEvent(event: Event) {
       if (!event.eventId || !event.filterKey || !event.time || !event.title) {
         throw new Error(`Event missing fields: ${event}`)
       }
@@ -211,7 +365,7 @@ const app = createApp({
       ]
     },
 
-    eventClass(event) {
+    eventClass(event: Event) {
       const classes = ['border-event', 'list-group-item']
 
       if (this.storedData.readDate && this.storedData.readDate > event.time.getTime()) {
@@ -225,18 +379,18 @@ const app = createApp({
       return classes.join(' ')
     },
 
-    handleAdBreak(eventId, data, time) {
+    handleAdBreak(eventId: string, data: AdbreakBeginFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'adbreak',
         icon: 'fas fa-rectangle-ad text-warning',
         text: `${data.duration}s ad-break is now running`,
-        time: time ? new Date(time) : null,
+        time: new Date(time),
         title: 'Ad-Break started',
       })
     },
 
-    handleBan(eventId, data, time) {
+    handleBan(eventId: string, data: BanFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'ban',
@@ -246,7 +400,7 @@ const app = createApp({
       })
     },
 
-    handleBits(eventId, data, time) {
+    handleBits(eventId: string, data: BitsFields, time: Date) {
       const from = data.user === userAnonCheerer ? 'Someone' : data.user
 
       this.addEvent({
@@ -257,12 +411,12 @@ const app = createApp({
         icon: 'fas fa-gem',
         subtext: data.message,
         text: `${from} just spent ${data.bits} Bits`,
-        time: time ? new Date(time) : null,
+        time: new Date(time),
         title: 'Bits donated',
       })
     },
 
-    handleCategoryUpdate(eventId, data, time) {
+    handleCategoryUpdate(eventId: string, data: CategoryUpdateFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'streamUpdate',
@@ -273,7 +427,7 @@ const app = createApp({
       })
     },
 
-    handleChannelPoints(eventId, data, time) {
+    handleChannelPoints(eventId: string, data: ChannelpointRedeemFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'channelpoint',
@@ -286,14 +440,14 @@ const app = createApp({
       })
     },
 
-    handleCustom(eventObj) {
+    handleCustom(eventObj: CustomSocketMessage) {
       const evt = customHandler(eventObj)
       if (evt !== null) {
         this.addEvent(evt)
       }
     },
 
-    handleFollow(eventId, data, time) {
+    handleFollow(eventId: string, data: FollowFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'follow',
@@ -305,27 +459,37 @@ const app = createApp({
       })
     },
 
-    handleHypetrain(eventId, data, time, phase) {
-      const evt = {
+    handleHypetrain(
+      eventId: string,
+      data: HypetrainBeginFields | HypetrainEndFields | HypetrainProgressFields,
+      time: Date,
+      phase: 'start' | 'end' | 'progress',
+    ) {
+      const progress = 'levelProgress' in data
+        ? data.levelProgress
+        : this.hypetrainProgress
+
+      const evt: Event = {
         eventId,
         extraData: {
           active: phase !== 'end',
           level: data.level,
-          progress: data.levelProgress || this.hypetrainProgress,
+          progress,
         },
 
         filterKey: 'hypetrain',
         icon: 'fas fa-train',
         time: new Date(time),
+        title: '',
       }
 
-      this.hypetrainProgress = evt.extraData.progress
+      this.hypetrainProgress = evt.extraData!.progress
 
       switch (phase) {
       case 'start':
         this.addEvent({
           ...evt,
-          text: `A hypetrain started on ${(data.levelProgress * 100).toFixed(0)}% towards level ${data.level}`,
+          text: `A hypetrain started on ${(progress * 100).toFixed(0)}% towards level ${data.level}`,
           title: 'Hypetrain started',
         })
         break
@@ -348,7 +512,7 @@ const app = createApp({
       }
     },
 
-    handleKoFiDonation(eventId, data, time) {
+    handleKoFiDonation(eventId: string, data: KofiDonationFields, time: Date) {
       let text
       if (data.isSubscription && data.isFirstSubPayment) {
         text = `${data.from} just started a monthly subscription of ${Number(data.amount).toFixed(2)} ${data.currency}`
@@ -370,48 +534,55 @@ const app = createApp({
       })
     },
 
-    handlePollEnd(eventId, data, time) {
-      if (data.poll.status === 'archived') {
+    handlePollEnd(eventId: string, data: PollEndFields, time: Date) {
+      if (data.status === 'archived') {
         return
+      }
+
+      // Map into stub-type
+      const poll = data.poll as {
+        choices: {
+          title: string
+          votes: number
+        }[]
       }
 
       this.addEvent({
         eventId,
         filterKey: 'pollEnd',
         icon: 'fas fa-square-poll-vertical',
-        subtext: data.poll.choices.map(choice => `${choice.title} (${choice.votes})`).join(' | '),
-        text: data.poll.title,
+        subtext: poll.choices.map(choice => `${choice.title} (${choice.votes})`).join(' | '),
+        text: data.title,
         time: new Date(time),
-        title: `Poll Ended (${data.poll.status})`,
+        title: `Poll Ended (${data.status})`,
       })
     },
 
-    handlePrimePaidUpgrade(eventId, data, time) {
+    handlePrimePaidUpgrade(eventId: string, data: PrimepaidupgradeFields, time: Date) {
       this.addEvent({
         eventId,
         extraData: { count: 0 }, // this is not a sub itself, just a change for the future but related to subs
         filterKey: 'subs',
         icon: 'fas fa-circle-up',
-        text: `${data.username} upgraded from Prime to paid sub`,
+        text: `${data.user} upgraded from Prime to paid sub`,
         time: new Date(time),
         title: 'Prime to Paid Upgrade',
       })
     },
 
-    handleRaid(eventId, data, time) {
+    handleRaid(eventId: string, data: RaidFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'raid',
         hasReplay: true,
         icon: 'fas fa-parachute-box',
-        soundUrl: '/public/fanfare.webm',
         text: `${data.from} just raided with ${data.viewercount} raiders`,
         time: new Date(time),
         title: 'Incoming raid',
       })
     },
 
-    handleRoleChange(eventId, data, time, role, added = true) {
+    handleRoleChange(eventId: string, data: VipAddFields | VipRemoveFields | ModeratorAddFields | ModeratorRemoveFields, time: Date, role: string, added: boolean = true) {
       const action = added ? 'added to' : 'removed from'
 
       this.addEvent({
@@ -424,7 +595,7 @@ const app = createApp({
       })
     },
 
-    handleShoutoutCreated(eventId, data, time) {
+    handleShoutoutCreated(eventId: string, data: ShoutoutCreatedFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'shoutout',
@@ -435,7 +606,7 @@ const app = createApp({
       })
     },
 
-    handleShoutoutReceived(eventId, data, time) {
+    handleShoutoutReceived(eventId: string, data: ShoutoutReceivedFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'shoutout',
@@ -446,7 +617,7 @@ const app = createApp({
       })
     },
 
-    handleStreamOffline(eventId, time) {
+    handleStreamOffline(eventId: string, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'streamOffline',
@@ -458,8 +629,10 @@ const app = createApp({
       this.streamOfflineTime = new Date(time)
     },
 
-    handleSub(evt, eventId, data, time) {
-      const text = evt === 'resub' ? `resubscribed for the ${data.subscribed_months}. time` : 'subscribed'
+    handleSub(evt: string, eventId: string, data: ResubFields | SubFields, time: Date) {
+      const text = evt === 'resub'
+        ? `resubscribed for the ${(data as ResubFields).subscribed_months}. time`
+        : 'subscribed'
       const tier = data.plan === 'Prime' ? 'P' : `T${Number(data.plan) / 1000}`
       const title = evt === 'resub' ? `Resub (${tier})` : `New Sub (${tier})`
       this.addEvent({
@@ -468,14 +641,19 @@ const app = createApp({
         filterKey: 'subs',
         hasReplay: true,
         icon: 'fas fa-star',
-        subtext: data.message,
+        subtext: evt === 'resub' ? (data as ResubFields).message : undefined,
         text: `${data.user} just ${text} (${tier})`,
         time: new Date(time),
         title,
       })
     },
 
-    handleSubgift(evt, eventId, data, time) {
+    handleSubgift(
+      evt: 'subgift' | 'submysterygift',
+      eventId: string,
+      data: SubgiftFields | SubmysterygiftFields,
+      time: Date,
+    ) {
       const from = data.user === userAnonSubgifter ? 'ANON' : data.from
 
       const tier = data.plan === 'Prime' ? 'Prime' : `Tier ${Number(data.plan) / 1000}`
@@ -483,15 +661,14 @@ const app = createApp({
       if (evt === 'submysterygift') {
         this.addEvent({
           eventId,
-          extraData: { count: data.number },
+          extraData: { count: (data as SubmysterygiftFields).number },
           filterKey: 'subs',
           hasReplay: true,
           icon: 'fas fa-gift',
           subtext: () => this.subgiftRecipients[data.origin_id] ? `To: ${this.subgiftRecipients[data.origin_id].join(', ')}` : undefined,
-          text: `${from} just gifted ${data.number} subs`,
-          time: time ? new Date(time) : null,
+          text: `${from} just gifted ${(data as SubmysterygiftFields).number} subs`,
+          time: new Date(time),
           title: `Subs gifted (${tier})`,
-          variant: 'warning',
         })
 
         this.knownMultiGiftIDs.push(data.origin_id)
@@ -501,7 +678,7 @@ const app = createApp({
       if (data.origin_id) {
         this.subgiftRecipients[data.origin_id] = [
           ...this.subgiftRecipients[data.origin_id] || [],
-          data.to,
+          (data as SubgiftFields).to,
         ].sort((a, b) => a.localeCompare(b))
       }
 
@@ -512,14 +689,13 @@ const app = createApp({
         hasReplay: true,
         icon: 'fas fa-gift',
         originId: data.origin_id,
-        text: `${from} just gifted ${data.to} a sub`,
-        time: time ? new Date(time) : null,
+        text: `${from} just gifted ${(data as SubgiftFields).to} a sub`,
+        time: new Date(time),
         title: `Sub gifted (${tier})`,
-        variant: 'warning',
       })
     },
 
-    handleTimeout(eventId, data, time) {
+    handleTimeout(eventId: string, data: TimeoutFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'ban',
@@ -529,7 +705,7 @@ const app = createApp({
       })
     },
 
-    handleTitleUpdate(eventId, data, time) {
+    handleTitleUpdate(eventId: string, data: TitleUpdateFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'streamUpdate',
@@ -540,7 +716,7 @@ const app = createApp({
       })
     },
 
-    handleWatchStreak(eventId, data, time) {
+    handleWatchStreak(eventId: string, data: WatchStreakFields, time: Date) {
       this.addEvent({
         eventId,
         filterKey: 'watchStreak',
@@ -557,11 +733,11 @@ const app = createApp({
       this.storageSave()
     },
 
-    repeatEvent(eventId) {
-      return this.eventClient.replayEvent(eventId)
+    repeatEvent(eventId: string) {
+      return this.eventClient!.replayEvent(eventId)
     },
 
-    resolveSubtext(subtext) {
+    resolveSubtext(subtext: string | (() => string | undefined) | undefined): string | undefined {
       if (typeof subtext === 'function') {
         return subtext()
       }
@@ -569,8 +745,12 @@ const app = createApp({
       return subtext
     },
 
-    storageKey() {
-      const channel = this.eventClient.paramOptionFallback('channel').replace(/^#*/, '')
+    storageKey(): string {
+      if (!this.eventClient || typeof this.eventClient.paramOptionFallback('channel') !== 'string') {
+        throw new Error('channel parameter not present')
+      }
+
+      const channel = this.eventClient.paramOptionFallback('channel')!.replace(/^#*/, '')
       return [STORAGE_KEY, channel].join('.')
     },
 
@@ -589,15 +769,15 @@ const app = createApp({
       window.localStorage.setItem(this.storageKey(), JSON.stringify(this.storedData))
     },
 
-    timeDisplay(time) {
+    timeDisplay(time: Date) {
       return dayjs(time).format('llll')
     },
 
-    timeSince(time) {
+    timeSince(time: Date) {
       return dayjs(time).from(this.now)
     },
 
-    toggleFilterVisibility(filter) {
+    toggleFilterVisibility(filter: string) {
       if (!this.storedData.filters[filter]) {
         this.storedData.filters[filter] = this.filters[filter]
       }
@@ -613,4 +793,31 @@ const app = createApp({
 dayjs.extend(dayjsLocalizedFormat)
 dayjs.extend(dayjsRelativeTime)
 
-app.mount('#app')
+queueMicrotask(() => createApp(component).mount('#app'))
+
+export default component
+</script>
+
+<style>
+[v-cloak] { display: none; }
+.border-event {
+  border-left-width: 5px !important;
+  border-left-style: solid !important;
+  border-left-color: #9147ff;
+}
+.border-event.event-bits { border-left-color: #5cffbe !important; }
+.border-event.event-channelpoint { border-left-color: #ffd37a !important; }
+.border-event.event-follow { border-left-color: #ff38db !important; }
+.border-event.event-raid { border-left-color: #ebeb00 !important; }
+.border-event.event-streamOffline { border-left-color: rgb(var(--bs-danger-rgb)) !important; }
+.border-event.event-subs { border-left-color: #1f69ff !important; }
+.m50 {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.premono {
+  font-family: monospace;
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}
+</style>

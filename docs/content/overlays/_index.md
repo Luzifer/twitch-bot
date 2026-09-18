@@ -13,12 +13,12 @@ The bot includes some files which are merged with the files you put into that di
 Currently the following files are available in the default distribution:
 
 - `debug.html` - The Debug Overlay (see below for an example how to use)
-- `eventclient.js` - The [EventClient]({{< ref "eventclient.md" >}}) Javascript library to aid you in developing overlays and communicating with the bot
+- `eventclient.js` / `eventclient.d.ts` / `eventTypes.d.ts` - The typed [EventClient]({{< ref "eventclient.md" >}}) library for developing overlays and communicating with the bot
 - `eventfeed.html` / `eventfeed.js` / `eventfeed.custom.js` - The [Event-Feed Overlay]({{< ref "eventfeed.md" >}}) and a customization file to adapt event rendering
 - `sounds.html` / `sounds.js` - The [Sound-Alerts Overlay]({{< ref "soundalerts.md" >}})
 - `template.html` - A very simple example overlay without external dependencies
 
-You can see the sources for these included files in the [project repository](https://github.com/Luzifer/twitch-bot/tree/master/internal/apimodules/overlays/default).
+You can see the sources for these included files in the [project repository](https://github.com/Luzifer/twitch-bot/tree/master/internal/apimodules/overlays/src).
 
 ## Event Retention
 

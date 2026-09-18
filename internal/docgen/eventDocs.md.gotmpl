@@ -1,0 +1,26 @@
+---
+title: Available Events
+---
+{{ range .Events }}
+{{- $name := eventName . }}
+{{- $fields := eventFields . }}
+## `{{ $name }}`
+
+{{ .Description }}
+{{ if or $fields (eq $name "custom") }}
+Fields:
+{{ if eq $name "custom" }}
+- `channel` _string_ - Channel the event occurred in
+{{- end }}
+{{ range $fields }}
+- `{{ .Name }}` _{{ .Type }}_{{ if .Optional }} _(optional)_{{ end }} - {{ .Description }}
+{{- end }}
+{{- if eq $name "custom" }}
+- Any additional fields passed to the custom event
+{{- end }}
+{{ else }}
+This event has no event fields.
+{{ end }}
+{{- end }}
+
+{{ if false }}<!-- vim: set ft=markdown: -->{{ end }}

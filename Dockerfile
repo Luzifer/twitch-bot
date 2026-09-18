@@ -8,20 +8,22 @@ WORKDIR /go/src/twitch-bot
 ENV CGO_ENABLED=0 \
     GOPATH=/go
 
-RUN set -ex \
- && apk --no-cache add \
-      curl \
-      git \
-      make \
-      nodejs \
-      npm \
- && git config --global --add safe.directory /go/src/twitch-bot \
- && make node_modules frontend_prod \
- && go install \
-      -trimpath \
-      -mod=readonly \
-      -modcacherw \
-      -ldflags "-X main.version=$(git describe --tags --always || echo dev)"
+RUN <<-EOF
+  set -ex
+
+  apk --no-cache add \
+    curl \
+    git \
+    make \
+    nodejs \
+    npm
+
+  git config --global --add safe.directory /go/src/twitch-bot
+
+  make build_prod
+
+  install -Dm0755 -t /rootfs/usr/local/bin twitch-bot
+EOF
 
 
 FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
@@ -36,17 +38,21 @@ LABEL org.opencontainers.image.authors="Knut Ahlers <knut@ahlers.me>" \
 ENV CONFIG=/data/config.yaml \
     STORAGE_CONN_STRING=/data/store.db
 
-RUN set -ex \
- && apk --no-cache add \
-      bash \
-      ca-certificates \
-      curl \
-      jq \
-      tzdata \
- && mkdir /data \
- && chown 1000:1000 /data
+RUN <<-EOF
+  set -ex
 
-COPY --from=builder /go/bin/twitch-bot /usr/local/bin/twitch-bot
+  apk --no-cache add \
+    bash \
+    ca-certificates \
+    curl \
+    jq \
+    tzdata
+
+  mkdir /data
+  chown 1000:1000 /data
+EOF
+
+COPY --from=builder /rootfs/ /
 
 USER 1000:1000
 VOLUME ["/data"]

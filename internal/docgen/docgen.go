@@ -10,6 +10,8 @@ import (
 const (
 	actorDocsPath         = "docs/content/configuration/actors.md"
 	documentationFileMode = 0o644
+	eventTypesPath        = "internal/apimodules/overlays/src/eventTypes.ts"
+	eventDocsPath         = "docs/content/configuration/events.md"
 	tplDocsPath           = "docs/content/configuration/templating.md"
 )
 

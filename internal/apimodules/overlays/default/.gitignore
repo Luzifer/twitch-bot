@@ -1,0 +1,8 @@
+# Folder contains generated files
+*
+
+# But not all of them are generated
+!.gitignore
+!debug.html
+!eventclient.mjs
+!template.html

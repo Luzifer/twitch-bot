@@ -1,8 +1,17 @@
-/* global Vue */
+<template>
+  <div />
+</template>
 
+<script lang="ts">
+import { createApp, defineComponent } from 'vue'
+import { type CustomFields } from './eventTypes.js'
 import EventClient from './eventclient.js'
 
-new Vue({
+type AlertParams = {
+  soundUrl: string
+}
+
+const component = defineComponent({
   created() {
     this.createAudioInterface()
 
@@ -13,21 +22,21 @@ new Vue({
     })
   },
 
-  data: {
-    alerts: [],
-    alertsEnabled: true,
-    sound: null,
-    soundsActive: false,
+  data() {
+    return {
+      alerts: [] as AlertParams[],
+      alertsRunning: false,
+      sound: null as null | HTMLAudioElement,
+      soundsActive: false,
+    }
   },
-
-  el: '#app',
 
   methods: {
     createAudioInterface() {
       // Create basic audio element to play sound
       this.sound = new Audio()
 
-      this.sound.addEventListener('load', () => this.sound.play(), true)
+      this.sound.addEventListener('load', () => this.sound!.play(), true)
       this.sound.addEventListener('playing', () => {
         this.soundsActive = true
       })
@@ -61,9 +70,13 @@ new Vue({
       source.connect(preGainNode)
     },
 
-    handleCustom(data) {
+    handleCustom(data: CustomFields) {
       switch (data.type) {
       case 'soundalert':
+        if (typeof data.soundUrl !== 'string') {
+          break
+        }
+
         this.queueAlert({
           soundUrl: data.soundUrl,
         })
@@ -74,12 +87,12 @@ new Vue({
       }
     },
 
-    playSound(soundUrl) {
+    playSound(soundUrl: string) {
       this.soundsActive = true
-      this.sound.src = soundUrl
+      this.sound!.src = soundUrl
     },
 
-    queueAlert(alertParams) {
+    queueAlert(alertParams: AlertParams) {
       this.alerts.push(alertParams)
     },
 
@@ -87,11 +100,6 @@ new Vue({
       const alrt = this.alerts.shift()
       if (!alrt) {
         return
-      }
-
-      if (!this.alertsEnabled) {
-        // Alerts are disabled completely or this one is blocked, discard alert
-        return this.triggerAlert()
       }
 
       if (alrt.soundUrl) {
@@ -116,3 +124,8 @@ new Vue({
     },
   },
 })
+
+queueMicrotask(() => createApp(component).mount('#app'))
+
+export default component
+</script>

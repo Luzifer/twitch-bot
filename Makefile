@@ -22,13 +22,13 @@ help: ## Display this help.
 
 ##@ Building
 
-build_prod: frontend_prod ## Build release binary locally
+build_prod: frontend_prod overlays ## Build release binary locally
 	go build \
 		-trimpath \
 		-mod=readonly \
 		-ldflags "-X main.version=$(shell git describe --tags --always || echo dev)"
 
-publish: frontend_prod ## Run build tooling to produce all binaries
+publish: frontend_prod overlays ## Run build tooling to produce all binaries
 	bash ./ci/build.sh
 
 ##@ Development
@@ -54,6 +54,9 @@ frontend_lint: node_modules ## Lint frontend files
 	pnpm eslint \
 		--fix \
 		src
+
+overlays: node_modules ## Build default overlays
+	$(MAKE) -C internal/apimodules/overlays build
 
 node_modules: ## Install node modules
 	pnpm i --frozen-lockfile
@@ -85,11 +88,8 @@ docs: generate_docs eventclient_docs ## Generate all documentation
 generate_docs: ## Generate project documentation
 	go run -tags docgen . --storage-conn-string $(shell mktemp --suffix=.db) generate-docs
 
-eventclient_docs: ## Generate eventclient documentation
-	echo -e "---\ntitle: EventClient\nweight: 10000\n---\n" >docs/content/overlays/eventclient.md
-	pnpx jsdoc-to-markdown \
-		--files ./internal/apimodules/overlays/default/eventclient.js \
-		>>docs/content/overlays/eventclient.md
+eventclient_docs: overlays ## Generate eventclient documentation
+	bash ./ci/eventclient_docs.sh
 
 render_docs: ## Render documentation site
 	$(MAKE) -C docs
