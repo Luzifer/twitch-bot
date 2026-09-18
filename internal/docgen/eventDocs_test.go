@@ -2,6 +2,8 @@ package docgen
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -74,6 +76,10 @@ func TestJSType(t *testing.T) {
 }
 
 func TestEventClientDeclarationConsumer(t *testing.T) {
+	if _, err := os.Stat("node_modules/.bin/tsc"); errors.Is(err, fs.ErrNotExist) {
+		t.Skip("missing tsc skipping TS type generation test")
+	}
+
 	repoRoot, err := filepath.Abs(filepath.Join("..", ".."))
 	require.NoError(t, err)
 
