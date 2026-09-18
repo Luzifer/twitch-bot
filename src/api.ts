@@ -1,5 +1,6 @@
 export class HttpError extends Error {
   data: unknown
+
   status: number
 
   constructor(status: number, data: unknown) {
@@ -16,10 +17,10 @@ async function parseResponse<TResponse>(resp: Response): Promise<TResponse> {
   const contentType = resp.headers.get('content-type') || ''
 
   if (contentType.includes('application/json')) {
-    return resp.json() as Promise<TResponse>
+    return await resp.json() as TResponse
   }
 
-  return resp.text() as Promise<TResponse>
+  return await resp.text() as TResponse
 }
 
 export function createApiClient(getAuthToken: () => string | null) {
@@ -31,7 +32,7 @@ export function createApiClient(getAuthToken: () => string | null) {
       headers.set('authorization', authToken)
     }
 
-    let payload: BodyInit | undefined
+    let payload: string | undefined
     if (body !== undefined) {
       headers.set('content-type', 'application/json')
       payload = JSON.stringify(body)

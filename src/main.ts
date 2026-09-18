@@ -32,6 +32,8 @@ const root = createApp(defineComponent({
     }
   },
 
+  name: 'TwichBot',
+
   render() {
     return h(App)
   },

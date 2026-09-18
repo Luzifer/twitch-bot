@@ -1,5 +1,5 @@
-import Tooltip from 'bootstrap/js/dist/tooltip'
 import { defineComponent, nextTick } from 'vue'
+import Tooltip from 'bootstrap/js/dist/tooltip'
 
 function vnodeToText(node: any): string {
   if (node == null) {

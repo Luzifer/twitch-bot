@@ -1,3 +1,5 @@
+/* eslint-disable sort-imports */
+
 import { defineStore } from 'pinia'
 
 import { api, setApiAuthToken } from '../api'

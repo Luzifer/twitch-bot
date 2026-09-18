@@ -1,3 +1,5 @@
+/* eslint-disable sort-imports */
+
 import { defineComponent, h } from 'vue'
 
 import { confirmModalState, settleConfirm } from '../lib/confirmModal'
@@ -44,12 +46,12 @@ export default defineComponent({
 
   render() {
     return h(AppModal, {
-      centered: confirmModalState.centered,
-      modelValue: confirmModalState.visible,
-      onHidden: this.handleHidden,
+      'centered': confirmModalState.centered,
+      'modelValue': confirmModalState.visible,
+      'onHidden': this.handleHidden,
       'onUpdate:modelValue': this.handleModelValue,
-      size: confirmModalState.size,
-      title: confirmModalState.title,
+      'size': confirmModalState.size,
+      'title': confirmModalState.title,
     }, {
       default: () => renderConfirmContent(),
       footer: () => [
