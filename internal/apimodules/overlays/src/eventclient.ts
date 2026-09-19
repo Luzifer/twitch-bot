@@ -107,7 +107,7 @@ export default class EventClient {
    * Triggers a replay of an event for all connected overlays.
    *
    * @param eventId Event ID received in a socket message
-   * @returns Fetch response
+   * @returns Response from the replay request
    */
   replayEvent(eventId: string): Promise<Response> {
     return fetch(`${this.apiBase()}/overlays/event/${eventId}/replay`, {

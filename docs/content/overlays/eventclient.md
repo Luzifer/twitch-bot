@@ -3,13 +3,28 @@ title: EventClient
 weight: 10000
 ---
 
-## Typed overlay development
+> [!TIP]
+> The EventClient connects an overlay to the bot, dispatches incoming events to handler functions, and provides helpers for replaying events and rendering bot templates.
 
-Import `eventclient.js` directly. TypeScript-aware editors automatically use the adjacent `eventclient.d.ts` and `eventTypes.d.ts` declarations for event-specific handler autocomplete and type checking.
+## Loading the EventClient
 
-### Bundled TypeScript overlays
+### Directly from the bot
 
-For overlays built locally with TypeScript, Vue, or another bundler, install the EventClient archive matching your bot release by adding it to your `package.json`. Replace `<version>` with the bot version in both places:
+The bot serves `eventclient.js` from the overlays directory. Import it from an overlay using a module script:
+
+```html
+<script type="module">
+  import EventClient from './eventclient.js'
+
+  const client = new EventClient({
+    handlers: {},
+  })
+</script>
+```
+
+### Bundling with TypeScript
+
+For overlays developed locally with TypeScript or Vue and built with a bundler, add the EventClient archive matching your bot release to your `package.json`. Replace `<version>` with the bot version in both places:
 
 ```json
 {
@@ -19,81 +34,102 @@ For overlays built locally with TypeScript, Vue, or another bundler, install the
 }
 ```
 
-The package contains the EventClient and its event type declarations:
+Import the client and any event types required by the overlay:
 
 ```typescript
 import EventClient from '@luzifer/twitch-bot-eventclient'
-import type { EventSocketMessage } from '@luzifer/twitch-bot-eventclient/event-types'
+import type {
+  FollowSocketMessage,
+} from '@luzifer/twitch-bot-eventclient/event-types'
+
+const client = new EventClient({
+  handlers: {},
+})
 ```
 
-Your bundler includes the EventClient in the generated overlay bundle, so the overlay does not need to import the `eventclient.js` served by the bot.
+The bundler includes the EventClient in the generated overlay bundle, so the overlay does not need to load the `eventclient.js` served by the bot.
 
 EventClient releases within the same major version are intended to remain compatible. Keeping the EventClient version in sync with the bot version is recommended so the bundled client matches the running bot.
 
-<a name="EventClient"></a>
+## Connecting and handling events
 
-## EventClient
-**Kind**: global class
+Create one client when the overlay starts. The token is best supplied through the URL hash instead of being included in the overlay source:
 
-* [EventClient](#EventClient)
-    * [new EventClient(opts)](#new_EventClient_new)
-    * [.apiBase()](#EventClient+apiBase) ⇒
-    * [.paramOptionFallback(key, fallback)](#EventClient+paramOptionFallback) ⇒
-    * [.renderTemplate(template)](#EventClient+renderTemplate) ⇒
-    * [.replayEvent(eventId)](#EventClient+replayEvent) ⇒
+```text
+https://your-bot.example.com/overlays/my-overlay.html#token=YOUR_TOKEN
+```
 
-<a name="new_EventClient_new"></a>
+Register handlers by event type. The `_` handler receives every event and runs in addition to a matching event-specific handler:
 
-### new EventClient(opts)
-Creates, initializes and connects the EventClient.
+```javascript
+const client = new EventClient({
+  channel: '#mychannel',
+  handlers: {
+    follow: event => {
+      console.log(`${event.fields.user} followed at ${event.time}`)
+    },
+    _: event => {
+      console.debug(`Received ${event.type}`, event.fields)
+    },
+  },
+  maxReplayAge: 24,
+  replay: true,
+})
+```
 
+The handler receives an event with these common properties:
 
-| Param | Description |
+| Property | Description |
 | --- | --- |
-| opts | EventClient options |
+| `event_id` | Unique event ID, which can be passed to `replayEvent` |
+| `type` | Event type used to select the handler |
+| `fields` | Event-specific data; see [Available Events]({{< ref "../configuration/events.md" >}}) |
+| `time` | Event timestamp as a JavaScript `Date` |
+| `is_live` | Whether the event was received while the stream was live |
+| `reason` | Whether this is a live event, bulk replay, or single-event replay |
 
-<a name="EventClient+apiBase"></a>
+### Client options
 
-### eventClient.apiBase() ⇒
-Returns the API base URL without trailing slash.
+| Option | Description |
+| --- | --- |
+| `token` | Required token with the `overlays` permission. Prefer passing it through the URL hash. |
+| `handlers` | Object mapping event types to handler functions. Use `_` as the handler for all events. |
+| `channel` | Only dispatch events whose `fields.channel` matches this value. |
+| `replay` | Fetch stored events for `channel` when the client connects. Defaults to `false`. |
+| `maxReplayAge` | Maximum age of replayed events in hours. By default all stored events are fetched. |
 
-**Kind**: instance method of [<code>EventClient</code>](#EventClient)
-**Returns**: API base URL
-<a name="EventClient+paramOptionFallback"></a>
+Options may also be supplied through the URL hash. Hash parameters take precedence over constructor options.
 
-### eventClient.paramOptionFallback(key, fallback) ⇒
-Resolves a URL hash parameter with a fallback to the constructor options.
+## Helper methods
 
-**Kind**: instance method of [<code>EventClient</code>](#EventClient)
-**Returns**: Resolved option value
+### `paramOptionFallback(key, fallback)`
 
-| Param | Default | Description |
-| --- | --- | --- |
-| key |  | Option key to resolve |
-| fallback | <code></code> | Value returned when the option is absent |
+Reads a value from the URL hash, then from the constructor options, and finally returns the supplied fallback. This can also be used for overlay-specific settings:
 
-<a name="EventClient+renderTemplate"></a>
+```javascript
+const duration = Number(client.paramOptionFallback('duration', 10))
+```
 
-### eventClient.renderTemplate(template) ⇒
-Renders a template using the bot's msgformat API.
+With `#duration=30` in the overlay URL, `paramOptionFallback` returns `"30"` and `Number` converts it to a number. URL parameters are strings, so convert numbers and booleans as needed.
+
+### `renderTemplate(template)`
+
+Renders a template through the bot's `msgformat` API and returns the rendered text:
+
+```javascript
+await client.renderTemplate('{{ recentTitle "mychannel" }}')
+```
 
 The token requires the `msgformat` permission in addition to `overlays`.
 
-**Kind**: instance method of [<code>EventClient</code>](#EventClient)
-**Returns**: Rendered template
+### `replayEvent(eventId)`
 
-| Param | Description |
-| --- | --- |
-| template | Template to render |
+Replays one stored event to all connected overlays and returns the HTTP `Response` for the request:
 
-<a name="EventClient+replayEvent"></a>
+```javascript
+const response = await client.replayEvent(event.event_id)
+```
 
-### eventClient.replayEvent(eventId) ⇒
-Triggers a replay of an event for all connected overlays.
+### `apiBase()`
 
-**Kind**: instance method of [<code>EventClient</code>](#EventClient)
-**Returns**: Fetch response
-
-| Param | Description |
-| --- | --- |
-| eventId | Event ID received in a socket message |
+Returns the bot API base URL derived from the current overlay URL, without a trailing slash.

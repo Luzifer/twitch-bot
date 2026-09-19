@@ -97,13 +97,10 @@ trivy: ## Run Trivy against the code
 
 ##@ Documentation
 
-docs: generate_docs eventclient_docs ## Generate all documentation
+docs: generate_docs ## Generate all documentation
 
 generate_docs: ## Generate project documentation
 	go run -tags docgen . --storage-conn-string $(shell mktemp --suffix=.db) generate-docs
-
-eventclient_docs: overlays ## Generate eventclient documentation
-	bash ./ci/eventclient_docs.sh
 
 render_docs: ## Render documentation site
 	$(MAKE) -C docs
