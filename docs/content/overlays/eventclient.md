@@ -24,12 +24,12 @@ The bot serves `eventclient.js` from the overlays directory. Import it from an o
 
 ### Bundling with TypeScript
 
-For overlays developed locally with TypeScript or Vue and built with a bundler, add the EventClient archive matching your bot release to your `package.json`. Replace `<version>` with the bot version in both places:
+For overlays developed locally with TypeScript or Vue and built with a bundler, add the EventClient archive matching your bot release to your `package.json`:
 
 ```json
 {
   "dependencies": {
-    "@luzifer/twitch-bot-eventclient": "https://github.com/Luzifer/twitch-bot/releases/download/v<version>/twitch-bot-eventclient-<version>.tgz"
+    "@luzifer/twitch-bot-eventclient": "https://github.com/Luzifer/twitch-bot/releases/download/v3.43.0/twitch-bot-eventclient-3.43.0.tgz"
   }
 }
 ```

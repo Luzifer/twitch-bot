@@ -13,5 +13,12 @@ release_commit_message: "Release: Twitch-Bot {{.Version}}"
 # specified. All commands are run as `bash -ec "..."` so you can use
 # bash inside the commands.
 pre_commit_commands:
+  # Patch version inside package.json for eventclient bundle creation
   - |-
     yq -iP -o json ".version = \"${TAG_VERSION}\"" ci/npm-bundle/package.json
+
+  # Update documentation to reference latest eventclient bundle
+  - |-
+    sed -i -E \
+      "s#releases/download/v[^/]+/twitch-bot-eventclient-[^\"]+\.tgz#releases/download/v${TAG_VERSION}/twitch-bot-eventclient-${TAG_VERSION}.tgz#" \
+      docs/content/overlays/eventclient.md
