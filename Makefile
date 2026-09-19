@@ -22,11 +22,16 @@ help: ## Display this help.
 
 ##@ Building
 
-build_prod: frontend_prod overlays ## Build release binary locally
+build_prod: ## Build release binary locally
+build_prod: export CGO_ENABLED=0
+build_prod: export SOURCE_DATE_EPOCH=1
+build_prod: frontend_prod overlays
 	go build \
-		-trimpath \
+		-buildvcs=false \
+		-ldflags "-s -w -buildid= -X main.version=$(shell git describe --tags --always || echo dev)" \
 		-mod=readonly \
-		-ldflags "-X main.version=$(shell git describe --tags --always || echo dev)"
+		-trimpath \
+		-o twitch-bot
 
 bundle_eventclient: ## Creates an NPM package containing eventclient and types
 bundle_eventclient: reset_builddir overlays

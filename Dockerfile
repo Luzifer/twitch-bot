@@ -33,7 +33,8 @@ LABEL org.opencontainers.image.authors="Knut Ahlers <knut@ahlers.me>" \
       org.opencontainers.image.documentation="https://twitch-bot-docs.luzifer.io/" \
       org.opencontainers.image.source="https://github.com/Luzifer/twitch-bot" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.title="Self-hosted alternative to one of the big Twitch bots managed by big companies"
+      org.opencontainers.image.title="Self-hosted alternative to one of the big Twitch bots managed by big companies" \
+      org.opencontainers.image.version='3.43.0'
 
 ENV CONFIG=/data/config.yaml \
     STORAGE_CONN_STRING=/data/store.db

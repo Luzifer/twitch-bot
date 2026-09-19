@@ -16,9 +16,18 @@ pre_commit_commands:
   # Patch version inside package.json for eventclient bundle creation
   - |-
     yq -iP -o json ".version = \"${TAG_VERSION}\"" ci/npm-bundle/package.json
+    git add ci/npm-bundle/package.json
 
   # Update documentation to reference latest eventclient bundle
   - |-
     sed -i -E \
       "s#releases/download/v[^/]+/twitch-bot-eventclient-[^\"]+\.tgz#releases/download/v${TAG_VERSION}/twitch-bot-eventclient-${TAG_VERSION}.tgz#" \
       docs/content/overlays/eventclient.md
+    git add docs/content/overlays/eventclient.md
+
+  # Update version in Docker-Image-Labels
+  - |-
+    sed -i -E \
+      "s#org.opencontainers.image.version='[^']*'#org.opencontainers.image.version='${TAG_VERSION}'#" \
+      Dockerfile
+    git add Dockerfile
