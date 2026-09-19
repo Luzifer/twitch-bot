@@ -1,5 +1,3 @@
----
-
 # Template to format the commit message containing the changelog change
 # which will be used to add the tag to.
 release_commit_message: "Release: Twitch-Bot {{.Version}}"
@@ -14,6 +12,6 @@ release_commit_message: "Release: Twitch-Bot {{.Version}}"
 # commands will be run from the repostory root, so sub-dirs MUST be
 # specified. All commands are run as `bash -ec "..."` so you can use
 # bash inside the commands.
-pre_commit_commands: []
-
-...
+pre_commit_commands:
+  - |-
+    yq -iP -o json ".version = \"${TAG_VERSION}\"" ci/npm-bundle/package.json

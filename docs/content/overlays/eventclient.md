@@ -7,6 +7,29 @@ weight: 10000
 
 Import `eventclient.js` directly. TypeScript-aware editors automatically use the adjacent `eventclient.d.ts` and `eventTypes.d.ts` declarations for event-specific handler autocomplete and type checking.
 
+### Bundled TypeScript overlays
+
+For overlays built locally with TypeScript, Vue, or another bundler, install the EventClient archive matching your bot release by adding it to your `package.json`. Replace `<version>` with the bot version in both places:
+
+```json
+{
+  "dependencies": {
+    "@luzifer/twitch-bot-eventclient": "https://github.com/Luzifer/twitch-bot/releases/download/v<version>/twitch-bot-eventclient-<version>.tgz"
+  }
+}
+```
+
+The package contains the EventClient and its event type declarations:
+
+```typescript
+import EventClient from '@luzifer/twitch-bot-eventclient'
+import type { EventSocketMessage } from '@luzifer/twitch-bot-eventclient/event-types'
+```
+
+Your bundler includes the EventClient in the generated overlay bundle, so the overlay does not need to import the `eventclient.js` served by the bot.
+
+EventClient releases within the same major version are intended to remain compatible. Keeping the EventClient version in sync with the bot version is recommended so the bundled client matches the running bot.
+
 <a name="EventClient"></a>
 
 ## EventClient

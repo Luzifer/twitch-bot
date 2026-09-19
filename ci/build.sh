@@ -52,10 +52,6 @@ version="$(git describe --tags --always || echo dev)"
 
 log "Building version ${version}..."
 
-log "Resetting output directory..."
-rm -rf "${builddir}"
-mkdir -p "${builddir}"
-
 log "Building Bot..."
 go_package_all "twitch-bot" "."
 

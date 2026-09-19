@@ -1,0 +1,15 @@
+{
+  "exports": {
+    ".": "./dist/eventclient.js",
+    "./event-types": "./dist/eventTypes.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/eventclient.js",
+  "name": "twitch-bot-eventclient",
+  "sideEffects": false,
+  "type": "module",
+  "types": "./dist/eventclient.d.ts",
+  "version": "3.43.0"
+}

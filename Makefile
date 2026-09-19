@@ -28,8 +28,22 @@ build_prod: frontend_prod overlays ## Build release binary locally
 		-mod=readonly \
 		-ldflags "-X main.version=$(shell git describe --tags --always || echo dev)"
 
-publish: frontend_prod overlays ## Run build tooling to produce all binaries
+bundle_eventclient: ## Creates an NPM package containing eventclient and types
+bundle_eventclient: reset_builddir overlays
+	install -Dm0644 -t ci/npm-bundle/dist \
+		internal/apimodules/overlays/default/eventclient.d.ts \
+		internal/apimodules/overlays/default/eventclient.js \
+		internal/apimodules/overlays/default/eventTypes.d.ts \
+		internal/apimodules/overlays/default/eventTypes.js
+	pnpm pack --dir $(CURDIR)/ci/npm-bundle --out $(CURDIR)/.build/%s-%v.tgz
+
+publish: ## Run build tooling to produce all binaries
+publish: reset_builddir frontend_prod overlays bundle_eventclient
 	bash ./ci/build.sh
+
+reset_builddir:
+	rm -rf $(CURDIR)/.build
+	install -dm0755 $(CURDIR)/.build
 
 ##@ Development
 
