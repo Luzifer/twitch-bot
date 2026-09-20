@@ -28,6 +28,7 @@ type (
 	resolver struct {
 		resolverC      chan resolverQueueEntry
 		skipValidation bool
+		transport      http.RoundTripper
 
 		t *testing.T
 	}
@@ -49,6 +50,7 @@ var (
 func newResolver(poolSize int, opts ...func(*resolver)) *resolver {
 	r := &resolver{
 		resolverC: make(chan resolverQueueEntry),
+		transport: http.DefaultTransport,
 	}
 
 	for _, o := range opts {
@@ -60,6 +62,10 @@ func newResolver(poolSize int, opts ...func(*resolver)) *resolver {
 	}
 
 	return r
+}
+
+func withTransport(rt http.RoundTripper) func(*resolver) {
+	return func(r *resolver) { r.transport = rt }
 }
 
 func withSkipVerify() func(*resolver) {
@@ -99,7 +105,8 @@ func (r resolver) resolveFinal(link string, cookieJar *cookiejar.Jar, callStack 
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		Jar: cookieJar,
+		Jar:       cookieJar,
+		Transport: r.transport,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultCheckTimeout)
