@@ -111,13 +111,13 @@ const component = defineComponent({
   name: 'SoundOverlay',
 
   watch: {
-    alerts(to) {
+    alerts(to: AlertParams[]) {
       if (to.length > 0 && !this.alertsRunning) {
         this.triggerAlert()
       }
     },
 
-    soundsActive(to) {
+    soundsActive(to: boolean) {
       if (!to) {
         this.triggerAlert()
       }

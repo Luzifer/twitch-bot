@@ -3,6 +3,5 @@
 
 # But not all of them are generated
 !.gitignore
-!debug.html
 !eventclient.mjs
 !template.html
