@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	chromeMajor = 149
+	chromeMajor = 153
 )
 
 // generateUserAgent resembles the Chrome user agent generation as
