@@ -29,7 +29,7 @@ For overlays developed locally with TypeScript or Vue and built with a bundler, 
 ```json
 {
   "dependencies": {
-    "@luzifer/twitch-bot-eventclient": "https://github.com/Luzifer/twitch-bot/releases/download/v3.43.0/twitch-bot-eventclient-3.43.0.tgz"
+    "@luzifer/twitch-bot-eventclient": "https://github.com/Luzifer/twitch-bot/releases/download/v3.44.0/twitch-bot-eventclient-3.44.0.tgz"
   }
 }
 ```

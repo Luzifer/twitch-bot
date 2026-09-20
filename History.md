@@ -1,3 +1,21 @@
+# 3.44.0 / 2026-09-20
+
+* Improvements
+  * feat: bundle eventclient as npm installable package
+  * chore: update chrome major version for improved linkcheck
+  * refactor: generate events docs, move default overlays and eventclient to TypeScript
+
+* Bugfixes
+  * fix(deps): update dependency vue-router to v5.3.1 (#436)
+  * fix(deps): update dependency vue to v3.5.43 (#448)
+  * fix(deps): update module github.com/go-sql-driver/mysql to v1.10.1 (#433)
+  * fix(deps): update module github.com/luzifer/go_helpers/* (#445)
+  * fix(deps): update module github.com/luzifer/korvike/functions to v1.2.1 (#449)
+  * fix(deps): update module golang.org/x/crypto to v0.57.0 (#442)
+  * fix(deps): update module golang.org/x/net to v0.59.0 (#443)
+  * fix(deps): update module golang.org/x/oauth2 to v0.37.0 (#439)
+  * fix(deps): update module gorm.io/driver/postgres to v1.6.3 (#446)
+
 # 3.43.0 / 2026-09-03
 
 * New Features
