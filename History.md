@@ -1,3 +1,8 @@
+# 3.44.1 / 2026-09-27
+
+* Bugfixes
+  * fix(overlays): sound-alerts in default sound-overlay not playing
+
 # 3.44.0 / 2026-09-20
 
 * Improvements
