@@ -25,7 +25,6 @@ const component = defineComponent({
   data() {
     return {
       alerts: [] as AlertParams[],
-      alertsRunning: false,
       sound: null as null | HTMLAudioElement,
       soundsActive: false,
     }
@@ -111,10 +110,13 @@ const component = defineComponent({
   name: 'SoundOverlay',
 
   watch: {
-    alerts(to: AlertParams[]) {
-      if (to.length > 0 && !this.alertsRunning) {
-        this.triggerAlert()
-      }
+    alerts: {
+      deep: true,
+      handler(to: AlertParams[]) {
+        if (to.length > 0 && !this.soundsActive) {
+          this.triggerAlert()
+        }
+      },
     },
 
     soundsActive(to: boolean) {
