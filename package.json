@@ -2,7 +2,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/bootstrap": "5.2.11",
-    "@types/node": "26.6.2",
+    "@types/node": "26.6.3",
     "@types/prismjs": "1.26.6",
     "@typescript-eslint/eslint-plugin": "8.70.1",
     "@typescript-eslint/parser": "8.70.1",
