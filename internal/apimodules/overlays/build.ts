@@ -21,6 +21,7 @@ const sourceFiles = (await readdir(sourceDir))
   .filter(file => ['.ts', '.vue'].includes(extname(file)) && !file.endsWith('.d.ts'))
   .sort()
 const temporaryDir = await mkdtemp(join(tmpdir(), 'twitch-bot-overlays-'))
+const tscFile = fileURLToPath(import.meta.resolve('typescript/bin/tsc'))
 
 try {
   await esbuild.build({
@@ -75,9 +76,8 @@ try {
 `)
   }
 
-  execFileSync('pnpm', [
-    'exec',
-    'tsc',
+  execFileSync(process.execPath, [
+    tscFile,
     '--declaration',
     '--emitDeclarationOnly',
     '--ignoreConfig',
