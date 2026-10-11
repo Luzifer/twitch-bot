@@ -12,8 +12,8 @@ require (
 	github.com/Luzifer/go_helpers/str v0.5.3
 	github.com/Luzifer/korvike/functions v1.2.1
 	github.com/Luzifer/rconfig/v2 v2.6.2
-	github.com/getsentry/sentry-go v0.49.0
-	github.com/getsentry/sentry-go/logrus v0.49.0
+	github.com/getsentry/sentry-go v0.50.0
+	github.com/getsentry/sentry-go/logrus v0.50.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.19.3
 	github.com/go-sql-driver/mysql v1.10.1
