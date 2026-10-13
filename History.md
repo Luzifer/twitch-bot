@@ -1,3 +1,12 @@
+# 3.44.2 / 2026-10-13
+
+* Bugfixes
+  * chore(sec): update transitive dependencies
+  * fix(deps): update dependency vue-router to v5.4.0 (#470)
+  * fix(deps): update github.com/getsentry/sentry-go/* to v0.50.0 (#471)
+  * fix(deps): update module github.com/go-git/go-git/v5 to v5.19.3 (#465)
+  * fix(deps): update module golang.org/x/net to v0.61.0 [security] (#469)
+
 # 3.44.1 / 2026-09-27
 
 * Bugfixes
