@@ -2,7 +2,7 @@ module github.com/Luzifer/twitch-bot/v3
 
 go 1.27.0
 
-toolchain go1.27.2
+toolchain go1.27.3
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.5
