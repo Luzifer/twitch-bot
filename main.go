@@ -225,7 +225,7 @@ func main() {
 		log.WithError(err).Fatal("Initial config load failed")
 	}
 	defer func() {
-		config.CloseRawMessageWriter() //nolint:errcheck,gosec,revive // That close is enforced by process exit
+		config.CloseRawMessageWriter() //nolint:errcheck,gosec // That close is enforced by process exit
 	}()
 
 	if cfg.ValidateConfig {

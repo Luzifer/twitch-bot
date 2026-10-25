@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func updateConfigCron() string {
 	//revive:disable-next-line:add-constant // Single-use number with clear purpose
-	minute := rand.Intn(60) //nolint:mnd,gosec // Only used to distribute load
+	minute := rand.Intn(int(time.Hour / time.Minute)) //#nosec:G404 // Only used to distribute load
 	return fmt.Sprintf("0 %d * * * *", minute)
 }
 

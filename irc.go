@@ -319,7 +319,7 @@ func (i ircHandler) handlePermit(m *irc.Message) {
 	}
 
 	msgParts := strings.Split(m.Trailing(), " ")
-	if len(msgParts) != 2 { //nolint:mnd // This is not a magic number but just an expected count
+	if len(msgParts) != 2 { //revive:disable-line:add-constant // This is not a magic number but just an expected count
 		return
 	}
 

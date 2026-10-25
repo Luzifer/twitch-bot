@@ -26,7 +26,10 @@ var (
 	formatMessage   plugins.MsgFormatter
 	ptrStringEmpty  = func(v string) *string { return &v }("")
 
-	timeoutChatcommandRegex = regexp.MustCompile(`^/timeout +([^\s]+) +([0-9]+) +(.+)$`)
+	timeoutChatCommandRegex         = regexp.MustCompile(`^/timeout +([^\s]+) +([0-9]+) +(.+)$`)
+	timeoutChatCommandFieldUser     = 1
+	timeoutChatCommandFieldDuration = 2
+	timeoutChatCommandFieldReason   = 3
 )
 
 // Register provides the plugins.RegisterFunc
@@ -110,17 +113,23 @@ func (actor) Validate(tplValidator plugins.TemplateValidatorFunc, attrs *fieldco
 func handleChatCommand(m *irc.Message) error {
 	channel := plugins.DeriveChannel(m, nil)
 
-	matches := timeoutChatcommandRegex.FindStringSubmatch(m.Trailing())
+	matches := timeoutChatCommandRegex.FindStringSubmatch(m.Trailing())
 	if matches == nil {
 		return errors.New("timeout message does not match required format")
 	}
 
-	duration, err := strconv.ParseInt(matches[2], 10, 64)
+	duration, err := strconv.ParseInt(matches[timeoutChatCommandFieldDuration], 10, 64)
 	if err != nil {
 		return fmt.Errorf("parsing timeout duration: %w", err)
 	}
 
-	if err = botTwitchClient().BanUser(context.Background(), channel, matches[1], time.Duration(duration)*time.Second, matches[3]); err != nil {
+	if err = botTwitchClient().BanUser(
+		context.Background(),
+		channel,
+		matches[timeoutChatCommandFieldUser],
+		time.Duration(duration)*time.Second,
+		matches[timeoutChatCommandFieldReason],
+	); err != nil {
 		return fmt.Errorf("executing timeout: %w", err)
 	}
 

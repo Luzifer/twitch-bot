@@ -7,6 +7,8 @@ import (
 	mathrand "math/rand"
 )
 
+const int63Boundary = 1<<63 - 1
+
 type (
 	cryptRandSrc struct{}
 )
@@ -56,7 +58,7 @@ func (cryptRandSrc) Int63() int64 {
 		return -1
 	}
 	// mask off sign bit to ensure positive number
-	return int64(binary.LittleEndian.Uint64(b[:]) & (1<<63 - 1)) //#nosec:G115 - Masking ensures conversion is fine
+	return int64(binary.LittleEndian.Uint64(b[:]) & int63Boundary) //#nosec:G115 - Masking ensures conversion is fine
 }
 
 // We're using a non-seedable source

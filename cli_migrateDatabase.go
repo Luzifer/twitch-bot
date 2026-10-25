@@ -24,7 +24,7 @@ func init() {
 		Description: "Copies database contents to a new storage DSN i.e. for migrating to a new DBMS",
 		Params:      []string{"<target storage-type>", "<target DSN>"},
 		Run: func(args []string) error {
-			if len(args) < 3 { //nolint:mnd // Just a count of parameters
+			if len(args) < 3 { //revive:disable-line:add-constant // Just a count of parameters
 				return errors.New("usage: twitch-bot copy-database <target storage-type> <target DSN>")
 			}
 

@@ -62,7 +62,7 @@ func stringToSeed(s string) (int64, error) {
 	)
 
 	for i := range hashSum {
-		sum += int64(float64(hashSum[len(hashSum)-1-i]%10) * math.Pow(10, float64(i))) //nolint:mnd // No need to put the 10 of 10**i into a constant named "ten"
+		sum += int64(float64(hashSum[len(hashSum)-1-i]%10) * math.Pow(10, float64(i))) //revive:disable-line:add-constant // No need to put the 10 of 10**i into a constant named "ten"
 	}
 
 	return sum, nil

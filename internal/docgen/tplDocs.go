@@ -94,6 +94,7 @@ func renderTplDocsExample(example *plugins.TemplateFuncDocumentationExample, for
 	}
 
 	return formatter(example.Template, msg, rule, fieldcollection.FromData(map[string]any{
+		//revive:disable-next-line:add-constant // single-use static numbers
 		"testDuration": 5*time.Hour + 33*time.Minute + 12*time.Second,
 	}))
 }

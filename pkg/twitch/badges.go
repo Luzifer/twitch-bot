@@ -47,7 +47,7 @@ func ParseBadgeLevels(m *irc.Message) BadgeCollection {
 	badges := strings.SplitSeq(badgeString, ",")
 	for b := range badges {
 		badgeParts := strings.Split(b, "/")
-		if len(badgeParts) != 2 { //nolint:mnd // This is not a magic number but just an expected count
+		if len(badgeParts) != 2 { //revive:disable-line:add-constant // This is not a magic number but just an expected count
 			continue
 		}
 

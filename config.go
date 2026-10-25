@@ -28,6 +28,10 @@ const (
 	expectedMinConfigVersion = 2
 	rawLogDirPerm            = 0o755
 	rawLogFilePerm           = 0o644
+
+	argon2idFieldConfig = 3
+	argon2idFieldSalt   = 4
+	argon2idFieldHash   = 5
 )
 
 type (
@@ -284,17 +288,16 @@ func (c configAuthToken) validate(token string) error {
 			p    uint8
 		)
 
-		if _, err := fmt.Sscanf(flds[3], "m=%d,t=%d,p=%d", &m, &t, &p); err != nil {
+		if _, err := fmt.Sscanf(flds[argon2idFieldConfig], "m=%d,t=%d,p=%d", &m, &t, &p); err != nil {
 			return fmt.Errorf("scanning argon2id hash params: %w", err)
 		}
 
-		salt, err := base64.RawStdEncoding.DecodeString(flds[4])
+		salt, err := base64.RawStdEncoding.DecodeString(flds[argon2idFieldSalt])
 		if err != nil {
 			return fmt.Errorf("decoding salt: %w", err)
 		}
 
-		//revive:disable-next-line:add-constant // single use field counter
-		if flds[5] == base64.RawStdEncoding.EncodeToString(argon2.IDKey([]byte(token), salt, t, m, p, argonHashLen)) {
+		if flds[argon2idFieldHash] == base64.RawStdEncoding.EncodeToString(argon2.IDKey([]byte(token), salt, t, m, p, argonHashLen)) {
 			return nil
 		}
 
