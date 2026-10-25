@@ -1,3 +1,15 @@
+# 3.44.3 / 2026-10-25
+
+* Bugfixes
+  * chore(deps): update dependency eslint to v10.13.0 (#478)
+  * chore(deps): update golang docker tag to v1.27.3 (#485)
+  * chore(deps): update go toolchain directive to v1.27.3 [security] (#480)
+  * chore(deps): update mysql docker tag to v26.10.0 (#483)
+  * chore(deps): update typescript-eslint monorepo to v8.72.0 (#481)
+  * fix(deps): update dependency pinia to v4.1.0 (#476)
+  * fix(deps): update dependency vue to v3.5.44 (#475)
+  * fix(deps): update module github.com/luzifer/korvike/functions to v1.2.2 (#484)
+
 # 3.44.2 / 2026-10-13
 
 * Bugfixes
