@@ -99,6 +99,7 @@ func initApp() error {
 	if cfg.SentryDSN != "" {
 		hook, err := sentrus.NewHook(
 			sentrus.WithDSN(cfg.SentryDSN),
+			sentrus.WithEnvironment(cfg.SentryEnvironment),
 			sentrus.WithRelease(strings.Join([]string{"twitch-bot", version}, "@")),
 		)
 		if err != nil {
