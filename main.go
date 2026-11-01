@@ -15,9 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Luzifer/go_helpers/sentrus"
 	"github.com/Luzifer/rconfig/v2"
-	"github.com/getsentry/sentry-go"
-	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	"github.com/gofrs/uuid/v3"
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron/v3"
@@ -98,12 +97,9 @@ func initApp() error {
 	log.SetLevel(l)
 
 	if cfg.SentryDSN != "" {
-		hook, err := sentrylogrus.NewLogHook(
-			[]log.Level{log.ErrorLevel, log.FatalLevel, log.PanicLevel},
-			sentry.ClientOptions{
-				Dsn:     cfg.SentryDSN,
-				Release: strings.Join([]string{"twitch-bot", version}, "@"),
-			},
+		hook, err := sentrus.NewHook(
+			sentrus.WithDSN(cfg.SentryDSN),
+			sentrus.WithRelease(strings.Join([]string{"twitch-bot", version}, "@")),
 		)
 		if err != nil {
 			return fmt.Errorf("creating sentry log-hook: %w", err)
