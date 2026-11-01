@@ -10,8 +10,8 @@ github.com/Luzifer/go_helpers/cli v0.3.2 h1:8f4/xN9gixKc/xITjDS5yeZFsc7DiTBq7rmi
 github.com/Luzifer/go_helpers/cli v0.3.2/go.mod h1:kFPBkf8H1CVhdSwt2UaynjWng0RHYM1SGsLoZ3/hm68=
 github.com/Luzifer/go_helpers/fieldcollection v0.5.4 h1:R53guE7rTw7pMqJG1b4jOj+/NWol1a+lsLoTUgxhb0E=
 github.com/Luzifer/go_helpers/fieldcollection v0.5.4/go.mod h1:bjXDFP7XRI3CEuBBVKbUTH4rZ06FB9OAFXu+Micm+ik=
-github.com/Luzifer/go_helpers/sentrus v0.1.0 h1:6Wb1cHfdpcKAIDVOVsIDoRFzAXMrjwKRTQxHA6oxH0g=
-github.com/Luzifer/go_helpers/sentrus v0.1.0/go.mod h1:Cx+aqVbTdZ1VsxqiF6+B1VH0GylQCgNupddZKqELvGA=
+github.com/Luzifer/go_helpers/sentrus v0.1.1 h1:Gv0Y8zo72mimEU9kI1X64FeKj+fmcvvCelCcYCmI8Ow=
+github.com/Luzifer/go_helpers/sentrus v0.1.1/go.mod h1:Cx+aqVbTdZ1VsxqiF6+B1VH0GylQCgNupddZKqELvGA=
 github.com/Luzifer/go_helpers/str v0.5.3 h1:bctsgvOuQ0fMj94DtwlnxosloFN4N2LDNNGbBZpKd1k=
 github.com/Luzifer/go_helpers/str v0.5.3/go.mod h1:R/3lMMlI2G2vC7xBMkFVIzI9FO/Nrrmv3LjxBSZ04rI=
 github.com/Luzifer/korvike/functions v1.2.2 h1:Blxe9+DHdBqrLE8cCrX9BcO9I9T8ajufyCA6klW0oRI=
