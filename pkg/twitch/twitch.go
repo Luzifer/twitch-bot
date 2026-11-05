@@ -318,6 +318,15 @@ func (c *Client) Request(ctx context.Context, opts ClientRequestOpts) error {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
+			// URL can contain secrets, we need to nuke them from the URL
+			// inside the error as they otherwise end up in the log / sentry
+			// events.
+			if urlErr, ok := err.(*url.Error); ok {
+				redacted := *urlErr
+				redacted.URL = c.replaceSecrets(redacted.URL)
+				err = &redacted
+			}
+
 			return fmt.Errorf("execute request: %w", err)
 		}
 		defer func() {
@@ -423,7 +432,11 @@ func (c *Client) replaceSecrets(u string) string {
 		if secret == "" {
 			continue
 		}
-		replacements = append(replacements, secret, c.hashSecret(secret))
+		replacements = append(
+			replacements,
+			secret, c.hashSecret(secret),
+			url.QueryEscape(secret), c.hashSecret(secret),
+		)
 	}
 
 	return strings.NewReplacer(replacements...).Replace(u)
