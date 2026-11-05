@@ -185,10 +185,7 @@ func (c *Client) GetTwitchAppAccessToken(ctx context.Context) (string, error) {
 	u, _ := url.Parse("https://id.twitch.tv/oauth2/token")
 	u.RawQuery = params.Encode()
 
-	reqCtx, cancel := context.WithTimeout(ctx, twitchRequestTimeout)
-	defer cancel()
-
-	if err := c.Request(reqCtx, ClientRequestOpts{
+	if err := c.Request(ctx, ClientRequestOpts{
 		AuthType: AuthTypeUnauthorized,
 		Method:   http.MethodPost,
 		OKStatus: http.StatusOK,
