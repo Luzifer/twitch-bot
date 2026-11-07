@@ -8,7 +8,7 @@ require (
 	github.com/Luzifer/go-openssl/v4 v4.2.5
 	github.com/Luzifer/go_helpers/backoff v0.5.4
 	github.com/Luzifer/go_helpers/cli v0.3.2
-	github.com/Luzifer/go_helpers/fieldcollection v0.5.4
+	github.com/Luzifer/go_helpers/fieldcollection v0.5.5
 	github.com/Luzifer/go_helpers/sentrus v0.1.1
 	github.com/Luzifer/go_helpers/str v0.5.3
 	github.com/Luzifer/korvike/functions v1.2.2
@@ -91,7 +91,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
