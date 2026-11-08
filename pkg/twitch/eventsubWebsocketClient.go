@@ -9,6 +9,7 @@ import (
 	"net"
 	"reflect"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Luzifer/go_helpers/backoff"
@@ -217,7 +218,18 @@ func (e *EventSubSocketClient) Run() error {
 
 	defer func() {
 		if err := e.conn.Close(); err != nil {
-			e.logger.WithError(helpers.CleanNetworkAddressFromError(err)).Error("finally closing socket")
+			var (
+				eLogger = e.logger.WithError(helpers.CleanNetworkAddressFromError(err))
+				logFn   = eLogger.Error
+			)
+			if errors.Is(err, syscall.EPIPE) {
+				// The connection was already closed, the closeNotify could not
+				// be sent. This is fine as the intention (to close the
+				// connection) was fulfilled.
+				logFn = eLogger.Debug
+			}
+
+			logFn("finally closing socket")
 		}
 	}()
 
