@@ -319,7 +319,6 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		authTimeout  = time.NewTimer(authTimeout)
-		connLock     = new(sync.Mutex)
 		errC         = make(chan error, 1)
 		isAuthorized bool
 		sendMsgC     = make(chan socketMessage, 1)
@@ -331,20 +330,6 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 
 	keepAlive := time.NewTicker(socketKeepAlive)
 	defer keepAlive.Stop()
-	go func() {
-		for range keepAlive.C {
-			connLock.Lock()
-
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				logger.WithError(err).Error("Unable to send ping message")
-				connLock.Unlock()
-				_ = conn.Close()
-				return
-			}
-
-			connLock.Unlock()
-		}
-	}()
 
 	go func() {
 		// Handle socket
@@ -443,13 +428,18 @@ func handleSocketSubscription(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			connLock.Lock()
 			if err := conn.WriteJSON(msg); err != nil {
 				logger.WithError(err).Error("Unable to send socket message")
-				connLock.Unlock()
 				_ = conn.Close()
+				return
 			}
-			connLock.Unlock()
+
+		case <-keepAlive.C:
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				logger.WithError(err).Error("Unable to send ping message")
+				_ = conn.Close()
+				return
+			}
 		}
 	}
 }
