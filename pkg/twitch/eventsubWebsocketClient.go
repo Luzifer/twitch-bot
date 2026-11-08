@@ -361,17 +361,16 @@ func (e *EventSubSocketClient) handleReconnectMessage(msg eventSubSocketMessage,
 	return nil
 }
 
-//nolint:gocyclo // just reacting on websocket events
 func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSocketMessage, errC chan error) error {
-	if closeErr, ok := errors.AsType[*websocket.CloseError](err); ok {
+	var reconnectReason string
+	closeErr, isCloseError := errors.AsType[*websocket.CloseError](err)
+
+	switch {
+	case isCloseError:
 		switch closeErr.Code {
 		case eventsubCloseCodeInternalServerError:
 			e.logger.Warn("websocket reported internal server error")
-			if err = e.connect(e.socketDest, msgC, errC, "internal-server-error"); err != nil {
-				return fmt.Errorf("re-connecting after internal-server-error: %w", err)
-			}
-
-			return nil
+			reconnectReason = "internal-server-error"
 
 		case eventsubCloseCodeClientSentTraffic:
 			e.logger.Error("wrong usage of websocket (client-sent-traffic)")
@@ -387,19 +386,11 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 
 		case eventsubCloseCodeNetworkTimeout:
 			e.logger.Warn("websocket reported network timeout")
-			if err = e.connect(e.socketDest, msgC, errC, "network-timeout"); err != nil {
-				return fmt.Errorf("re-connecting after network-timeout: %w", err)
-			}
-
-			return nil
+			reconnectReason = "network-timeout"
 
 		case eventsubCloseCodeNetworkError:
 			e.logger.Warn("websocket reported network error")
-			if err = e.connect(e.socketDest, msgC, errC, "network-error"); err != nil {
-				return fmt.Errorf("re-connecting after network-error: %w", err)
-			}
-
-			return nil
+			reconnectReason = "network-error"
 
 		case eventsubCloseCodeInvalidReconnect:
 			e.logger.Warn("websocket reported invalid reconnect url")
@@ -412,25 +403,29 @@ func (e *EventSubSocketClient) handleSocketError(err error, msgC chan eventSubSo
 
 		case websocket.CloseAbnormalClosure:
 			e.logger.Warn("websocket reported abnormal closure")
-			if err = e.connect(e.socketDest, msgC, errC, "network-error"); err != nil {
-				return fmt.Errorf("re-connecting after abnormal closure: %w", err)
-			}
-
-			return nil
+			reconnectReason = "abnormal-closure"
 
 		default:
 			// Some non-twitch close code we did not expect
 			e.logger.WithError(closeErr).Error("websocket reported unexpected error code")
 		}
-	}
 
-	if errors.Is(err, net.ErrClosed) {
+	case errors.Is(err, net.ErrClosed):
 		// This isn't nice but might happen, in this  case the socket is
 		// already gone but the read didn't notice that until this error
 		return nil
 	}
 
-	return err
+	if reconnectReason == "" {
+		// We don't reconnect, so we report the error we found
+		return err
+	}
+
+	if err = e.connect(e.socketDest, msgC, errC, reconnectReason); err != nil {
+		return fmt.Errorf("re-connecting after %s: %w", reconnectReason, err)
+	}
+
+	return nil
 }
 
 func (e *EventSubSocketClient) handleWelcomeMessage(msg eventSubSocketMessage) (time.Duration, error) {
