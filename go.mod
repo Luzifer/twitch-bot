@@ -15,7 +15,7 @@ require (
 	github.com/Luzifer/rconfig/v2 v2.6.3
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.19.3
-	github.com/go-sql-driver/mysql v1.10.1
+	github.com/go-sql-driver/mysql v1.10.2
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gofrs/uuid/v3 v3.1.2
 	github.com/gorilla/mux v1.8.1
